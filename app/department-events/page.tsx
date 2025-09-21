@@ -37,7 +37,7 @@ interface ApiAction {
 }
 
 interface ApiActionsResponse {
-  "composite action": ApiAction[]
+  "composite action": [ApiAction, ApiAction][]  // Array of pairs of actions [display action, submission action]
   "department action": ApiAction[]
   "member action": ApiAction[]
 }
@@ -74,7 +74,8 @@ interface NewEventForm {
     email: string
     phone_number: string
     uni_id: string
-    participation_action_id: string
+    participation_type: string
+    gender: "Male" | "Female"
   }>
   custom_points_awarded: string
   custom_points_date: string
@@ -93,6 +94,7 @@ interface NewEventForm {
   new_member_phone: string
   new_member_uni_id: string
   new_member_organizer_type: string
+  new_member_gender: "Male" | "Female" | ""
   show_link_popup: boolean
   link_input: string
   link_validating: boolean
@@ -121,6 +123,7 @@ export default function AddNewEventPage() {
       points: number
       requires_attendance: boolean
       participation_types: string[]
+      member_action_id: number
     }>
     department_actions: Array<{
       id: number
@@ -169,6 +172,7 @@ export default function AddNewEventPage() {
     new_member_phone: "",
     new_member_uni_id: "",
     new_member_organizer_type: "volunteer",
+    new_member_gender: "",
     show_link_popup: false,
     link_input: "",
     link_validating: false,
@@ -219,12 +223,13 @@ export default function AddNewEventPage() {
       setContributorActions(contributorData)
 
       const transformedActions = {
-        composite_actions: apiData["composite action"].map((action) => ({
-          id: action.id,
-          name: action["action description"],
-          points: action.points,
+        composite_actions: apiData["composite action"].map(([displayAction, submissionAction]) => ({
+          id: displayAction.id,
+          name: displayAction["action description"],
+          points: displayAction.points,
           requires_attendance: true,
           participation_types: ["Participant"],
+          member_action_id: submissionAction.id, // Store the submission action ID
         })),
         department_actions: apiData["department action"].map((action) => ({
           id: action.id,
@@ -310,7 +315,8 @@ export default function AddNewEventPage() {
           email: "",
           phone_number: "",
           uni_id: "",
-          participation_type: "",
+          participation_action_id: "",
+          gender: "Male",
         },
       ],
     })
@@ -355,6 +361,7 @@ export default function AddNewEventPage() {
       new_member_phone: "",
       new_member_uni_id: "",
       new_member_organizer_type: "volunteer",
+      new_member_gender: "",
     })
 
     toast({
@@ -386,7 +393,8 @@ export default function AddNewEventPage() {
         email: newEventForm.new_member_email,
         phone_number: newEventForm.new_member_phone,
         uni_id: newEventForm.new_member_uni_id,
-        participation_type: newEventForm.new_member_organizer_type,
+        participation_action_id: newEventForm.new_member_organizer_type,
+        gender: newEventForm.new_member_gender as "Male" | "Female",
       }
     } else {
       // Adding new member
@@ -395,7 +403,8 @@ export default function AddNewEventPage() {
         email: newEventForm.new_member_email,
         phone_number: newEventForm.new_member_phone,
         uni_id: newEventForm.new_member_uni_id,
-        participation_type: newEventForm.new_member_organizer_type,
+        participation_action_id: newEventForm.new_member_organizer_type,
+        gender: newEventForm.new_member_gender as "Male" | "Female",
       }
     }
 
@@ -425,7 +434,7 @@ export default function AddNewEventPage() {
 
     toast({
       title: "Organizer added",
-      description: `${newOrganizer.name} has been added as a ${newOrganizer.participation_type}.`,
+      description: `${newOrganizer.name} has been added as ${contributorActions.find(action => action.id.toString() === newOrganizer.participation_action_id)?.["action name"] || newOrganizer.participation_action_id}.`,
     })
   }
 
@@ -456,8 +465,7 @@ export default function AddNewEventPage() {
     setNewEventForm({ ...newEventForm, link_validating: true, link_error: "" })
     try {
       const data = JSON.stringify({ url: newEventForm.link_input, start_date: newEventForm.event_date, end_date:newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date })
-      const response = await fetch(`${BaseUrl}/validate/sheet`, {
-        
+        const response = await fetch(`${BaseUrl}/validate/sheet`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: data
@@ -465,7 +473,7 @@ export default function AddNewEventPage() {
       console.log(data);
       
 
-      if (true) {
+      if (response.ok) {
         setNewEventForm({
           ...newEventForm,
           attendants_link: newEventForm.link_input,
@@ -486,8 +494,7 @@ export default function AddNewEventPage() {
         setNewEventForm({
           ...newEventForm,
           link_validating: false,
-          link_error: `${errorData.error}:
-          \n\n${errorData.detail}`,
+          link_error: `${errorData.detail.error}:\n ${errorData.detail.details}`,
         })
       }
     } catch (error) {
@@ -527,10 +534,15 @@ export default function AddNewEventPage() {
 
       switch (newEventForm.action_category) {
         case "composite":
+          const selectedCompositeAction = actions.composite_actions.find(action => action.id.toString() === newEventForm.action_id)
+          if (!selectedCompositeAction) {
+            throw new Error("Selected composite action not found")
+          }
           eventData = {
             ...baseEventData,
             action: "composite",
-            action_id: newEventForm.action_id,
+            department_action_id: selectedCompositeAction.id,
+            member_action_id: selectedCompositeAction.member_action_id,
             department_id: newEventForm.department_id,
             members_link: newEventForm.attendants_link,
           }
@@ -1394,6 +1406,24 @@ export default function AddNewEventPage() {
                           />
                         </div>
                         <Select
+                          value={newEventForm.new_member_gender}
+                          onValueChange={(value: "Male" | "Female") =>
+                            setNewEventForm({
+                              ...newEventForm,
+                              new_member_gender: value,
+                            })
+                          }
+                          disabled={!!newEventForm.selected_existing_member}
+                        >
+                          <SelectTrigger className="enhanced-select">
+                            <SelectValue placeholder="Select Gender *" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Male">Male</SelectItem>
+                            <SelectItem value="Female">Female</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select
                           value={newEventForm.new_member_organizer_type}
                           onValueChange={(value) =>
                             setNewEventForm({
@@ -1422,7 +1452,8 @@ export default function AddNewEventPage() {
                               : !newEventForm.new_member_name ||
                                 !newEventForm.new_member_email ||
                                 !newEventForm.new_member_uni_id ||
-                                !newEventForm.new_member_organizer_type
+                                !newEventForm.new_member_organizer_type ||
+                                !newEventForm.new_member_gender
                           }
                           className="w-full"
                         >
@@ -1448,7 +1479,7 @@ export default function AddNewEventPage() {
                               <div className="flex items-center justify-between mb-2">
                                 <div className="flex items-center gap-2">
                                   <Badge variant="secondary" className="capitalize">
-                                    {organizer.participation_type}
+                                    {contributorActions.find(action => action.id.toString() === organizer.participation_action_id)?.["action name"] || organizer.participation_action_id}
                                   </Badge>
                                   <span className="font-medium">{organizer.name}</span>
                                 </div>
@@ -1466,6 +1497,7 @@ export default function AddNewEventPage() {
                                 <div>Email: {organizer.email}</div>
                                 <div>Phone: {organizer.phone_number}</div>
                                 <div>University ID: {organizer.uni_id}</div>
+                                <div>Gender: {organizer.gender}</div>
                               </div>
                             </div>
                           ))}
