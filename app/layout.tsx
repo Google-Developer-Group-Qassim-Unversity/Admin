@@ -3,6 +3,12 @@ import type { Metadata } from "next"
 import { Space_Grotesk, DM_Sans } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import {
+  ClerkProvider,
+  SignedIn,
+  SignedOut,
+  UserButton,
+} from "@clerk/nextjs"
 import "./globals.css"
 
 const spaceGrotesk = Space_Grotesk({
@@ -29,11 +35,35 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
-        <Suspense fallback={null}>{children}</Suspense>
-        <Analytics />
-      </body>
-    </html>
+    <ClerkProvider
+      appearance={{
+        baseTheme: undefined,
+        variables: {
+          colorPrimary: "#000000",
+        },
+      }}
+    >
+      <html lang="en">
+        <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
+          <SignedIn>
+            <header className="flex justify-between items-center p-4 bg-background border-b">
+              <h1 className="text-xl font-bold">Admin Dashboard - Score Leaderboard</h1>
+              <div className="flex items-center gap-4">
+                <UserButton 
+                  appearance={{
+                    elements: {
+                      avatarBox: "h-8 w-8",
+                    },
+                  }}
+                />
+              </div>
+            </header>
+          </SignedIn>
+          
+          <Suspense fallback={null}>{children}</Suspense>
+          <Analytics />
+        </body>
+      </html>
+    </ClerkProvider>
   )
 }
