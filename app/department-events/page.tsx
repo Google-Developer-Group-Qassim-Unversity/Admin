@@ -25,7 +25,7 @@ import { useToast } from "@/hooks/use-toast"
 import { MemberSelector } from "@/components/member-selector"
 import { Badge } from "@/components/ui/badge"
 
-const BaseUrl = "http://localhost:7001";
+const BaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://178.128.205.239:7001";
 
 interface ApiAction {
   id: number
