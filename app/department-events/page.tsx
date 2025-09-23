@@ -1,5 +1,6 @@
 "use client"
 import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -79,8 +80,10 @@ interface NewEventForm {
   event_date: string
   event_end_date: string
   date_type: "single" | "range"
-  attendants_link: string | null // Changed from attendants_file to attendants_link
-  attendants_link_validated: boolean // Added validation status
+  attendants_link: string | null // Google Sheets link
+  attendants_file: File | null // Uploaded file
+  attendants_source: "link" | "file" | null // Which source user chose
+  attendants_validated: boolean // Validation status for either source
   organizers: Array<{
     name: string
     email: string
@@ -108,22 +111,22 @@ interface NewEventForm {
   new_member_uni_id: string
   new_member_organizer_type: string
   new_member_gender: "Male" | "Female" | ""
-  show_link_popup: boolean
-  link_input: string
-  link_validating: boolean
-  link_error: string
+  validation_error: string // Combined validation error for both link and file
+  validating: boolean // Combined validation status
 }
 
 export default function AddNewEventPage() {
   // Local state for new member attendance before adding
   const [newMemberAttendance, setNewMemberAttendance] = useState<string[]>([])
   const { toast } = useToast()
+  const router = useRouter()
   const [departments, setDepartments] = useState<Department[]>([])
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [isAddingMember, setIsAddingMember] = useState(false)
   const [existingEventNames, setExistingEventNames] = useState<string[]>([])
+  const [eventCreated, setEventCreated] = useState(false)
   const [contributorActions, setContributorActions] = useState<Array<{
     id: number;
     "action name": string;
@@ -141,6 +144,7 @@ export default function AddNewEventPage() {
       requires_attendance: boolean
       participation_types: string[]
       member_action_id: number
+      member_points: number
     }>
     department_actions: Array<{
       id: number
@@ -179,8 +183,10 @@ export default function AddNewEventPage() {
     event_date: "",
     event_end_date: "",
     date_type: "single",
-    attendants_link: null, // Changed from attendants_file
-    attendants_link_validated: false,
+    attendants_link: null, // Google Sheets link
+    attendants_file: null, // Uploaded file
+    attendants_source: null, // Which source user chose
+    attendants_validated: false,
     organizers: [],
     custom_points_awarded: "",
     custom_points_date: new Date().toISOString().split("T")[0],
@@ -198,10 +204,8 @@ export default function AddNewEventPage() {
     new_member_uni_id: "",
     new_member_organizer_type: "volunteer",
     new_member_gender: "",
-    show_link_popup: false,
-    link_input: "",
-    link_validating: false,
-    link_error: "",
+    validation_error: "",
+    validating: false,
     bonus: "0",
     discount: "0",
   })
@@ -267,6 +271,7 @@ export default function AddNewEventPage() {
             requires_attendance: true,
             participation_types: ["Participant"],
             member_action_id: submissionAction.id, // Store the submission action ID
+            member_points: submissionAction.points, // Store the member action points
           })),
         department_actions: apiData["department action"]
           .filter((action) => !HIDDEN_ACTION_IDS.department_actions.includes(action.id))
@@ -327,16 +332,16 @@ export default function AddNewEventPage() {
   const getMaxSteps = () => {
     switch (newEventForm.action_category) {
       case "composite":
-        return 5 // Added organizer step
+        return 6 // Added summary step
       case "department":
-        return 3
+        return 4 // Added summary step
       case "member":
-        return 3 // Updated from 2 to 3 to include member selection step
+        return 4 // Added summary step
       case "custom_member":
       case "custom_department":
-        return 3 // Step 1: Choose type, Step 2: Event details, Step 3: Department/Member + Points
+        return 4 // Added summary step
       default:
-        return 4
+        return 5
     }
   }
 
@@ -400,72 +405,188 @@ export default function AddNewEventPage() {
     }
   }
 
-  const handleLinkValidation = async () => {
-    if (!newEventForm.link_input.trim()) {
-      setNewEventForm({ ...newEventForm, link_error: "Please enter a link" })
-      return
-    }
+  const validateFile = (file: File): boolean => {
+    const allowedTypes = [
+      'text/csv', 
+      'application/vnd.ms-excel',
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    ]
+    const maxSize = 5 * 1024 * 1024 // 5MB
+    
+    return allowedTypes.includes(file.type) && file.size <= maxSize
+  }
 
-    if (!validateGoogleSheetsLink(newEventForm.link_input)) {
-      setNewEventForm({
-        ...newEventForm,
-        link_error: "Please enter a valid Google Sheets link with output=csv parameter",
-      })
-      return
-    }
-    setNewEventForm({ ...newEventForm, link_validating: true, link_error: "" })
+  const handleValidation = async () => {
+    // Reset validation state
+    setNewEventForm(prev => ({ ...prev, validating: true, validation_error: "" }))
+
     try {
-      const data = JSON.stringify({ url: newEventForm.link_input, start_date: newEventForm.event_date, end_date:newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date })
-        const response = await fetch(`${BaseUrl}/validate/sheet`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: data
-      })
-      console.log(data);
+      const formData = new FormData()
       
+      // Add event dates - ensure we have valid dates
+      const startDate = newEventForm.event_date ? new Date(newEventForm.event_date) : new Date()
+      const endDate = newEventForm.date_type === "single" 
+        ? startDate 
+        : newEventForm.event_end_date 
+          ? new Date(newEventForm.event_end_date) 
+          : startDate
+      
+      formData.append('start date', startDate.toISOString())
+      formData.append('end date', endDate.toISOString())
+      
+      console.log("Validation dates:", {
+        "start date": startDate.toISOString(),
+        "end date": endDate.toISOString(),
+        event_date: newEventForm.event_date,
+        event_end_date: newEventForm.event_end_date,
+        date_type: newEventForm.date_type
+      })
+      
+      // Add either URL or file based on user choice
+      if (newEventForm.attendants_source === "link") {
+        if (!newEventForm.attendants_link?.trim()) {
+          setNewEventForm(prev => ({ ...prev, validation_error: "Please enter a link", validating: false }))
+          return
+        }
+        if (!validateGoogleSheetsLink(newEventForm.attendants_link)) {
+          setNewEventForm(prev => ({ 
+            ...prev, 
+            validation_error: "Please enter a valid Google Sheets link with output=csv parameter", 
+            validating: false 
+          }))
+          return
+        }
+        formData.append('url', newEventForm.attendants_link)
+      } else if (newEventForm.attendants_source === "file") {
+        if (!newEventForm.attendants_file) {
+          setNewEventForm(prev => ({ ...prev, validation_error: "Please select a file", validating: false }))
+          return
+        }
+        if (!validateFile(newEventForm.attendants_file)) {
+          setNewEventForm(prev => ({ 
+            ...prev, 
+            validation_error: "Please select a valid CSV or Excel file (max 5MB)", 
+            validating: false 
+          }))
+          return
+        }
+        formData.append('file', newEventForm.attendants_file)
+      }
+
+      const response = await fetch(`${BaseUrl}/validate/sheet`, {
+        method: "POST",
+        body: formData
+      })
 
       if (response.ok) {
-        setNewEventForm({
-          ...newEventForm,
-          attendants_link: newEventForm.link_input,
-          attendants_link_validated: true,
-          show_link_popup: false,
-          link_input: "",
-          link_validating: false,
-          link_error: "",
-        })
+        setNewEventForm(prev => ({
+          ...prev,
+          attendants_validated: true,
+          validating: false,
+          validation_error: "",
+        }))
         toast({
           title: "Success",
-          description: "Google Sheets link validated successfully",
+          description: `${newEventForm.attendants_source === "link" ? "Google Sheets link" : "File"} validated successfully`,
         })
       } else {
-        const errorData = await response.json()
-        console.log(errorData);
+        let errorMessage = "Validation failed"
         
-        setNewEventForm({
-          ...newEventForm,
-          link_validating: false,
-          link_error: `${errorData.detail.error}:\n ${errorData.detail.details}`,
-        })
+        try {
+          const errorData = await response.json()
+          console.log("Validation error response:", errorData)
+          
+          if (response.status === 422) {
+            // Handle 422 validation errors
+            if (errorData.detail && Array.isArray(errorData.detail)) {
+              const errors = errorData.detail.map((err: any) => {
+                const location = Array.isArray(err.loc) ? err.loc.join(' -> ') : 'Unknown field'
+                return `${location}: ${err.msg || 'Validation error'}`
+              }).join('\n')
+              errorMessage = `Validation errors:\n${errors}`
+            } else {
+              errorMessage = "Validation failed: Invalid request format"
+            }
+          } else if (response.status === 400) {
+            // Handle 400 errors - format: {detail: {error: str, details: str | list | str[]}}
+            if (errorData.detail?.error && errorData.detail?.details) {
+              const details = Array.isArray(errorData.detail.details) 
+                ? errorData.detail.details.join(', ')
+                : errorData.detail.details
+              errorMessage = `${errorData.detail.error}: ${details}`
+            } else if (errorData.detail?.error) {
+              errorMessage = errorData.detail.error
+            } else {
+              errorMessage = "Bad request"
+            }
+          } else {
+            // Handle other error formats
+            if (errorData.detail?.error && errorData.detail?.details) {
+              errorMessage = `${errorData.detail.error}: ${errorData.detail.details}`
+            } else if (errorData.detail) {
+              errorMessage = typeof errorData.detail === 'string' 
+                ? errorData.detail 
+                : JSON.stringify(errorData.detail)
+            } else if (errorData.message) {
+              errorMessage = errorData.message
+            } else {
+              errorMessage = `Validation failed (Status: ${response.status})`
+            }
+          }
+        } catch (parseError) {
+          console.error("Error parsing validation response:", parseError)
+          errorMessage = `Validation failed (Status: ${response.status})`
+        }
+        
+        setNewEventForm(prev => ({
+          ...prev,
+          validating: false,
+          validation_error: errorMessage,
+        }))
       }
     } catch (error) {
-      setNewEventForm({
-        ...newEventForm,
-        link_validating: false,
-        link_error: "Network error occurred during validation",
-      })
+      console.error("Validation error:", error)
+      setNewEventForm(prev => ({
+        ...prev,
+        validating: false,
+        validation_error: "Network error occurred during validation",
+      }))
     }
   }
 
-  const closeLinkPopup = () => {
-    setNewEventForm({
-      ...newEventForm,
-      show_link_popup: false,
-      link_input: "",
-      link_error: "",
-      link_validating: false,
-    })
-  }
+  // Helper function to create FormData from composite event data
+  const createCompositeFormData = (eventData: any) => {
+    const formData = new FormData();
+    
+    // Add scalar fields as strings
+    formData.append('action', eventData.action);
+    formData.append('event_info', JSON.stringify(eventData.event_info));
+    formData.append('department_id', eventData.department_id.toString());
+    formData.append('department_action_id', eventData.department_action_id.toString());
+    formData.append('member_action_id', eventData.member_action_id.toString());
+    formData.append('bonus', eventData.bonus.toString());
+    formData.append('discount', eventData.discount.toString());
+    formData.append('organizers', JSON.stringify(eventData.organizers));
+    
+    // Add either members link or members file based on user choice
+    if (newEventForm.attendants_source === "link" && newEventForm.attendants_link) {
+      formData.append('members link', newEventForm.attendants_link);
+    } else if (newEventForm.attendants_source === "file" && newEventForm.attendants_file) {
+      formData.append('members_file', newEventForm.attendants_file);
+    }
+    
+    // Log FormData contents for debugging
+    console.log("FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      if (value instanceof File) {
+        console.log(`  ${key}: File(${value.name}, ${value.size} bytes)`);
+      } else {
+        console.log(`  ${key}: ${value}`);
+      }
+    }
+    
+    return formData;
+  };
 
   const handleNewEventSubmit = async () => {
     setSubmitting(true)
@@ -473,8 +594,8 @@ export default function AddNewEventPage() {
       const baseEventData = {
         event_info: {
           event_title: newEventForm.event_title,
-          start_date: newEventForm.event_date,
-          end_date: newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date,
+          start_date: new Date(newEventForm.event_date).toISOString(),
+          end_date: new Date(newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date).toISOString(),
         },
         bonus: parseInt(newEventForm.bonus) || 0,
         discount: parseInt(newEventForm.discount) || 0,
@@ -482,6 +603,7 @@ export default function AddNewEventPage() {
 
       let eventData;
       let endpoint;
+      let useFormData = false;
 
       switch (newEventForm.action_category) {
         case "composite":
@@ -494,11 +616,11 @@ export default function AddNewEventPage() {
             action: "composite",
             department_action_id: selectedCompositeAction.id,
             member_action_id: selectedCompositeAction.member_action_id,
-            department_id: newEventForm.department_id,
-            members_link: newEventForm.attendants_link,
-            Organizers: newEventForm.organizers.length > 0 ? newEventForm.organizers : null
+            department_id: parseInt(newEventForm.department_id),
+            organizers: newEventForm.organizers.length > 0 ? newEventForm.organizers : []
           }
-          endpoint = `${BaseUrl}/events/compose`
+          endpoint = `${BaseUrl}/events/composite`
+          useFormData = true;
           break;
         
         case "department":
@@ -592,73 +714,123 @@ export default function AddNewEventPage() {
         default:
           throw new Error("Invalid action category")
       }
+      
       console.log("Submitting event data...", JSON.stringify(eventData, null, 2))
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(eventData),
-      })
-
-      if (!response.ok) {
-        console.log("Response not ok:", await response.json());
-        throw new Error("Failed to create event")
+      
+      // Prepare request options based on whether we're using FormData or JSON
+      let requestOptions;
+      if (useFormData) {
+        const formData = createCompositeFormData(eventData);
+        requestOptions = {
+          method: 'POST',
+          body: formData,
+        };
+        console.log("Using FormData for composite action");
+      } else {
+        requestOptions = {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(eventData),
+        };
       }
+      
+      const response = await fetch(endpoint, requestOptions);
 
-      const responseData = await response.json();
-      console.log(responseData);
+      if (response.status === 201) {
+        const responseData = await response.json();
+        console.log(responseData);
 
-      toast({
-        title: "Success",
-        description: "Event created successfully",
-      })
-
-      // Reset form
-      setNewEventForm({
-        action_id: "",
-        action_category: "",
-        department_id: "",
-        event_title: "",
-        event_date: "",
-        event_end_date: "",
-        date_type: "single",
-        attendants_link: null, // Changed from attendants_file
-        attendants_link_validated: false,
-        organizers: [],
-        custom_points_awarded: "",
-        custom_points_date: new Date().toISOString().split("T")[0],
-        selected_member_id: "",
-        event_selection_type: "new",
-        selected_existing_event_id: "",
-        member_selection_type: "single",
-        member_search_query: "",
-        show_add_member_form: false,
-        selected_existing_member: null,
-        // Reset renamed new_member fields
-        new_member_name: "",
-        new_member_email: "",
-        new_member_phone: "",
-        new_member_uni_id: "",
-        new_member_organizer_type: "volunteer",
-        new_member_gender: "",
-        show_link_popup: false,
-        link_input: "",
-        link_validating: false,
-        link_error: "",
-        bonus: "0",
-        discount: "0",
-      })
-      setNewEventStep(1)
+        // Show success state
+        setEventCreated(true)
+      } else if (response.status >= 400) {
+        const errorData = await response.json();
+        console.log("Error response:", errorData);
+        
+        toast({
+          title: "Error",
+          description: "Something went wrong while creating the event. Please try again.",
+          variant: "destructive",
+        })
+      } else {
+        throw new Error("Unexpected response status")
+      }
     } catch (error) {
+      console.error("Error creating event:", error)
       toast({
         title: "Error",
-        description: "Failed to create event",
+        description: "Something went wrong while creating the event. Please try again.",
         variant: "destructive",
       })
     } finally {
       setSubmitting(false)
     }
+  }
+
+  if (eventCreated) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
+        {/* Header */}
+        <header className="border-b border-border bg-white/80 backdrop-blur-sm">
+          <div className="container mx-auto px-6 py-4">
+            <div className="flex items-center gap-4">
+              <div>
+                <h1 className="text-2xl font-heading font-bold text-primary">Event Created Successfully</h1>
+                <p className="text-sm text-muted-foreground">Your event has been created and points have been awarded</p>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="container mx-auto px-6 py-8">
+          <div className="max-w-2xl mx-auto">
+            <Card className="border-2 border-green-200 bg-green-50/50">
+              <CardContent className="flex flex-col items-center justify-center py-12 space-y-6">
+                <div className="h-16 w-16 bg-green-500 rounded-full flex items-center justify-center">
+                  <CheckCircle className="h-8 w-8 text-white" />
+                </div>
+                
+                <div className="text-center space-y-2">
+                  <h2 className="text-2xl font-bold text-green-700">Event Created Successfully!</h2>
+                  <p className="text-green-600">
+                    Your event "{newEventForm.event_title}" has been created and all points have been awarded to the respective participants.
+                  </p>
+                </div>
+
+                <div className="bg-white p-4 rounded-lg border border-green-200 w-full">
+                  <h3 className="font-semibold text-green-700 mb-2">Event Summary:</h3>
+                  <div className="space-y-1 text-sm">
+                    <p><span className="font-medium">Title:</span> {newEventForm.event_title}</p>
+                    <p><span className="font-medium">Type:</span> {newEventForm.action_category?.replace('_', ' ')}</p>
+                    <p><span className="font-medium">Date:</span> {
+                      newEventForm.date_type === "single" 
+                        ? new Date(newEventForm.event_date).toLocaleDateString()
+                        : `${new Date(newEventForm.event_date).toLocaleDateString()} - ${new Date(newEventForm.event_end_date).toLocaleDateString()}`
+                    }</p>
+                    {newEventForm.action_category === "composite" && (
+                      <p><span className="font-medium">Department:</span> {departments.find(d => d.id.toString() === newEventForm.department_id)?.name}</p>
+                    )}
+                    {(newEventForm.action_category === "member" || newEventForm.action_category === "custom_member") && (
+                      <p><span className="font-medium">Members:</span> {newEventForm.organizers.length} participant(s)</p>
+                    )}
+                  </div>
+                </div>
+
+                <Button 
+                  onClick={() => router.push('/')}
+                  className="bg-primary hover:bg-primary/90 min-w-[200px]"
+                  size="lg"
+                >
+                  Return to Home
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </main>
+      </div>
+    )
   }
 
   if (loading) {
@@ -1208,46 +1380,167 @@ export default function AddNewEventPage() {
                   <h3 className="font-medium text-lg">Step 4: Add Members</h3>
 
                   <div className="space-y-6">
-                    {/* Composite Actions - Bulk Upload Section */}
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Google Sheets Link</Label>
-                        {!newEventForm.attendants_link ? (
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => setNewEventForm({ ...newEventForm, show_link_popup: true })}
-                            className="w-full"
-                          >
-                            <Plus className="w-4 h-4 mr-2" />
-                            Add Link
-                          </Button>
-                        ) : (
-                          <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
-                            <div className="flex items-center space-x-2">
-                              <CheckCircle className="w-4 h-4 text-green-600" />
-                              <span className="text-sm text-green-700">Link validated and ready</span>
+                      <Label className="text-base font-medium">Choose how to provide member data *</Label>
+                      
+                      {/* Source Selection */}
+                      <RadioGroup
+                        value={newEventForm.attendants_source || ""}
+                        onValueChange={(value: "link" | "file") => {
+                          setNewEventForm({
+                            ...newEventForm,
+                            attendants_source: value,
+                            attendants_validated: false,
+                            validation_error: "",
+                            attendants_link: value === "link" ? newEventForm.attendants_link : null,
+                            attendants_file: value === "file" ? newEventForm.attendants_file : null,
+                          })
+                        }}
+                        className="grid grid-cols-2 gap-4"
+                      >
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+                          <RadioGroupItem value="link" id="link-option" />
+                          <Label htmlFor="link-option" className="cursor-pointer">
+                            <div>
+                              <div className="font-medium">Google Sheets Link</div>
+                              <div className="text-sm text-muted-foreground">Use a shared Google Sheets URL</div>
                             </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-muted/50">
+                          <RadioGroupItem value="file" id="file-option" />
+                          <Label htmlFor="file-option" className="cursor-pointer">
+                            <div>
+                              <div className="font-medium">Upload File</div>
+                              <div className="text-sm text-muted-foreground">Upload CSV or Excel file</div>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+
+                      {/* Google Sheets Link Input */}
+                      {newEventForm.attendants_source === "link" && (
+                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                          <div className="space-y-2">
+                            <Label>Google Sheets URL *</Label>
+                            <Input
+                              type="url"
+                              placeholder="https://docs.google.com/spreadsheets/d/.../edit?output=csv"
+                              value={newEventForm.attendants_link || ""}
+                              onChange={(e) =>
                                 setNewEventForm({
                                   ...newEventForm,
-                                  attendants_link: null,
-                                  attendants_link_validated: false,
+                                  attendants_link: e.target.value,
+                                  attendants_validated: false,
+                                  validation_error: "",
                                 })
                               }
-                            >
-                              <X className="w-4 h-4" />
-                            </Button>
+                              disabled={newEventForm.validating}
+                              className="enhanced-input"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Make sure the link includes the "output=csv" parameter and the sheet is publicly accessible
+                            </p>
                           </div>
-                        )}
-                        <p className="text-sm text-muted-foreground">
-                          Add a Google Sheets link with output=csv parameter containing attendant data
-                        </p>
-                      </div>
+                        </div>
+                      )}
+
+                      {/* File Upload Input */}
+                      {newEventForm.attendants_source === "file" && (
+                        <div className="space-y-4 p-4 border rounded-lg bg-muted/30">
+                          <div className="space-y-2">
+                            <Label>Upload Members File *</Label>
+                            <Input
+                              type="file"
+                              accept=".csv,.xlsx,.xls"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0] || null
+                                setNewEventForm({
+                                  ...newEventForm,
+                                  attendants_file: file,
+                                  attendants_validated: false,
+                                  validation_error: "",
+                                })
+                              }}
+                              disabled={newEventForm.validating}
+                              className="enhanced-input"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                              Accepted formats: CSV, Excel (.xlsx, .xls). Max size: 5MB
+                            </p>
+                            {newEventForm.attendants_file && (
+                              <div className="text-sm text-green-600">
+                                Selected: {newEventForm.attendants_file.name} ({Math.round(newEventForm.attendants_file.size / 1024)} KB)
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Validation Button */}
+                      {newEventForm.attendants_source && (
+                        <div className="space-y-4">
+                          <Button
+                            type="button"
+                            onClick={handleValidation}
+                            disabled={
+                              newEventForm.validating ||
+                              (newEventForm.attendants_source === "link" && !newEventForm.attendants_link?.trim()) ||
+                              (newEventForm.attendants_source === "file" && !newEventForm.attendants_file)
+                            }
+                            className="w-full"
+                            variant={newEventForm.attendants_validated ? "outline" : "default"}
+                          >
+                            {newEventForm.validating ? (
+                              <>
+                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                Validating...
+                              </>
+                            ) : newEventForm.attendants_validated ? (
+                              <>
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                Re-validate
+                              </>
+                            ) : (
+                              `Validate ${newEventForm.attendants_source === "link" ? "Link" : "File"}`
+                            )}
+                          </Button>
+
+                          {/* Validation Status */}
+                          {newEventForm.attendants_validated && (
+                            <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                              <div className="flex items-center text-green-700">
+                                <CheckCircle className="w-4 h-4 mr-2" />
+                                <span className="text-sm font-medium">
+                                  {newEventForm.attendants_source === "link" ? "Google Sheets link" : "File"} validated successfully
+                                </span>
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Validation Error */}
+                          {newEventForm.validation_error && (
+                            <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                              <div className="flex items-start space-x-2">
+                                <X className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
+                                <div>
+                                  <p className="text-sm font-medium text-red-700">Validation Failed</p>
+                                  <p className="text-sm text-red-600 mt-1 whitespace-pre-wrap">{newEventForm.validation_error}</p>
+                                </div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Instructions */}
+                      {!newEventForm.attendants_source && (
+                        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                          <p className="text-sm text-blue-700">
+                            Please choose how you want to provide the member data. You can either upload a file or provide a Google Sheets link.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1267,6 +1560,188 @@ export default function AddNewEventPage() {
                     onMemberSearchChange={(query) => setNewEventForm({ ...newEventForm, member_search_query: query })}
                     onAddingMemberStateChange={setIsAddingMember}
                   />
+                </div>
+              )}
+
+              {/* Summary Step - Final step for all action types */}
+              {newEventStep === maxSteps && (
+                <div className="space-y-6">
+                  <h3 className="font-medium text-lg">Step {maxSteps}: Review & Confirm</h3>
+                  
+                  <div className="bg-muted/30 p-6 rounded-lg space-y-4">
+                    <h4 className="font-semibold text-primary">Event Summary</h4>
+                    
+                    {/* Basic Event Information */}
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Event Title</Label>
+                        <p className="font-medium">{newEventForm.event_title}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Action Type</Label>
+                        <p className="font-medium capitalize">{newEventForm.action_category?.replace('_', ' ')}</p>
+                      </div>
+                      <div>
+                        <Label className="text-sm font-medium text-muted-foreground">Event Date</Label>
+                        <p className="font-medium">
+                          {newEventForm.date_type === "single" 
+                            ? new Date(newEventForm.event_date).toLocaleDateString()
+                            : `${new Date(newEventForm.event_date).toLocaleDateString()} - ${new Date(newEventForm.event_end_date).toLocaleDateString()}`
+                          }
+                        </p>
+                      </div>
+                      {(newEventForm.bonus !== "0" || newEventForm.discount !== "0") && (
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Bonus/Discount</Label>
+                          <p className="font-medium">
+                            {newEventForm.bonus !== "0" && `+${newEventForm.bonus} bonus`}
+                            {newEventForm.bonus !== "0" && newEventForm.discount !== "0" && ", "}
+                            {newEventForm.discount !== "0" && `-${newEventForm.discount} discount`}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Action-specific information */}
+                    {newEventForm.action_category === "composite" && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Selected Action</Label>
+                          <p className="font-medium">{getSelectedAction()?.name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Department</Label>
+                          <p className="font-medium">
+                            {departments.find(d => d.id.toString() === newEventForm.department_id)?.name || "Not selected"}
+                          </p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">Department Points</Label>
+                            <p className="font-medium text-green-600">
+                              +{getSelectedAction()?.points || 0} points
+                              {parseInt(newEventForm.bonus) > 0 && ` (+${newEventForm.bonus} bonus)`}
+                              {parseInt(newEventForm.discount) > 0 && ` (-${newEventForm.discount} discount)`}
+                            </p>
+                          </div>
+                          <div>
+                            <Label className="text-sm font-medium text-muted-foreground">Member Points (Each)</Label>
+                            <p className="font-medium text-blue-600">
+                              +{(() => {
+                                // Find the selected composite action and get member points directly
+                                const selectedComposite = actions.composite_actions.find(action => 
+                                  action.id.toString() === newEventForm.action_id
+                                );
+                                return selectedComposite?.member_points || 0;
+                              })()} points
+                              {parseInt(newEventForm.bonus) > 0 && ` (+${newEventForm.bonus} bonus)`}
+                              {parseInt(newEventForm.discount) > 0 && ` (-${newEventForm.discount} discount)`}
+                            </p>
+                          </div>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Attendants Data Source</Label>
+                          <p className="font-medium">
+                            {newEventForm.attendants_validated 
+                              ? newEventForm.attendants_source === "link" 
+                                ? "Google Sheets Link (Validated)" 
+                                : `File: ${newEventForm.attendants_file?.name} (Validated)`
+                              : "Not provided"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Organizers</Label>
+                          <p className="font-medium">{newEventForm.organizers.length} organizer(s) added</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {newEventForm.action_category === "department" && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Selected Action</Label>
+                          <p className="font-medium">{getSelectedAction()?.name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Department</Label>
+                          <p className="font-medium">
+                            {departments.find(d => d.id.toString() === newEventForm.department_id)?.name || "Not selected"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Organizers</Label>
+                          <p className="font-medium">{newEventForm.organizers.length} organizer(s) added</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {newEventForm.action_category === "member" && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Selected Action</Label>
+                          <p className="font-medium">{getSelectedAction()?.name}</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Members</Label>
+                          <p className="font-medium">{newEventForm.organizers.length} member(s) selected</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {newEventForm.action_category === "custom_member" && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Points to Award</Label>
+                          <p className="font-medium">{newEventForm.bonus} points</p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Members</Label>
+                          <p className="font-medium">{newEventForm.organizers.length} member(s) selected</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {newEventForm.action_category === "custom_department" && (
+                      <div className="space-y-3">
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Department</Label>
+                          <p className="font-medium">
+                            {departments.find(d => d.id.toString() === newEventForm.department_id)?.name || "Not selected"}
+                          </p>
+                        </div>
+                        <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Points to Award</Label>
+                          <p className="font-medium">{newEventForm.custom_points_awarded} points</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Members/Organizers Details */}
+                    {newEventForm.organizers.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-sm font-medium text-muted-foreground">
+                          {newEventForm.action_category === "member" || newEventForm.action_category === "custom_member" 
+                            ? "Selected Members" 
+                            : "Organizers"}
+                        </Label>
+                        <div className="max-h-32 overflow-y-auto space-y-1">
+                          {newEventForm.organizers.map((organizer, index) => (
+                            <div key={index} className="text-sm bg-background p-2 rounded border">
+                              <span className="font-medium">{organizer.name}</span>
+                              <span className="text-muted-foreground ml-2">({organizer.email})</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <p className="text-sm text-yellow-700">
+                      <strong>Please review all information carefully.</strong> Once you create the event, 
+                      the data will be submitted to the system and points will be awarded accordingly.
+                    </p>
+                  </div>
                 </div>
               )}
 
@@ -1307,7 +1782,7 @@ export default function AddNewEventPage() {
                         newEventForm.action_category === "member" &&
                         (newEventForm.member_selection_type || "single") === "single" &&
                         !newEventForm.selected_member_id) ||
-                      (newEventForm.member_selection_type === "bulk" && !newEventForm.attendants_link_validated) || // Updated validation to check link validation
+                      (newEventForm.member_selection_type === "bulk" && !newEventForm.attendants_validated) || // Updated validation to check validation status
                       (newEventStep === 3 &&
                         (newEventForm.action_category === "composite" ||
                           newEventForm.action_category === "department") &&
@@ -1320,7 +1795,17 @@ export default function AddNewEventPage() {
                           (newEventForm.action_category === "custom_department" && !newEventForm.department_id)))) ||
                       (newEventStep === 4 &&
                         newEventForm.action_category === "composite" &&
-                        !newEventForm.attendants_link_validated)
+                        !newEventForm.attendants_validated) ||
+                      (newEventStep === 3 &&
+                        newEventForm.action_category === "member" &&
+                        newEventForm.organizers.length === 0) ||
+                      (newEventStep === 4 &&
+                        newEventForm.action_category === "department" &&
+                        !newEventForm.department_id) ||
+                      (newEventStep === 5 &&
+                        newEventForm.action_category === "composite" &&
+                        !newEventForm.attendants_validated) ||
+                      isAddingMember
                     }
                   >
                     Next
@@ -1333,7 +1818,7 @@ export default function AddNewEventPage() {
                     disabled={
                       submitting || 
                       isAddingMember || // Disable when user is adding a member
-                      (newEventForm.action_category === "composite" && !newEventForm.attendants_link) ||
+                      (newEventForm.action_category === "composite" && !newEventForm.attendants_validated) ||
                       (newEventForm.action_category === "department" && !newEventForm.department_id) ||
                       ((newEventForm.action_category === "member" || newEventForm.action_category === "custom_member") && newEventForm.organizers.length === 0)
                     }
@@ -1347,7 +1832,7 @@ export default function AddNewEventPage() {
                     ) : (
                       <>
                         <Save className="h-4 w-4 mr-2" />
-                        Create Event
+                        Create New Event
                       </>
                     )}
                   </Button>
@@ -1358,67 +1843,6 @@ export default function AddNewEventPage() {
         </div>
       </main>
 
-      {newEventForm.show_link_popup && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold">Add Google Sheets Link</h3>
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={closeLinkPopup}
-                disabled={newEventForm.link_validating}
-              >
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
-
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Google Sheets URL</Label>
-                <Input
-                  type="url"
-                  placeholder="https://docs.google.com/spreadsheets/d/.../edit?output=csv"
-                  value={newEventForm.link_input}
-                  onChange={(e) =>
-                    setNewEventForm({
-                      ...newEventForm,
-                      link_input: e.target.value,
-                      link_error: "",
-                    })
-                  }
-                  disabled={newEventForm.link_validating}
-                  className="enhanced-input"
-                />
-                <p className="text-xs text-muted-foreground">Make sure the link includes the "output=csv" parameter</p>
-              </div>
-
-              {newEventForm.link_error && (
-                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
-                  <p className="text-sm text-red-600">{newEventForm.link_error}</p>
-                </div>
-              )}
-
-              <Button
-                type="button"
-                onClick={handleLinkValidation}
-                disabled={newEventForm.link_validating || !newEventForm.link_input.trim()}
-                className="w-full"
-              >
-                {newEventForm.link_validating ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Validating...
-                  </>
-                ) : (
-                  "Validate"
-                )}
-              </Button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   )
 }
