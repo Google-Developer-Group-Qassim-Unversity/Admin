@@ -13,6 +13,7 @@ import {
   Save,
   Calendar,
   Users,
+  User,
   Sparkles,
   Building2,
   X,
@@ -23,9 +24,19 @@ import Link from "next/link"
 import { type Department, MOCK_DATA } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
 import { MemberSelector } from "@/components/member-selector"
-import { Badge } from "@/components/ui/badge"
+import { OrganizerManager } from "@/components/organizer-manager"
 
-const BaseUrl = process.env.NEXT_PUBLIC_API_URL || "http://178.128.205.239:7001";
+const BaseUrl = process.env.NEXT_PUBLIC_DEV_HOST || process.env.NEXT_PUBLIC_HOST || "http://178.128.205.239:7001";
+console.log(`Using BaseUrl: \x1b[32m${BaseUrl}\x1b[0m`);
+
+// List of action IDs that should be hidden from the user interface
+const HIDDEN_ACTION_IDS = {
+  member_actions: [76, 77, 78, 79, 80, 64],
+  department_actions: [],
+  composite_actions: [],
+  custom_actions: []
+};
+ 
 
 interface ApiAction {
   id: number
@@ -40,6 +51,7 @@ interface ApiActionsResponse {
   "composite action": [ApiAction, ApiAction][]  // Array of pairs of actions [display action, submission action]
   "department action": ApiAction[]
   "member action": ApiAction[]
+  "custom action": ApiAction[]
 }
 
 const EXTENDED_MOCK_DATA = {
@@ -51,11 +63,11 @@ const EXTENDED_MOCK_DATA = {
     { id: 4, title: "Innovation Day", date: "2024-05-05" },
   ],
   preview_members: [
-    { id: 1, name: "John Smith", email: "john.smith@university.edu", uni_id: "U001", department: "Computer Science" },
-    { id: 2, name: "Sarah Johnson", email: "sarah.johnson@university.edu", uni_id: "U002", department: "Engineering" },
-    { id: 3, name: "Michael Brown", email: "michael.brown@university.edu", uni_id: "U003", department: "Business" },
-    { id: 4, name: "Emily Davis", email: "emily.davis@university.edu", uni_id: "U004", department: "Mathematics" },
-    { id: 5, name: "David Wilson", email: "david.wilson@university.edu", uni_id: "U005", department: "Physics" },
+    { id: 1, name: "John Smith", email: "john.smith@university.edu", uni_id: "U001", department: "Computer Science", gender: "Male" },
+    { id: 2, name: "Sarah Johnson", email: "sarah.johnson@university.edu", uni_id: "U002", department: "Engineering", gender: "Female" },
+    { id: 3, name: "Michael Brown", email: "michael.brown@university.edu", uni_id: "U003", department: "Business", gender: "Male" },
+    { id: 4, name: "Emily Davis", email: "emily.davis@university.edu", uni_id: "U004", department: "Mathematics", gender: "Female" },
+    { id: 5, name: "David Wilson", email: "david.wilson@university.edu", uni_id: "U005", department: "Physics", gender: "Male" },
   ],
 }
 
@@ -74,8 +86,9 @@ interface NewEventForm {
     email: string
     phone_number: string
     uni_id: string
-    participation_type: string
+    participation_action_id: string
     gender: "Male" | "Female"
+    attendance: string[] // Array of "present"/"absent" for each event day
   }>
   custom_points_awarded: string
   custom_points_date: string
@@ -102,11 +115,15 @@ interface NewEventForm {
 }
 
 export default function AddNewEventPage() {
+  // Local state for new member attendance before adding
+  const [newMemberAttendance, setNewMemberAttendance] = useState<string[]>([])
   const { toast } = useToast()
   const [departments, setDepartments] = useState<Department[]>([])
   const [members, setMembers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [isAddingMember, setIsAddingMember] = useState(false)
+  const [existingEventNames, setExistingEventNames] = useState<string[]>([])
   const [contributorActions, setContributorActions] = useState<Array<{
     id: number;
     "action name": string;
@@ -139,10 +156,18 @@ export default function AddNewEventPage() {
       requires_attendance: boolean
       participation_types: string[]
     }>
+    custom_actions: Array<{
+      id: number
+      name: string
+      points: number
+      requires_attendance: boolean
+      participation_types: string[]
+    }>
   }>({
     composite_actions: [],
     department_actions: [],
     member_actions: [],
+    custom_actions: [],
   })
 
   const [newEventStep, setNewEventStep] = useState(1)
@@ -222,29 +247,54 @@ export default function AddNewEventPage() {
       const contributorData = await contributorResponse.json()
       setContributorActions(contributorData)
 
+      // Load existing event names
+      const eventsResponse = await fetch(`${BaseUrl}/events`)
+      if (!eventsResponse.ok) {
+        throw new Error("Failed to fetch existing events")
+      }
+      const eventsData: string[] = await eventsResponse.json()
+      setExistingEventNames(eventsData)
+
       const transformedActions = {
-        composite_actions: apiData["composite action"].map(([displayAction, submissionAction]) => ({
-          id: displayAction.id,
-          name: displayAction["action description"],
-          points: displayAction.points,
-          requires_attendance: true,
-          participation_types: ["Participant"],
-          member_action_id: submissionAction.id, // Store the submission action ID
-        })),
-        department_actions: apiData["department action"].map((action) => ({
-          id: action.id,
-          name: action["action description"],
-          points: action.points,
-          requires_attendance: false,
-          participation_types: ["Participant"],
-        })),
-        member_actions: apiData["member action"].map((action) => ({
-          id: action.id,
-          name: action["action description"],
-          points: action.points,
-          requires_attendance: true,
-          participation_types: ["Participant"],
-        })),
+        composite_actions: apiData["composite action"]
+          .filter(([displayAction, submissionAction]) => 
+            !HIDDEN_ACTION_IDS.composite_actions.includes(displayAction.id)
+          )
+          .map(([displayAction, submissionAction]) => ({
+            id: displayAction.id,
+            name: displayAction["action description"],
+            points: displayAction.points,
+            requires_attendance: true,
+            participation_types: ["Participant"],
+            member_action_id: submissionAction.id, // Store the submission action ID
+          })),
+        department_actions: apiData["department action"]
+          .filter((action) => !HIDDEN_ACTION_IDS.department_actions.includes(action.id))
+          .map((action) => ({
+            id: action.id,
+            name: action["action description"],
+            points: action.points,
+            requires_attendance: false,
+            participation_types: ["Participant"],
+          })),
+        member_actions: apiData["member action"]
+          .filter((action) => !HIDDEN_ACTION_IDS.member_actions.includes(action.id))
+          .map((action) => ({
+            id: action.id,
+            name: action["action description"],
+            points: action.points,
+            requires_attendance: true,
+            participation_types: ["Participant"],
+          })),
+        custom_actions: apiData["custom action"]
+          .filter((action) => !HIDDEN_ACTION_IDS.custom_actions.includes(action.id))
+          .map((action) => ({
+            id: action.id,
+            name: action["action description"],
+            points: action.points,
+            requires_attendance: false,
+            participation_types: ["Participant"],
+          })),
       }
 
       setActions(transformedActions)
@@ -260,6 +310,7 @@ export default function AddNewEventPage() {
         composite_actions: [],
         department_actions: [],
         member_actions: [],
+        custom_actions: [],
       })
     } finally {
       setLoading(false)
@@ -276,7 +327,7 @@ export default function AddNewEventPage() {
   const getMaxSteps = () => {
     switch (newEventForm.action_category) {
       case "composite":
-        return 4
+        return 5 // Added organizer step
       case "department":
         return 3
       case "member":
@@ -287,6 +338,13 @@ export default function AddNewEventPage() {
       default:
         return 4
     }
+  }
+
+  const isEventNameTaken = (eventTitle: string): boolean => {
+    if (!eventTitle.trim()) return false
+    return existingEventNames.some(name => 
+      name.toLowerCase().trim() === eventTitle.toLowerCase().trim()
+    )
   }
 
   const handleActionSelect = (actionId: string, category: "composite" | "department" | "member") => {
@@ -302,37 +360,21 @@ export default function AddNewEventPage() {
       ...newEventForm,
       action_id: "custom",
       action_category: category,
+      event_selection_type: "new", // Always set to "new" since we removed existing event option for custom departments
     })
   }
 
-  const addOrganizer = () => {
-    setNewEventForm({
-      ...newEventForm,
-      organizers: [
-        ...newEventForm.organizers,
-        {
-          name: "",
-          email: "",
-          phone_number: "",
-          uni_id: "",
-          participation_action_id: "",
-          gender: "Male",
-        },
-      ],
-    })
-  }
-
-  const removeOrganizer = (index: number) => {
-    setNewEventForm({
-      ...newEventForm,
-      organizers: newEventForm.organizers.filter((_, i) => i !== index),
-    })
-  }
-
-  const updateOrganizer = (index: number, field: string, value: string) => {
-    const updatedOrganizers = [...newEventForm.organizers]
-    updatedOrganizers[index] = { ...updatedOrganizers[index], [field]: value }
-    setNewEventForm({ ...newEventForm, organizers: updatedOrganizers })
+  // Helper to get event days as array of dates
+  const getEventDays = () => {
+    const start = new Date(newEventForm.event_date)
+    const end = newEventForm.date_type === "range" ? new Date(newEventForm.event_end_date) : start
+    const days = []
+    let current = new Date(start)
+    while (current <= end) {
+      days.push(new Date(current))
+      current.setDate(current.getDate() + 1)
+    }
+    return days
   }
 
   const getFilteredMembers = () => {
@@ -345,97 +387,6 @@ export default function AddNewEventPage() {
         member.email.toLowerCase().includes(newEventForm.member_search_query.toLowerCase()) ||
         (member.uni_id?.toLowerCase?.() || null).includes(newEventForm.member_search_query.toLowerCase())
     )
-  }
-
-  const handleAddNewMember = () => {
-    // In a real app, this would make an API call to add the member
-    console.log("Adding new member:", newEventForm.new_member_name)
-
-    // Reset the form and hide the add member form
-    setNewEventForm({
-      ...newEventForm,
-      show_add_member_form: false,
-      selected_existing_member: null,
-      new_member_name: "",
-      new_member_email: "",
-      new_member_phone: "",
-      new_member_uni_id: "",
-      new_member_organizer_type: "volunteer",
-      new_member_gender: "",
-    })
-
-    toast({
-      title: "Success",
-      description: "New member added successfully",
-    })
-  }
-
-  const handleSelectExistingMember = (member: any) => {
-    setNewEventForm({
-      ...newEventForm,
-      selected_existing_member: member,
-      show_add_member_form: true,
-      new_member_name: member.name,
-      new_member_email: member.email,
-      new_member_phone: member.phone_number || "",
-      new_member_uni_id: member.uni_id,
-      new_member_organizer_type: "",
-    })
-  }
-
-  const handleAddAsOrganizer = () => {
-    let newOrganizer
-
-    if (newEventForm.selected_existing_member) {
-      // Adding existing member
-      newOrganizer = {
-        name: newEventForm.new_member_name,
-        email: newEventForm.new_member_email,
-        phone_number: newEventForm.new_member_phone,
-        uni_id: newEventForm.new_member_uni_id,
-        participation_action_id: newEventForm.new_member_organizer_type,
-        gender: newEventForm.new_member_gender as "Male" | "Female",
-      }
-    } else {
-      // Adding new member
-      newOrganizer = {
-        name: newEventForm.new_member_name,
-        email: newEventForm.new_member_email,
-        phone_number: newEventForm.new_member_phone,
-        uni_id: newEventForm.new_member_uni_id,
-        participation_action_id: newEventForm.new_member_organizer_type,
-        gender: newEventForm.new_member_gender as "Male" | "Female",
-      }
-    }
-
-    // Check if organizer already exists
-    const exists = newEventForm.organizers.some((org) => org.uni_id === newOrganizer.uni_id)
-
-    if (exists) {
-      toast({
-        title: "Member already added",
-        description: "This member is already in the organizers list.",
-        variant: "destructive",
-      })
-      return
-    }
-
-    setNewEventForm({
-      ...newEventForm,
-      organizers: [...newEventForm.organizers, newOrganizer],
-      show_add_member_form: false,
-      selected_existing_member: null,
-      new_member_name: "",
-      new_member_email: "",
-      new_member_phone: "",
-      new_member_uni_id: "",
-      new_member_organizer_type: "volunteer",
-    })
-
-    toast({
-      title: "Organizer added",
-      description: `${newOrganizer.name} has been added as ${contributorActions.find(action => action.id.toString() === newOrganizer.participation_action_id)?.["action name"] || newOrganizer.participation_action_id}.`,
-    })
   }
 
   const validateGoogleSheetsLink = (url: string): boolean => {
@@ -527,10 +478,10 @@ export default function AddNewEventPage() {
         },
         bonus: parseInt(newEventForm.bonus) || 0,
         discount: parseInt(newEventForm.discount) || 0,
-        Organizers: newEventForm.organizers.length > 0 ? newEventForm.organizers : null
       }
 
       let eventData;
+      let endpoint;
 
       switch (newEventForm.action_category) {
         case "composite":
@@ -545,50 +496,104 @@ export default function AddNewEventPage() {
             member_action_id: selectedCompositeAction.member_action_id,
             department_id: newEventForm.department_id,
             members_link: newEventForm.attendants_link,
+            Organizers: newEventForm.organizers.length > 0 ? newEventForm.organizers : null
           }
+          endpoint = `${BaseUrl}/events/compose`
           break;
         
         case "department":
           eventData = {
-            ...baseEventData,
             action: "department",
-            action_id: parseInt(newEventForm.action_id),
+            event_info: baseEventData.event_info,
             department_id: parseInt(newEventForm.department_id),
+            organizers: newEventForm.organizers.length > 0 ? newEventForm.organizers : [],
+            action_id: parseInt(newEventForm.action_id),
+            bonus: baseEventData.bonus,
+            discount: baseEventData.discount,
           }
+          endpoint = `${BaseUrl}/events/departments`
           break;
 
         case "member":
+          // Transform organizers to members format
+          const membersData = newEventForm.organizers.map(organizer => ({
+            id: parseInt(organizer.uni_id) || 0, // Use uni_id as id or 0 if not a number
+            name: organizer.name,
+            email: organizer.email,
+            "phone number": organizer.phone_number,
+            uni_id: organizer.uni_id,
+            gender: organizer.gender
+          }))
+
           eventData = {
-            ...baseEventData,
-            action: "member",
-            action_id: parseInt(newEventForm.action_id),
-            member_id: newEventForm.selected_member_id,
+            event_info: {
+              event_title: newEventForm.event_title,
+              start_date: new Date(newEventForm.event_date).toISOString(),
+              end_date: new Date(newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date).toISOString()
+            },
+            members: membersData,
+            bonus: parseInt(newEventForm.bonus) || 0,
+            discount: parseInt(newEventForm.discount) || 0,
+            action_id: parseInt(newEventForm.action_id)
           }
+          endpoint = `${BaseUrl}/events/members`
           break;
 
         case "custom_member":
+          // Find the "Bonus" action ID
+          const bonusAction = actions.custom_actions?.find(action => 
+            action.name === "Bonus" || action.name.toLowerCase().includes("bonus")
+          );
+          
+          // Transform organizers to Members format
+          const customMembersData = newEventForm.organizers.map(organizer => ({
+            name: organizer.name,
+            email: organizer.email,
+            phone_number: organizer.phone_number,
+            uni_id: organizer.uni_id,
+            gender: organizer.gender
+          }));
+
+          // Create event info for new event
+          const eventInfo = {
+            event_title: newEventForm.event_title,
+            start_date: new Date(newEventForm.event_date).toISOString(),
+            end_date: new Date(newEventForm.event_date).toISOString()
+          };
+
           eventData = {
-            ...baseEventData,
-            action: "custom_member",
-            member_id: newEventForm.selected_member_id,
-            points: parseInt(newEventForm.custom_points_awarded),
+            event_info: eventInfo,
+            bonus: parseInt(newEventForm.bonus) || 0,
+            members: customMembersData,
+            action_id: bonusAction?.id || 1 // fallback to 1 if bonus action not found
           }
+          endpoint = `${BaseUrl}/events/custom/members`
           break;
 
         case "custom_department":
+          // Find the "Bonus" action ID from custom actions
+          const bonusActionDept = actions.custom_actions?.find(action => 
+            action.name === "Bonus" || action.name.toLowerCase().includes("bonus")
+          );
+          
           eventData = {
-            ...baseEventData,
-            action: "custom_department",
+            event_info: {
+              event_title: newEventForm.event_title,
+              start_date: new Date(newEventForm.event_date).toISOString(),
+              end_date: new Date(newEventForm.event_date).toISOString()
+            },
             department_id: parseInt(newEventForm.department_id),
-            points: parseInt(newEventForm.custom_points_awarded),
+            bonus: parseInt(newEventForm.custom_points_awarded) || 0,
+            action_id: bonusActionDept?.id || 1 // fallback to 1 if bonus action not found
           }
+          endpoint = `${BaseUrl}/events/custom/departments`
           break;
 
         default:
           throw new Error("Invalid action category")
       }
       console.log("Submitting event data...", JSON.stringify(eventData, null, 2))
-      const response = await fetch(`${BaseUrl}/events`, {
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -636,10 +641,13 @@ export default function AddNewEventPage() {
         new_member_phone: "",
         new_member_uni_id: "",
         new_member_organizer_type: "volunteer",
+        new_member_gender: "",
         show_link_popup: false,
         link_input: "",
         link_validating: false,
         link_error: "",
+        bonus: "0",
+        discount: "0",
       })
       setNewEventStep(1)
     } catch (error) {
@@ -853,55 +861,7 @@ export default function AddNewEventPage() {
                 <div className="space-y-4">
                   <h3 className="font-medium text-lg">Step 2: Event Details</h3>
 
-                  {(newEventForm.action_category === "custom_member" ||
-                    newEventForm.action_category === "custom_department") && (
-                    <div className="space-y-4">
-                      <Label>Event Selection *</Label>
-                      <RadioGroup
-                        value={newEventForm.event_selection_type}
-                        onValueChange={(value: "new" | "existing") =>
-                          setNewEventForm({ ...newEventForm, event_selection_type: value })
-                        }
-                        className="flex gap-6"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="new" id="new-event" />
-                          <Label htmlFor="new-event">Create New Event</Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="existing" id="existing-event" />
-                          <Label htmlFor="existing-event">Select Existing Event</Label>
-                        </div>
-                      </RadioGroup>
-
-                      {newEventForm.event_selection_type === "existing" && (
-                        <div className="space-y-2">
-                          <Label>Choose Existing Event *</Label>
-                          <Select
-                            value={newEventForm.selected_existing_event_id}
-                            onValueChange={(value) =>
-                              setNewEventForm({ ...newEventForm, selected_existing_event_id: value })
-                            }
-                          >
-                            <SelectTrigger className="enhanced-select">
-                              <SelectValue placeholder="Select an existing event" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {EXTENDED_MOCK_DATA.existing_events.map((event) => (
-                                <SelectItem key={event.id} value={event.id.toString()}>
-                                  {event.title} - {event.date}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                      )}
-                    </div>
-                  )}
-
-                  {(newEventForm.event_selection_type === "new" ||
-                    (newEventForm.action_category !== "custom_member" &&
-                      newEventForm.action_category !== "custom_department")) && (
+                  {newEventForm.action_category === "custom_member" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
                         <Label>Event Title *</Label>
@@ -909,8 +869,69 @@ export default function AddNewEventPage() {
                           placeholder="Enter event title"
                           value={newEventForm.event_title}
                           onChange={(e) => setNewEventForm({ ...newEventForm, event_title: e.target.value })}
+                          className={`enhanced-input ${isEventNameTaken(newEventForm.event_title) ? 'border-red-500' : ''}`}
+                        />
+                        {isEventNameTaken(newEventForm.event_title) && (
+                          <p className="text-sm text-red-500">Event Already exists</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Event Date *</Label>
+                        <Input
+                          type="date"
+                          value={newEventForm.event_date}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, event_date: e.target.value, event_end_date: e.target.value, date_type: "single" })}
                           className="enhanced-input"
                         />
+                      </div>
+                    </div>
+                  )}
+
+                  {newEventForm.action_category === "custom_department" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Event Title *</Label>
+                        <Input
+                          placeholder="Enter event title"
+                          value={newEventForm.event_title}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, event_title: e.target.value })}
+                          className={`enhanced-input ${isEventNameTaken(newEventForm.event_title) ? 'border-red-500' : ''}`}
+                        />
+                        {isEventNameTaken(newEventForm.event_title) && (
+                          <p className="text-sm text-red-500">Event Already exists</p>
+                        )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Event Date *</Label>
+                        <Input
+                          type="date"
+                          value={newEventForm.event_date}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, event_date: e.target.value, event_end_date: e.target.value, date_type: "single" })}
+                          className="enhanced-input"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {(newEventForm.event_selection_type === "new" ||
+                    (newEventForm.action_category !== "custom_member" &&
+                      newEventForm.action_category !== "custom_department")) && 
+                    newEventForm.action_category !== "custom_member" && 
+                    newEventForm.action_category !== "custom_department" && (
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label>Event Title *</Label>
+                        <Input
+                          placeholder="Enter event title"
+                          value={newEventForm.event_title}
+                          onChange={(e) => setNewEventForm({ ...newEventForm, event_title: e.target.value })}
+                          className={`enhanced-input ${isEventNameTaken(newEventForm.event_title) ? 'border-red-500' : ''}`}
+                        />
+                        {isEventNameTaken(newEventForm.event_title) && (
+                          <p className="text-sm text-red-500">Event Already exists</p>
+                        )}
                       </div>
 
                       <div className="grid grid-cols-2 gap-4">
@@ -977,7 +998,22 @@ export default function AddNewEventPage() {
                               <Input
                                 type="date"
                                 value={newEventForm.event_date}
-                                onChange={(e) => setNewEventForm({ ...newEventForm, event_date: e.target.value })}
+                                onChange={(e) => {
+                                  const startDate = new Date(e.target.value)
+                                  const maxEndDate = new Date(startDate)
+                                  maxEndDate.setDate(maxEndDate.getDate() + 30)
+                                  
+                                  let endDate = newEventForm.event_end_date
+                                  if (newEventForm.event_end_date && new Date(newEventForm.event_end_date) > maxEndDate) {
+                                    endDate = maxEndDate.toISOString().split('T')[0]
+                                  }
+                                  
+                                  setNewEventForm({ 
+                                    ...newEventForm, 
+                                    event_date: e.target.value,
+                                    event_end_date: endDate
+                                  })
+                                }}
                                 className="enhanced-input"
                               />
                             </div>
@@ -986,9 +1022,19 @@ export default function AddNewEventPage() {
                               <Input
                                 type="date"
                                 value={newEventForm.event_end_date}
+                                min={newEventForm.event_date}
+                                max={newEventForm.event_date ? (() => {
+                                  const maxDate = new Date(newEventForm.event_date)
+                                  maxDate.setDate(maxDate.getDate() + 30)
+                                  return maxDate.toISOString().split('T')[0]
+                                })() : undefined}
                                 onChange={(e) => setNewEventForm({ ...newEventForm, event_end_date: e.target.value })}
                                 className="enhanced-input"
                               />
+                              {newEventForm.event_date && (
+                                <p className="text-xs text-muted-foreground">
+                                </p>
+                              )}
                             </div>
                           </div>
                         )}
@@ -999,119 +1045,61 @@ export default function AddNewEventPage() {
               )}
 
               {newEventStep === 3 && newEventForm.action_category === "member" && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h3 className="font-medium text-lg">Step 3: Add Members</h3>
-                  <div className="space-y-4">
-                    <div className="space-y-2">
-                      <Label>Member Selection Method *</Label>
-                      <RadioGroup
-                        value={newEventForm.member_selection_type || "single"}
-                        onValueChange={(value: "single" | "bulk") =>
-                          setNewEventForm({ ...newEventForm, member_selection_type: value })
-                        }
-                        className="flex gap-6"
-                      >
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="single" id="single-member" />
-                          <Label htmlFor="single-member" className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Add Single Member
-                          </Label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <RadioGroupItem value="bulk" id="bulk-members" />
-                          <Label htmlFor="bulk-members" className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Add Bulk Members
-                          </Label>
-                        </div>
-                      </RadioGroup>
+                  <OrganizerManager
+                    organizers={newEventForm.organizers}
+                    onOrganizersChange={(organizers) => setNewEventForm({ ...newEventForm, organizers })}
+                    members={members}
+                    contributorActions={contributorActions}
+                    eventDays={getEventDays()}
+                    mode="department"
+                    memberSearchQuery={newEventForm.member_search_query}
+                    onMemberSearchChange={(query) => setNewEventForm({ ...newEventForm, member_search_query: query })}
+                    onAddingMemberStateChange={setIsAddingMember}
+                    skipAttendance={getEventDays().length === 1}
+                  />
+                  {newEventForm.organizers.length === 0 && (
+                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                      <p className="text-sm text-yellow-600">At least one member must be selected to create the event.</p>
                     </div>
-
-                    {(newEventForm.member_selection_type || "single") === "single" && (
-                      <div className="space-y-2">
-                        <Label>Select Member *</Label>
-                        <MemberSelector
-                          onMemberSelect={(member) =>
-                            setNewEventForm({ ...newEventForm, selected_member_id: member.id.toString() })
-                          }
-                          selectedMemberId={newEventForm.selected_member_id}
-                          participationTypes={getSelectedAction()?.participation_types || []}
-                          eventDate={newEventForm.event_date}
-                        />
-                      </div>
-                    )}
-
-                    {newEventForm.member_selection_type === "bulk" && (
-                      <div className="space-y-4">
-                        <div className="space-y-2">
-                          <Label>Google Sheets Link</Label>
-                          {!newEventForm.attendants_link ? (
-                            <Button
-                              type="button"
-                              variant="outline"
-                              onClick={() => setNewEventForm({ ...newEventForm, show_link_popup: true })}
-                              className="w-full"
-                            >
-                              <Plus className="w-4 h-4 mr-2" />
-                              Add Link
-                            </Button>
-                          ) : (
-                            <div className="flex items-center justify-between p-3 border rounded-lg bg-green-50">
-                              <div className="flex items-center space-x-2">
-                                <CheckCircle className="w-4 h-4 text-green-600" />
-                                <span className="text-sm text-green-700">Link validated and ready</span>
-                              </div>
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() =>
-                                  setNewEventForm({
-                                    ...newEventForm,
-                                    attendants_link: null,
-                                    attendants_link_validated: false,
-                                  })
-                                }
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
-                          <p className="text-sm text-muted-foreground">
-                            Add a Google Sheets link with output=csv parameter containing member data
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               )}
 
               {newEventStep === 3 && newEventForm.action_category === "custom_member" && (
                 <div className="space-y-4">
-                  <h3 className="font-medium text-lg">Step 3: Select Member and Award Points</h3>
+                  <h3 className="font-medium text-lg">Step 3: Award Points to Members</h3>
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label>Member *</Label>
-                      <MemberSelector
-                        onMemberSelect={(member) =>
-                          setNewEventForm({ ...newEventForm, selected_member_id: member.id.toString() })
-                        }
-                        selectedMemberId={newEventForm.selected_member_id}
-                        participationTypes={[]}
-                        eventDate={newEventForm.custom_points_date}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Points Awarded *</Label>
+                      <Label>Points to be awarded *</Label>
                       <Input
                         type="number"
                         placeholder="Enter points value"
-                        value={newEventForm.custom_points_awarded}
-                        onChange={(e) => setNewEventForm({ ...newEventForm, custom_points_awarded: e.target.value })}
+                        value={newEventForm.bonus}
+                        onChange={(e) => setNewEventForm({ ...newEventForm, bonus: e.target.value })}
                         className="enhanced-input"
                       />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Members *</Label>
+                      <OrganizerManager
+                        organizers={newEventForm.organizers}
+                        onOrganizersChange={(organizers) => setNewEventForm({ ...newEventForm, organizers })}
+                        members={members}
+                        contributorActions={[]}
+                        eventDays={[new Date(newEventForm.event_date || new Date().toISOString().split('T')[0])]}
+                        mode="department"
+                        memberSearchQuery={newEventForm.member_search_query}
+                        onMemberSearchChange={(query) => setNewEventForm({ ...newEventForm, member_search_query: query })}
+                        onAddingMemberStateChange={setIsAddingMember}
+                        skipAttendance={true}
+                      />
+                      {newEventForm.organizers.length === 0 && (
+                        <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                          <p className="text-sm text-yellow-600">At least one member must be selected to create the event.</p>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -1140,10 +1128,11 @@ export default function AddNewEventPage() {
                       </Select>
                     </div>
                     <div className="space-y-2">
-                      <Label>Points Awarded *</Label>
+                      <Label>Points to be awarded *</Label>
                       <Input
                         type="number"
-                        placeholder="Enter points value"
+                        min="0"
+                        placeholder="Enter points to be awarded"
                         value={newEventForm.custom_points_awarded}
                         onChange={(e) => setNewEventForm({ ...newEventForm, custom_points_awarded: e.target.value })}
                         className="enhanced-input"
@@ -1154,8 +1143,8 @@ export default function AddNewEventPage() {
               )}
 
               {newEventStep === 3 &&
-                (newEventForm.action_category === "composite" || newEventForm.action_category === "department") && (
-                  <div className="space-y-4">
+                newEventForm.action_category === "department" && (
+                  <div className="space-y-6">
                     <h3 className="font-medium text-lg">Step 3: Select Department</h3>
                     <div className="space-y-2">
                       <Label>Department *</Label>
@@ -1175,8 +1164,44 @@ export default function AddNewEventPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    {/* Organizer selection UI for department actions */}
+                    <OrganizerManager
+                      organizers={newEventForm.organizers}
+                      onOrganizersChange={(organizers) => setNewEventForm({ ...newEventForm, organizers })}
+                      members={members}
+                      contributorActions={contributorActions}
+                      eventDays={getEventDays()}
+                      mode="department"
+                      memberSearchQuery={newEventForm.member_search_query}
+                      onMemberSearchChange={(query) => setNewEventForm({ ...newEventForm, member_search_query: query })}
+                      onAddingMemberStateChange={setIsAddingMember}
+                    />
                   </div>
                 )}
+
+              {newEventStep === 3 && newEventForm.action_category === "composite" && (
+                <div className="space-y-6">
+                  <h3 className="font-medium text-lg">Step 3: Select Department</h3>
+                  <div className="space-y-2">
+                    <Label>Department *</Label>
+                    <Select
+                      value={newEventForm.department_id}
+                      onValueChange={(value) => setNewEventForm({ ...newEventForm, department_id: value })}
+                    >
+                      <SelectTrigger className="enhanced-select">
+                        <SelectValue placeholder="Select department" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {departments.map((dept) => (
+                          <SelectItem key={dept.id} value={dept.id.toString()}>
+                            {dept.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
               {newEventStep === 4 && newEventForm.action_category === "composite" && (
                 <div className="space-y-6">
@@ -1224,287 +1249,24 @@ export default function AddNewEventPage() {
                         </p>
                       </div>
                     </div>
-
-                    <div className="relative">
-                      <div className="absolute inset-0 flex items-center">
-                        <span className="w-full border-t" />
-                      </div>
-                      <div className="relative flex justify-center text-xs uppercase">
-                        <span className="bg-background px-2 text-muted-foreground">Or add members individually</span>
-                      </div>
-                    </div>
-
-                    {/* Member Search and Selection */}
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Search Members</Label>
-                        <Input
-                          placeholder="Search by name, email, ID, or department..."
-                          value={newEventForm.member_search_query}
-                          onChange={(e) => setNewEventForm({ ...newEventForm, member_search_query: e.target.value })}
-                          className="enhanced-input"
-                        />
-                      </div>
-
-                      {/* Member Preview List */}
-                      <div className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <Label className="text-sm font-medium">
-                            Available Members (showing {Math.min(5, getFilteredMembers().length)} of{" "}
-                            {getFilteredMembers().length})
-                          </Label>
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            onClick={() =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                show_add_member_form: !newEventForm.show_add_member_form,
-                              })
-                            }
-                          >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Add New Member
-                          </Button>
-                        </div>
-
-                        <div className="grid gap-3 max-h-80 overflow-y-auto">
-                          {getFilteredMembers()
-                            .slice(0, 5)
-                            .map((member) => (
-                              <div
-                                key={member.id}
-                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                              >
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                      <span className="text-sm font-medium text-primary">
-                                        {member.name
-                                          .split(" ")
-                                          .map((n: any) => n[0])
-                                          .join("")}
-                                      </span>
-                                    </div>
-                                    <div>
-                                      <p className="font-medium text-sm">{member.name}</p>
-                                      <p className="text-xs text-muted-foreground">{member.email}</p>
-                                      <div className="flex items-center gap-2 mt-1">
-                                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                                          {member.uni_id}
-                                        </span>
-                                        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
-                                          {member.department}
-                                        </span>
-                                      </div>
-                                    </div>
-                                  </div>
-                                </div>
-                                <Button type="button" size="sm" onClick={() => handleSelectExistingMember(member)}>
-                                  <Plus className="h-4 w-4 mr-1" />
-                                  Add
-                                </Button>
-                              </div>
-                            ))}
-                        </div>
-
-                        {getFilteredMembers().length > 5 && (
-                          <p className="text-sm text-muted-foreground text-center">
-                            {getFilteredMembers().length - 5} more members available. Use search to find specific
-                            members.
-                          </p>
-                        )}
-
-                        {getFilteredMembers().length === 0 && newEventForm.member_search_query && (
-                          <div className="text-center py-8 text-muted-foreground">
-                            <Users className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                            <p>No members found matching "{newEventForm.member_search_query}"</p>
-                            <p className="text-sm">Try a different search term or add a new member</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Add New Member Form */}
-                    {newEventForm.show_add_member_form && (
-                      <div className="border rounded-lg p-4 space-y-4 bg-muted/20">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium">
-                            {newEventForm.selected_existing_member
-                              ? "Add Existing Member as Organizer"
-                              : "Add New Member"}
-                          </h4>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                show_add_member_form: false,
-                                selected_existing_member: null,
-                              })
-                            }
-                          >
-                            Cancel
-                          </Button>
-                        </div>
-                        <div className="grid grid-cols-2 gap-3">
-                          <Input
-                            placeholder="Full Name *"
-                            value={newEventForm.new_member_name}
-                            onChange={(e) =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                new_member_name: e.target.value,
-                              })
-                            }
-                            className="enhanced-input"
-                            readOnly={!!newEventForm.selected_existing_member}
-                            disabled={!!newEventForm.selected_existing_member}
-                          />
-                          <Input
-                            placeholder="University ID *"
-                            value={newEventForm.new_member_uni_id}
-                            onChange={(e) =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                new_member_uni_id: e.target.value,
-                              })
-                            }
-                            className="enhanced-input"
-                            readOnly={!!newEventForm.selected_existing_member}
-                            disabled={!!newEventForm.selected_existing_member}
-                          />
-                          <Input
-                            type="email"
-                            placeholder="Email *"
-                            value={newEventForm.new_member_email}
-                            onChange={(e) =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                new_member_email: e.target.value,
-                              })
-                            }
-                            className="enhanced-input"
-                            readOnly={!!newEventForm.selected_existing_member}
-                            disabled={!!newEventForm.selected_existing_member}
-                          />
-                          <Input
-                            placeholder="Phone Number"
-                            value={newEventForm.new_member_phone}
-                            onChange={(e) =>
-                              setNewEventForm({
-                                ...newEventForm,
-                                new_member_phone: e.target.value,
-                              })
-                            }
-                            className="enhanced-input"
-                            readOnly={!!newEventForm.selected_existing_member}
-                            disabled={!!newEventForm.selected_existing_member}
-                          />
-                        </div>
-                        <Select
-                          value={newEventForm.new_member_gender}
-                          onValueChange={(value: "Male" | "Female") =>
-                            setNewEventForm({
-                              ...newEventForm,
-                              new_member_gender: value,
-                            })
-                          }
-                          disabled={!!newEventForm.selected_existing_member}
-                        >
-                          <SelectTrigger className="enhanced-select">
-                            <SelectValue placeholder="Select Gender *" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <Select
-                          value={newEventForm.new_member_organizer_type}
-                          onValueChange={(value) =>
-                            setNewEventForm({
-                              ...newEventForm,
-                              new_member_organizer_type: value,
-                            })
-                          }
-                        >
-                          <SelectTrigger className="enhanced-select">
-                            <SelectValue placeholder="Select Organizer Type *" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {contributorActions.map((action) => (
-                              <SelectItem key={action.id} value={action.id.toString()}>
-                                {action["action name"]} ({action.points} pts)
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <Button
-                          type="button"
-                          onClick={handleAddAsOrganizer}
-                          disabled={
-                            newEventForm.selected_existing_member
-                              ? !newEventForm.new_member_organizer_type
-                              : !newEventForm.new_member_name ||
-                                !newEventForm.new_member_email ||
-                                !newEventForm.new_member_uni_id ||
-                                !newEventForm.new_member_organizer_type ||
-                                !newEventForm.new_member_gender
-                          }
-                          className="w-full"
-                        >
-                          <Plus className="h-4 w-4 mr-2" />
-                          {newEventForm.selected_existing_member ? "Add as Organizer" : "Add Member"}
-                        </Button>
-                      </div>
-                    )}
-
-                    {/* Current Organizers List */}
-                    {newEventForm.organizers.length > 0 && (
-                      <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                          <Label className="flex items-center gap-2">
-                            <Users className="h-4 w-4" />
-                            Added Organizers ({newEventForm.organizers.length})
-                          </Label>
-                        </div>
-
-                        <div className="space-y-3">
-                          {newEventForm.organizers.map((organizer, index) => (
-                            <div key={index} className="border rounded-lg p-4 bg-muted/20">
-                              <div className="flex items-center justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                  <Badge variant="secondary" className="capitalize">
-                                    {contributorActions.find(action => action.id.toString() === organizer.participation_action_id)?.["action name"] || organizer.participation_action_id}
-                                  </Badge>
-                                  <span className="font-medium">{organizer.name}</span>
-                                </div>
-                                <Button
-                                  type="button"
-                                  onClick={() => removeOrganizer(index)}
-                                  size="sm"
-                                  variant="ghost"
-                                  className="text-destructive hover:text-destructive"
-                                >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2 text-sm text-muted-foreground">
-                                <div>Email: {organizer.email}</div>
-                                <div>Phone: {organizer.phone_number}</div>
-                                <div>University ID: {organizer.uni_id}</div>
-                                <div>Gender: {organizer.gender}</div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    )}
                   </div>
+                </div>
+              )}
+
+              {newEventStep === 5 && newEventForm.action_category === "composite" && (
+                <div className="space-y-6">
+                  <h3 className="font-medium text-lg">Step 5: Add Organizers</h3>
+                  <OrganizerManager
+                    mode="composite"
+                    organizers={newEventForm.organizers}
+                    onOrganizersChange={(updatedOrganizers) => setNewEventForm({ ...newEventForm, organizers: updatedOrganizers })}
+                    members={members}
+                    contributorActions={contributorActions}
+                    eventDays={getEventDays()}
+                    memberSearchQuery={newEventForm.member_search_query}
+                    onMemberSearchChange={(query) => setNewEventForm({ ...newEventForm, member_search_query: query })}
+                    onAddingMemberStateChange={setIsAddingMember}
+                  />
                 </div>
               )}
 
@@ -1526,17 +1288,21 @@ export default function AddNewEventPage() {
                     disabled={
                       (newEventStep === 1 && !newEventForm.action_id) ||
                       (newEventStep === 2 &&
-                        (newEventForm.action_category === "custom_member" ||
-                          newEventForm.action_category === "custom_department") &&
-                        newEventForm.event_selection_type === "existing" &&
-                        !newEventForm.selected_existing_event_id) ||
+                        newEventForm.action_category === "custom_member" &&
+                        (!newEventForm.event_title || !newEventForm.event_date || isEventNameTaken(newEventForm.event_title))) ||
+                      (newEventStep === 2 &&
+                        newEventForm.action_category === "custom_department" &&
+                        (!newEventForm.event_title || !newEventForm.event_date || isEventNameTaken(newEventForm.event_title))) ||
                       (newEventStep === 2 &&
                         (newEventForm.event_selection_type === "new" ||
                           (newEventForm.action_category !== "custom_member" &&
                             newEventForm.action_category !== "custom_department")) &&
+                        newEventForm.action_category !== "custom_member" &&
+                        newEventForm.action_category !== "custom_department" &&
                         (!newEventForm.event_title ||
                           !newEventForm.event_date ||
-                          (newEventForm.date_type === "range" && !newEventForm.event_end_date))) ||
+                          (newEventForm.date_type === "range" && !newEventForm.event_end_date) ||
+                          isEventNameTaken(newEventForm.event_title))) ||
                       (newEventStep === 3 &&
                         newEventForm.action_category === "member" &&
                         (newEventForm.member_selection_type || "single") === "single" &&
@@ -1549,9 +1315,12 @@ export default function AddNewEventPage() {
                       (newEventStep === 3 &&
                         (newEventForm.action_category === "custom_member" ||
                           newEventForm.action_category === "custom_department") &&
-                        (!newEventForm.custom_points_awarded ||
-                          (newEventForm.action_category === "custom_member" && !newEventForm.selected_member_id) ||
-                          (newEventForm.action_category === "custom_department" && !newEventForm.department_id)))
+                        ((!newEventForm.bonus ||
+                          (newEventForm.action_category === "custom_member" && newEventForm.organizers.length === 0) ||
+                          (newEventForm.action_category === "custom_department" && !newEventForm.department_id)))) ||
+                      (newEventStep === 4 &&
+                        newEventForm.action_category === "composite" &&
+                        !newEventForm.attendants_link_validated)
                     }
                   >
                     Next
@@ -1563,7 +1332,10 @@ export default function AddNewEventPage() {
                     onClick={handleNewEventSubmit}
                     disabled={
                       submitting || 
-                      (newEventForm.action_category === "composite" && !newEventForm.attendants_link)
+                      isAddingMember || // Disable when user is adding a member
+                      (newEventForm.action_category === "composite" && !newEventForm.attendants_link) ||
+                      (newEventForm.action_category === "department" && !newEventForm.department_id) ||
+                      ((newEventForm.action_category === "member" || newEventForm.action_category === "custom_member") && newEventForm.organizers.length === 0)
                     }
                     className="bg-primary hover:bg-primary/90"
                   >

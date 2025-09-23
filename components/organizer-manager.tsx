@@ -36,6 +36,7 @@ interface OrganizerManagerProps {
   memberSearchQuery: string
   onMemberSearchChange: (query: string) => void
   onAddingMemberStateChange?: (isAdding: boolean) => void // New callback for adding member state
+  skipAttendance?: boolean // New prop to skip attendance selection
 }
 
 export function OrganizerManager({
@@ -48,6 +49,7 @@ export function OrganizerManager({
   memberSearchQuery,
   onMemberSearchChange,
   onAddingMemberStateChange,
+  skipAttendance = false,
 }: OrganizerManagerProps) {
   const { toast } = useToast()
   const [showAddMemberForm, setShowAddMemberForm] = useState(false)
@@ -154,23 +156,71 @@ export function OrganizerManager({
   }
 
   const handleSelectExistingMember = (member: any) => {
-    setSelectedExistingMember(member)
-    setShowAddMemberForm(true)
-    setNewMemberForm({
-      name: member.name,
-      email: member.email,
-      phone: member.phone_number || "",
-      uni_id: member.uni_id,
-      organizer_type: "",
-      gender: member.gender || "",
-    })
-    setNewMemberAttendance(eventDays.map(() => "absent"))
+    if (skipAttendance) {
+      // For custom member points flow, add the member immediately without showing the form
+      const attendance = eventDays.map(() => "present")
+      
+      // Get participation action ID
+      let participationActionId: string
+      if (mode === "department") {
+        const volunteerAction = contributorActions.find(action => 
+          action["action name"].toLowerCase() === "volunteer"
+        )
+        participationActionId = volunteerAction ? volunteerAction.id.toString() : "1"
+      } else {
+        participationActionId = "1" // Default fallback
+      }
+      
+      const organizer: Organizer = {
+        name: member.name,
+        email: member.email,
+        phone_number: member.phone_number || "",
+        uni_id: member.uni_id,
+        participation_action_id: participationActionId,
+        gender: member.gender as "Male" | "Female",
+        attendance,
+      }
+
+      // Check if member is already added
+      const existingOrganizerIndex = organizers.findIndex(org => org.uni_id === member.uni_id)
+      if (existingOrganizerIndex !== -1) {
+        toast({
+          title: "Warning",
+          description: "This member is already added to the event",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Add the member directly to the organizers list
+      onOrganizersChange([...organizers, organizer])
+      
+      toast({
+        title: "Success",
+        description: `${member.name} has been added to the event`,
+      })
+    } else {
+      // Original behavior for other flows
+      setSelectedExistingMember(member)
+      setShowAddMemberForm(true)
+      setNewMemberForm({
+        name: member.name,
+        email: member.email,
+        phone: member.phone_number || "",
+        uni_id: member.uni_id,
+        organizer_type: "",
+        gender: member.gender || "",
+      })
+      setNewMemberAttendance(eventDays.map(() => "absent"))
+    }
   }
 
   const handleAddAsOrganizer = () => {
-    const attendance = newMemberAttendance.length === eventDays.length 
-      ? newMemberAttendance 
-      : eventDays.map(() => "absent")
+    const attendance = skipAttendance 
+      ? eventDays.map(() => "present") // Auto-set to present when skipping attendance selection
+      : newMemberAttendance.length === eventDays.length 
+        ? newMemberAttendance 
+        : eventDays.map(() => "absent")
     
     // Get participation action ID
     let participationActionId: string
@@ -316,7 +366,7 @@ export function OrganizerManager({
             size="sm"
             onClick={() => {
               setShowAddMemberForm(!showAddMemberForm)
-              setNewMemberAttendance(eventDays.map(() => "absent"))
+              setNewMemberAttendance(skipAttendance ? eventDays.map(() => "present") : eventDays.map(() => "absent"))
             }}
           >
             <Plus className="h-4 w-4 mr-2" />
@@ -473,30 +523,32 @@ export function OrganizerManager({
           )}
 
           {/* Attendance checkboxes */}
-          <div className="space-y-2 col-span-2">
-            <Label>Attendance</Label>
-            <div className="flex flex-wrap gap-6 mb-2">
-              {eventDays.map((day, idx) => (
-                <div
-                  key={idx}
-                  className={`flex flex-col items-center px-3 py-2 rounded-lg border-2 bg-white shadow-sm hover:border-primary cursor-pointer transition-all duration-150 ${
-                    newMemberAttendance[idx] === "present" 
-                      ? "border-primary bg-primary/5" 
-                      : "border-gray-200"
-                  }`}
-                  style={{ minWidth: 90 }}
-                  onClick={() => {
-                    const updated = [...newMemberAttendance]
-                    updated[idx] = updated[idx] === "present" ? "absent" : "present"
-                    setNewMemberAttendance(updated)
-                  }}
-                >
-                  <span className="text-xs font-semibold mb-1">Day {idx + 1}</span>
-                  <span className="text-xs mt-1 text-gray-500">{day.toLocaleDateString()}</span>
-                </div>
-              ))}
+          {!skipAttendance && (
+            <div className="space-y-2 col-span-2">
+              <Label>Attendance</Label>
+              <div className="flex flex-wrap gap-6 mb-2">
+                {eventDays.map((day, idx) => (
+                  <div
+                    key={idx}
+                    className={`flex flex-col items-center px-3 py-2 rounded-lg border-2 bg-white shadow-sm hover:border-primary cursor-pointer transition-all duration-150 ${
+                      newMemberAttendance[idx] === "present" 
+                        ? "border-primary bg-primary/5" 
+                        : "border-gray-200"
+                    }`}
+                    style={{ minWidth: 90 }}
+                    onClick={() => {
+                      const updated = [...newMemberAttendance]
+                      updated[idx] = updated[idx] === "present" ? "absent" : "present"
+                      setNewMemberAttendance(updated)
+                    }}
+                  >
+                    <span className="text-xs font-semibold mb-1">Day {idx + 1}</span>
+                    <span className="text-xs mt-1 text-gray-500">{day.toLocaleDateString()}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
           
           {/* Validation Error Messages - Above the button, outside the grid */}
           {(validationErrors.email || validationErrors.uni_id || validationErrors.phone) && (

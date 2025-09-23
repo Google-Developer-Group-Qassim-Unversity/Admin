@@ -10,23 +10,16 @@ import { ChevronsUpDown, Plus, UserPlus } from "lucide-react"
 
 // Mock data for existing members
 const MOCK_MEMBERS = [
-  { id: 1, name: "John Doe", email: "john@example.com", phone_number: "123-456-7890", uni_id: "UNI001" },
-  { id: 2, name: "Jane Smith", email: "jane@example.com", phone_number: "123-456-7891", uni_id: "UNI002" },
-  { id: 3, name: "Bob Johnson", email: "bob@example.com", phone_number: "123-456-7892", uni_id: "UNI003" },
-  { id: 4, name: "Alice Brown", email: "alice@example.com", phone_number: "123-456-7893", uni_id: "UNI004" },
-  { id: 5, name: "Charlie Wilson", email: "charlie@example.com", phone_number: "123-456-7894", uni_id: "UNI005" },
-  { id: 6, name: "Diana Davis", email: "diana@example.com", phone_number: "123-456-7895", uni_id: "UNI006" },
-  { id: 7, name: "Eva Martinez", email: "eva@example.com", phone_number: "123-456-7896", uni_id: "UNI007" },
-  { id: 8, name: "Frank Garcia", email: "frank@example.com", phone_number: "123-456-7897", uni_id: "UNI008" },
+  { id: 1, name: "John Doe", email: "john@example.com", phone_number: "123-456-7890", uni_id: "UNI001", gender: "Male" as const },
+  { id: 2, name: "Jane Smith", email: "jane@example.com", phone_number: "123-456-7891", uni_id: "UNI002", gender: "Female" as const },
+  { id: 3, name: "Bob Johnson", email: "bob@example.com", phone_number: "123-456-7892", uni_id: "UNI003", gender: "Male" as const },
+  { id: 4, name: "Alice Brown", email: "alice@example.com", phone_number: "123-456-7893", uni_id: "UNI004", gender: "Female" as const },
+  { id: 5, name: "Charlie Wilson", email: "charlie@example.com", phone_number: "123-456-7894", uni_id: "UNI005", gender: "Male" as const },
+  { id: 6, name: "Diana Davis", email: "diana@example.com", phone_number: "123-456-7895", uni_id: "UNI006", gender: "Female" as const },
+  { id: 7, name: "Eva Martinez", email: "eva@example.com", phone_number: "123-456-7896", uni_id: "UNI007", gender: "Female" as const },
+  { id: 8, name: "Frank Garcia", email: "frank@example.com", phone_number: "123-456-7897", uni_id: "UNI008", gender: "Male" as const },
 ]
 
-interface Member {
-  id: number
-  name: string
-  email: string
-  phone_number: string
-  uni_id: string
-}
 
 interface MemberSelectorProps {
   onMemberSelect: (member: Member) => void

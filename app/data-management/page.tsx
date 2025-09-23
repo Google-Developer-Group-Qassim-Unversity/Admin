@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import {
@@ -37,7 +38,7 @@ export default function DataManagementPage() {
 
   // Form states
   const [departmentForm, setDepartmentForm] = useState({ name: "" })
-  const [memberForm, setMemberForm] = useState({ name: "", email: "", phone_number: "", uni_id: "" })
+  const [memberForm, setMemberForm] = useState({ name: "", email: "", phone_number: "", uni_id: "", gender: "" })
   const [eventForm, setEventForm] = useState({ name: "" })
   const [actionForm, setActionForm] = useState({ name: "", points: "" })
 
@@ -75,6 +76,7 @@ export default function DataManagementPage() {
       email: item?.email || "",
       phone_number: item?.phone_number || "",
       uni_id: item?.uni_id || "",
+      gender: item?.gender || "",
     })
     setEventForm({ name: item?.name || "" })
     setActionForm({ name: item?.name || "", points: item?.points?.toString() || "" })
@@ -213,14 +215,31 @@ export default function DataManagementPage() {
                 placeholder="Enter email address"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="phone">Phone Number</Label>
-              <Input
-                id="phone"
-                value={memberForm.phone_number}
-                onChange={(e) => setMemberForm({ ...memberForm, phone_number: e.target.value })}
-                placeholder="Enter phone number"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  value={memberForm.phone_number}
+                  onChange={(e) => setMemberForm({ ...memberForm, phone_number: e.target.value })}
+                  placeholder="Enter phone number"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender *</Label>
+                <Select
+                  value={memberForm.gender}
+                  onValueChange={(value: string) => setMemberForm({ ...memberForm, gender: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Male">Male</SelectItem>
+                    <SelectItem value="Female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         )
@@ -411,6 +430,7 @@ export default function DataManagementPage() {
                         <TableHead>University ID</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Phone</TableHead>
+                        <TableHead>Gender</TableHead>
                         <TableHead className="text-right">Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -422,6 +442,7 @@ export default function DataManagementPage() {
                           <TableCell>{member.uni_id}</TableCell>
                           <TableCell>{member.email}</TableCell>
                           <TableCell>{member.phone_number}</TableCell>
+                          <TableCell>{member.gender}</TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end gap-2">
                               <Button variant="outline" size="sm" onClick={() => openDialog("member", member)}>

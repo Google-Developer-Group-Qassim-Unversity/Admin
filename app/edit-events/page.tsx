@@ -54,6 +54,7 @@ const EXTENDED_MOCK_DATA = {
           uni_id: "UNI001",
           participation_type: "Attendee",
           attendance_date: "2024-03-15",
+          gender: "Male",
         },
         {
           id: 2,
@@ -63,6 +64,7 @@ const EXTENDED_MOCK_DATA = {
           uni_id: "UNI002",
           participation_type: "Volunteer",
           attendance_date: "2024-03-15",
+          gender: "Female",
         },
       ],
     },
@@ -81,6 +83,7 @@ const EXTENDED_MOCK_DATA = {
           uni_id: "UNI003",
           participation_type: "Facilitator",
           attendance_date: "2024-04-20",
+          gender: "Male",
         },
       ],
     },
@@ -101,6 +104,7 @@ interface EditEventForm {
     uni_id: string
     participation_type: string
     attendance_date: string
+    gender: "Male" | "Female"
   }>
 }
 

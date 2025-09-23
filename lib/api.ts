@@ -1,4 +1,4 @@
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:7000/api"
+export const API_BASE_URL = process.env.NEXT_PUBLIC_DEV_HOST || process.env.NEXT_PUBLIC_HOST || "http://178.128.205.239:7001"
 
 // API Endpoints
 export const API_ENDPOINTS = {
@@ -66,6 +66,7 @@ export interface Member {
   email: string
   phone_number: string
   uni_id: string
+  gender: "Male" | "Female"
 }
 
 export interface Event {
@@ -119,10 +120,10 @@ export const MOCK_DATA = {
   ] as Department[],
 
   members: [
-    { id: 1, name: "John Doe", email: "john@example.com", phone_number: "123-456-7890", uni_id: "UNI001" },
-    { id: 2, name: "Jane Smith", email: "jane@example.com", phone_number: "123-456-7891", uni_id: "UNI002" },
-    { id: 3, name: "Bob Johnson", email: "bob@example.com", phone_number: "123-456-7892", uni_id: "UNI003" },
-    { id: 4, name: "Alice Brown", email: "alice@example.com", phone_number: "123-456-7893", uni_id: "UNI004" },
+    { id: 1, name: "John Doe", email: "john@example.com", phone_number: "123-456-7890", uni_id: "UNI001", gender: "Male" },
+    { id: 2, name: "Jane Smith", email: "jane@example.com", phone_number: "123-456-7891", uni_id: "UNI002", gender: "Female" },
+    { id: 3, name: "Bob Johnson", email: "bob@example.com", phone_number: "123-456-7892", uni_id: "UNI003", gender: "Male" },
+    { id: 4, name: "Alice Brown", email: "alice@example.com", phone_number: "123-456-7893", uni_id: "UNI004", gender: "Female" },
   ] as Member[],
 
   events: [
