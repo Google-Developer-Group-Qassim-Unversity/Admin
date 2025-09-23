@@ -78,7 +78,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-accent/20 bg-white md:col-span-2 lg:col-span-1">
+          <Card className="hover:shadow-xl opacity-50 cursor-not-allowed transition-all duration-300 border-2 border-accent/20 bg-white md:col-span-2 lg:col-span-1">
             <CardHeader className="text-center pb-4">
               <div className="mx-auto w-16 h-16 bg-gradient-to-br from-accent to-accent/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
                 <Database className="h-8 w-8 text-white" />
@@ -87,8 +87,8 @@ export default function DashboardPage() {
               <CardDescription>Manage members, departments, and more</CardDescription>
             </CardHeader>
             <CardContent className="text-center">
-              <Link href="/data-management">
-                <Button className="w-full h-12 text-base font-medium bg-accent hover:bg-accent/90">
+                <Link href="/data-management">
+                <Button className="w-full h-12  text-base font-medium bg-accent hover:bg-accent/90">
                   + Manage Data
                 </Button>
               </Link>

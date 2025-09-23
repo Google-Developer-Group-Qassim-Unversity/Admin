@@ -20,9 +20,9 @@
   --secondary: oklch(0.6 0.18 240); /* Ocean blue */
   --secondary-foreground: oklch(1 0 0); /* White text */
 
-  /* Data management colors - Purple theme */
-  --accent: oklch(0.65 0.2 300); /* Rich purple */
-  --accent-foreground: oklch(1 0 0); /* White text */
+  /* Accent colors - Subtle muted hover/focus states */
+  --accent: oklch(0.96 0.01 200); /* Very light blue-gray */
+  --accent-foreground: oklch(0.25 0 0); /* Dark gray text for good contrast */
 
   --muted: oklch(0.96 0.01 240); /* Light muted background */
   --muted-foreground: oklch(0.45 0 0); /* Medium gray text */
@@ -61,8 +61,8 @@
   --primary-foreground: oklch(0.08 0 0);
   --secondary: oklch(0.7 0.18 240);
   --secondary-foreground: oklch(0.08 0 0);
-  --accent: oklch(0.75 0.2 300);
-  --accent-foreground: oklch(0.08 0 0);
+  --accent: oklch(0.15 0.01 200);
+  --accent-foreground: oklch(0.95 0 0);
   --muted: oklch(0.15 0 0);
   --muted-foreground: oklch(0.65 0 0);
   --destructive: oklch(0.65 0.22 25);
@@ -149,4 +149,23 @@
 
 .enhanced-select {
   @apply border-2 border-border/60 shadow-sm focus:border-primary focus:shadow-md transition-all duration-200;
+}
+
+/* Custom button hover styles that override default button hover */
+.custom-action-button {
+  @apply transition-all duration-300;
+}
+
+.custom-action-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Global overrides to prevent bad color combinations */
+.hover\:bg-accent:hover {
+  background-color: rgba(0, 0, 0, 0.05) !important;
+  color: var(--foreground) !important;
+}
+
+.dark .hover\:bg-accent:hover {
+  background-color: rgba(255, 255, 255, 0.1) !important;
 }

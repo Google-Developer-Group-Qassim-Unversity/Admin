@@ -360,6 +360,47 @@ export default function AddNewEventPage() {
     })
   }
 
+  // Helper function to auto-add members for department actions with single day events
+  const handleDepartmentSelect = (departmentId: string) => {
+    setNewEventForm(prev => ({ 
+      ...prev, 
+      department_id: departmentId 
+    }))
+
+    // Auto-add all members from the department if it's a single day event
+    if (newEventForm.action_category === "department" && 
+        newEventForm.event_date && 
+        (newEventForm.date_type === "single" || 
+         (newEventForm.date_type === "range" && newEventForm.event_date === newEventForm.event_end_date))) {
+      
+      const departmentMembers = members.filter(member => 
+        member.department_id?.toString() === departmentId
+      )
+      
+      const autoOrganizers = departmentMembers.map(member => ({
+        name: member.name,
+        email: member.email,
+        phone_number: member.phone_number || "",
+        uni_id: member.uni_id,
+        participation_action_id: contributorActions[0]?.id?.toString() || "",
+        gender: member.gender as "Male" | "Female",
+        attendance: ["present"] // Auto-set to present for single day
+      }))
+
+      setNewEventForm(prev => ({
+        ...prev,
+        organizers: autoOrganizers
+      }))
+
+      if (departmentMembers.length > 0) {
+        toast({
+          title: "Members Auto-Added",
+          description: `${departmentMembers.length} members from the selected department have been automatically added with "present" attendance for this single-day event.`,
+        })
+      }
+    }
+  }
+
   const handleCustomPointsSelect = (category: "custom_member" | "custom_department") => {
     setNewEventForm({
       ...newEventForm,
@@ -898,27 +939,47 @@ export default function AddNewEventPage() {
                 <div className="space-y-6">
                   <h3 className="font-medium text-lg">Step 1: Choose Action Type</h3>
 
-                  <div className="grid grid-cols-2 gap-3 mb-6">
+                  <div className="grid grid-cols-2 gap-4 mb-6">
                     <Button
-                      variant={newEventForm.action_category === "custom_member" ? "default" : "outline"}
-                      className="h-12 justify-start gap-3 border-2 hover:border-primary/50"
+                      variant="outline"
+                      className={`custom-action-button h-16 justify-start gap-4 border-2 transition-all duration-300 relative overflow-hidden group ${
+                        newEventForm.action_category === "custom_member" 
+                          ? "border-primary bg-primary/10 shadow-lg" 
+                          : "border-gray-200 hover:border-amber-400 hover:bg-gradient-to-r hover:from-amber-50 hover:to-orange-50 hover:shadow-lg"
+                      }`}
                       onClick={() => handleCustomPointsSelect("custom_member")}
                     >
-                      <Sparkles className="h-5 w-5" />
+                      <div className={`p-2 rounded-full transition-all duration-300 ${
+                        newEventForm.action_category === "custom_member" 
+                          ? "bg-primary text-white" 
+                          : "bg-amber-100 text-amber-600 group-hover:bg-amber-200 group-hover:scale-110"
+                      }`}>
+                        <Users className="h-5 w-5" />
+                      </div>
                       <div className="text-left">
-                        <div className="font-medium">Add Custom Member Points</div>
-                        <div className="text-xs text-muted-foreground">Award points to individual member</div>
+                        <div className="font-semibold text-base">Custom Member Points</div>
+                        <div className="text-xs text-muted-foreground">Award custom points to individual members</div>
                       </div>
                     </Button>
                     <Button
-                      variant={newEventForm.action_category === "custom_department" ? "default" : "outline"}
-                      className="h-12 justify-start gap-3 border-2 hover:border-primary/50"
+                      variant="outline"
+                      className={`custom-action-button h-16 justify-start gap-4 border-2 transition-all duration-300 relative overflow-hidden group ${
+                        newEventForm.action_category === "custom_department" 
+                          ? "border-primary bg-primary/10 shadow-lg" 
+                          : "border-gray-200 hover:border-emerald-400 hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 hover:shadow-lg"
+                      }`}
                       onClick={() => handleCustomPointsSelect("custom_department")}
                     >
-                      <Building2 className="h-5 w-5" />
+                      <div className={`p-2 rounded-full transition-all duration-300 ${
+                        newEventForm.action_category === "custom_department" 
+                          ? "bg-primary text-white" 
+                          : "bg-emerald-100 text-emerald-600 group-hover:bg-emerald-200 group-hover:scale-110"
+                      }`}>
+                        <Building2 className="h-5 w-5" />
+                      </div>
                       <div className="text-left">
-                        <div className="font-medium">Add Custom Department Points</div>
-                        <div className="text-xs text-muted-foreground">Award points to department members</div>
+                        <div className="font-semibold text-base">Custom Department Points</div>
+                        <div className="text-xs text-muted-foreground">Award custom points to entire department</div>
                       </div>
                     </Button>
                   </div>
@@ -946,10 +1007,10 @@ export default function AddNewEventPage() {
                         {actions.composite_actions.map((action) => (
                           <button
                             key={action.id}
-                            className={`w-full p-3 rounded-lg border text-left transition-all hover:shadow-sm ${
+                            className={`custom-action-button w-full p-3 rounded-lg border text-left transition-all duration-300 hover:shadow-md ${
                               newEventForm.action_id === action.id.toString()
-                                ? "border-primary bg-primary/5 shadow-sm"
-                                : "border-border hover:border-primary/30 hover:bg-muted/30"
+                                ? "border-primary bg-primary/10 shadow-sm"
+                                : "border-gray-200 hover:border-blue-300 hover:bg-gradient-to-r hover:from-blue-50 hover:to-indigo-50"
                             }`}
                             onClick={() => handleActionSelect(action.id.toString(), "composite")}
                           >
@@ -977,10 +1038,10 @@ export default function AddNewEventPage() {
                         {actions.department_actions.map((action) => (
                           <button
                             key={action.id}
-                            className={`w-full p-3 rounded-lg border text-left transition-all hover:shadow-sm ${
+                            className={`custom-action-button w-full p-3 rounded-lg border text-left transition-all duration-300 hover:shadow-md ${
                               newEventForm.action_id === action.id.toString()
-                                ? "border-primary bg-primary/5 shadow-sm"
-                                : "border-border hover:border-primary/30 hover:bg-muted/30"
+                                ? "border-primary bg-primary/10 shadow-sm"
+                                : "border-gray-200 hover:border-green-300 hover:bg-gradient-to-r hover:from-green-50 hover:to-emerald-50"
                             }`}
                             onClick={() => handleActionSelect(action.id.toString(), "department")}
                           >
@@ -1008,10 +1069,10 @@ export default function AddNewEventPage() {
                         {actions.member_actions.map((action) => (
                           <button
                             key={action.id}
-                            className={`w-full p-3 rounded-lg border text-left transition-all hover:shadow-sm ${
+                            className={`custom-action-button w-full p-3 rounded-lg border text-left transition-all duration-300 hover:shadow-md ${
                               newEventForm.action_id === action.id.toString()
-                                ? "border-primary bg-primary/5 shadow-sm"
-                                : "border-border hover:border-primary/30 hover:bg-muted/30"
+                                ? "border-primary bg-primary/10 shadow-sm"
+                                : "border-gray-200 hover:border-orange-300 hover:bg-gradient-to-r hover:from-orange-50 hover:to-red-50"
                             }`}
                             onClick={() => handleActionSelect(action.id.toString(), "member")}
                           >
@@ -1322,7 +1383,7 @@ export default function AddNewEventPage() {
                       <Label>Department *</Label>
                       <Select
                         value={newEventForm.department_id}
-                        onValueChange={(value) => setNewEventForm({ ...newEventForm, department_id: value })}
+                        onValueChange={(value) => handleDepartmentSelect(value)}
                       >
                         <SelectTrigger className="enhanced-select">
                           <SelectValue placeholder="Select department" />
@@ -1663,6 +1724,10 @@ export default function AddNewEventPage() {
                           <p className="font-medium">{getSelectedAction()?.name}</p>
                         </div>
                         <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Points per Member</Label>
+                          <p className="font-semibold text-blue-600 text-lg">{getSelectedAction()?.points} points</p>
+                        </div>
+                        <div>
                           <Label className="text-sm font-medium text-muted-foreground">Department</Label>
                           <p className="font-medium">
                             {departments.find(d => d.id.toString() === newEventForm.department_id)?.name || "Not selected"}
@@ -1682,6 +1747,10 @@ export default function AddNewEventPage() {
                           <p className="font-medium">{getSelectedAction()?.name}</p>
                         </div>
                         <div>
+                          <Label className="text-sm font-medium text-muted-foreground">Points per Member</Label>
+                          <p className="font-semibold text-blue-600 text-lg">{getSelectedAction()?.points} points</p>
+                        </div>
+                        <div>
                           <Label className="text-sm font-medium text-muted-foreground">Members</Label>
                           <p className="font-medium">{newEventForm.organizers.length} member(s) selected</p>
                         </div>
@@ -1692,7 +1761,7 @@ export default function AddNewEventPage() {
                       <div className="space-y-3">
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Points to Award</Label>
-                          <p className="font-medium">{newEventForm.bonus} points</p>
+                          <p className="font-semibold text-green-600 text-lg">{newEventForm.bonus} points</p>
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Members</Label>
@@ -1711,13 +1780,13 @@ export default function AddNewEventPage() {
                         </div>
                         <div>
                           <Label className="text-sm font-medium text-muted-foreground">Points to Award</Label>
-                          <p className="font-medium">{newEventForm.custom_points_awarded} points</p>
+                          <p className="font-semibold text-green-600 text-lg">{newEventForm.custom_points_awarded} points</p>
                         </div>
                       </div>
                     )}
 
                     {/* Members/Organizers Details */}
-                    {newEventForm.organizers.length > 0 && (
+                    {newEventForm.organizers.length > 0 && newEventForm.action_category !== "custom_department" && (
                       <div className="space-y-3">
                         <Label className="text-sm font-medium text-muted-foreground">
                           {newEventForm.action_category === "member" || newEventForm.action_category === "custom_member" 
@@ -1780,8 +1849,7 @@ export default function AddNewEventPage() {
                           isEventNameTaken(newEventForm.event_title))) ||
                       (newEventStep === 3 &&
                         newEventForm.action_category === "member" &&
-                        (newEventForm.member_selection_type || "single") === "single" &&
-                        !newEventForm.selected_member_id) ||
+                        newEventForm.organizers.length === 0) ||
                       (newEventForm.member_selection_type === "bulk" && !newEventForm.attendants_validated) || // Updated validation to check validation status
                       (newEventStep === 3 &&
                         (newEventForm.action_category === "composite" ||
@@ -1790,9 +1858,9 @@ export default function AddNewEventPage() {
                       (newEventStep === 3 &&
                         (newEventForm.action_category === "custom_member" ||
                           newEventForm.action_category === "custom_department") &&
-                        ((!newEventForm.bonus ||
+                        ((!newEventForm.bonus || parseInt(newEventForm.bonus) <= 0 ||
                           (newEventForm.action_category === "custom_member" && newEventForm.organizers.length === 0) ||
-                          (newEventForm.action_category === "custom_department" && !newEventForm.department_id)))) ||
+                          (newEventForm.action_category === "custom_department" && (!newEventForm.department_id || !newEventForm.custom_points_awarded || parseInt(newEventForm.custom_points_awarded) <= 0))))) ||
                       (newEventStep === 4 &&
                         newEventForm.action_category === "composite" &&
                         !newEventForm.attendants_validated) ||
