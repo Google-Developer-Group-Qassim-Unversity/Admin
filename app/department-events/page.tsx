@@ -33,9 +33,9 @@ console.log(`Using BaseUrl: \x1b[32m${BaseUrl}\x1b[0m`);
 // List of action IDs that should be hidden from the user interface
 const HIDDEN_ACTION_IDS = {
   member_actions: [76, 77, 78, 79, 80, 64],
-  department_actions: [],
-  composite_actions: [],
-  custom_actions: []
+  department_actions: [] as number[],
+  composite_actions: [] as number[],
+  custom_actions: [] as number[]
 };
  
 
@@ -125,7 +125,7 @@ export default function AddNewEventPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [isAddingMember, setIsAddingMember] = useState(false)
-  const [existingEventNames, setExistingEventNames] = useState<string[]>([])
+  const [existingEvents, setExistingEvents] = useState<Array<{id: number, name: string}>>([])
   const [eventCreated, setEventCreated] = useState(false)
   const [contributorActions, setContributorActions] = useState<Array<{
     id: number;
@@ -251,13 +251,13 @@ export default function AddNewEventPage() {
       const contributorData = await contributorResponse.json()
       setContributorActions(contributorData)
 
-      // Load existing event names
+      // Load existing events
       const eventsResponse = await fetch(`${BaseUrl}/events`)
       if (!eventsResponse.ok) {
         throw new Error("Failed to fetch existing events")
       }
-      const eventsData: string[] = await eventsResponse.json()
-      setExistingEventNames(eventsData)
+      const eventsData: Array<{id: number, name: string}> = await eventsResponse.json()
+      setExistingEvents(eventsData)
 
       const transformedActions = {
         composite_actions: apiData["composite action"]
@@ -347,8 +347,8 @@ export default function AddNewEventPage() {
 
   const isEventNameTaken = (eventTitle: string): boolean => {
     if (!eventTitle.trim()) return false
-    return existingEventNames.some(name => 
-      name.toLowerCase().trim() === eventTitle.toLowerCase().trim()
+    return existingEvents.some(event => 
+      event.name.toLowerCase().trim() === eventTitle.toLowerCase().trim()
     )
   }
 
@@ -406,7 +406,7 @@ export default function AddNewEventPage() {
       ...newEventForm,
       action_id: "custom",
       action_category: category,
-      event_selection_type: "new", // Always set to "new" since we removed existing event option for custom departments
+      event_selection_type: "new", // Default to "new" for both custom member and department
     })
   }
 
@@ -635,8 +635,10 @@ export default function AddNewEventPage() {
       const baseEventData = {
         event_info: {
           event_title: newEventForm.event_title,
-          start_date: new Date(newEventForm.event_date).toISOString(),
-          end_date: new Date(newEventForm.date_type === "single" ? newEventForm.event_date : newEventForm.event_end_date).toISOString(),
+          start_date: newEventForm.event_date ? new Date(newEventForm.event_date).toISOString() : new Date().toISOString(),
+          end_date: newEventForm.date_type === "single" 
+            ? (newEventForm.event_date ? new Date(newEventForm.event_date).toISOString() : new Date().toISOString())
+            : (newEventForm.event_end_date ? new Date(newEventForm.event_end_date).toISOString() : new Date().toISOString()),
         },
         bonus: parseInt(newEventForm.bonus) || 0,
         discount: parseInt(newEventForm.discount) || 0,
@@ -739,12 +741,23 @@ export default function AddNewEventPage() {
             action.name === "Bonus" || action.name.toLowerCase().includes("bonus")
           );
           
-          eventData = {
-            event_info: {
+          // Determine event_info based on selection type
+          let customDeptEventInfo;
+          if (newEventForm.event_selection_type === "existing" && newEventForm.selected_existing_event_id) {
+            // Find the selected event and use its name as string
+            const selectedEvent = existingEvents.find(event => event.id.toString() === newEventForm.selected_existing_event_id);
+            customDeptEventInfo = selectedEvent?.name || "Unknown Event";
+          } else {
+            // Create new event info object
+            customDeptEventInfo = {
               event_title: newEventForm.event_title,
               start_date: new Date(newEventForm.event_date).toISOString(),
               end_date: new Date(newEventForm.event_date).toISOString()
-            },
+            };
+          }
+          
+          eventData = {
+            event_info: customDeptEventInfo,
             department_id: parseInt(newEventForm.department_id),
             bonus: parseInt(newEventForm.custom_points_awarded) || 0,
             action_id: bonusActionDept?.id || 1 // fallback to 1 if bonus action not found
@@ -1094,6 +1107,8 @@ export default function AddNewEventPage() {
                 <div className="space-y-4">
                   <h3 className="font-medium text-lg">Step 2: Event Details</h3>
 
+
+
                   {newEventForm.action_category === "custom_member" && (
                     <div className="space-y-4">
                       <div className="space-y-2">
@@ -1123,28 +1138,90 @@ export default function AddNewEventPage() {
 
                   {newEventForm.action_category === "custom_department" && (
                     <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Event Title *</Label>
-                        <Input
-                          placeholder="Enter event title"
-                          value={newEventForm.event_title}
-                          onChange={(e) => setNewEventForm({ ...newEventForm, event_title: e.target.value })}
-                          className={`enhanced-input ${isEventNameTaken(newEventForm.event_title) ? 'border-red-500' : ''}`}
-                        />
-                        {isEventNameTaken(newEventForm.event_title) && (
-                          <p className="text-sm text-red-500">Event Already exists</p>
-                        )}
+                      {/* Event Selection Type for custom department */}
+                      <div className="space-y-3">
+                        <Label>Event Type *</Label>
+                        <RadioGroup
+                          value={newEventForm.event_selection_type}
+                          onValueChange={(value: "new" | "existing") =>
+                            setNewEventForm({ 
+                              ...newEventForm, 
+                              event_selection_type: value,
+                              // Clear fields based on selection
+                              selected_existing_event_id: value === "new" ? "" : newEventForm.selected_existing_event_id,
+                              event_title: value === "existing" ? "" : newEventForm.event_title,
+                              event_date: value === "existing" ? "" : newEventForm.event_date,
+                              event_end_date: value === "existing" ? "" : newEventForm.event_end_date,
+                            })
+                          }
+                          className="flex gap-6"
+                        >
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="new" id="new-event-custom-dept" />
+                            <Label htmlFor="new-event-custom-dept" className="flex items-center gap-2">
+                              <Plus className="h-4 w-4" />
+                              Create New Event
+                            </Label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="existing" id="existing-event-custom-dept" />
+                            <Label htmlFor="existing-event-custom-dept" className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              Use Existing Event
+                            </Label>
+                          </div>
+                        </RadioGroup>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Event Date *</Label>
-                        <Input
-                          type="date"
-                          value={newEventForm.event_date}
-                          onChange={(e) => setNewEventForm({ ...newEventForm, event_date: e.target.value, event_end_date: e.target.value, date_type: "single" })}
-                          className="enhanced-input"
-                        />
-                      </div>
+                      {/* Existing Event Selection */}
+                      {newEventForm.event_selection_type === "existing" && (
+                        <div className="space-y-2">
+                          <Label>Select Existing Event *</Label>
+                          <Select
+                            value={newEventForm.selected_existing_event_id}
+                            onValueChange={(value) => setNewEventForm({ ...newEventForm, selected_existing_event_id: value })}
+                          >
+                            <SelectTrigger className="enhanced-input">
+                              <SelectValue placeholder="Choose an existing event" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {existingEvents.map((event) => (
+                                <SelectItem key={event.id} value={event.id.toString()}>
+                                  {event.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      )}
+
+                      {/* New Event Fields */}
+                      {newEventForm.event_selection_type === "new" && (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Event Title *</Label>
+                            <Input
+                              placeholder="Enter event title"
+                              value={newEventForm.event_title}
+                              onChange={(e) => setNewEventForm({ ...newEventForm, event_title: e.target.value })}
+                              className={`enhanced-input ${isEventNameTaken(newEventForm.event_title) ? 'border-red-500' : ''}`}
+                            />
+                            {isEventNameTaken(newEventForm.event_title) && (
+                              <p className="text-sm text-red-500">Event Already exists</p>
+                            )}
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Event Date *</Label>
+                            <Input
+                              type="date"
+                              value={newEventForm.event_date}
+                              onChange={(e) => setNewEventForm({ ...newEventForm, event_date: e.target.value, event_end_date: e.target.value, date_type: "single" })}
+                              className="enhanced-input"
+                            />
+                          </div>
+                        </>
+                      )}
                     </div>
                   )}
 
@@ -1836,11 +1913,13 @@ export default function AddNewEventPage() {
                         (!newEventForm.event_title || !newEventForm.event_date || isEventNameTaken(newEventForm.event_title))) ||
                       (newEventStep === 2 &&
                         newEventForm.action_category === "custom_department" &&
-                        (!newEventForm.event_title || !newEventForm.event_date || isEventNameTaken(newEventForm.event_title))) ||
+                        (
+                          (newEventForm.event_selection_type === "new" &&
+                            (!newEventForm.event_title || !newEventForm.event_date || isEventNameTaken(newEventForm.event_title))) ||
+                          (newEventForm.event_selection_type === "existing" &&
+                            !newEventForm.selected_existing_event_id)
+                        )) ||
                       (newEventStep === 2 &&
-                        (newEventForm.event_selection_type === "new" ||
-                          (newEventForm.action_category !== "custom_member" &&
-                            newEventForm.action_category !== "custom_department")) &&
                         newEventForm.action_category !== "custom_member" &&
                         newEventForm.action_category !== "custom_department" &&
                         (!newEventForm.event_title ||
@@ -1856,11 +1935,11 @@ export default function AddNewEventPage() {
                           newEventForm.action_category === "department") &&
                         !newEventForm.department_id) ||
                       (newEventStep === 3 &&
-                        (newEventForm.action_category === "custom_member" ||
-                          newEventForm.action_category === "custom_department") &&
-                        ((!newEventForm.bonus || parseInt(newEventForm.bonus) <= 0 ||
-                          (newEventForm.action_category === "custom_member" && newEventForm.organizers.length === 0) ||
-                          (newEventForm.action_category === "custom_department" && (!newEventForm.department_id || !newEventForm.custom_points_awarded || parseInt(newEventForm.custom_points_awarded) <= 0))))) ||
+                        newEventForm.action_category === "custom_member" &&
+                        (!newEventForm.bonus || parseInt(newEventForm.bonus) <= 0 || newEventForm.organizers.length === 0)) ||
+                      (newEventStep === 3 &&
+                        newEventForm.action_category === "custom_department" &&
+                        (!newEventForm.department_id || !newEventForm.custom_points_awarded || parseInt(newEventForm.custom_points_awarded) <= 0)) ||
                       (newEventStep === 4 &&
                         newEventForm.action_category === "composite" &&
                         !newEventForm.attendants_validated) ||
@@ -1888,7 +1967,8 @@ export default function AddNewEventPage() {
                       isAddingMember || // Disable when user is adding a member
                       (newEventForm.action_category === "composite" && !newEventForm.attendants_validated) ||
                       (newEventForm.action_category === "department" && !newEventForm.department_id) ||
-                      ((newEventForm.action_category === "member" || newEventForm.action_category === "custom_member") && newEventForm.organizers.length === 0)
+                      ((newEventForm.action_category === "member" || newEventForm.action_category === "custom_member") && newEventForm.organizers.length === 0) ||
+                      (newEventForm.action_category === "custom_department" && (!newEventForm.department_id || !newEventForm.custom_points_awarded || parseInt(newEventForm.custom_points_awarded) <= 0))
                     }
                     className="bg-primary hover:bg-primary/90"
                   >
