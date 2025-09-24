@@ -27,7 +27,7 @@ import { useToast } from "@/hooks/use-toast"
 import { MemberSelector } from "@/components/member-selector"
 import { OrganizerManager } from "@/components/organizer-manager"
 
-const BaseUrl = process.env.NEXT_PUBLIC_DEV_HOST || process.env.NEXT_PUBLIC_HOST || "http://178.128.205.239:7001";
+const BaseUrl = process.env.NEXT_PUBLIC_DEV_HOST || process.env.NEXT_PUBLIC_HOST 
 console.log(`Using BaseUrl: \x1b[32m${BaseUrl}\x1b[0m`);
 
 // List of action IDs that should be hidden from the user interface
