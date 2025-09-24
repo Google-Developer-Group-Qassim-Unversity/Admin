@@ -401,13 +401,37 @@ export default function AddNewEventPage() {
     }
   }
 
-  const handleCustomPointsSelect = (category: "custom_member" | "custom_department") => {
+  // Function to fetch existing events from the API
+  const fetchExistingEvents = async () => {
+    try {
+      const eventsResponse = await fetch(`${BaseUrl}/events`)
+      if (!eventsResponse.ok) {
+        throw new Error("Failed to fetch existing events")
+      }
+      const eventsData: Array<{id: number, name: string}> = await eventsResponse.json()
+      setExistingEvents(eventsData)
+    } catch (error) {
+      console.error("Error fetching existing events:", error)
+      toast({
+        title: "Error",
+        description: "Failed to fetch existing events. Please try again.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleCustomPointsSelect = async (category: "custom_member" | "custom_department") => {
     setNewEventForm({
       ...newEventForm,
       action_id: "custom",
       action_category: category,
       event_selection_type: "new", // Default to "new" for both custom member and department
     })
+
+    // Refresh existing events when Custom Department Points is selected
+    if (category === "custom_department") {
+      await fetchExistingEvents()
+    }
   }
 
   // Helper to get event days as array of dates
