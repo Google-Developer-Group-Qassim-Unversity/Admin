@@ -52,7 +52,6 @@ export default function CreateEventPage() {
   const [isLoadingData, setIsLoadingData] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
-  const [customLocations, setCustomLocations] = React.useState<Map<string, LocationType>>(new Map());
 
   const {
     register,
@@ -77,7 +76,6 @@ export default function CreateEventPage() {
 
   const watchName = watch("name");
   const watchLocationType = watch("location_type");
-  const watchLocation = watch("location");
 
   // Fetch existing events on mount
   React.useEffect(() => {
@@ -98,50 +96,27 @@ export default function CreateEventPage() {
     fetchData();
   }, []);
 
-  // Get unique locations from existing events and custom locations, filtered by location type
+  // Get unique locations from existing events, filtered by location type
   const locationOptions = React.useMemo(() => {
-    const locationsMap = new Map<string, LocationType>(); // location -> location_type
+    const uniqueLocations = new Set<string>();
     
-    // Add locations from existing events
     existingEvents.forEach((event) => {
-      if (event.location && !locationsMap.has(event.location)) {
-        locationsMap.set(event.location, event.location_type);
+      if (event.location && event.location_type === watchLocationType) {
+        uniqueLocations.add(event.location);
       }
     });
     
-    // Add custom locations
-    customLocations.forEach((locationType, location) => {
-      if (!locationsMap.has(location)) {
-        locationsMap.set(location, locationType);
-      }
-    });
-    
-    // Filter by current location_type and sort alphabetically
-    const filteredLocations = Array.from(locationsMap.entries())
-      .filter(([_, locationType]) => locationType === watchLocationType)
-      .map(([location]) => location)
-      .sort((a, b) => a.localeCompare(b));
-    
-    return filteredLocations;
-  }, [existingEvents, customLocations, watchLocationType]);
+    return Array.from(uniqueLocations).sort((a, b) => a.localeCompare(b));
+  }, [existingEvents, watchLocationType]);
 
-  // Track custom locations when user enters new ones
+  // Clear location when location type changes
+  const previousLocationType = React.useRef<LocationType>(watchLocationType);
   React.useEffect(() => {
-    if (watchLocation && watchLocation.trim()) {
-      const locationExists = existingEvents.some(
-        (event) => event.location === watchLocation
-      );
-      
-      // If location doesn't exist in existing events, add it to custom locations
-      if (!locationExists && !customLocations.has(watchLocation)) {
-        setCustomLocations((prev) => {
-          const newMap = new Map(prev);
-          newMap.set(watchLocation, watchLocationType);
-          return newMap;
-        });
-      }
+    if (previousLocationType.current !== watchLocationType) {
+      setValue("location", "");
+      previousLocationType.current = watchLocationType;
     }
-  }, [watchLocation, watchLocationType, existingEvents, customLocations]);
+  }, [watchLocationType, setValue]);
 
   // Validate event name uniqueness
   React.useEffect(() => {
@@ -208,9 +183,6 @@ export default function CreateEventPage() {
 
       if (result.success) {
         toast.success("Event created successfully!");
-        // Clear custom locations on successful submission
-        setCustomLocations(new Map());
-        // Reset form or redirect
         window.location.reload();
       } else {
         if (shouldContactSupport(result.error)) {
