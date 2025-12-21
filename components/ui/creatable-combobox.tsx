@@ -23,7 +23,6 @@ interface CreatableComboboxProps {
   options: string[];
   value: string;
   onChange: (value: string) => void;
-  onCreateOption?: (value: string) => Promise<void> | void;
   placeholder?: string;
   searchPlaceholder?: string;
   emptyMessage?: string;
@@ -36,7 +35,6 @@ export function CreatableCombobox({
   options,
   value,
   onChange,
-  onCreateOption,
   placeholder = "Select option...",
   searchPlaceholder = "Search...",
   emptyMessage = "No option found.",
@@ -46,7 +44,6 @@ export function CreatableCombobox({
 }: CreatableComboboxProps) {
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
-  const [isCreating, setIsCreating] = React.useState(false);
 
   // Normalize search value for comparison
   const normalizedSearch = searchValue.trim().toLowerCase();
@@ -62,8 +59,7 @@ export function CreatableCombobox({
   );
 
   // Show create option if search has value and no exact match exists
-  const showCreateOption =
-    normalizedSearch.length > 0 && !exactMatchExists && onCreateOption;
+  const showCreateOption = normalizedSearch.length > 0 && !exactMatchExists;
 
   const handleSelect = (selectedValue: string) => {
     onChange(selectedValue === value ? "" : selectedValue);
@@ -71,24 +67,15 @@ export function CreatableCombobox({
     setSearchValue("");
   };
 
-  const handleCreate = async () => {
-    if (!onCreateOption || !normalizedSearch) return;
-
-    setIsCreating(true);
-    try {
-      await onCreateOption(searchValue.trim());
-      onChange(searchValue.trim());
-      setOpen(false);
-      setSearchValue("");
-    } catch (error) {
-      console.error("Failed to create option:", error);
-    } finally {
-      setIsCreating(false);
-    }
+  const handleCreate = () => {
+    if (!normalizedSearch) return;
+    onChange(searchValue.trim());
+    setOpen(false);
+    setSearchValue("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && showCreateOption && !isCreating) {
+    if (e.key === "Enter" && showCreateOption) {
       e.preventDefault();
       handleCreate();
     }
@@ -124,15 +111,10 @@ export function CreatableCombobox({
               <CommandGroup>
                 <CommandItem
                   onSelect={handleCreate}
-                  disabled={isCreating}
                   className="flex items-center gap-2 text-primary"
                 >
                   <Plus className="h-4 w-4" />
-                  <span>
-                    {isCreating
-                      ? "Creating..."
-                      : `Create "${searchValue.trim()}"`}
-                  </span>
+                  <span>Use &quot;{searchValue.trim()}&quot;</span>
                 </CommandItem>
               </CommandGroup>
             )}

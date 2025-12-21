@@ -27,8 +27,6 @@ import {
 } from "@/components/ui/file-upload";
 import {
   getEvents,
-  getLocations,
-  createLocation,
   createEvent,
   uploadFile,
   shouldContactSupport,
@@ -51,10 +49,10 @@ type EventFormData = z.infer<typeof eventFormSchema>;
 
 export function CreateEventModule() {
   const [existingEvents, setExistingEvents] = React.useState<Event[]>([]);
-  const [locations, setLocations] = React.useState<string[]>([]);
   const [isLoadingData, setIsLoadingData] = React.useState(true);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
+  const [customLocations, setCustomLocations] = React.useState<Map<string, LocationType>>(new Map());
 
   const {
     register,
@@ -79,23 +77,16 @@ export function CreateEventModule() {
 
   const watchName = watch("name");
   const watchLocationType = watch("location_type");
+  const watchLocation = watch("location");
 
-  // Fetch existing events and locations on mount
+  // Fetch existing events on mount
   React.useEffect(() => {
     async function fetchData() {
       setIsLoadingData(true);
       try {
-        const [eventsResult, locationsResult] = await Promise.all([
-          getEvents(),
-          getLocations(),
-        ]);
-
+        const eventsResult = await getEvents();
         if (eventsResult.success) {
           setExistingEvents(eventsResult.data);
-        }
-
-        if (locationsResult.success) {
-          setLocations(locationsResult.data);
         }
       } catch (error) {
         console.error("Failed to fetch initial data:", error);
@@ -106,6 +97,51 @@ export function CreateEventModule() {
 
     fetchData();
   }, []);
+
+  // Get unique locations from existing events and custom locations, filtered by location type
+  const locationOptions = React.useMemo(() => {
+    const locationsMap = new Map<string, LocationType>(); // location -> location_type
+    
+    // Add locations from existing events
+    existingEvents.forEach((event) => {
+      if (event.location && !locationsMap.has(event.location)) {
+        locationsMap.set(event.location, event.location_type);
+      }
+    });
+    
+    // Add custom locations
+    customLocations.forEach((locationType, location) => {
+      if (!locationsMap.has(location)) {
+        locationsMap.set(location, locationType);
+      }
+    });
+    
+    // Filter by current location_type and sort alphabetically
+    const filteredLocations = Array.from(locationsMap.entries())
+      .filter(([_, locationType]) => locationType === watchLocationType)
+      .map(([location]) => location)
+      .sort((a, b) => a.localeCompare(b));
+    
+    return filteredLocations;
+  }, [existingEvents, customLocations, watchLocationType]);
+
+  // Track custom locations when user enters new ones
+  React.useEffect(() => {
+    if (watchLocation && watchLocation.trim()) {
+      const locationExists = existingEvents.some(
+        (event) => event.location === watchLocation
+      );
+      
+      // If location doesn't exist in existing events, add it to custom locations
+      if (!locationExists && !customLocations.has(watchLocation)) {
+        setCustomLocations((prev) => {
+          const newMap = new Map(prev);
+          newMap.set(watchLocation, watchLocationType);
+          return newMap;
+        });
+      }
+    }
+  }, [watchLocation, watchLocationType, existingEvents, customLocations]);
 
   // Validate event name uniqueness
   React.useEffect(() => {
@@ -123,18 +159,6 @@ export function CreateEventModule() {
       clearErrors("name");
     }
   }, [watchName, existingEvents, setError, clearErrors, errors.name?.type]);
-
-  // Handle location creation
-  const handleCreateLocation = async (locationName: string) => {
-    const result = await createLocation({ location: locationName });
-    if (result.success) {
-      setLocations((prev) => [...prev, locationName]);
-      toast.success(`Location "${locationName}" created`);
-    } else {
-      toast.error("Failed to create location");
-      throw new Error(result.error.message);
-    }
-  };
 
   // Handle file upload
   const handleFileUpload = async (files: File[]) => {
@@ -184,6 +208,8 @@ export function CreateEventModule() {
 
       if (result.success) {
         toast.success("Event created successfully!");
+        // Clear custom locations on successful submission
+        setCustomLocations(new Map());
         // Reset form or redirect
         window.location.reload();
       } else {
@@ -276,23 +302,16 @@ export function CreateEventModule() {
 
           {/* Location Selection */}
           <div className="space-y-2">
-            <Label>
-              {watchLocationType === "online" ? "Platform/Link" : "Venue"} *
-            </Label>
+            <Label>Location *</Label>
             <Controller
               name="location"
               control={control}
               render={({ field }) => (
                 <CreatableCombobox
-                  options={locations}
+                  options={locationOptions}
                   value={field.value}
                   onChange={field.onChange}
-                  onCreateOption={handleCreateLocation}
-                  placeholder={
-                    watchLocationType === "online"
-                      ? "Select or create platform..."
-                      : "Select or create venue..."
-                  }
+                  placeholder="Select or enter location..."
                   searchPlaceholder="Search locations..."
                   emptyMessage="No locations found"
                 />

@@ -3,7 +3,6 @@ import type {
   ApiResponse,
   Event,
   CreateEventPayload,
-  CreateLocationPayload,
   UploadResponse,
 } from "./api-types";
 
@@ -142,22 +141,7 @@ export async function createEvent(
   });
 }
 
-// =============================================================================
-// Locations API
-// =============================================================================
 
-export async function getLocations(): Promise<ApiResponse<string[]>> {
-  return apiFetch<string[]>("/events/locations");
-}
-
-export async function createLocation(
-  payload: CreateLocationPayload
-): Promise<ApiResponse<string>> {
-  return apiFetch<string>("/events/locations", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-}
 
 // =============================================================================
 // Upload API

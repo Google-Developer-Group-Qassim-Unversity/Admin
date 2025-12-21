@@ -27,11 +27,6 @@ export interface CreateEventPayload {
   image_url: string;
 }
 
-// Location types
-export interface CreateLocationPayload {
-  location: string;
-}
-
 // Upload types
 export interface UploadResponse {
   file: string;
