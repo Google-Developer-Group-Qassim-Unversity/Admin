@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ImageIcon, X, Upload } from "lucide-react";
+import { Loader2, ImageIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -16,22 +17,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { LocationToggle } from "@/components/ui/location-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
-import {
-  FileUpload,
-  FileUploadDropzone,
-  FileUploadItem,
-  FileUploadItemDelete,
-  FileUploadItemMetadata,
-  FileUploadItemPreview,
-  FileUploadList,
-} from "@/components/ui/file-upload";
-import {
-  getEvents,
-  createEvent,
-  uploadFile,
-  shouldContactSupport,
-} from "@/lib/api";
-import type { Event, LocationType, EventStatus } from "@/lib/api-types";
+import { EventImageUpload } from "@/components/event-image-upload";
+import { useEventFormData } from "@/hooks/use-event-form-data";
+import { createEvent, shouldContactSupport } from "@/lib/api";
+import type { LocationType, EventStatus } from "@/lib/api-types";
 
 // Form validation schema
 const eventFormSchema = z.object({
@@ -48,10 +37,8 @@ const eventFormSchema = z.object({
 type EventFormData = z.infer<typeof eventFormSchema>;
 
 export default function CreateEventPage() {
-  const [existingEvents, setExistingEvents] = React.useState<Event[]>([]);
-  const [isLoadingData, setIsLoadingData] = React.useState(true);
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
 
   const {
     register,
@@ -77,91 +64,14 @@ export default function CreateEventPage() {
   const watchName = watch("name");
   const watchLocationType = watch("location_type");
 
-  // Fetch existing events on mount
-  React.useEffect(() => {
-    async function fetchData() {
-      setIsLoadingData(true);
-      try {
-        const eventsResult = await getEvents();
-        if (eventsResult.success) {
-          setExistingEvents(eventsResult.data);
-        }
-      } catch (error) {
-        console.error("Failed to fetch initial data:", error);
-      } finally {
-        setIsLoadingData(false);
-      }
-    }
-
-    fetchData();
-  }, []);
-
-  // Get unique locations from existing events, filtered by location type
-  const locationOptions = React.useMemo(() => {
-    const uniqueLocations = new Set<string>();
-    
-    existingEvents.forEach((event) => {
-      if (event.location && event.location_type === watchLocationType) {
-        uniqueLocations.add(event.location);
-      }
-    });
-    
-    return Array.from(uniqueLocations).sort((a, b) => a.localeCompare(b));
-  }, [existingEvents, watchLocationType]);
-
-  // Clear location when location type changes
-  const previousLocationType = React.useRef<LocationType>(watchLocationType);
-  React.useEffect(() => {
-    if (previousLocationType.current !== watchLocationType) {
-      setValue("location", "");
-      previousLocationType.current = watchLocationType;
-    }
-  }, [watchLocationType, setValue]);
-
-  // Validate event name uniqueness
-  React.useEffect(() => {
-    const normalizedName = watchName.trim().toLowerCase();
-    const isDuplicate = existingEvents.some(
-      (event) => event.name.trim().toLowerCase() === normalizedName
-    );
-
-    if (isDuplicate && normalizedName.length > 0) {
-      setError("name", {
-        type: "manual",
-        message: "An event with this name already exists",
-      });
-    } else if (errors.name?.type === "manual") {
-      clearErrors("name");
-    }
-  }, [watchName, existingEvents, setError, clearErrors, errors.name?.type]);
-
-  // Handle file upload
-  const handleFileUpload = async (files: File[]) => {
-    if (files.length === 0) return;
-
-    const file = files[0];
-    setUploadedFile(file);
-
-    const result = await uploadFile(file);
-    if (result.success) {
-      setValue("image_url", result.data.file);
-      toast.success("Image uploaded successfully");
-    } else {
-      setUploadedFile(null);
-      setValue("image_url", "");
-      if (shouldContactSupport(result.error)) {
-        toast.error("Upload failed. Please contact support.");
-      } else {
-        toast.error(result.error.message);
-      }
-    }
-  };
-
-  // Handle file removal
-  const handleFileRemove = () => {
-    setUploadedFile(null);
-    setValue("image_url", "");
-  };
+  const { isLoadingData, locationOptions } = useEventFormData({
+    watchName,
+    watchLocationType,
+    setValue,
+    setError,
+    clearErrors,
+    errors,
+  });
 
   // Form submission
   const onSubmit = async (data: EventFormData) => {
@@ -176,14 +86,14 @@ export default function CreateEventPage() {
         start_datetime: data.startDate.toISOString(),
         end_datetime: data.endDate.toISOString(),
         status: (data.publishNow ? "open" : "announced") as EventStatus,
-        image_url: data.image_url || null,
+        image_url: data.image_url || "",
       };
 
       const result = await createEvent(payload);
 
       if (result.success) {
         toast.success("Event created successfully!");
-        window.location.reload();
+        router.push("/");
       } else {
         if (shouldContactSupport(result.error)) {
           toast.error(
@@ -362,54 +272,16 @@ export default function CreateEventPage() {
           </div>
 
           {/* Image Upload */}
-          <div className="space-y-2">
-            <Label>Event Image</Label>
-            <FileUpload
-              maxFiles={1}
-              maxSize={5 * 1024 * 1024}
-              accept="image/*"
-              onAccept={handleFileUpload}
-              value={uploadedFile ? [uploadedFile] : []}
-              onValueChange={(files) => {
-                if (files.length === 0) {
-                  handleFileRemove();
-                }
-              }}
-            >
-              <FileUploadDropzone className="min-h-30 flex-col">
-                <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Drag & drop an image here, or click to browse
-                </p>
-                <p className="text-xs text-muted-foreground">
-                  Max 5MB, images only
-                </p>
-              </FileUploadDropzone>
-              <FileUploadList>
-                {uploadedFile && (
-                  <FileUploadItem value={uploadedFile}>
-                    <FileUploadItemPreview />
-                    <FileUploadItemMetadata />
-                    <FileUploadItemDelete asChild>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={handleFileRemove}
-                      >
-                        <X className="h-4 w-4" />
-                      </Button>
-                    </FileUploadItemDelete>
-                  </FileUploadItem>
-                )}
-              </FileUploadList>
-            </FileUpload>
-            {errors.image_url && (
-              <p className="text-sm text-destructive">
-                {errors.image_url.message}
-              </p>
+          <Controller
+            name="image_url"
+            control={control}
+            render={({ field }) => (
+              <EventImageUpload
+                onChange={field.onChange}
+                error={errors.image_url?.message}
+              />
             )}
-          </div>
+          />
 
           {/* Submit Button */}
           <Button
