@@ -2,6 +2,7 @@
 
 import { User } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -18,10 +19,8 @@ export function Navbar() {
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 flex h-14 items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-            <span className="text-sm font-bold">ST</span>
-          </div>
-          <span className="hidden sm:inline-block">Score Tracker Admin</span>
+          <Image src="/gdg.png" alt="Logo" width={362} height={200} className="h-5 w-9" priority unoptimized />
+          <span className="hidden sm:inline-block">GDG Score Tracker Admin</span>
         </Link>
 
         {/* Navigation */}

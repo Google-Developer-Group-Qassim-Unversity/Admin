@@ -19,8 +19,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Score Tracker Admin",
+  title: "GDG-Admin",
   description: "Admin dashboard for Score Tracker application",
+  icons: {
+    icon: "/gdg.ico",
+  },
 };
 
 export default function RootLayout({

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, ImageIcon } from "lucide-react";
+import { Loader2, CalendarPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -132,7 +132,7 @@ export default function CreateEventPage() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <ImageIcon className="h-5 w-5 text-primary" />
+            <CalendarPlus className="h-5 w-5 text-primary" />
           </div>
           Create New Event
         </CardTitle>
