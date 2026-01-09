@@ -1,69 +1,54 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Space_Grotesk, DM_Sans } from "next/font/google"
-import { Analytics } from "@vercel/analytics/next"
-import { Suspense } from "react"
-import {
-  ClerkProvider,
-  SignedIn,
-  SignedOut,
-  UserButton,
-} from "@clerk/nextjs"
-import "./globals.css"
+import type { Metadata } from "next";
+import { Geist, Geist_Mono, Figtree } from "next/font/google";
+import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ["latin"],
-  variable: "--font-space-grotesk",
-  weight: ["400", "700"],
-})
+import { ThemeProvider } from "@/components/theme-provider";
+import { Navbar } from "@/components/navbar";
+import { Toaster } from "@/components/ui/sonner";
 
-const dmSans = DM_Sans({
+const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
+
+const geistSans = Geist({
+  variable: "--font-geist-sans",
   subsets: ["latin"],
-  variable: "--font-dm-sans",
-  weight: ["400", "500", "700"],
-})
+});
+
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+});
 
 export const metadata: Metadata = {
-  title: "Admin Dashboard - Score Leaderboard",
-  description: "Admin interface for managing department events and member participation",
-  generator: "v0.app",
-}
+  title: "GDG-Admin",
+  description: "Admin dashboard for Score Tracker application",
+  icons: {
+    icon: "/gdg.ico",
+  },
+};
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode
+  children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      appearance={{
-        baseTheme: undefined,
-        variables: {
-          colorPrimary: "#000000",
-        },
-      }}
-    >
-      <html lang="en">
-        <body className={`font-sans ${spaceGrotesk.variable} ${dmSans.variable}`}>
-          <SignedIn>
-            <header className="flex justify-between items-center p-4 bg-background border-b">
-              <h1 className="text-xl font-bold">Admin Dashboard - Score Leaderboard</h1>
-              <div className="flex items-center gap-4">
-                <UserButton 
-                  appearance={{
-                    elements: {
-                      avatarBox: "h-8 w-8",
-                    },
-                  }}
-                />
-              </div>
-            </header>
-          </SignedIn>
-          
-          <Suspense fallback={null}>{children}</Suspense>
-          <Analytics />
-        </body>
-      </html>
-    </ClerkProvider>
-  )
+    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <div className="relative min-h-screen flex flex-col">
+            <Navbar />
+            <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+          </div>
+          <Toaster />
+        </ThemeProvider>
+      </body>
+    </html>
+  );
 }

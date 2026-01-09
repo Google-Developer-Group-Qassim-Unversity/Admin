@@ -1,101 +1,82 @@
-import Link from "next/link"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Building2, Database, Home, Edit } from "lucide-react"
+import Link from "next/link";
+import { CalendarPlus, Users, Trophy } from "lucide-react";
 
-export default function DashboardPage() {
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+
+export default function Page() {
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-muted/30 to-background">
-      <nav className="bg-white/80 border-b border-border sticky top-0 z-50">
-        <div className="container mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-primary via-secondary to-accent rounded-lg flex items-center justify-center">
-                <Home className="h-4 w-4 text-white" />
-              </div>
-              <h1 className="text-xl font-heading font-bold text-foreground">Score Leaderboard Admin</h1>
+    <div className="space-y-8">
+      {/* Page Header */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
+        <p className="text-muted-foreground mt-2">
+          Manage events, participants, and scores
+        </p>
+      </div>
+
+      {/* Module Cards Grid */}
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Manage Events Module */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex-1">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
+              <CalendarPlus className="h-6 w-6 text-primary" />
             </div>
-            <div className="flex items-center gap-4">
-              <Link href="/department-events">
-                <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/10">
-                  Add Events
-                </Button>
-              </Link>
-              <Link href="/edit-events">
-                <Button variant="ghost" size="sm" className="text-secondary hover:bg-secondary/10">
-                  Edit Events
-                </Button>
-              </Link>
-              <Link href="/data-management">
-                <Button variant="ghost" size="sm" className="text-accent hover:bg-accent/10">
-                  Data
-                </Button>
-              </Link>
+            <CardTitle className="text-lg">Manage Events</CardTitle>
+            <CardDescription>
+              Create and manage events for participants to join and compete
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button asChild className="w-full">
+              <Link href="/manage-events">Manage Events</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Placeholder for future modules */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex-1">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
+              <Users className="h-6 w-6 text-primary" />
             </div>
-          </div>
-        </div>
-      </nav>
+            <CardTitle className="text-lg">Manage Participants</CardTitle>
+            <CardDescription>
+              View and manage event participants and registrations
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button className="w-full" disabled>
+              Coming Soon
+            </Button>
+          </CardFooter>
+        </Card>
 
-      {/* Main Content */}
-      <main className="container mx-auto px-6 py-12">
-        <div className="text-center mb-12">
-          <h2 className="text-4xl font-heading font-bold text-foreground mb-4">Welcome Back!</h2>
-          <p className="text-lg text-muted-foreground">Choose what you'd like to manage today</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-primary/20 bg-white">
-            <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-primary to-primary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                <Building2 className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="font-heading text-xl text-primary">Add New Event</CardTitle>
-              <CardDescription>Create new events with guided wizard</CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Link href="/department-events">
-                <Button className="w-full h-12 text-base font-medium bg-primary hover:bg-primary/90">
-                  + Add New Event
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-xl transition-all duration-300 border-2 border-secondary/20 bg-white">
-            <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-secondary to-secondary/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                <Edit className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="font-heading text-xl text-secondary">Edit Events</CardTitle>
-              <CardDescription>Modify and manage existing events</CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-              <Link href="/edit-events">
-                <Button className="w-full h-12 text-base font-medium bg-secondary hover:bg-secondary/90">
-                  Edit Existing Events
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-
-          <Card className="hover:shadow-xl opacity-50 cursor-not-allowed transition-all duration-300 border-2 border-accent/20 bg-white md:col-span-2 lg:col-span-1">
-            <CardHeader className="text-center pb-4">
-              <div className="mx-auto w-16 h-16 bg-gradient-to-br from-accent to-accent/80 rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-                <Database className="h-8 w-8 text-white" />
-              </div>
-              <CardTitle className="font-heading text-xl text-accent">Data Management</CardTitle>
-              <CardDescription>Manage members, departments, and more</CardDescription>
-            </CardHeader>
-            <CardContent className="text-center">
-                <Link href="/data-management">
-                <Button className="w-full h-12  text-base font-medium bg-accent hover:bg-accent/90">
-                  + Manage Data
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
-        </div>
-      </main>
+        <Card className="flex flex-col">
+          <CardHeader className="flex-1">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
+              <Trophy className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Score Management</CardTitle>
+            <CardDescription>
+              Update and manage participant scores and rankings
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button className="w-full" disabled>
+              Coming Soon
+            </Button>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
-  )
+  );
 }
