@@ -13,7 +13,7 @@ export interface Event {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
-  image_url: string;
+  image_url: string | null;
 }
 
 export interface CreateEventPayload {
@@ -24,7 +24,7 @@ export interface CreateEventPayload {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
-  image_url: string;
+  image_url: string | null;
 }
 
 // Upload types
