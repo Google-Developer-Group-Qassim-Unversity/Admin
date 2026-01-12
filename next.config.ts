@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
         protocol: "https",
         hostname: "localhost",
       },
+      {
+        protocol: 'https',
+        hostname: '*.googleusercontent.com',
+      },
     ],
     dangerouslyAllowLocalIP: true,
   },

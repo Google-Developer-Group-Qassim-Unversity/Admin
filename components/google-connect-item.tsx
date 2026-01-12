@@ -20,18 +20,24 @@ interface GoogleConnectItemProps {
   user: { name?: string; email?: string; picture?: string } | null;
   isLoading: boolean;
   onAuthChange: () => void;
+  eventId?: number;
 }
 
 export function GoogleConnectItem({ 
   isAuthenticated, 
   user, 
   isLoading, 
-  onAuthChange 
+  onAuthChange,
+  eventId 
 }: GoogleConnectItemProps) {
   const [imgError, setImgError] = useState(false);
 
   const handleConnect = () => {
-    window.location.href = '/api/auth/google';
+    // Include eventId in auth URL so it can be passed through the OAuth flow
+    const authUrl = eventId 
+      ? `/api/auth/google?eventId=${eventId}`
+      : '/api/auth/google';
+    window.location.href = authUrl;
   };
 
   const handleDisconnect = async () => {

@@ -45,8 +45,6 @@ export function EventCard({ event }: EventCardProps) {
         return "secondary";
       case "closed":
         return "outline";
-      case "cancelled":
-        return "destructive";
       default:
         return "secondary";
     }

@@ -4,10 +4,13 @@ import type {
   Event,
   CreateEventPayload,
   UploadResponse,
+  Form,
+  CreateFormPayload,
+  UpdateFormPayload,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001";
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001";
 
 // Generic fetch wrapper with error handling
 async function apiFetch<T>(
@@ -150,7 +153,40 @@ export async function createEvent(
   });
 }
 
+// =============================================================================
+// Forms API
+// =============================================================================
 
+export async function createForm(
+  payload: CreateFormPayload
+): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>("/forms/", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function getFormByEventId(
+  eventId: number
+): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>(`/events/${eventId}/form/`);
+}
+
+export async function updateForm(
+  formId: number,
+  payload: UpdateFormPayload
+): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>(`/forms/${formId}/`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function deleteForm(formId: number): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>(`/forms/${formId}/`, {
+    method: "DELETE",
+  });
+}
 
 // =============================================================================
 // Upload API

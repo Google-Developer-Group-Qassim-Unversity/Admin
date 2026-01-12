@@ -53,3 +53,23 @@ export interface ApiError {
 export type ApiResponse<T> =
   | { success: true; data: T }
   | { success: false; error: ApiError };
+
+// Form types
+export interface Form {
+  id: number;
+  event_id: number;
+  google_form_id: string | null;
+  refresh_token: string;
+}
+
+export interface CreateFormPayload {
+  event_id: number;
+  google_form_id?: string | null;
+  refresh_token: string;
+}
+
+export interface UpdateFormPayload {
+  event_id: number;
+  google_form_id: string | null;
+  refresh_token: string;
+}

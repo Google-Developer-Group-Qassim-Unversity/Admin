@@ -20,15 +20,25 @@ import {
 import { GoogleFormsIcon } from '@/lib/google-icons';
 import { MoreHorizontal, Loader2, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
 
-interface FormsCopyItemProps {
-  isAuthenticated: boolean;
+interface FormData {
+  id?: number;
+  googleFormId: string | null;
+  formName: string | null;
 }
 
-export function FormsCopyItem({ isAuthenticated }: FormsCopyItemProps) {
-  const [isCopied, setIsCopied] = useState(false);
+interface FormsCopyItemProps {
+  isAuthenticated: boolean;
+  eventId: number;
+  formData: FormData | null;
+  onFormChange: () => void;
+}
+
+export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange }: FormsCopyItemProps) {
   const [isLoading, setIsLoading] = useState(false);
-  const [fileName, setFileName] = useState<string | null>(null);
-  const [fileId, setFileId] = useState<string | null>(null);
+
+  const isCopied = !!formData?.googleFormId;
+  const fileName = formData?.formName || 'Event Form';
+  const fileId = formData?.googleFormId;
 
   const handleCopy = async () => {
     if (!isAuthenticated) return;
@@ -37,16 +47,18 @@ export function FormsCopyItem({ isAuthenticated }: FormsCopyItemProps) {
     try {
       const response = await fetch('/api/drive/copy', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to copy file');
       }
 
-      const data = await response.json();
-      setFileName(data.name);
-      setFileId(data.id);
-      setIsCopied(true);
+      // Notify parent to refresh form data
+      onFormChange();
     } catch (error) {
       console.error('Error copying file:', error);
       alert('Failed to copy file. Please try again.');
@@ -55,15 +67,65 @@ export function FormsCopyItem({ isAuthenticated }: FormsCopyItemProps) {
     }
   };
 
-  const handleUnattach = () => {
-    setIsCopied(false);
-    setFileName(null);
-    setFileId(null);
+  const handleUnattach = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/drive/unattach', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to un-attach form');
+      }
+
+      // Notify parent to refresh form data
+      onFormChange();
+    } catch (error) {
+      console.error('Error un-attaching form:', error);
+      alert('Failed to un-attach form. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleReplace = async () => {
-    handleUnattach();
-    await handleCopy();
+    // First un-attach, then copy new
+    setIsLoading(true);
+    try {
+      // Un-attach current form
+      await fetch('/api/drive/unattach', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId }),
+      });
+
+      // Copy new form
+      const response = await fetch('/api/drive/copy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to replace form');
+      }
+
+      // Notify parent to refresh form data
+      onFormChange();
+    } catch (error) {
+      console.error('Error replacing form:', error);
+      alert('Failed to replace form. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -83,7 +145,7 @@ export function FormsCopyItem({ isAuthenticated }: FormsCopyItemProps) {
         <ItemDescription className="max-w-100">
           {isCopied && fileName ? (
             <div className="flex flex-col gap-1">
-              <span>Members will now have to fill out the form <span className="font-semibold text-foreground">&quot{fileName}&quot</span> before signing up to the event.</span>
+              <span>Members will now have to fill out the form <span className="font-semibold text-foreground">&quot;{fileName}&quot;</span> before signing up to the event.</span>
               <span className="text-xs text-muted-foreground">You can edit the form in Google Forms and members will be shown the latest updated form.</span>
             </div>
           ) : (
@@ -106,8 +168,12 @@ export function FormsCopyItem({ isAuthenticated }: FormsCopyItemProps) {
             </Button>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon">
-                  <MoreHorizontal className="h-4 w-4" />
+                <Button variant="outline" size="icon" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <MoreHorizontal className="h-4 w-4" />
+                  )}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
