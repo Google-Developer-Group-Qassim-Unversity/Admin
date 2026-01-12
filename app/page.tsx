@@ -37,7 +37,7 @@ export default function Page() {
           </CardHeader>
           <CardFooter>
             <Button asChild className="w-full">
-              <Link href="/manage-events">Manage Events</Link>
+              <Link href="/events">Manage Events</Link>
             </Button>
           </CardFooter>
         </Card>
