@@ -1,3 +1,6 @@
+"use client";
+
+import * as React from "react";
 import Link from "next/link";
 import { CalendarPlus, AlertCircle, Calendar } from "lucide-react";
 
@@ -6,15 +9,23 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EventsList } from "@/components/events-list";
 import { getEvents } from "@/lib/api";
 
-export default async function ManageEventsPage() {
-  const eventsResponse = await getEvents();
-  
-  // Sort events by start_datetime DESC if fetch was successful
-  const sortedEvents = eventsResponse.success 
-    ? [...eventsResponse.data].sort((a, b) => 
-        new Date(b.start_datetime).getTime() - new Date(a.start_datetime).getTime()
-      )
-    : [];
+export default function ManageEventsPage() {
+  const [page, setPage] = React.useState(1);
+  const [eventsResponse, setEventsResponse] = React.useState<Awaited<ReturnType<typeof getEvents>> | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  const limit = 50;
+
+  React.useEffect(() => {
+    async function fetchEvents() {
+      setIsLoading(true);
+      const offset = (page - 1) * limit;
+      const response = await getEvents({ limit, offset });
+      setEventsResponse(response);
+      setIsLoading(false);
+    }
+    fetchEvents();
+  }, [page]);
 
   return (
     <div className="space-y-8">
@@ -34,8 +45,15 @@ export default async function ManageEventsPage() {
         </Button>
       </div>
 
+      {/* Loading State */}
+      {isLoading && (
+        <div className="text-center py-12 text-muted-foreground">
+          Loading events...
+        </div>
+      )}
+
       {/* Error State - Fetch Failed */}
-      {!eventsResponse.success && (
+      {!isLoading && eventsResponse && !eventsResponse.success && (
         <div className="flex justify-center">
           <Alert variant="destructive" className="max-w-2xl">
             <AlertCircle className="h-4 w-4" />
@@ -53,12 +71,12 @@ export default async function ManageEventsPage() {
       )}
 
       {/* Success State - Has Events */}
-      {eventsResponse.success && sortedEvents.length > 0 && (
-        <EventsList events={sortedEvents} />
+      {!isLoading && eventsResponse?.success && eventsResponse.data.length > 0 && (
+        <EventsList events={eventsResponse.data} page={page} onPageChange={setPage} totalEvents={eventsResponse.data.length} limit={limit} />
       )}
 
       {/* Empty State - No Events */}
-      {eventsResponse.success && sortedEvents.length === 0 && (
+      {!isLoading && eventsResponse?.success && eventsResponse.data.length === 0 && (
         <div className="flex justify-center">
           <Alert className="max-w-2xl">
             <Calendar className="h-4 w-4" />

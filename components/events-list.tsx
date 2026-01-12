@@ -3,13 +3,25 @@
 import * as React from "react";
 import { EventCard } from "@/components/event-card";
 import { EventFilters } from "@/components/event-filters";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 import type { Event, LocationType } from "@/lib/api-types";
 
 interface EventsListProps {
   events: Event[];
+  page: number;
+  onPageChange: (page: number) => void;
+  totalEvents: number;
+  limit: number;
 }
 
-export function EventsList({ events }: EventsListProps) {
+export function EventsList({ events, page, onPageChange, totalEvents, limit }: EventsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [locationTypes, setLocationTypes] = React.useState<LocationType[]>([]);
   const [selectedLocations, setSelectedLocations] = React.useState<string[]>([]);
@@ -75,11 +87,38 @@ export function EventsList({ events }: EventsListProps) {
 
       {/* Filtered Events Grid */}
       {filteredEvents.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filteredEvents.map((event) => (
-            <EventCard key={event.id} event={event} />
-          ))}
-        </div>
+        <>
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filteredEvents.map((event) => (
+              <EventCard key={event.id} event={event} />
+            ))}
+          </div>
+          
+          {/* Pagination */}
+          <div className="flex justify-center pt-4">
+            <Pagination>
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious 
+                    onClick={() => onPageChange(Math.max(1, page - 1))}
+                    className={page === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationLink isActive>
+                    {page}
+                  </PaginationLink>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext 
+                    onClick={() => onPageChange(page + 1)}
+                    className={totalEvents < limit ? "pointer-events-none opacity-50" : "cursor-pointer"}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          </div>
+        </>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
           No events match your filters. Try adjusting your search criteria.
