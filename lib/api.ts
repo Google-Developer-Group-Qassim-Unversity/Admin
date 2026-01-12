@@ -137,6 +137,10 @@ export async function getEvents(params?: { limit?: number; offset?: number }): P
   return apiFetch<Event[]>(endpoint);
 }
 
+export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}`);
+}
+
 export async function createEvent(
   payload: CreateEventPayload
 ): Promise<ApiResponse<Event>> {

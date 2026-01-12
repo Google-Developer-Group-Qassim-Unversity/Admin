@@ -2,7 +2,7 @@
 
 // Event types
 export type LocationType = "online" | "on-site" | "none";
-export type EventStatus = "announced" | "open" | "closed" | "cancelled";
+export type EventStatus = "announced" | "open" | "closed";
 
 export interface Event {
   id: number;
@@ -14,6 +14,7 @@ export interface Event {
   end_datetime: string;
   status: EventStatus;
   image_url: string | null;
+  is_official: boolean;
 }
 
 export interface CreateEventPayload {

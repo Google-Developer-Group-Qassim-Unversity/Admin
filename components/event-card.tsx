@@ -94,7 +94,7 @@ export function EventCard({ event }: EventCardProps) {
         {/* Location */}
         {event.location_type !== "none" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <LocationIcon className="h-4 w-4 flex-shrink-0" />
+            <LocationIcon className="h-4 w-4 shrink-0" />
             <span className="truncate">{event.location}</span>
           </div>
         )}
@@ -111,10 +111,10 @@ export function EventCard({ event }: EventCardProps) {
       {/* Actions */}
       <CardFooter className="pt-3 gap-2">
         <Button asChild variant="outline" className="flex-1">
-          <Link href={`/events/${event.id}/edit`}>Edit</Link>
+          <Link href={`/events/${event.id}`}>Edit</Link>
         </Button>
         <Button asChild className="flex-1">
-          <Link href={`/events/${event.id}/manage`}>Manage</Link>
+          <Link href={`/events/${event.id}`}>Manage</Link>
         </Button>
       </CardFooter>
     </Card>
