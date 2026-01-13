@@ -36,8 +36,10 @@ interface FormsCopyItemProps {
 export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange }: FormsCopyItemProps) {
   const [isLoading, setIsLoading] = useState(false);
 
+  console.log('FormsCopyItem formData:', formData);
+
   const isCopied = !!formData?.googleFormId;
-  const fileName = formData?.formName || 'Event Form';
+  const fileName = formData?.formName;
   const fileId = formData?.googleFormId;
 
   const handleCopy = async () => {
@@ -131,11 +133,11 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
   return (
     <Item 
       variant="outline"
-      className={isCopied ? 'bg-green-50 border-green-200' : ''}
+      className={isCopied ? 'bg-green-500/10 border-green-500/30' : ''}
     >
       <ItemMedia variant="image">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-100' : 'bg-gray-100'}`}>
-          <GoogleFormsIcon className={`w-6 h-6 ${isCopied ? 'text-green-600' : ''}`} />
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-500/20' : 'bg-muted'}`}>
+          <GoogleFormsIcon className={`w-6 h-6 ${isCopied ? 'text-green-500' : ''}`} />
         </div>
       </ItemMedia>
       <ItemContent>

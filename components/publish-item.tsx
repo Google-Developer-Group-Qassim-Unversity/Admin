@@ -45,14 +45,14 @@ export function PublishItem({ isAuthenticated }: PublishItemProps) {
   return (
     <Item 
       variant="outline"
-      className={isPublished ? 'bg-green-50 border-green-200' : ''}
+      className={isPublished ? 'bg-green-500/10 border-green-500/30' : ''}
     >
       <ItemMedia variant="image">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isPublished ? 'bg-green-100' : 'bg-gray-100'}`}>
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isPublished ? 'bg-green-500/20' : 'bg-muted'}`}>
           {isPublished ? (
-            <Check className="w-6 h-6 text-green-600" />
+            <Check className="w-6 h-6 text-green-500" />
           ) : (
-            <Upload className="w-6 h-6 text-gray-600" />
+            <Upload className="w-6 h-6 text-muted-foreground" />
           )}
         </div>
       </ItemMedia>

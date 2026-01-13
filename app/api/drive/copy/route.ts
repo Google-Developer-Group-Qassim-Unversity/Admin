@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
       await setFormIdInCookies(eventId, result.id, result.name);
     }
     
-    // Fetch current form data to get full object for update
+    // Fetch current form data to get full object for update to DB
     const formResult = await getFormByEventId(eventId);
     if (formResult.success && result.id) {
       try {

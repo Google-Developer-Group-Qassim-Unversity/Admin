@@ -73,7 +73,7 @@ export function GoogleConnectItem({
   return (
     <Item 
       variant="outline" 
-      className={isAuthenticated ? 'bg-green-50 border-green-200' : ''}
+      className={isAuthenticated ? 'bg-green-500/10 border-green-500/30' : ''}
     >
       <ItemMedia>
         {isAuthenticated && user?.picture && !imgError ? (
@@ -82,13 +82,13 @@ export function GoogleConnectItem({
             alt={user.name || 'User'} 
             width={48}
             height={48}
-            className="rounded-lg object-cover border border-green-100 shadow-sm"
+            className="rounded-lg object-cover border border-green-500/20 shadow-sm"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAuthenticated ? 'bg-green-100' : 'bg-gray-100'}`}>
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isAuthenticated ? 'bg-green-500/20' : 'bg-muted'}`}>
             {isAuthenticated ? (
-              <Check className="w-6 h-6 text-green-600" />
+              <Check className="w-6 h-6 text-green-500" />
             ) : (
               <GoogleIcon className="w-6 h-6" />
             )}
