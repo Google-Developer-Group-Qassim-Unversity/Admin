@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { copyDriveFile, setFormIdInCookies } from '@/lib/google-api';
+import { copyDriveFile, setFormIdInCookies, deleteDriveFile, registerFormWatch } from '@/lib/google-api';
 import { updateForm, getFormByEventId } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
@@ -17,14 +17,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
     }
 
+    // Step 1: Copy the form template
     const result = await copyDriveFile(templateFileId, eventId);
     
-    // Store form ID in cookies for faster access
+    if (!result.id) {
+      return NextResponse.json({ error: 'Failed to copy file - no ID returned' }, { status: 500 });
+    }
+
+    // Step 2: Register a watch for form responses
+    try {
+      await registerFormWatch(result.id, eventId);
+      console.log(`Watch registered for form ${result.id}`);
+    } catch (watchError) {
+      console.error('Error registering form watch:', watchError);
+      
+      // Clean up: delete the copied file since watch registration failed
+      try {
+        await deleteDriveFile(result.id, eventId);
+        console.log(`Cleaned up: deleted form ${result.id} after watch registration failure`);
+      } catch (deleteError) {
+        console.error('Error deleting file during cleanup:', deleteError);
+      }
+      
+      const errorMessage = watchError instanceof Error ? watchError.message : 'Failed to register form watch';
+      return NextResponse.json(
+        { error: `Watch registration failed: ${errorMessage}. The form was not created.` },
+        { status: 500 }
+      );
+    }
+    
+    // Step 3: Store form ID in cookies for faster access
     if (result.id && result.name) {
       await setFormIdInCookies(eventId, result.id, result.name);
     }
     
-    // Fetch current form data to get full object for update to DB
+    // Step 4: Fetch current form data to get full object for update to DB
     const formResult = await getFormByEventId(eventId);
     if (formResult.success && result.id) {
       try {

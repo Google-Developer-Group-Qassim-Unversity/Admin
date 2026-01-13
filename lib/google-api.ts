@@ -16,6 +16,8 @@ export async function getAuthUrl() {
   const oauth2Client = getOAuth2Client();
   const scopes = [
     'https://www.googleapis.com/auth/drive',
+    'https://www.googleapis.com/auth/forms.body',
+    'https://www.googleapis.com/auth/forms.responses.readonly',
     'https://www.googleapis.com/auth/userinfo.profile',
     'https://www.googleapis.com/auth/userinfo.email',
   ];
@@ -169,6 +171,59 @@ export async function copyDriveFile(fileId: string, eventId?: number) {
   return {
     id: response.data.id,
     name: response.data.name,
+  };
+}
+
+export async function deleteDriveFile(fileId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const drive = google.drive({ version: 'v3', auth: oauth2Client });
+  
+  await drive.files.delete({
+    fileId: fileId,
+  });
+
+  return { success: true };
+}
+
+export async function registerFormWatch(formId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const topicName = process.env.GOOGLE_FORMS_TOPIC_NAME;
+  
+  if (!topicName) {
+    throw new Error('GOOGLE_FORMS_TOPIC_NAME not configured');
+  }
+
+  const forms = google.forms({ version: 'v1', auth: oauth2Client });
+  
+  const response = await forms.forms.watches.create({
+    formId: formId,
+    requestBody: {
+      watch: {
+        target: {
+          topic: {
+            topicName: topicName,
+          },
+        },
+        eventType: 'RESPONSES',
+      },
+    },
+  });
+
+  console.log('Real-time watch setup complete!');
+  
+  return {
+    watchId: response.data.id,
+    expireTime: response.data.expireTime,
   };
 }
 

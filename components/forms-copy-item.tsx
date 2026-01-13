@@ -18,7 +18,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { GoogleFormsIcon } from '@/lib/google-icons';
-import { MoreHorizontal, Loader2, ExternalLink, RefreshCw, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Loader2, ExternalLink, RefreshCw, Trash2, AlertCircle } from 'lucide-react';
 
 interface FormData {
   id?: number;
@@ -35,6 +35,7 @@ interface FormsCopyItemProps {
 
 export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange }: FormsCopyItemProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   console.log('FormsCopyItem formData:', formData);
 
@@ -46,6 +47,7 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
     if (!isAuthenticated) return;
 
     setIsLoading(true);
+    setError(null);
     try {
       const response = await fetch('/api/drive/copy', {
         method: 'POST',
@@ -55,15 +57,18 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
         body: JSON.stringify({ eventId }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to copy file');
+        throw new Error(data.error || 'Failed to copy file');
       }
 
       // Notify parent to refresh form data
       onFormChange();
     } catch (error) {
       console.error('Error copying file:', error);
-      alert('Failed to copy file. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to copy file. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -97,6 +102,7 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
   const handleReplace = async () => {
     // First un-attach, then copy new
     setIsLoading(true);
+    setError(null);
     try {
       // Un-attach current form
       await fetch('/api/drive/unattach', {
@@ -116,43 +122,51 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
         body: JSON.stringify({ eventId }),
       });
 
+      const data = await response.json();
+      
       if (!response.ok) {
-        throw new Error('Failed to replace form');
+        throw new Error(data.error || 'Failed to replace form');
       }
 
       // Notify parent to refresh form data
       onFormChange();
     } catch (error) {
       console.error('Error replacing form:', error);
-      alert('Failed to replace form. Please try again.');
+      const errorMessage = error instanceof Error ? error.message : 'Failed to replace form. Please try again.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Item 
-      variant="outline"
-      className={isCopied ? 'bg-green-500/10 border-green-500/30' : ''}
-    >
-      <ItemMedia variant="image">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-500/20' : 'bg-muted'}`}>
-          <GoogleFormsIcon className={`w-6 h-6 ${isCopied ? 'text-green-500' : ''}`} />
-        </div>
-      </ItemMedia>
-      <ItemContent>
-        <ItemTitle>
-          {isCopied ? 'Google Form is now attached' : 'Attach a Form'}
-        </ItemTitle>
-        <ItemDescription className="max-w-100">
-          {isCopied && fileName ? (
-            <div className="flex flex-col gap-1">
-              <span>Members will now have to fill out the form <span className="font-semibold text-foreground">&quot;{fileName}&quot;</span> before signing up to the event.</span>
-              <span className="text-xs text-muted-foreground">You can edit the form in Google Forms and members will be shown the latest updated form.</span>
-            </div>
-          ) : (
-            'Attach a Google Form so that members fill it out before signing up to the event'
-          )}
+    <>
+      <Item 
+        variant="outline"
+        className={isCopied ? 'bg-green-500/10 border-green-500/30' : error ? 'bg-destructive/10 border-destructive/30' : ''}
+      >
+        <ItemMedia variant="image">
+          <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-500/20' : error ? 'bg-destructive/20' : 'bg-muted'}`}>
+            {error ? (
+              <AlertCircle className="w-6 h-6 text-destructive" />
+            ) : (
+              <GoogleFormsIcon className={`w-6 h-6 ${isCopied ? 'text-green-500' : ''}`} />
+            )}
+          </div>
+        </ItemMedia>
+        <ItemContent>
+          <ItemTitle>
+            {isCopied ? 'Google Form is now attached' : 'Attach a Form'}
+          </ItemTitle>
+          <ItemDescription className="max-w-100">
+            {isCopied && fileName ? (
+              <div className="flex flex-col gap-1">
+                <span>Members will now have to fill out the form <span className="font-semibold text-foreground">&quot;{fileName}&quot;</span> before signing up to the event.</span>
+                <span className="text-xs text-muted-foreground">You can edit the form in Google Forms and members will be shown the latest updated form.</span>
+              </div>
+            ) : (
+              'Attach a Google Form so that members fill it out before signing up to the event'
+            )}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
@@ -220,5 +234,15 @@ export function FormsCopyItem({ isAuthenticated, eventId, formData, onFormChange
         )}
       </ItemActions>
     </Item>
+    {error && (
+      <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 border border-destructive/30 text-destructive text-sm">
+        <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">Failed to attach form</span>
+          <span className="text-destructive/80">{error}</span>
+        </div>
+      </div>
+    )}
+    </>
   );
 }
