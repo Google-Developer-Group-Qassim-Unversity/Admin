@@ -20,10 +20,16 @@ export async function GET(request: NextRequest) {
   if ((!tokens || isTokenExpired(tokens)) && eventId) {
     const refreshToken = await getRefreshTokenFromBackend(eventId);
     if (refreshToken) {
-      const newTokens = await refreshAccessToken(refreshToken);
-      if (newTokens) {
-        tokens = newTokens;
-        await setTokensInCookies(tokens);
+      try {
+        const newTokens = await refreshAccessToken(refreshToken);
+        if (newTokens) {
+          tokens = newTokens;
+          await setTokensInCookies(tokens);
+        }
+      } catch (refreshError) {
+        // Token refresh failed (likely revoked or invalid)
+        console.error('Failed to refresh token:', refreshError);
+        return NextResponse.json({ authenticated: false, reason: 'token_refresh_failed' });
       }
     }
   }

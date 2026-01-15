@@ -31,6 +31,7 @@ export function GoogleConnectItem({
   eventId 
 }: GoogleConnectItemProps) {
   const [imgError, setImgError] = useState(false);
+  const [isDisconnecting, setIsDisconnecting] = useState(false);
 
   const handleConnect = () => {
     // Include eventId in auth URL so it can be passed through the OAuth flow
@@ -41,11 +42,14 @@ export function GoogleConnectItem({
   };
 
   const handleDisconnect = async () => {
+    setIsDisconnecting(true);
     try {
       await fetch('/api/auth/disconnect', { method: 'POST' });
       onAuthChange();
     } catch (error) {
       console.error('Error disconnecting:', error);
+    } finally {
+      setIsDisconnecting(false);
     }
   };
 
@@ -107,8 +111,9 @@ export function GoogleConnectItem({
         <Button
           onClick={isAuthenticated ? handleDisconnect : handleConnect}
           variant={isAuthenticated ? 'outline' : 'default'}
+          disabled={isDisconnecting}
         >
-          {isAuthenticated ? 'Disconnect' : 'Connect'}
+          {isDisconnecting ? 'Disconnecting...' : isAuthenticated ? 'Disconnect' : 'Connect'}
         </Button>
       </ItemActions>
     </Item>
