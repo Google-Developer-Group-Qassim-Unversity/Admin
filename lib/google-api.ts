@@ -76,7 +76,7 @@ export async function getRefreshTokenFromBackend(eventId: number): Promise<strin
     if (!result.success) {
       return null;
     }
-    return result.data.refresh_token || null;
+    return result.data.google_refresh_token || null;
   } catch (error) {
     console.error('Error fetching refresh token from backend:', error);
     return null;
@@ -225,6 +225,25 @@ export async function registerFormWatch(formId: string, eventId?: number) {
     watchId: response.data.id,
     expireTime: response.data.expireTime,
   };
+}
+
+export async function deleteFormWatch(formId: string, watchId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const forms = google.forms({ version: 'v1', auth: oauth2Client });
+  
+  await forms.forms.watches.delete({
+    formId: formId,
+    watchId: watchId,
+  });
+
+  console.log('Watch deleted successfully');
+  
+  return { success: true };
 }
 
 export async function listDriveFiles(pageSize: number = 10, eventId?: number) {

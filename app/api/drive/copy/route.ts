@@ -58,8 +58,10 @@ export async function POST(request: NextRequest) {
         const currentForm = formResult.data;
         const updateResult = await updateForm(currentForm.id, {
           event_id: currentForm.event_id,
+          form_type: 'google',
           google_form_id: result.id,
-          refresh_token: currentForm.refresh_token,
+          google_refresh_token: currentForm.google_refresh_token,
+          google_watch_id: null,
         });
         
         if (!updateResult.success) {

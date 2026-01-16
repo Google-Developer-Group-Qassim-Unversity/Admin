@@ -55,21 +55,29 @@ export type ApiResponse<T> =
   | { success: false; error: ApiError };
 
 // Form types
+export type FormType = "google" | "none";
+
 export interface Form {
   id: number;
   event_id: number;
+  form_type: FormType;
   google_form_id: string | null;
-  refresh_token: string;
+  google_refresh_token: string | null;
+  google_watch_id: string | null;
 }
 
 export interface CreateFormPayload {
   event_id: number;
+  form_type: FormType;
   google_form_id?: string | null;
-  refresh_token: string;
+  google_refresh_token?: string | null;
+  google_watch_id?: string | null;
 }
 
 export interface UpdateFormPayload {
   event_id: number;
+  form_type: FormType;
   google_form_id: string | null;
-  refresh_token: string;
+  google_refresh_token: string | null;
+  google_watch_id: string | null;
 }

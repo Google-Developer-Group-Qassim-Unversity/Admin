@@ -3,12 +3,6 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import {
   Item,
   ItemActions,
   ItemContent,
@@ -18,11 +12,7 @@ import {
 } from '@/components/ui/item';
 import { Check, Upload, Loader2 } from 'lucide-react';
 
-interface PublishItemProps {
-  isAuthenticated: boolean;
-}
-
-export function PublishItem({ isAuthenticated }: PublishItemProps) {
+export function PublishItem() {
   const [isPublished, setIsPublished] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,33 +53,20 @@ export function PublishItem({ isAuthenticated }: PublishItemProps) {
         </ItemDescription>
       </ItemContent>
       <ItemActions>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <span>
-                <Button
-                  onClick={isPublished ? handleUnpublish : handlePublish}
-                  disabled={isLoading || (!isPublished && !isAuthenticated)}
-                  variant={isPublished ? 'outline' : 'default'}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isPublished ? 'Unpublishing...' : 'Publishing...'}
-                    </>
-                  ) : (
-                    isPublished ? 'Unpublish' : 'Publish'
-                  )}
-                </Button>
-              </span>
-            </TooltipTrigger>
-            {!isAuthenticated && !isPublished && (
-              <TooltipContent>
-                <p>Connect Google account first</p>
-              </TooltipContent>
-            )}
-          </Tooltip>
-        </TooltipProvider>
+        <Button
+          onClick={isPublished ? handleUnpublish : handlePublish}
+          disabled={isLoading}
+          variant={isPublished ? 'outline' : 'default'}
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              {isPublished ? 'Unpublishing...' : 'Publishing...'}
+            </>
+          ) : (
+            isPublished ? 'Unpublish' : 'Publish'
+          )}
+        </Button>
       </ItemActions>
     </Item>
   );
