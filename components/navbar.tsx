@@ -1,17 +1,10 @@
 "use client";
 
-import { User } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 
-import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { AuthButton } from "@/components/auth-button";
 
 export function Navbar() {
   return (
@@ -42,24 +35,7 @@ export function Navbar() {
         {/* Right side - Theme toggle and User profile */}
         <div className="flex items-center gap-2">
           <ThemeToggle />
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="rounded-full">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted">
-                  <User className="h-4 w-4" />
-                </div>
-                <span className="sr-only">User menu</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem disabled>
-                <span className="text-muted-foreground">Profile (Coming soon)</span>
-              </DropdownMenuItem>
-              <DropdownMenuItem disabled>
-                <span className="text-muted-foreground">Sign in (Coming soon)</span>
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <AuthButton />
         </div>
       </div>
     </header>
