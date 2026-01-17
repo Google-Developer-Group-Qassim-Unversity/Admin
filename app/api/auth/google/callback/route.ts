@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
+import { google } from 'googleapis';
 import { getOAuth2Client, setTokensInCookies, copyDriveFile, setFormIdInCookies, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
 import { createForm, getFormByEventId, updateForm } from '@/lib/api';
 
@@ -90,15 +91,24 @@ export async function GET(request: NextRequest) {
         }
         
         // Step 5: Update form to success state with google form details
-        // Generate the responders link for the Google Form
-        const respondersLink = `https://docs.google.com/forms/d/${copyResult.id}/viewform`;
+        // Get the actual responder URI from Google Forms API
+        let respondersLink = null;
+        try {
+          oauth2Client.setCredentials(tokens);
+          const forms = google.forms({ version: 'v1', auth: oauth2Client });
+          const formDetails = await forms.forms.get({ formId: copyResult.id });
+          respondersLink = formDetails.data.responderUri || null;
+        } catch (formError) {
+          console.error('Error fetching responder URI:', formError);
+        }
+        
         const updateResult = await updateForm(formId, {
           event_id: eventId,
           form_type: 'google',
           google_form_id: copyResult.id,
           google_refresh_token: tokens.refresh_token,
           google_watch_id: watchId || null,
-          google_responders_link: respondersLink,
+          google_responders_url: respondersLink,
         }, getToken);
         
         if (!updateResult.success) {

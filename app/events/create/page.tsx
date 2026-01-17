@@ -94,7 +94,7 @@ export default function CreateEventPage() {
         google_form_id: null,
         google_refresh_token: null,
         google_watch_id: null,
-        google_responders_link: null,
+        google_responders_url: null,
       };
 
       const result = await createEvent(payload, getToken);

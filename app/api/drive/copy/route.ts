@@ -41,9 +41,6 @@ export async function POST(request: NextRequest) {
       // Copy the form template
       const copyResponse = await drive.files.copy({
         fileId: templateFileId,
-        requestBody: {
-          name: `Event Registration Form - ${eventId}`,
-        },
         fields: 'id,name',
       });
 
@@ -95,15 +92,29 @@ export async function POST(request: NextRequest) {
     if (formResult.success && formId) {
       try {
         const currentForm = formResult.data;
-        // Generate the responders link for the Google Form
-        const respondersLink = `https://docs.google.com/forms/d/${formId}/viewform`;
+        
+        // Get the actual responder URI from Google Forms API
+        let respondersLink = null;
+        try {
+          const forms = google.forms({ version: 'v1', auth: oauth2Client });
+          const formDetails = await forms.forms.get({ formId });
+          respondersLink = formDetails.data.responderUri || undefined;
+        } catch (formError) {
+          console.error('Error fetching responder URI:', formError);
+        }
+        if (!respondersLink) {
+          console.log('No responder URI found for form:', formId);
+          respondersLink = null;
+        }
+        console.log('Responder URI for form', formId, ':', respondersLink);
+        
         const updateResult = await updateForm(currentForm.id, {
           event_id: currentForm.event_id,
           form_type: 'google',
           google_form_id: formId,
           google_refresh_token: refreshToken || currentForm.google_refresh_token,
           google_watch_id: watchId || null,
-          google_responders_link: respondersLink,
+          google_responders_url: respondersLink,
         }, getToken);
         
         if (!updateResult.success) {

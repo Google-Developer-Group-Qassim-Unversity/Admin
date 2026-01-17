@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
           google_form_id: null,
           google_refresh_token: null,
           google_watch_id: null,
-          google_responders_link: null,
+          google_responders_url: null,
         }, getToken);
         
         if (!updateResult.success) {
