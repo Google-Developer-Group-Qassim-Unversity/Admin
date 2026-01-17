@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, CalendarPlus } from "lucide-react";
+import { Loader2, CalendarPlus, FileBadge } from "lucide-react";
 import { toast } from "sonner";
+import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,7 +21,7 @@ import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
 import { useEventFormData } from "@/hooks/use-event-form-data";
 import { createEvent, shouldContactSupport } from "@/lib/api";
-import type { LocationType, EventStatus } from "@/lib/api-types";
+import type { LocationType } from "@/lib/api-types";
 
 // Form validation schema
 const eventFormSchema = z.object({
@@ -30,7 +31,7 @@ const eventFormSchema = z.object({
   location: z.string().min(1, "Location is required"),
   startDate: z.date({ message: "Start date is required" }),
   endDate: z.date({ message: "End date is required" }),
-  publishNow: z.boolean(),
+  is_official: z.boolean(),
   image_url: z.string().nullable(),
 });
 
@@ -38,6 +39,7 @@ type EventFormData = z.infer<typeof eventFormSchema>;
 
 export default function CreateEventPage() {
   const router = useRouter();
+  const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const {
@@ -56,7 +58,7 @@ export default function CreateEventPage() {
       description: null,
       location_type: "on-site",
       location: "",
-      publishNow: false,
+      is_official: false,
       image_url: "",
     },
   });
@@ -85,15 +87,21 @@ export default function CreateEventPage() {
         location: data.location,
         start_datetime: data.startDate.toISOString(),
         end_datetime: data.endDate.toISOString(),
-        status: (data.publishNow ? "open" : "announced") as EventStatus,
-        image_url: data.image_url || "",
+        status: "closed" as const,
+        image_url: data.image_url || null,
+        is_official: data.is_official,
+        form_type: "none" as const,
+        google_form_id: null,
+        google_refresh_token: null,
+        google_watch_id: null,
+        google_responders_link: null,
       };
 
-      const result = await createEvent(payload);
+      const result = await createEvent(payload, getToken);
 
       if (result.success) {
         toast.success("Event created successfully!");
-        router.push("/");
+        router.push(`/events/${result.data.id}`);
       } else {
         if (shouldContactSupport(result.error)) {
           toast.error(
@@ -241,31 +249,34 @@ export default function CreateEventPage() {
             )}
           </div>
 
-          {/* Publish Status */}
+          {/* Is Official */}
           <div className="space-y-2">
-            <Label htmlFor="publishNow">Open for Registration?</Label>
+            <Label htmlFor="is_official">Official Event</Label>
             <div className="flex items-center gap-4 rounded-lg border p-4">
               <Controller
-                name="publishNow"
+                name="is_official"
                 control={control}
                 render={({ field }) => (
                   <Switch
-                    id="publishNow"
+                    id="is_official"
                     checked={field.value}
                     onCheckedChange={field.onChange}
                   />
                 )}
               />
               <div className="space-y-0.5">
-                <Label htmlFor="publishNow" className="text-base cursor-pointer">
-                  {watch("publishNow")
-                    ? "Yes, open registration now"
-                    : "No, just announce the event"}
+                <Label htmlFor="is_official" className="text-base cursor-pointer flex items-center gap-2">
+                  {watch("is_official") && (
+                    <FileBadge className="h-4 w-4 text-amber-500" />
+                  )}
+                  {watch("is_official")
+                    ? "This is an official event"
+                    : "This is not an official event"}
                 </Label>
                 <p className="text-sm text-muted-foreground">
-                  {watch("publishNow")
-                    ? "Members can sign up immediately"
-                    : "Event will be visible but registration closed"}
+                  {watch("is_official")
+                    ? "Event will be marked as official"
+                    : "Event will be marked as unofficial/community event"}
                 </p>
               </div>
             </div>
@@ -279,6 +290,7 @@ export default function CreateEventPage() {
               <EventImageUpload
                 onChange={field.onChange}
                 error={errors.image_url?.message}
+                getToken={getToken}
               />
             )}
           />

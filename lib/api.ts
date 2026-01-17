@@ -11,20 +11,41 @@ import type {
 
 // Base API URL - configure this based on your environment
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001";
+export const UPLOAD_BASE_URL = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE || API_BASE_URL;
+
+// Type for getting auth token
+type GetTokenFn = () => Promise<string | null>;
 
 // Generic fetch wrapper with error handling
 async function apiFetch<T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit = {},
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    // Merge existing headers
+    if (options.headers) {
+      const existingHeaders = options.headers as Record<string, string>;
+      Object.assign(headers, existingHeaders);
+    }
+
+    // Add authorization header for non-GET requests
+    const method = options.method?.toUpperCase() || "GET";
+    if (method !== "GET" && getToken) {
+      const token = await getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+
     const response = await fetch(url, {
       ...options,
-      headers: {
-        "Content-Type": "application/json",
-        ...options.headers,
-      },
+      headers,
     });
 
     if (!response.ok) {
@@ -76,15 +97,25 @@ async function apiFetch<T>(
 // File upload helper (uses FormData instead of JSON)
 async function apiUpload<T>(
   endpoint: string,
-  file: File
+  file: File,
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<T>> {
   try {
-    const url = `${API_BASE_URL}${endpoint}`;
+    const url = `${UPLOAD_BASE_URL}${endpoint}`;
     const formData = new FormData();
     formData.append("file", file);
 
+    const headers: Record<string, string> = {};
+    if (getToken) {
+      const token = await getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+
     const response = await fetch(url, {
       method: "POST",
+      headers,
       body: formData,
     });
 
@@ -145,12 +176,13 @@ export async function getEvent(id: number | string): Promise<ApiResponse<Event>>
 }
 
 export async function createEvent(
-  payload: CreateEventPayload
+  payload: CreateEventPayload,
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<Event>> {
   return apiFetch<Event>("/events", {
     method: "POST",
     body: JSON.stringify(payload),
-  });
+  }, getToken);
 }
 
 // =============================================================================
@@ -158,12 +190,13 @@ export async function createEvent(
 // =============================================================================
 
 export async function createForm(
-  payload: CreateFormPayload
+  payload: CreateFormPayload,
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<Form>> {
   return apiFetch<Form>("/forms/", {
     method: "POST",
     body: JSON.stringify(payload),
-  });
+  }, getToken);
 }
 
 export async function getFormByEventId(
@@ -174,18 +207,22 @@ export async function getFormByEventId(
 
 export async function updateForm(
   formId: number,
-  payload: UpdateFormPayload
+  payload: UpdateFormPayload,
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<Form>> {
   return apiFetch<Form>(`/forms/${formId}/`, {
     method: "PUT",
     body: JSON.stringify(payload),
-  });
+  }, getToken);
 }
 
-export async function deleteForm(formId: number): Promise<ApiResponse<Form>> {
+export async function deleteForm(
+  formId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Form>> {
   return apiFetch<Form>(`/forms/${formId}/`, {
     method: "DELETE",
-  });
+  }, getToken);
 }
 
 // =============================================================================
@@ -193,9 +230,13 @@ export async function deleteForm(formId: number): Promise<ApiResponse<Form>> {
 // =============================================================================
 
 export async function uploadFile(
-  file: File
+  file: File,
+  getToken?: GetTokenFn
 ): Promise<ApiResponse<UploadResponse>> {
-  return apiUpload<UploadResponse>("/upload", file);
+  const uploadEndpoint = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE 
+    ? "" 
+    : "/upload";
+  return apiUpload<UploadResponse>(uploadEndpoint, file, getToken);
 }
 
 // =============================================================================

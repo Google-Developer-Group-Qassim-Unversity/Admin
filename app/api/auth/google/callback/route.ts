@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { getOAuth2Client, setTokensInCookies, copyDriveFile, setFormIdInCookies, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
 import { createForm, getFormByEventId, updateForm } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
+  const { getToken } = await auth();
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
@@ -47,7 +49,7 @@ export async function GET(request: NextRequest) {
             form_type: 'none',
             google_form_id: null,
             google_refresh_token: null,
-          });
+          }, getToken);
           
           if (!createResult.success) {
             throw new Error('Failed to create form in backend');
@@ -88,13 +90,16 @@ export async function GET(request: NextRequest) {
         }
         
         // Step 5: Update form to success state with google form details
+        // Generate the responders link for the Google Form
+        const respondersLink = `https://docs.google.com/forms/d/${copyResult.id}/viewform`;
         const updateResult = await updateForm(formId, {
           event_id: eventId,
           form_type: 'google',
           google_form_id: copyResult.id,
           google_refresh_token: tokens.refresh_token,
           google_watch_id: watchId || null,
-        });
+          google_responders_link: respondersLink,
+        }, getToken);
         
         if (!updateResult.success) {
           console.error('Failed to update form in backend:', updateResult.error.message);
@@ -106,9 +111,10 @@ export async function GET(request: NextRequest) {
     }
     
     // Redirect back to the event page if eventId exists
+    // Include the refresh token in the redirect so the client can save it to localStorage
     const redirectUrl = eventId 
-      ? `/events/${eventId}?auth=success`
-      : '/?auth=success';
+      ? `/events/${eventId}?auth=success&save_refresh_token=${encodeURIComponent(tokens.refresh_token || '')}`
+      : `/?auth=success&save_refresh_token=${encodeURIComponent(tokens.refresh_token || '')}`;
     
     return NextResponse.redirect(new URL(redirectUrl, request.url));
   } catch (error) {

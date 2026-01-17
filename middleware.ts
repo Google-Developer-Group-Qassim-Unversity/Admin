@@ -44,7 +44,6 @@ export default clerkMiddleware(async (auth, req) => {
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
   const publicMetadata = user.publicMetadata || undefined;
-  console.log('User publicMetadata:', publicMetadata);
 
   const isAdmin = publicMetadata?.is_admin === true;
 

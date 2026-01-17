@@ -26,6 +26,12 @@ export interface CreateEventPayload {
   end_datetime: string;
   status: EventStatus;
   image_url: string | null;
+  is_official: boolean;
+  form_type: FormType;
+  google_form_id: string | null;
+  google_refresh_token: string | null;
+  google_watch_id: string | null;
+  google_responders_link: string | null;
 }
 
 // Upload types
@@ -64,6 +70,7 @@ export interface Form {
   google_form_id: string | null;
   google_refresh_token: string | null;
   google_watch_id: string | null;
+  google_responders_link: string | null;
 }
 
 export interface CreateFormPayload {
@@ -72,6 +79,7 @@ export interface CreateFormPayload {
   google_form_id?: string | null;
   google_refresh_token?: string | null;
   google_watch_id?: string | null;
+  google_responders_link?: string | null;
 }
 
 export interface UpdateFormPayload {
@@ -80,4 +88,5 @@ export interface UpdateFormPayload {
   google_form_id: string | null;
   google_refresh_token: string | null;
   google_watch_id: string | null;
+  google_responders_link: string | null;
 }

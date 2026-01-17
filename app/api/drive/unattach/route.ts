@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@clerk/nextjs/server';
 import { clearFormIdFromCookies, clearTokensFromCookies, getTokensFromCookies, getOAuth2Client, deleteFormWatch } from '@/lib/google-api';
 import { updateForm, getFormByEventId } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
+  const { getToken } = await auth();
   try {
     const body = await request.json();
     const eventId = body.eventId ? parseInt(body.eventId, 10) : null;
@@ -28,22 +30,11 @@ export async function POST(request: NextRequest) {
     // Step 3: Clear form ID from cookies
     await clearFormIdFromCookies(eventId);
     
-    // Revoke Google tokens
-    const tokens = await getTokensFromCookies();
-    if (tokens?.access_token) {
-      try {
-        const oauth2Client = getOAuth2Client();
-        oauth2Client.setCredentials(tokens);
-        await oauth2Client.revokeCredentials();
-      } catch (revokeError) {
-        console.error('Error revoking credentials:', revokeError);
-      }
-    }
-    
-    // Step 5: Clear tokens from cookies
+    // Note: We don't revoke Google tokens here as the admin may want to use them for other forms
+    // We only clear tokens from cookies for this session
     await clearTokensFromCookies();
     
-    // Step 6: Update form in backend: clear google_form_id, refresh_token, and set form_type to "none"
+    // Step 4: Update form in backend: clear google_form_id, refresh_token, and set form_type to "none"
     if (formResult.success) {
       try {
         const currentForm = formResult.data;
@@ -53,7 +44,8 @@ export async function POST(request: NextRequest) {
           google_form_id: null,
           google_refresh_token: null,
           google_watch_id: null,
-        });
+          google_responders_link: null,
+        }, getToken);
         
         if (!updateResult.success) {
           console.error('Failed to update form in backend:', updateResult.error.message);

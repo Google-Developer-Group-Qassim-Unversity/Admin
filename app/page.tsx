@@ -1,4 +1,8 @@
+"use client";
+
 import Link from "next/link";
+import { useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { CalendarPlus, Users, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -9,8 +13,22 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { saveRefreshToken } from "@/lib/google-token-storage";
 
 export default function Page() {
+  const searchParams = useSearchParams();
+
+  // Save refresh token from OAuth callback
+  useEffect(() => {
+    const refreshToken = searchParams.get('save_refresh_token');
+    if (refreshToken) {
+      saveRefreshToken(refreshToken);
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('save_refresh_token');
+      window.history.replaceState({}, '', url);
+    }
+  }, [searchParams]);
 
   return (
     <div className="space-y-8">

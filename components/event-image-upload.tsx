@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Upload, X } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -20,23 +20,25 @@ import { uploadFile, shouldContactSupport } from "@/lib/api";
 interface EventImageUploadProps {
   onChange: (url: string | null) => void;
   error?: string;
+  getToken?: () => Promise<string | null>;
 }
 
-export function EventImageUpload({ onChange, error }: EventImageUploadProps) {
+export function EventImageUpload({ onChange, error, getToken }: EventImageUploadProps) {
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
+  const [isUploading, setIsUploading] = React.useState(false);
 
   const handleFileUpload = async (files: File[]) => {
     if (files.length === 0) return;
 
     const file = files[0];
-    setUploadedFile(file);
+    setIsUploading(true);
 
-    const result = await uploadFile(file);
+    const result = await uploadFile(file, getToken);
     if (result.success) {
+      setUploadedFile(file);
       onChange(result.data.file);
       toast.success("Image uploaded successfully");
     } else {
-      setUploadedFile(null);
       onChange(null);
       if (shouldContactSupport(result.error)) {
         toast.error("Upload failed. Please contact support.");
@@ -44,6 +46,7 @@ export function EventImageUpload({ onChange, error }: EventImageUploadProps) {
         toast.error(result.error.message);
       }
     }
+    setIsUploading(false);
   };
 
   const handleFileRemove = () => {
@@ -66,15 +69,28 @@ export function EventImageUpload({ onChange, error }: EventImageUploadProps) {
           }
         }}
       >
-        <FileUploadDropzone className="min-h-30 flex-col">
-          <Upload className="h-8 w-8 text-muted-foreground" />
-          <p className="mt-2 text-sm text-muted-foreground">
-            Drag & drop an image here, or click to browse
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Max 5MB, images only
-          </p>
-        </FileUploadDropzone>
+        {!uploadedFile && (
+          <FileUploadDropzone className="min-h-30 flex-col">
+            {isUploading ? (
+              <>
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Uploading image...
+                </p>
+              </>
+            ) : (
+              <>
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Drag & drop an image here, or click to browse
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Max 5MB, images only
+                </p>
+              </>
+            )}
+          </FileUploadDropzone>
+        )}
         <FileUploadList>
           {uploadedFile && (
             <FileUploadItem value={uploadedFile}>

@@ -1,22 +1,36 @@
 "use client";
 
 import * as React from "react";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventInfoTab } from "@/components/event-info-tab";
 import { EventManageTab } from "@/components/event-manage-tab";
 import { EventResponsesTab } from "@/components/event-responses-tab";
 import { EventEditTab } from "@/components/event-edit-tab";
 import { getEvent } from "@/lib/api";
+import { saveRefreshToken } from "@/lib/google-token-storage";
 import type { Event } from "@/lib/api-types";
 
 export default function EventPage() {
   const params = useParams();
+  const searchParams = useSearchParams();
   const eventId = params.id as string;
 
   const [event, setEvent] = React.useState<Event | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
+
+  // Save refresh token from OAuth callback
+  React.useEffect(() => {
+    const refreshToken = searchParams.get('save_refresh_token');
+    if (refreshToken) {
+      saveRefreshToken(refreshToken);
+      // Clean up the URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('save_refresh_token');
+      window.history.replaceState({}, '', url);
+    }
+  }, [searchParams]);
 
   const fetchEvent = React.useCallback(async () => {
     setIsLoading(true);

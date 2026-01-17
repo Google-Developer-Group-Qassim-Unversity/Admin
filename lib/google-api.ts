@@ -174,8 +174,8 @@ export async function copyDriveFile(fileId: string, eventId?: number) {
   };
 }
 
-export async function deleteDriveFile(fileId: string, eventId?: number) {
-  const oauth2Client = await getAuthenticatedClient(eventId);
+export async function deleteDriveFile(fileId: string, eventId?: number, providedClient?: Auth.OAuth2Client) {
+  const oauth2Client = providedClient || await getAuthenticatedClient(eventId);
   
   if (!oauth2Client) {
     throw new Error('Not authenticated');
@@ -190,8 +190,8 @@ export async function deleteDriveFile(fileId: string, eventId?: number) {
   return { success: true };
 }
 
-export async function registerFormWatch(formId: string, eventId?: number) {
-  const oauth2Client = await getAuthenticatedClient(eventId);
+export async function registerFormWatch(formId: string, eventId?: number, providedClient?: Auth.OAuth2Client) {
+  const oauth2Client = providedClient || await getAuthenticatedClient(eventId);
   
   if (!oauth2Client) {
     throw new Error('Not authenticated');

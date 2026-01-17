@@ -19,6 +19,8 @@ import {
 } from '@/components/ui/item';
 import { GoogleFormsIcon, GoogleIcon } from '@/lib/google-icons';
 import { MoreHorizontal, Loader2, ExternalLink, Trash2, Info } from 'lucide-react';
+import { getRefreshToken, hasRefreshToken } from '@/lib/google-token-storage';
+import { toast } from 'sonner';
 
 interface FormData {
   id?: number;
@@ -36,14 +38,55 @@ interface FormsCopyItemProps {
 export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCopyItemProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [imgError, setImgError] = useState(false);
+  const hasSavedToken = hasRefreshToken();
 
   const isCopied = !!formData?.googleFormId;
   const fileName = formData?.formName;
   const fileId = formData?.googleFormId;
 
   const handleConnect = () => {
-    const authUrl = `/api/auth/google?eventId=${eventId}`;
-    window.location.href = authUrl;
+    // Check if we have a saved refresh token
+    if (hasRefreshToken()) {
+      handleCopyWithToken();
+    } else {
+      // No saved token, go through OAuth flow
+      const authUrl = `/api/auth/google?eventId=${eventId}`;
+      window.location.href = authUrl;
+    }
+  };
+
+  const handleCopyWithToken = async () => {
+    const refreshToken = getRefreshToken();
+    if (!refreshToken) {
+      // Fallback to OAuth if no token
+      const authUrl = `/api/auth/google?eventId=${eventId}`;
+      window.location.href = authUrl;
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/drive/copy', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ eventId, refreshToken }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to attach form');
+      }
+
+      toast.success('Form attached successfully!');
+      // Notify parent to refresh form data
+      onFormChange();
+    } catch (error) {
+      console.error('Error attaching form:', error);
+      toast.error('Failed to attach form. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleUnattach = async () => {
@@ -162,11 +205,22 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
             </DropdownMenu>
           </div>
         ) : (
-          <Button onClick={handleConnect}>
-            <span className="mr-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
-              <GoogleIcon className="h-4 w-4" />
-            </span>
-            Connect to Google
+          <Button onClick={handleConnect} disabled={isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Attaching Form...
+              </>
+            ) : hasSavedToken ? (
+              "Copy Form Template"
+            ) : (
+              <>
+                <span className="mr-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
+                  <GoogleIcon className="h-4 w-4" />
+                </span>
+                Connect to Google
+              </>
+            )}
           </Button>
         )}
       </ItemActions>
