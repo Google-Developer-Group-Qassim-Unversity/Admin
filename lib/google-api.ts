@@ -279,3 +279,53 @@ export async function getUserInfo(eventId?: number) {
     picture: response.data.picture,
   };
 }
+
+export async function publishForm(formId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const forms = google.forms({ version: 'v1', auth: oauth2Client });
+  
+  // Update form settings to accept responses
+  await forms.forms.batchUpdate({
+    formId: formId,
+    requestBody: {
+      requests: [
+        {
+          updateSettings: {
+            settings: {
+              quizSettings: {
+                isQuiz: false,
+              },
+            },
+            updateMask: 'quizSettings.isQuiz',
+          },
+        },
+      ],
+    },
+  });
+
+  return { success: true };
+}
+
+export async function checkFormPublished(formId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const forms = google.forms({ version: 'v1', auth: oauth2Client });
+  
+  try {
+    const response = await forms.forms.get({ formId });
+    // If we can get the responderUri, the form is published
+    return !!response.data.responderUri;
+  } catch (error) {
+    console.error('Error checking form published status:', error);
+    return false;
+  }
+}

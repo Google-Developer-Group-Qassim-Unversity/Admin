@@ -185,6 +185,17 @@ export async function createEvent(
   }, getToken);
 }
 
+export async function updateEvent(
+  id: number,
+  payload: Partial<Event>,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
 // =============================================================================
 // Forms API
 // =============================================================================

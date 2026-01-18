@@ -86,7 +86,7 @@ export default function EventPage() {
       </TabsContent>
 
       <TabsContent value="manage">
-        <EventManageTab event={event} />
+        <EventManageTab event={event} onEventChange={fetchEvent} />
       </TabsContent>
 
       <TabsContent value="responses">

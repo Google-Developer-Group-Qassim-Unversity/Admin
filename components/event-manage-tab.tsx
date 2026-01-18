@@ -8,6 +8,7 @@ import type { Event } from '@/lib/api-types';
 
 interface EventManageTabProps {
   event: Event;
+  onEventChange?: () => void;
 }
 
 interface FormData {
@@ -16,7 +17,7 @@ interface FormData {
   formName: string | null;
 }
 
-export function EventManageTab({ event }: EventManageTabProps) {
+export function EventManageTab({ event, onEventChange }: EventManageTabProps) {
   const [user, setUser] = useState<{ name?: string; email?: string; picture?: string } | null>(null);
   const [formData, setFormData] = useState<FormData | null>(null);
 
@@ -76,6 +77,11 @@ export function EventManageTab({ event }: EventManageTabProps) {
       }
       
       setUser(authData.user || null);
+      
+      // Also refresh the event data from parent
+      if (onEventChange) {
+        onEventChange();
+      }
     } catch (error) {
       console.error('Error refreshing data:', error);
     }
@@ -96,7 +102,11 @@ export function EventManageTab({ event }: EventManageTabProps) {
           onFormChange={handleFormChange}
           user={user}
         />
-        <PublishItem />
+        <PublishItem 
+          event={event}
+          formData={formData}
+          onEventChange={handleFormChange}
+        />
       </CardContent>
     </Card>
   );
