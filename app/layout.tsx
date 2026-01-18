@@ -4,6 +4,7 @@ import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { QueryProvider } from "@/lib/query-provider";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/sonner";
 
@@ -47,11 +48,13 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <div className="relative min-h-screen flex flex-col">
-              <Navbar />
-              <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
-            </div>
-            <Toaster />
+            <QueryProvider>
+              <div className="relative min-h-screen flex flex-col">
+                <Navbar />
+                <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+              </div>
+              <Toaster />
+            </QueryProvider>
           </ThemeProvider>
         </body>
       </html>

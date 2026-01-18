@@ -19,7 +19,7 @@ import { LocationToggle } from "@/components/ui/location-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
-import { useEventFormData } from "@/hooks/use-event-form-data";
+import { useCreateEventForm } from "@/hooks/use-create-event-form";
 import { createEvent, shouldContactSupport } from "@/lib/api";
 import type { LocationType } from "@/lib/api-types";
 
@@ -66,7 +66,7 @@ export default function CreateEventPage() {
   const watchName = watch("name");
   const watchLocationType = watch("location_type");
 
-  const { isLoadingData, locationOptions } = useEventFormData({
+  const { isLoadingData, locationOptions } = useCreateEventForm({
     watchName,
     watchLocationType,
     setValue,
@@ -171,6 +171,7 @@ export default function CreateEventPage() {
               id="description"
               placeholder="Enter event description (optional)"
               rows={3}
+              dir='auto'
               {...register("description")}
             />
             <p className="text-xs text-muted-foreground">

@@ -71,6 +71,7 @@ export interface Form {
   google_refresh_token: string | null;
   google_watch_id: string | null;
   google_responders_url: string | null;
+  google_form_schema: JSON;
 }
 
 export interface CreateFormPayload {
@@ -80,6 +81,7 @@ export interface CreateFormPayload {
   google_refresh_token?: string | null;
   google_watch_id?: string | null;
   google_responders_url?: string | null;
+  google_form_schema?: JSON;
 }
 
 export interface UpdateFormPayload {
@@ -89,4 +91,12 @@ export interface UpdateFormPayload {
   google_refresh_token: string | null;
   google_watch_id: string | null;
   google_responders_url: string | null;
+  google_form_schema?: JSON;
+}
+
+// Client-side Google Form data (camelCase mapping of Form)
+export interface GoogleFormData {
+  id?: number;
+  googleFormId: string | null;
+  googleRespondersUrl?: string | null;
 }

@@ -97,38 +97,6 @@ export async function refreshAccessToken(refreshToken: string): Promise<Credenti
   }
 }
 
-// Form ID cookie management
-export async function getFormIdFromCookies(eventId: number): Promise<string | null> {
-  const cookieStore = await cookies();
-  const formIdJson = cookieStore.get(`form_id_${eventId}`)?.value;
-  
-  if (!formIdJson) {
-    return null;
-  }
-
-  try {
-    const data = JSON.parse(formIdJson);
-    return data.formId || null;
-  } catch {
-    return null;
-  }
-}
-
-export async function setFormIdInCookies(eventId: number, formId: string, formName: string) {
-  const cookieStore = await cookies();
-  cookieStore.set(`form_id_${eventId}`, JSON.stringify({ formId, formName }), {
-    httpOnly: false, // Allow client-side access for faster fetching
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 365, // 1 year
-  });
-}
-
-export async function clearFormIdFromCookies(eventId: number) {
-  const cookieStore = await cookies();
-  cookieStore.delete(`form_id_${eventId}`);
-}
-
 export async function getAuthenticatedClient(eventId?: number) {
   let tokens = await getTokensFromCookies();
   
@@ -289,26 +257,25 @@ export async function publishForm(formId: string, eventId?: number) {
 
   const forms = google.forms({ version: 'v1', auth: oauth2Client });
   
-  // Update form settings to accept responses
-  await forms.forms.batchUpdate({
+  // Set form to published state to accept responses
+  const response = await forms.forms.setPublishSettings({
+    // Required. The ID of the form. You can get the id from Form.form_id field.
     formId: formId,
-    requestBody: {
-      requests: [
-        {
-          updateSettings: {
-            settings: {
-              quizSettings: {
-                isQuiz: false,
-              },
-            },
-            updateMask: 'quizSettings.isQuiz',
-          },
+      requestBody: {
+        // request body parameters
+        publishSettings: {
+          publishState: {
+            isPublished: true,
+            isAcceptingResponses: true,
+          }
         },
-      ],
-    },
-  });
+      },
+    });
 
-  return { success: true };
+  return { 
+    success: true,
+    data: response.data
+  };
 }
 
 export async function checkFormPublished(formId: string, eventId?: number) {
@@ -322,10 +289,38 @@ export async function checkFormPublished(formId: string, eventId?: number) {
   
   try {
     const response = await forms.forms.get({ formId });
-    // If we can get the responderUri, the form is published
-    return !!response.data.responderUri;
+    // Check if publishedState is 'PUBLISHED'
+    return response.data.publishSettings?.publishState?.isPublished;
   } catch (error) {
     console.error('Error checking form published status:', error);
     return false;
   }
+}
+
+export async function unpublishForm(formId: string, eventId?: number) {
+  const oauth2Client = await getAuthenticatedClient(eventId);
+  
+  if (!oauth2Client) {
+    throw new Error('Not authenticated');
+  }
+
+  const forms = google.forms({ version: 'v1', auth: oauth2Client });
+  
+  // Set form to unpublished state to stop accepting responses
+  const response = await forms.forms.setPublishSettings({
+    formId: formId,
+    requestBody: {
+      publishSettings: {
+        publishState: {
+          isPublished: false,
+          isAcceptingResponses: false,
+        }
+      },
+    },
+  });
+
+  return { 
+    success: true,
+    data: response.data
+  };
 }

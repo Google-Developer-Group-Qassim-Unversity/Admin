@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
-import { copyDriveFile, setFormIdInCookies, deleteDriveFile, registerFormWatch, getOAuth2Client } from '@/lib/google-api';
+import { copyDriveFile, deleteDriveFile, registerFormWatch, getOAuth2Client } from '@/lib/google-api';
 import { updateForm, getFormByEventId } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
@@ -23,7 +23,6 @@ export async function POST(request: NextRequest) {
 
     let result;
     let formId: string | undefined;
-    let formName: string | undefined;
 
     let oauth2Client;
 
@@ -45,13 +44,11 @@ export async function POST(request: NextRequest) {
       });
 
       formId = copyResponse.data.id || undefined;
-      formName = copyResponse.data.name || undefined;
-      result = { id: formId, name: formName };
+      result = { id: formId, name: copyResponse.data.name || undefined };
     } else {
       // Use existing cookie-based flow
       result = await copyDriveFile(templateFileId, eventId);
       formId = result.id || undefined;
-      formName = result.name || undefined;
     }
     
     if (!formId) {
@@ -82,25 +79,22 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // Step 3: Store form ID in cookies for faster access
-    if (formId && formName) {
-      await setFormIdInCookies(eventId, formId, formName);
-    }
-    
-    // Step 4: Fetch current form data to get full object for update to DB
+    // Step 3: Fetch current form data to get full object for update to DB
     const formResult = await getFormByEventId(eventId);
     if (formResult.success && formId) {
       try {
         const currentForm = formResult.data;
         
-        // Get the actual responder URI from Google Forms API
+        // Get the form schema and responder URI from Google Forms API
         let respondersLink = null;
+        let formSchema = null;
         try {
           const forms = google.forms({ version: 'v1', auth: oauth2Client });
           const formDetails = await forms.forms.get({ formId });
           respondersLink = formDetails.data.responderUri || undefined;
+          formSchema = formDetails.data; // Store the complete form schema
         } catch (formError) {
-          console.error('Error fetching responder URI:', formError);
+          console.error('Error fetching form schema:', formError);
         }
         if (!respondersLink) {
           console.log('No responder URI found for form:', formId);
@@ -115,6 +109,7 @@ export async function POST(request: NextRequest) {
           google_refresh_token: refreshToken || currentForm.google_refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
+          google_form_schema: formSchema,
         }, getToken);
         
         if (!updateResult.success) {

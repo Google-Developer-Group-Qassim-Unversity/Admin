@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Item,
@@ -10,101 +9,58 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
-import { Check, Upload, Loader2 } from 'lucide-react';
-import { updateEvent } from '@/lib/api';
+import { Check, Upload, Loader2, ExternalLink } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
+import { useUpdateEvent } from '@/hooks/use-event';
+import { usePublishForm } from '@/hooks/use-form-data';
 import { toast } from 'sonner';
-import type { Event } from '@/lib/api-types';
-
-interface FormData {
-  id?: number;
-  googleFormId: string | null;
-  formName: string | null;
-}
+import type { Event, GoogleFormData } from '@/lib/api-types';
 
 interface PublishItemProps {
   event: Event;
-  formData: FormData | null;
+  formData: GoogleFormData | null;
   onEventChange: () => void;
 }
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const { getToken } = useAuth();
+  const updateEvent = useUpdateEvent(getToken);
+  const publishForm = usePublishForm(event.id);
+
+  const isLoading = updateEvent.isPending || publishForm.isPending;
   const isPublished = event.status === 'open';
   const hasGoogleForm = formData?.googleFormId;
 
   const handlePublish = async () => {
-    setIsLoading(true);
     try {
-      // If event has a Google form, ensure it's published
+      // If event has a Google form, ensure it's published first
       if (hasGoogleForm && formData?.googleFormId) {
-        try {
-          // Call API to check and publish the Google form
-          const response = await fetch('/api/drive/publish', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ 
-              eventId: event.id,
-              formId: formData.googleFormId 
-            }),
-          });
-
-          if (!response.ok) {
-            throw new Error('Failed to publish Google Form');
-          }
-        } catch (formError) {
-          console.error('Error publishing Google Form:', formError);
-          toast.error('Failed to publish Google Form. Please try again.');
-          setIsLoading(false);
-          return;
-        }
+        await publishForm.mutateAsync(formData.googleFormId);
       }
 
-      // Update event status to 'open'
-      const result = await updateEvent(
-        event.id,
-        { ...event, status: 'open' },
-        getToken
-      );
+      await updateEvent.mutateAsync({
+        id: event.id,
+        data: { ...event, status: 'open' },
+      });
 
-      if (result.success) {
-        toast.success('Event published successfully!');
-        onEventChange();
-      } else {
-        toast.error(result.error.message || 'Failed to publish event');
-      }
-    } catch (error) {
-      console.error('Error publishing event:', error);
+      toast.success('Event published successfully!');
+      onEventChange();
+    } catch {
       toast.error('Failed to publish event. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
   const handleUnpublish = async () => {
-    setIsLoading(true);
     try {
-      // Update event status to 'announced'
-      const result = await updateEvent(
-        event.id,
-        { ...event, status: 'announced' },
-        getToken
-      );
+      await updateEvent.mutateAsync({
+        id: event.id,
+        data: { ...event, status: 'announced' },
+      });
 
-      if (result.success) {
-        toast.success('Event unpublished successfully!');
-        onEventChange();
-      } else {
-        toast.error(result.error.message || 'Failed to unpublish event');
-      }
-    } catch (error) {
-      console.error('Error unpublishing event:', error);
+      toast.success('Event unpublished successfully!');
+      onEventChange();
+    } catch {
       toast.error('Failed to unpublish event. Please try again.');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -129,20 +85,34 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
         </ItemDescription>
       </ItemContent>
       <ItemActions>
-        <Button
-          onClick={isPublished ? handleUnpublish : handlePublish}
-          disabled={isLoading}
-          variant={isPublished ? 'outline' : 'default'}
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              {isPublished ? 'Unpublishing...' : 'Publishing...'}
-            </>
-          ) : (
-            isPublished ? 'Unpublish' : 'Publish'
+        <div className="flex items-center gap-2">
+          {isPublished && hasGoogleForm && formData?.googleRespondersUrl && (
+            <Button variant="outline" size="sm" asChild>
+              <a 
+                href={formData.googleRespondersUrl} 
+                target="_blank" 
+                rel="noopener noreferrer"
+              >
+                Open Form
+                <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
           )}
-        </Button>
+          <Button
+            onClick={isPublished ? handleUnpublish : handlePublish}
+            disabled={isLoading}
+            variant={isPublished ? 'outline' : 'default'}
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {isPublished ? 'Unpublishing...' : 'Publishing...'}
+              </>
+            ) : (
+              isPublished ? 'Unpublish' : 'Publish'
+            )}
+          </Button>
+        </div>
       </ItemActions>
     </Item>
   );

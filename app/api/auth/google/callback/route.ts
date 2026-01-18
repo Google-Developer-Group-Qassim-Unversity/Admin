@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
-import { getOAuth2Client, setTokensInCookies, copyDriveFile, setFormIdInCookies, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
+import { getOAuth2Client, setTokensInCookies, copyDriveFile, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
 import { createForm, getFormByEventId, updateForm } from '@/lib/api';
 
 export async function GET(request: NextRequest) {
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
         try {
           const watchResult = await registerFormWatch(copyResult.id, eventId);
           watchId = watchResult.watchId;
-          console.log(`Watch registered for form ${copyResult.id}`);
+          console.log(`👁‍🗨 Watch registered for form ${copyResult.id}`);
         } catch (watchError) {
           console.error('Error registering form watch:', watchError);
           
@@ -85,21 +85,18 @@ export async function GET(request: NextRequest) {
           throw new Error('Failed to register form watch');
         }
         
-        // Step 4: Store form ID in cookies for faster access
-        if (copyResult.id && copyResult.name) {
-          await setFormIdInCookies(eventId, copyResult.id, copyResult.name);
-        }
-        
-        // Step 5: Update form to success state with google form details
-        // Get the actual responder URI from Google Forms API
+        // Step 4: Update form to success state with google form details
+        // Get the form schema and responder URI from Google Forms API
         let respondersLink = null;
+        let formSchema = null;
         try {
           oauth2Client.setCredentials(tokens);
           const forms = google.forms({ version: 'v1', auth: oauth2Client });
           const formDetails = await forms.forms.get({ formId: copyResult.id });
           respondersLink = formDetails.data.responderUri || null;
+          formSchema = formDetails.data; // Store the complete form schema
         } catch (formError) {
-          console.error('Error fetching responder URI:', formError);
+          console.error('Error fetching form schema:', formError);
         }
         
         const updateResult = await updateForm(formId, {
@@ -109,6 +106,7 @@ export async function GET(request: NextRequest) {
           google_refresh_token: tokens.refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
+          google_form_schema: formSchema,
         }, getToken);
         
         if (!updateResult.success) {

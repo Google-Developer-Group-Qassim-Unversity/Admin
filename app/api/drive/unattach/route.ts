@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { clearFormIdFromCookies, clearTokensFromCookies, getTokensFromCookies, getOAuth2Client, deleteFormWatch } from '@/lib/google-api';
+import { clearTokensFromCookies, getTokensFromCookies, getOAuth2Client, deleteFormWatch } from '@/lib/google-api';
 import { updateForm, getFormByEventId } from '@/lib/api';
 
 export async function POST(request: NextRequest) {
@@ -27,11 +27,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Step 3: Clear form ID from cookies
-    await clearFormIdFromCookies(eventId);
-    
+    // Step 3: Clear tokens from cookies for this session
     // Note: We don't revoke Google tokens here as the admin may want to use them for other forms
-    // We only clear tokens from cookies for this session
     await clearTokensFromCookies();
     
     // Step 4: Update form in backend: clear google_form_id, refresh_token, and set form_type to "none"

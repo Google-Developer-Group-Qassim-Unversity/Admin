@@ -1,27 +1,24 @@
 "use client";
 
-import * as React from "react";
+import { useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventInfoTab } from "@/components/event-info-tab";
 import { EventManageTab } from "@/components/event-manage-tab";
 import { EventResponsesTab } from "@/components/event-responses-tab";
 import { EventEditTab } from "@/components/event-edit-tab";
-import { getEvent } from "@/lib/api";
+import { useEvent } from "@/hooks/use-event";
 import { saveRefreshToken } from "@/lib/google-token-storage";
-import type { Event } from "@/lib/api-types";
 
 export default function EventPage() {
   const params = useParams();
   const searchParams = useSearchParams();
   const eventId = params.id as string;
 
-  const [event, setEvent] = React.useState<Event | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-  const [error, setError] = React.useState<string | null>(null);
+  const { data: event, isLoading, error, refetch } = useEvent(eventId);
 
   // Save refresh token from OAuth callback
-  React.useEffect(() => {
+  useEffect(() => {
     const refreshToken = searchParams.get('save_refresh_token');
     if (refreshToken) {
       saveRefreshToken(refreshToken);
@@ -31,22 +28,6 @@ export default function EventPage() {
       window.history.replaceState({}, '', url);
     }
   }, [searchParams]);
-
-  const fetchEvent = React.useCallback(async () => {
-    setIsLoading(true);
-    setError(null);
-    const response = await getEvent(eventId);
-    if (response.success) {
-      setEvent(response.data);
-    } else {
-      setError(response.error.message);
-    }
-    setIsLoading(false);
-  }, [eventId]);
-
-  React.useEffect(() => {
-    fetchEvent();
-  }, [fetchEvent]);
 
   if (isLoading) {
     return (
@@ -59,7 +40,7 @@ export default function EventPage() {
   if (error) {
     return (
       <div className="text-center py-12 text-destructive">
-        Error: {error}
+        Error: {error.message}
       </div>
     );
   }
@@ -86,7 +67,7 @@ export default function EventPage() {
       </TabsContent>
 
       <TabsContent value="manage">
-        <EventManageTab event={event} onEventChange={fetchEvent} />
+        <EventManageTab event={event} onEventChange={refetch} />
       </TabsContent>
 
       <TabsContent value="responses">

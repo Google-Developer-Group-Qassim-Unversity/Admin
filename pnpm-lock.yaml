@@ -23,6 +23,9 @@ importers:
       '@radix-ui/react-slot':
         specifier: ^1.2.4
         version: 1.2.4(@types/react@19.2.7)(react@19.2.3)
+      '@tanstack/react-query':
+        specifier: ^5.90.19
+        version: 5.90.19(react@19.2.3)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1
@@ -36,8 +39,8 @@ importers:
         specifier: ^4.1.0
         version: 4.1.0
       googleapis:
-        specifier: ^170.0.0
-        version: 170.0.0
+        specifier: ^170.1.0
+        version: 170.1.0
       lucide-react:
         specifier: ^0.562.0
         version: 0.562.0(react@19.2.3)
@@ -1522,6 +1525,14 @@ packages:
   '@tailwindcss/postcss@4.1.18':
     resolution: {integrity: sha512-Ce0GFnzAOuPyfV5SxjXGn0CubwGcuDB0zcdaPuCSzAa/2vII24JTkH+I6jcbXLb1ctjZMZZI6OjDaLPJQL1S0g==}
 
+  '@tanstack/query-core@5.90.19':
+    resolution: {integrity: sha512-GLW5sjPVIvH491VV1ufddnfldyVB+teCnpPIvweEfkpRx7CfUmUGhoh9cdcUKBh/KwVxk22aNEDxeTsvmyB/WA==}
+
+  '@tanstack/react-query@5.90.19':
+    resolution: {integrity: sha512-qTZRZ4QyTzQc+M0IzrbKHxSeISUmRB3RPGmao5bT+sI6ayxSRhn0FXEnT5Hg3as8SBFcRosrXXRFB+yAcxVxJQ==}
+    peerDependencies:
+      react: ^18 || ^19
+
   '@ts-morph/common@0.27.0':
     resolution: {integrity: sha512-Wf29UqxWDpc+i61k3oIOzcUfQt79PIT9y/MWfAGlrkjg6lBC1hwDECLXPVJAhWjiGbfBCxZd65F/LIZF3+jeJQ==}
 
@@ -2542,8 +2553,8 @@ packages:
     resolution: {integrity: sha512-eCzNACUXPb1PW5l0ULTzMHaL/ltPRADoPgjBlT8jWsTbxkCp6siv+qKJ/1ldaybCthGwsYFYallF7u9AkU4L+A==}
     engines: {node: '>=18.0.0'}
 
-  googleapis@170.0.0:
-    resolution: {integrity: sha512-UJz71WZ3ubMr4NhkEU+CFTS0CMrrXq+ltrFnAQo8Llf9M3cy0AIfKLyFQdUJyhqIpJ4jPW4SRCcBBntrLQ72/A==}
+  googleapis@170.1.0:
+    resolution: {integrity: sha512-RLbc7yG6qzZqvAmGcgjvNIoZ7wpcCFxtc+HN+46etxDrlO4a8l5Cb7NxNQGhV91oRmL7mt56VoRoypAtEQEIKg==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -5479,6 +5490,13 @@ snapshots:
       postcss: 8.5.6
       tailwindcss: 4.1.18
 
+  '@tanstack/query-core@5.90.19': {}
+
+  '@tanstack/react-query@5.90.19(react@19.2.3)':
+    dependencies:
+      '@tanstack/query-core': 5.90.19
+      react: 19.2.3
+
   '@ts-morph/common@0.27.0':
     dependencies:
       fast-glob: 3.3.3
@@ -6694,7 +6712,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  googleapis@170.0.0:
+  googleapis@170.1.0:
     dependencies:
       google-auth-library: 10.5.0
       googleapis-common: 8.0.1

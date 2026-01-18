@@ -20,98 +20,50 @@ import {
 import { GoogleFormsIcon, GoogleIcon } from '@/lib/google-icons';
 import { MoreHorizontal, Loader2, ExternalLink, Trash2, Info } from 'lucide-react';
 import { getRefreshToken, hasRefreshToken } from '@/lib/google-token-storage';
+import { useCopyForm, useUnattachForm } from '@/hooks/use-form-data';
 import { toast } from 'sonner';
-
-interface FormData {
-  id?: number;
-  googleFormId: string | null;
-  formName: string | null;
-}
+import type { GoogleFormData } from '@/lib/api-types';
 
 interface FormsCopyItemProps {
   eventId: number;
-  formData: FormData | null;
+  formData: GoogleFormData | null;
   onFormChange: () => void;
   user?: { name?: string; email?: string; picture?: string } | null;
 }
 
 export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCopyItemProps) {
-  const [isLoading, setIsLoading] = useState(false);
   const [imgError, setImgError] = useState(false);
   const hasSavedToken = hasRefreshToken();
 
+  const copyForm = useCopyForm(eventId);
+  const unattachForm = useUnattachForm(eventId);
+
+  const isLoading = copyForm.isPending || unattachForm.isPending;
   const isCopied = !!formData?.googleFormId;
-  const fileName = formData?.formName;
   const fileId = formData?.googleFormId;
 
   const handleConnect = () => {
-    // Check if we have a saved refresh token
-    if (hasRefreshToken()) {
-      handleCopyWithToken();
-    } else {
-      // No saved token, go through OAuth flow
-      const authUrl = `/api/auth/google?eventId=${eventId}`;
-      window.location.href = authUrl;
-    }
-  };
-
-  const handleCopyWithToken = async () => {
     const refreshToken = getRefreshToken();
-    if (!refreshToken) {
-      // Fallback to OAuth if no token
-      const authUrl = `/api/auth/google?eventId=${eventId}`;
-      window.location.href = authUrl;
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/drive/copy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
+    if (refreshToken) {
+      copyForm.mutate(refreshToken, {
+        onSuccess: () => {
+          toast.success('Form attached successfully!');
+          onFormChange();
         },
-        body: JSON.stringify({ eventId, refreshToken }),
+        onError: () => {
+          toast.error('Failed to attach form. Please try again.');
+        },
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to attach form');
-      }
-
-      toast.success('Form attached successfully!');
-      // Notify parent to refresh form data
-      onFormChange();
-    } catch (error) {
-      console.error('Error attaching form:', error);
-      toast.error('Failed to attach form. Please try again.');
-    } finally {
-      setIsLoading(false);
+    } else {
+      window.location.href = `/api/auth/google?eventId=${eventId}`;
     }
   };
 
-  const handleUnattach = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/drive/unattach', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ eventId }),
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to un-attach form');
-      }
-
-      // Notify parent to refresh form data
-      onFormChange();
-    } catch (error) {
-      console.error('Error un-attaching form:', error);
-      alert('Failed to un-attach form. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handleUnattach = () => {
+    unattachForm.mutate(undefined, {
+      onSuccess: () => onFormChange(),
+      onError: () => toast.error('Failed to un-attach form. Please try again.'),
+    });
   };
 
   return (
@@ -129,9 +81,9 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
           {isCopied ? 'Google Form is now attached' : 'Attach a Form'}
         </ItemTitle>
         <ItemDescription className="max-w-100">
-          {isCopied && fileName ? (
+          {isCopied ? (
             <div className="flex flex-col gap-1">
-              <span>Members will now have to fill out the form <span className="font-semibold text-foreground">&quot;{fileName}&quot;</span> before signing up to the event.</span>
+              <span>Members will now have to fill out the form before signing up to the event.</span>
               <span className="text-xs text-muted-foreground">You can edit the form in Google Forms and members will be shown the latest updated form.</span>
             </div>
           ) : (

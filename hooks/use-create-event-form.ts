@@ -3,7 +3,7 @@ import type { FieldValues, Path, UseFormSetValue, UseFormSetError, UseFormClearE
 import { getEvents } from "@/lib/api";
 import type { Event, LocationType } from "@/lib/api-types";
 
-interface UseEventFormDataOptions<T extends FieldValues> {
+interface UseCreateEventFormOptions<T extends FieldValues> {
   watchName: string;
   watchLocationType: LocationType;
   setValue: UseFormSetValue<T>;
@@ -12,14 +12,14 @@ interface UseEventFormDataOptions<T extends FieldValues> {
   errors: FieldErrors<T>;
 }
 
-export function useEventFormData<T extends FieldValues>({
+export function useCreateEventForm<T extends FieldValues>({
   watchName,
   watchLocationType,
   setValue,
   setError,
   clearErrors,
   errors,
-}: UseEventFormDataOptions<T>) {
+}: UseCreateEventFormOptions<T>) {
   const [existingEvents, setExistingEvents] = React.useState<Event[]>([]);
   const [isLoadingData, setIsLoadingData] = React.useState(true);
   const previousLocationType = React.useRef<LocationType>(watchLocationType);
