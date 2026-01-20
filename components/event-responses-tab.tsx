@@ -1,6 +1,6 @@
 "use client";
 
-import type { Event, Submission } from "@/lib/api-types";
+import type { Event } from "@/lib/api-types";
 import {
   Card,
   CardHeader,
@@ -11,8 +11,14 @@ import {
 import { useSubmissions } from "@/hooks/use-submissions";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
+import {
+  transformSubmissionsToRows,
+  getQuestionKeys,
+  createColumns,
+} from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMemo, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   useReactTable,
   getCoreRowModel,
@@ -20,7 +26,6 @@ import {
   getSortedRowModel,
   getFilteredRowModel,
   flexRender,
-  type ColumnDef,
   type SortingState,
   type ColumnFiltersState,
   type VisibilityState,
@@ -35,13 +40,10 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import {
-  ArrowUpDown,
-  Check,
   ChevronLeft,
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
-  Clock,
   Columns3,
   Search,
 } from "lucide-react";
@@ -57,212 +59,84 @@ interface EventResponsesTabProps {
   event: Event;
 }
 
-// Type for transformed table row data
-// Using Record<string, unknown> to allow dynamic question keys
-type TableRowData = Record<string, unknown> & {
-  // Submission metadata
-  submission_id: number;
-  submitted_at: string;
-  is_accepted: boolean;
-  submission_type: string;
-  // Member data (flattened)
-  member_id: number;
-  name: string;
-  email: string;
-  phone_number: string;
-  uni_id: string;
-  gender: string;
-  uni_level: number;
-  uni_college: string;
-};
+// Table skeleton component matching the table structure
+function TableSkeleton() {
+  return (
+    <>
+      {/* Summary Statistics Skeleton */}
+      <div className="rounded-lg border p-6 mb-6">
+        <div className="text-sm text-muted-foreground">Summary</div>
+        <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
+          {Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="p-2 rounded bg-muted/50">
+              <Skeleton className="h-5 w-20" />
+            </div>
+          ))}
+        </div>
+      </div>
 
-// Transform submissions to table rows
-function transformSubmissionsToRows(
-  submissions: Submission[],
-  parsedGoogleSubmissions: Array<{
-    submission: Submission;
-    parsedAnswers: Record<string, string | string[] | null> | null;
-    error?: string;
-  }>
-): TableRowData[] {
-  // Create a map for quick lookup of parsed answers
-  const parsedMap = new Map(
-    parsedGoogleSubmissions.map((p) => [p.submission.submission_id, p])
+      {/* Table Controls Skeleton */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+        <div className="relative flex-1 max-w-sm">
+          <Skeleton className="h-10 w-full" />
+        </div>
+        <Skeleton className="h-9 w-24" />
+      </div>
+
+      {/* Table Skeleton */}
+      <div className="rounded-lg border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {/* Base columns: Name, Email, Phone, Uni ID, Gender, Level, College, Submitted At, Actions */}
+              {/* Plus 2-3 placeholder question columns */}
+              {Array.from({ length: 11 }).map((_, i) => (
+                <TableHead key={i}>
+                  <Skeleton className="h-5 w-20" />
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {Array.from({ length: 8 }).map((_, rowIndex) => (
+              <TableRow key={rowIndex}>
+                {Array.from({ length: 11 }).map((_, colIndex) => (
+                  <TableCell key={colIndex}>
+                    <Skeleton className="h-4 w-full" />
+                  </TableCell>
+                ))}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Pagination Skeleton */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
+        <Skeleton className="h-5 w-48" />
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <Skeleton key={i} className="h-9 w-9" />
+          ))}
+        </div>
+      </div>
+    </>
   );
-
-  return submissions.map((submission) => {
-    const parsed = parsedMap.get(submission.submission_id);
-
-    // Base row with member data
-    const row: TableRowData = {
-      submission_id: submission.submission_id,
-      submitted_at: submission.submitted_at,
-      is_accepted: submission.is_accepted,
-      submission_type: submission.submission_type,
-      member_id: submission.member.id,
-      name: submission.member.name,
-      email: submission.member.email,
-      phone_number: submission.member.phone_number,
-      uni_id: submission.member.uni_id,
-      gender: submission.member.gender,
-      uni_level: submission.member.uni_level,
-      uni_college: submission.member.uni_college,
-    };
-
-    // Add parsed answers if available
-    if (parsed?.parsedAnswers) {
-      Object.entries(parsed.parsedAnswers).forEach(([title, answer]) => {
-        // Convert arrays to comma-separated strings
-        if (Array.isArray(answer)) {
-          row[title] = answer.join(", ");
-        } else {
-          row[title] = answer;
-        }
-      });
-    }
-
-    return row;
-  });
-}
-
-// Get dynamic question column keys from parsed submissions
-function getQuestionKeys(
-  parsedGoogleSubmissions: Array<{
-    submission: Submission;
-    parsedAnswers: Record<string, string | string[] | null> | null;
-  }>
-): string[] {
-  // Get keys from first valid parsed submission
-  const firstValid = parsedGoogleSubmissions.find((p) => p.parsedAnswers);
-  if (!firstValid?.parsedAnswers) return [];
-  return Object.keys(firstValid.parsedAnswers);
-}
-
-// Create column definitions
-function createColumns(
-  questionKeys: string[],
-  onToggleAccepted: (submissionId: number, currentValue: boolean) => void
-): ColumnDef<TableRowData>[] {
-  // Base member columns
-  const baseColumns: ColumnDef<TableRowData>[] = [
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-2"
-        >
-          Name
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("name")}</span>
-      ),
-    },
-    {
-      accessorKey: "email",
-      header: "Email",
-    },
-    {
-      accessorKey: "phone_number",
-      header: "Phone",
-    },
-    {
-      accessorKey: "uni_id",
-      header: "Uni ID",
-    },
-    {
-      accessorKey: "gender",
-      header: "Gender",
-    },
-    {
-      accessorKey: "uni_level",
-      header: "Level",
-    },
-    {
-      accessorKey: "uni_college",
-      header: "College",
-    },
-    {
-      accessorKey: "submitted_at",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-2"
-        >
-          Submitted At
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("submitted_at"));
-        return (
-          <span className="text-muted-foreground">
-            {date.toLocaleDateString()} {date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-          </span>
-        );
-      },
-    },
-  ];
-
-  // Dynamic question columns
-  const questionColumns: ColumnDef<TableRowData>[] = questionKeys.map(
-    (key) => ({
-      accessorKey: key,
-      header: key,
-      cell: ({ row }) => {
-        const value = row.getValue(key);
-        if (value === null || value === undefined || value === "") {
-          return <span className="text-muted-foreground">—</span>;
-        }
-        return <span className="max-w-[200px] truncate block">{String(value)}</span>;
-      },
-    })
-  );
-
-  // Actions column
-  const actionsColumn: ColumnDef<TableRowData> = {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const isAccepted = row.original.is_accepted;
-      const submissionId = row.original.submission_id;
-      return (
-        <Button
-          variant={isAccepted ? "secondary" : "outline"}
-          size="sm"
-          onClick={() => onToggleAccepted(submissionId, isAccepted)}
-          className="gap-1"
-        >
-          {isAccepted ? (
-            <>
-              <Check className="h-3 w-3" />
-              Accepted
-            </>
-          ) : (
-            <>
-              <Clock className="h-3 w-3" />
-              Pending
-            </>
-          )}
-        </Button>
-      );
-    },
-  };
-
-  return [...baseColumns, ...questionColumns, actionsColumn];
 }
 
 export function EventResponsesTab({ event }: EventResponsesTabProps) {
   const { getToken } = useAuth();
-  const { data: submissions, isLoading, error } = useSubmissions(event.id, getToken);
-  const { data: formData } = useFormData(event.id);
-  const { data: formSchema } = useFormSchema(formData?.googleFormId || null);
+  const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event.id, getToken);
+  const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
+  const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
+
+  // Determine if we need formSchema (if googleFormId exists, we need to wait for schema)
+  // We also need to wait for formData to load to know if we need formSchema
+  const needsFormSchema = !!formData?.googleFormId;
+  const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
+
+  // Overall loading state: wait for submissions, formData (to know if we need schema), and formSchema if needed
+  const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
 
   // Local state for is_accepted (UI only, no backend call)
   const [acceptedState, setAcceptedState] = useState<Record<number, boolean>>({});
@@ -383,9 +257,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
       </CardHeader>
       <CardContent>
         {isLoading ? (
-          <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-            <p>Loading submissions…</p>
-          </div>
+          <TableSkeleton />
         ) : error ? (
           <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
             <p>Failed to load submissions.</p>
