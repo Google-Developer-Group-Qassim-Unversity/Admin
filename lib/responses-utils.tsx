@@ -1,7 +1,15 @@
 import type { Submission } from "@/lib/api-types";
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
-import { ArrowUpDown, Check, Clock } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuCheckboxItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, Clock } from "lucide-react";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -84,6 +92,74 @@ export function getQuestionKeys(
   return Object.keys(firstValid.parsedAnswers);
 }
 
+// Helper function to create a header with dropdown menu for sorting and hiding
+function createHeaderWithDropdown(title: string, sortable: boolean = false) {
+  function HeaderDropdown({ column }: HeaderContext<TableRowData, unknown>) {
+    const sortDirection = sortable ? column.getIsSorted() : false;
+    const isVisible = column.getIsVisible();
+    
+    return (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="-ml-2 h-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+          >
+            {title}
+            {sortable && <ArrowUpDown className="ml-1 h-3 w-3" />}
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {sortable && (
+            <>
+              <DropdownMenuItem
+                onClick={() => column.toggleSorting(false)}
+                disabled={sortDirection === "asc"}
+              >
+                <ArrowUp className="mr-2 h-4 w-4" />
+                Sort Ascending
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => column.toggleSorting(true)}
+                disabled={sortDirection === "desc"}
+              >
+                <ArrowDown className="mr-2 h-4 w-4" />
+                Sort Descending
+              </DropdownMenuItem>
+              {sortDirection && (
+                <DropdownMenuItem onClick={() => column.clearSorting()}>
+                  Clear Sort
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuSeparator />
+            </>
+          )}
+          <DropdownMenuCheckboxItem
+            checked={isVisible}
+            onCheckedChange={(value) => column.toggleVisibility(!!value)}
+          >
+            {isVisible ? (
+              <>
+                <Eye className="mr-2 h-4 w-4" />
+                Hide Column
+              </>
+            ) : (
+              <>
+                <EyeOff className="mr-2 h-4 w-4" />
+                Show Column
+              </>
+            )}
+          </DropdownMenuCheckboxItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    );
+  }
+  HeaderDropdown.displayName = `HeaderDropdown(${title})`;
+  
+  return HeaderDropdown;
+}
+
 // Create column definitions
 export function createColumns(
   questionKeys: string[],
@@ -93,58 +169,45 @@ export function createColumns(
   const baseColumns: ColumnDef<TableRowData>[] = [
     {
       accessorKey: "name",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-2"
-        >
-          Name
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
+      header: createHeaderWithDropdown("Name", false),
+      enableSorting: false,
       cell: ({ row }) => (
         <span className="font-medium">{row.getValue("name")}</span>
       ),
     },
     {
       accessorKey: "email",
-      header: "Email",
+      header: createHeaderWithDropdown("Email", false),
+      enableSorting: false,
     },
     {
       accessorKey: "phone_number",
-      header: "Phone",
+      header: createHeaderWithDropdown("Phone", false),
+      enableSorting: false,
     },
     {
       accessorKey: "uni_id",
-      header: "Uni ID",
+      header: createHeaderWithDropdown("Uni ID", false),
+      enableSorting: false,
     },
     {
       accessorKey: "gender",
-      header: "Gender",
+      header: createHeaderWithDropdown("Gender", false),
+      enableSorting: false,
     },
     {
       accessorKey: "uni_level",
-      header: "Level",
+      header: createHeaderWithDropdown("Level", false),
+      enableSorting: false,
     },
     {
       accessorKey: "uni_college",
-      header: "College",
+      header: createHeaderWithDropdown("College", false),
+      enableSorting: false,
     },
     {
       accessorKey: "submitted_at",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-          className="-ml-2"
-        >
-          Submitted At
-          <ArrowUpDown className="ml-1 h-3 w-3" />
-        </Button>
-      ),
+      header: createHeaderWithDropdown("Submitted At", true),
       cell: ({ row }) => {
         const date = new Date(row.getValue("submitted_at"));
         return (
@@ -161,7 +224,8 @@ export function createColumns(
   const questionColumns: ColumnDef<TableRowData>[] = questionKeys.map(
     (key) => ({
       accessorKey: key,
-      header: key,
+      header: createHeaderWithDropdown(key, false),
+      enableSorting: false,
       cell: ({ row }) => {
         const value = row.getValue(key);
         if (value === null || value === undefined || value === "") {

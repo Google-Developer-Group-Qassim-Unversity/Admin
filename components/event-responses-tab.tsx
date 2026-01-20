@@ -133,7 +133,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
   const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
 
-  // Determine if we need formSchema (if googleFormId exists, we need to wait for schema)
+  // Determine if we need formSchema (if googleFormId exists then its a google form, we need to wait for schema)
   // We also need to wait for formData to load to know if we need formSchema
   const needsFormSchema = !!formData?.googleFormId;
   const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
