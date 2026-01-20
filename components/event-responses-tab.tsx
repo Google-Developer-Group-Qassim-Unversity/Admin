@@ -308,18 +308,6 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                   <span className="text-muted-foreground">Pending:</span>{" "}
                   <span className="font-medium text-yellow-600">{pending}</span>
                 </div>
-                <div className="p-2 rounded bg-muted/50">
-                  <span className="text-muted-foreground">None:</span>{" "}
-                  <span className="font-medium">{noneType}</span>
-                </div>
-                <div className="p-2 rounded bg-blue-500/10">
-                  <span className="text-muted-foreground">Google:</span>{" "}
-                  <span className="font-medium text-blue-600">{googleType}</span>
-                </div>
-                <div className="p-2 rounded bg-muted/50">
-                  <span className="text-muted-foreground">Partial:</span>{" "}
-                  <span className="font-medium">{partialType}</span>
-                </div>
               </div>
             </div>
 
