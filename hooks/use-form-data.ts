@@ -12,6 +12,11 @@ export const authKeys = {
   status: (eventId: number) => ['auth', 'status', eventId] as const,
 };
 
+export const formSchemaKeys = {
+  all: ['formSchemas'] as const,
+  byFormId: (formId: string) => [...formSchemaKeys.all, formId] as const,
+};
+
 // Types
 interface GoogleUser {
   name?: string;
@@ -42,6 +47,26 @@ export function useFormData(eventId: number) {
         googleRespondersUrl: result.data.google_responders_url,
       };
     },
+  });
+}
+
+export function useFormSchema(formId: string | null | undefined) {
+  return useQuery({
+    queryKey: formSchemaKeys.byFormId(formId || ''),
+    queryFn: async () => {
+      if (!formId) {
+        throw new Error('Form ID is required');
+      }
+      
+      const res = await fetch(`/api/drive/form-schema/${formId}`);
+      if (!res.ok) {
+        throw new Error('Failed to fetch form schema');
+      }
+      
+      const data = await res.json();
+      return data.schema;
+    },
+    enabled: !!formId,
   });
 }
 

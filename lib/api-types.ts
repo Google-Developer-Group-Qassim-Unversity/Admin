@@ -135,5 +135,5 @@ export interface Submission {
   google_submission_value: string;
   event_id: number;
   form_id: number;
-  googl_form_id: string;
+  google_form_id: string;
 }

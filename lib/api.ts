@@ -244,7 +244,7 @@ export async function getSubmissions(
   eventId: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Submission[]>> {
-  return apiFetch<Submission[]>(`/submissions/${eventId}`, {}, getToken);
+  return apiFetch<Submission[]>(`/events/submissions/${eventId}`, {}, getToken);
 }
 
 // =============================================================================
