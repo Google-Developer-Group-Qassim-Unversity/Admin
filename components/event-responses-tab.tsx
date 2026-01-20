@@ -412,7 +412,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                         data-state={row.getIsSelected() && "selected"}
                         className={cn(
                           row.original.is_accepted &&
-                            "bg-green-50 dark:bg-green-950/20"
+                            "bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50"
                         )}
                       >
                         {row.getVisibleCells().map((cell) => (

@@ -10,6 +10,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
 
 // Type for transformed table row data
@@ -195,14 +200,43 @@ export function createColumns(
       accessorKey: "name",
       header: createHeaderWithDropdown("Name", false),
       enableSorting: false,
-      cell: ({ row }) => (
-        <span className="font-medium">{row.getValue("name")}</span>
-      ),
+      cell: ({ row }) => {
+        const name = String(row.getValue("name"));
+        if (name.length > 25) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="font-medium">{name}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{name}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        return <span className="font-medium">{name}</span>;
+      },
     },
     {
       accessorKey: "email",
       header: createHeaderWithDropdown("Email", false),
       enableSorting: false,
+      cell: ({ row }) => {
+        const email = String(row.getValue("email"));
+        if (email.length > 25) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{email}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{email}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        return <span>{email}</span>;
+      },
     },
     {
       accessorKey: "phone_number",
@@ -228,6 +262,22 @@ export function createColumns(
       accessorKey: "uni_college",
       header: createHeaderWithDropdown("College", false),
       enableSorting: false,
+      cell: ({ row }) => {
+        const college = String(row.getValue("uni_college"));
+        if (college.length > 25) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span>{college}</span>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{college}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
+        return <span>{college}</span>;
+      },
     },
     {
       accessorKey: "submitted_at",
@@ -255,8 +305,24 @@ export function createColumns(
         if (value === null || value === undefined || value === "") {
           return <span className="text-muted-foreground">—</span>;
         }
+        const stringValue = String(value);
+        // Show tooltip only if content is long enough to be truncated
+        if (stringValue.length > 30) {
+          return (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <span className="max-w-[200px] truncate block">
+                  {stringValue}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent className="max-w-md">
+                <p className="whitespace-pre-wrap break-words">{stringValue}</p>
+              </TooltipContent>
+            </Tooltip>
+          );
+        }
         return (
-          <span className="max-w-[200px] truncate block">{String(value)}</span>
+          <span className="max-w-[200px] truncate block">{stringValue}</span>
         );
       },
     })
