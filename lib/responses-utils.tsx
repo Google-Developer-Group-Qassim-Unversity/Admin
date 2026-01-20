@@ -206,3 +206,78 @@ export function createColumns(
 
   return [...baseColumns, ...questionColumns, actionsColumn];
 }
+
+// Helper to get column ID from column definition
+function getColumnId(col: ColumnDef<TableRowData>): string | null {
+  if (col.id) return col.id;
+  if ("accessorKey" in col && typeof col.accessorKey === "string") {
+    return col.accessorKey;
+  }
+  return null;
+}
+
+// Generate TSV content from table data
+export function generateTSV(
+  rows: TableRowData[],
+  columns: ColumnDef<TableRowData>[],
+  columnVisibility: Record<string, boolean>
+): string {
+  // Filter visible columns (excluding actions column)
+  const visibleColumns = columns.filter((col) => {
+    const columnId = getColumnId(col);
+    if (!columnId || columnId === "actions") return false;
+    // Check visibility (default to true if not specified)
+    return columnVisibility[columnId] !== false;
+  });
+
+  // Build header row
+  const headers = visibleColumns.map((col) => {
+    const header = col.header;
+    const columnId = getColumnId(col) || "";
+
+    // If header is a string, use it directly
+    if (typeof header === "string") {
+      return header;
+    }
+
+    // For function headers (like sortable columns), use known mappings or format the id
+    const headerMap: Record<string, string> = {
+      name: "Name",
+      submitted_at: "Submitted At",
+    };
+    if (headerMap[columnId]) {
+      return headerMap[columnId];
+    }
+
+    // Fallback: format the column id nicely
+    return String(columnId)
+      .replace(/_/g, " ")
+      .replace(/\b\w/g, (char) => char.toUpperCase());
+  });
+
+  // Build data rows
+  const dataRows = rows.map((row) => {
+    return visibleColumns.map((col) => {
+      const columnId = getColumnId(col);
+      if (!columnId) return "";
+
+      // Get value from row
+      const value = row[columnId];
+
+      // Handle null/undefined values
+      if (value === null || value === undefined) {
+        return "";
+      }
+
+      // Convert to string and escape tabs/newlines
+      const stringValue = String(value);
+      // Replace tabs with spaces, newlines with spaces
+      return stringValue.replace(/\t/g, " ").replace(/\n/g, " ").replace(/\r/g, "");
+    });
+  });
+
+  // Combine header and rows
+  return [headers, ...dataRows]
+    .map((row) => row.join("\t"))
+    .join("\n");
+}

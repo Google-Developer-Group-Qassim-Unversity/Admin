@@ -15,6 +15,7 @@ import {
   transformSubmissionsToRows,
   getQuestionKeys,
   createColumns,
+  generateTSV,
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMemo, useState } from "react";
@@ -46,6 +47,7 @@ import {
   ChevronsRight,
   Columns3,
   Search,
+  Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -54,6 +56,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { toast } from "sonner";
 
 interface EventResponsesTabProps {
   event: Event;
@@ -247,6 +250,28 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     },
   });
 
+  // Copy all data as TSV
+  const handleCopyAsTSV = () => {
+    try {
+      // Get all filtered rows (not just current page)
+      const allRows = table.getFilteredRowModel().rows.map((row) => row.original);
+
+      // Generate TSV content using utility function
+      const tsvContent = generateTSV(allRows, columns, columnVisibility);
+
+      // Copy to clipboard
+      navigator.clipboard.writeText(tsvContent).then(() => {
+        toast.success(`Copied ${allRows.length} row${allRows.length !== 1 ? "s" : ""} as TSV`);
+      }).catch((err) => {
+        console.error("Failed to copy:", err);
+        toast.error("Failed to copy data to clipboard");
+      });
+    } catch (error) {
+      console.error("Error generating TSV:", error);
+      toast.error("Failed to generate TSV data");
+    }
+  };
+
   return (
     <Card className="max-w-full mx-auto">
       <CardHeader>
@@ -311,10 +336,21 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                 />
               </div>
 
+              {/* Copy as TSV */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCopyAsTSV}
+                className="ml-auto sm:ml-0"
+              >
+                <Copy className="mr-1 h-4 w-4" />
+                Copy
+              </Button>
+
               {/* Column Visibility */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="ml-auto">
+                  <Button variant="outline" size="sm">
                     <Columns3 className="mr-1 h-4 w-4" />
                     Columns
                   </Button>
