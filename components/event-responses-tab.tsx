@@ -16,10 +16,13 @@ import {
   getQuestionKeys,
   createColumns,
   generateTSV,
+  filterTableDataByStatus,
+  getAcceptAllUpdates,
+  getBulkAcceptUpdates,
+  type StatusFilter,
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMemo, useState } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import {
   useReactTable,
   getCoreRowModel,
@@ -47,7 +50,6 @@ import {
   ChevronsRight,
   Columns3,
   Search,
-  Copy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
@@ -56,75 +58,23 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
+import {
+  TableSkeleton,
+  ActionsDropdown,
+  BulkAcceptDialog,
+} from "@/components/responses-tab-components";
+import { cn } from "@/lib/utils";
 
 interface EventResponsesTabProps {
   event: Event;
-}
-
-// Table skeleton component matching the table structure
-function TableSkeleton() {
-  return (
-    <>
-      {/* Summary Statistics Skeleton */}
-      <div className="rounded-lg border p-6 mb-6">
-        <div className="text-sm text-muted-foreground">Summary</div>
-        <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="p-2 rounded bg-muted/50">
-              <Skeleton className="h-5 w-20" />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Table Controls Skeleton */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-        <div className="relative flex-1 max-w-sm">
-          <Skeleton className="h-10 w-full" />
-        </div>
-        <Skeleton className="h-9 w-24" />
-      </div>
-
-      {/* Table Skeleton */}
-      <div className="rounded-lg border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {/* Base columns: Name, Email, Phone, Uni ID, Gender, Level, College, Submitted At, Actions */}
-              {/* Plus 2-3 placeholder question columns */}
-              {Array.from({ length: 11 }).map((_, i) => (
-                <TableHead key={i}>
-                  <Skeleton className="h-5 w-20" />
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Array.from({ length: 8 }).map((_, rowIndex) => (
-              <TableRow key={rowIndex}>
-                {Array.from({ length: 11 }).map((_, colIndex) => (
-                  <TableCell key={colIndex}>
-                    <Skeleton className="h-4 w-full" />
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-
-      {/* Pagination Skeleton */}
-      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-        <Skeleton className="h-5 w-48" />
-        <div className="flex items-center gap-1">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} className="h-9 w-9" />
-          ))}
-        </div>
-      </div>
-    </>
-  );
 }
 
 export function EventResponsesTab({ event }: EventResponsesTabProps) {
@@ -143,6 +93,12 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
 
   // Local state for is_accepted (UI only, no backend call)
   const [acceptedState, setAcceptedState] = useState<Record<number, boolean>>({});
+
+  // Status filter state
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  // Bulk accept dialog state
+  const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
 
   // Table state
   const [sorting, setSorting] = useState<SortingState>([
@@ -200,8 +156,8 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     [parsedGoogleSubmissions]
   );
 
-  // Transform data for table
-  const tableData = useMemo(() => {
+  // Transform data for table (without filtering)
+  const allTableData = useMemo(() => {
     if (!submissions) return [];
     const rows = transformSubmissionsToRows(submissions, parsedGoogleSubmissions);
     // Apply local accepted state overrides
@@ -210,6 +166,11 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
       is_accepted: acceptedState[row.submission_id] ?? row.is_accepted,
     }));
   }, [submissions, parsedGoogleSubmissions, acceptedState]);
+
+  // Apply status filter to table data
+  const tableData = useMemo(() => {
+    return filterTableDataByStatus(allTableData, statusFilter);
+  }, [allTableData, statusFilter]);
 
   // Toggle accepted handler
   const handleToggleAccepted = (submissionId: number, currentValue: boolean) => {
@@ -272,6 +233,33 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     }
   };
 
+  // Accept all filtered rows
+  const handleAcceptAll = () => {
+    const allRows = table.getFilteredRowModel().rows.map((row) => row.original);
+    const updates = getAcceptAllUpdates(allRows, acceptedState);
+    setAcceptedState(updates);
+    toast.success(`Accepted ${allRows.length} submission${allRows.length !== 1 ? "s" : ""}`);
+  };
+
+  // Accept bulk by Uni IDs
+  const handleAcceptBulk = (uniIds: string[]) => {
+    // Use allTableData to search through all submissions (not just filtered)
+    const { updates, acceptedCount } = getBulkAcceptUpdates(
+      allTableData,
+      uniIds,
+      acceptedState
+    );
+    setAcceptedState(updates);
+    
+    if (acceptedCount > 0) {
+      toast.success(
+        `Accepted ${acceptedCount} submission${acceptedCount !== 1 ? "s" : ""} by Uni ID`
+      );
+    } else {
+      toast.warning("No submissions found matching the provided Uni IDs");
+    }
+  };
+
   return (
     <Card className="max-w-full mx-auto">
       <CardHeader>
@@ -313,6 +301,21 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
 
             {/* Table Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+              {/* Status Filter */}
+              <Select
+                value={statusFilter}
+                onValueChange={(value: StatusFilter) => setStatusFilter(value)}
+              >
+                <SelectTrigger className="w-[150px]" size="sm">
+                  <SelectValue placeholder="Filter status" />
+                </SelectTrigger>
+                <SelectContent align="start">
+                  <SelectItem value="all">All</SelectItem>
+                  <SelectItem value="accepted">Accepted</SelectItem>
+                  <SelectItem value="not_accepted">Not Accepted</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Search */}
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -324,16 +327,13 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                 />
               </div>
 
-              {/* Copy as TSV */}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleCopyAsTSV}
-                className="ml-auto sm:ml-0"
-              >
-                <Copy className="mr-1 h-4 w-4" />
-                Copy
-              </Button>
+              {/* Actions Dropdown */}
+              <ActionsDropdown
+                onCopyAsTSV={handleCopyAsTSV}
+                onAcceptAll={handleAcceptAll}
+                onAcceptBulk={() => setBulkAcceptDialogOpen(true)}
+                filteredRowCount={table.getFilteredRowModel().rows.length}
+              />
 
               {/* Column Visibility */}
               <DropdownMenu>
@@ -388,6 +388,10 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
+                        className={cn(
+                          row.original.is_accepted &&
+                            "bg-green-50 dark:bg-green-950/20"
+                        )}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>
@@ -471,6 +475,11 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
           </>
         )}
       </CardContent>
+      <BulkAcceptDialog
+        open={bulkAcceptDialogOpen}
+        onOpenChange={setBulkAcceptDialogOpen}
+        onSubmit={handleAcceptBulk}
+      />
     </Card>
   );
 }

@@ -345,3 +345,62 @@ export function generateTSV(
     .map((row) => row.join("\t"))
     .join("\n");
 }
+
+// =============================================================================
+// Status Filter Utilities
+// =============================================================================
+
+export type StatusFilter = "all" | "accepted" | "not_accepted";
+
+/**
+ * Filter table data by acceptance status
+ */
+export function filterTableDataByStatus(
+  data: TableRowData[],
+  filter: StatusFilter
+): TableRowData[] {
+  if (filter === "all") return data;
+  if (filter === "accepted") return data.filter((row) => row.is_accepted);
+  if (filter === "not_accepted") return data.filter((row) => !row.is_accepted);
+  return data;
+}
+
+/**
+ * Get updated accepted state for "Accept All" action
+ * Sets all provided rows to accepted (true)
+ */
+export function getAcceptAllUpdates(
+  rows: TableRowData[],
+  currentState: Record<number, boolean>
+): Record<number, boolean> {
+  const updates = { ...currentState };
+  for (const row of rows) {
+    updates[row.submission_id] = true;
+  }
+  return updates;
+}
+
+/**
+ * Get updated accepted state for "Accept Bulk" action
+ * Accepts all submissions matching the provided Uni IDs
+ * Returns the updated state and count of accepted submissions
+ */
+export function getBulkAcceptUpdates(
+  allRows: TableRowData[],
+  uniIds: string[],
+  currentState: Record<number, boolean>
+): { updates: Record<number, boolean>; acceptedCount: number } {
+  const updates = { ...currentState };
+  const uniIdSet = new Set(uniIds.map((id) => id.trim().toLowerCase()));
+  let acceptedCount = 0;
+
+  for (const row of allRows) {
+    const rowUniId = String(row.uni_id || "").trim().toLowerCase();
+    if (uniIdSet.has(rowUniId)) {
+      updates[row.submission_id] = true;
+      acceptedCount++;
+    }
+  }
+
+  return { updates, acceptedCount };
+}
