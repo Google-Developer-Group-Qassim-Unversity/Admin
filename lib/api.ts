@@ -7,6 +7,7 @@ import type {
   Form,
   CreateFormPayload,
   UpdateFormPayload,
+  Submission,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -34,9 +35,8 @@ async function apiFetch<T>(
       Object.assign(headers, existingHeaders);
     }
 
-    // Add authorization header for non-GET requests
-    const method = options.method?.toUpperCase() || "GET";
-    if (method !== "GET" && getToken) {
+    // Add authorization header when a token provider is passed
+    if (getToken) {
       const token = await getToken();
       if (token) {
         headers["Authorization"] = `Bearer ${token}`;
@@ -234,6 +234,17 @@ export async function deleteForm(
   return apiFetch<Form>(`/forms/${formId}/`, {
     method: "DELETE",
   }, getToken);
+}
+
+// =============================================================================
+// Submissions API
+// =============================================================================
+
+export async function getSubmissions(
+  eventId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Submission[]>> {
+  return apiFetch<Submission[]>(`/submissions/${eventId}`, {}, getToken);
 }
 
 // =============================================================================

@@ -100,3 +100,40 @@ export interface GoogleFormData {
   googleFormId: string | null;
   googleRespondersUrl?: string | null;
 }
+
+// =============================================================================
+// Submissions
+// =============================================================================
+
+export type Gender = "Male" | "Female";
+
+export interface Member {
+  id: number;
+  name: string;
+  email: string;
+  phone_number: string;
+  uni_id: string;
+  gender: Gender;
+  uni_level: number;
+  uni_college: string;
+}
+
+/**
+ * - "none": submission complete, no questions to fill
+ * - "google": a Google Form is attached; answers are in `google_submission_value`
+ * - "partial": intermediate state while user is filling; can be ignored for now
+ */
+export type SubmissionType = "none" | "partial" | "google";
+
+export interface Submission {
+  member: Member;
+  submission_id: number;
+  submitted_at: string;
+  form_type: FormType;
+  submission_type: SubmissionType;
+  is_accepted: boolean;
+  google_submission_value: string;
+  event_id: number;
+  form_id: number;
+  googl_form_id: string;
+}
