@@ -19,6 +19,7 @@ import {
   filterTableDataByStatus,
   getAcceptAllUpdates,
   getBulkAcceptUpdates,
+  getToggleSelectedUpdates,
   type StatusFilter,
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
@@ -33,6 +34,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
   type VisibilityState,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -64,6 +66,7 @@ import {
   ActionsDropdown,
   BulkAcceptDialog,
   Pagination,
+  SelectedRowsActions,
 } from "@/components/responses-tab-components";
 import { cn } from "@/lib/utils";
 
@@ -106,6 +109,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     uni_college: false,
   });
   const [globalFilter, setGlobalFilter] = useState("");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Summary stats
   const total = submissions?.length ?? 0;
@@ -166,17 +170,9 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     return filterTableDataByStatus(allTableData, statusFilter);
   }, [allTableData, statusFilter]);
 
-  // Toggle accepted handler
-  const handleToggleAccepted = (submissionId: number, currentValue: boolean) => {
-    setAcceptedState((prev) => ({
-      ...prev,
-      [submissionId]: !currentValue,
-    }));
-  };
-
   // Create columns
   const columns = useMemo(
-    () => createColumns(questionKeys, handleToggleAccepted),
+    () => createColumns(questionKeys),
     [questionKeys]
   );
 
@@ -189,11 +185,15 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
       columnFilters,
       columnVisibility,
       globalFilter,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onColumnVisibilityChange: setColumnVisibility,
     onGlobalFilterChange: setGlobalFilter,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
+    getRowId: (row) => String(row.submission_id),
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -253,6 +253,27 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
       toast.warning("No submissions found matching the provided Uni IDs");
     }
   };
+
+  // Toggle acceptance for selected rows
+  const handleAcceptSelected = () => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+    if (selectedRows.length === 0) return;
+    
+    const { updates, allAccepted } = getToggleSelectedUpdates(selectedRows, acceptedState);
+    setAcceptedState(updates);
+    setRowSelection({});
+    
+    const action = allAccepted ? "Removed acceptance from" : "Accepted";
+    toast.success(`${action} ${selectedRows.length} submission${selectedRows.length !== 1 ? "s" : ""}`);
+  };
+
+  // Check if all selected rows are accepted
+  const allSelectedAccepted = useMemo(() => {
+    const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
+    return selectedRows.length > 0 && selectedRows.every(
+      (row) => acceptedState[row.submission_id] ?? row.is_accepted
+    );
+  }, [table, acceptedState, rowSelection]);
 
   return (
     <Card className="max-w-full mx-auto">
@@ -320,6 +341,13 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                   className="pl-8"
                 />
               </div>
+
+              {/* Selected Rows Actions */}
+              <SelectedRowsActions
+                selectedCount={table.getFilteredSelectedRowModel().rows.length}
+                allAccepted={allSelectedAccepted}
+                onAcceptSelected={handleAcceptSelected}
+              />
 
               {/* Actions Dropdown */}
               <ActionsDropdown

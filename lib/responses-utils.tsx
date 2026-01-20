@@ -1,6 +1,7 @@
 import type { Submission } from "@/lib/api-types";
 import type { ColumnDef, HeaderContext } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,7 +10,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, Clock } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -162,9 +163,32 @@ function createHeaderWithDropdown(title: string, sortable: boolean = false) {
 
 // Create column definitions
 export function createColumns(
-  questionKeys: string[],
-  onToggleAccepted: (submissionId: number, currentValue: boolean) => void
+  questionKeys: string[]
 ): ColumnDef<TableRowData>[] {
+  // Select column for row selection
+  const selectColumn: ColumnDef<TableRowData> = {
+    id: "select",
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Select all"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Select row"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  };
+
   // Base member columns
   const baseColumns: ColumnDef<TableRowData>[] = [
     {
@@ -238,37 +262,7 @@ export function createColumns(
     })
   );
 
-  // Actions column
-  const actionsColumn: ColumnDef<TableRowData> = {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => {
-      const isAccepted = row.original.is_accepted;
-      const submissionId = row.original.submission_id;
-      return (
-        <Button
-          variant={isAccepted ? "secondary" : "outline"}
-          size="sm"
-          onClick={() => onToggleAccepted(submissionId, isAccepted)}
-          className="gap-1"
-        >
-          {isAccepted ? (
-            <>
-              <Check className="h-3 w-3" />
-              Accepted
-            </>
-          ) : (
-            <>
-              <Clock className="h-3 w-3" />
-              Pending
-            </>
-          )}
-        </Button>
-      );
-    },
-  };
-
-  return [...baseColumns, ...questionColumns, actionsColumn];
+  return [selectColumn, ...baseColumns, ...questionColumns];
 }
 
 // Helper to get column ID from column definition
@@ -286,10 +280,10 @@ export function generateTSV(
   columns: ColumnDef<TableRowData>[],
   columnVisibility: Record<string, boolean>
 ): string {
-  // Filter visible columns (excluding actions column)
+  // Filter visible columns (excluding select and actions columns)
   const visibleColumns = columns.filter((col) => {
     const columnId = getColumnId(col);
-    if (!columnId || columnId === "actions") return false;
+    if (!columnId || columnId === "actions" || columnId === "select") return false;
     // Check visibility (default to true if not specified)
     return columnVisibility[columnId] !== false;
   });
@@ -378,6 +372,45 @@ export function getAcceptAllUpdates(
     updates[row.submission_id] = true;
   }
   return updates;
+}
+
+/**
+ * Get updated accepted state for "Accept Selected" action
+ * Sets all selected rows to accepted (true)
+ */
+export function getAcceptSelectedUpdates(
+  selectedRows: TableRowData[],
+  currentState: Record<number, boolean>
+): Record<number, boolean> {
+  const updates = { ...currentState };
+  for (const row of selectedRows) {
+    updates[row.submission_id] = true;
+  }
+  return updates;
+}
+
+/**
+ * Toggle acceptance state for selected rows
+ * If all selected rows are accepted, unaccepts them
+ * Otherwise, accepts all selected rows
+ */
+export function getToggleSelectedUpdates(
+  selectedRows: TableRowData[],
+  currentState: Record<number, boolean>
+): { updates: Record<number, boolean>; allAccepted: boolean } {
+  const updates = { ...currentState };
+  // Check if all selected rows are currently accepted
+  const allAccepted = selectedRows.every(
+    (row) => currentState[row.submission_id] ?? row.is_accepted
+  );
+  
+  // Toggle: if all accepted, unaccept; otherwise accept
+  const newValue = !allAccepted;
+  for (const row of selectedRows) {
+    updates[row.submission_id] = newValue;
+  }
+  
+  return { updates, allAccepted };
 }
 
 /**
