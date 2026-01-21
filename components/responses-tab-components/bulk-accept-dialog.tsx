@@ -12,21 +12,40 @@ import {
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Loader2 } from "lucide-react";
 
 interface BulkAcceptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (uniIds: string[]) => void;
+  isLoading?: boolean;
 }
 
 export function BulkAcceptDialog({
   open,
   onOpenChange,
   onSubmit,
+  isLoading = false,
 }: BulkAcceptDialogProps) {
   const [uniIdsText, setUniIdsText] = useState("");
+  const [dialogKey, setDialogKey] = useState(0);
 
-  const handleSubmit = () => {
+  const handleOpenChange = (newOpen: boolean) => {
+    // Prevent closing while request is in progress
+    if (isLoading && !newOpen) {
+      return;
+    }
+    
+    // Reset textarea when dialog opens
+    if (newOpen && !open) {
+      setUniIdsText("");
+      setDialogKey((prev) => prev + 1);
+    }
+    
+    onOpenChange(newOpen);
+  };
+
+  const handleSubmit = async () => {
     // Parse Uni IDs from textarea (split by newlines, commas, or spaces)
     const uniIds = uniIdsText
       .split(/[\n,\s]+/)
@@ -37,14 +56,12 @@ export function BulkAcceptDialog({
       return;
     }
 
-    onSubmit(uniIds);
-    setUniIdsText("");
-    onOpenChange(false);
+    await onSubmit(uniIds);
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent key={dialogKey}>
         <DialogHeader>
           <DialogTitle>Accept Bulk by Uni ID</DialogTitle>
           <DialogDescription>
@@ -60,14 +77,26 @@ export function BulkAcceptDialog({
             value={uniIdsText}
             onChange={(e) => setUniIdsText(e.target.value)}
             className="min-h-[150px] font-mono text-sm"
+            disabled={isLoading}
           />
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button 
+            variant="outline" 
+            onClick={() => handleOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!uniIdsText.trim()}>
-            Accept
+          <Button onClick={handleSubmit} disabled={!uniIdsText.trim() || isLoading}>
+            {isLoading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Processing...
+              </>
+            ) : (
+              "Accept"
+            )}
           </Button>
         </DialogFooter>
       </DialogContent>

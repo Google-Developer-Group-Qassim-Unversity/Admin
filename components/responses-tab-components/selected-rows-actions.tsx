@@ -1,18 +1,20 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { CheckCheck, X } from "lucide-react";
+import { CheckCheck, X, Loader2 } from "lucide-react";
 
 interface SelectedRowsActionsProps {
   selectedCount: number;
   allAccepted: boolean;
   onAcceptSelected: () => void;
+  isLoading?: boolean;
 }
 
 export function SelectedRowsActions({
   selectedCount,
   allAccepted,
   onAcceptSelected,
+  isLoading = false,
 }: SelectedRowsActionsProps) {
   if (selectedCount === 0) {
     return null;
@@ -28,8 +30,14 @@ export function SelectedRowsActions({
         size="sm"
         onClick={onAcceptSelected}
         className="gap-1"
+        disabled={isLoading}
       >
-        {allAccepted ? (
+        {isLoading ? (
+          <>
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Processing...
+          </>
+        ) : allAccepted ? (
           <>
             <X className="h-4 w-4" />
             Remove Acceptance

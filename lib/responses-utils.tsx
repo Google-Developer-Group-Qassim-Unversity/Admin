@@ -426,80 +426,75 @@ export function filterTableDataByStatus(
 }
 
 /**
- * Get updated accepted state for "Accept All" action
- * Sets all provided rows to accepted (true)
+ * Get API payload for "Accept All" action
+ * Returns array of payload objects to accept all provided rows
  */
-export function getAcceptAllUpdates(
-  rows: TableRowData[],
-  currentState: Record<number, boolean>
-): Record<number, boolean> {
-  const updates = { ...currentState };
-  for (const row of rows) {
-    updates[row.submission_id] = true;
-  }
-  return updates;
+export function getAcceptAllPayload(
+  rows: TableRowData[]
+): Array<{ submission_id: number; is_accepted: boolean }> {
+  return rows.map((row) => ({
+    submission_id: row.submission_id,
+    is_accepted: true,
+  }));
 }
 
 /**
- * Get updated accepted state for "Accept Selected" action
- * Sets all selected rows to accepted (true)
+ * Get API payload for "Accept Selected" action
+ * Returns array of payload objects to accept all selected rows
  */
-export function getAcceptSelectedUpdates(
-  selectedRows: TableRowData[],
-  currentState: Record<number, boolean>
-): Record<number, boolean> {
-  const updates = { ...currentState };
-  for (const row of selectedRows) {
-    updates[row.submission_id] = true;
-  }
-  return updates;
+export function getAcceptSelectedPayload(
+  selectedRows: TableRowData[]
+): Array<{ submission_id: number; is_accepted: boolean }> {
+  return selectedRows.map((row) => ({
+    submission_id: row.submission_id,
+    is_accepted: true,
+  }));
 }
 
 /**
- * Toggle acceptance state for selected rows
+ * Get API payload for "Toggle Selected" action
  * If all selected rows are accepted, unaccepts them
  * Otherwise, accepts all selected rows
  */
-export function getToggleSelectedUpdates(
-  selectedRows: TableRowData[],
-  currentState: Record<number, boolean>
-): { updates: Record<number, boolean>; allAccepted: boolean } {
-  const updates = { ...currentState };
+export function getToggleSelectedPayload(
+  selectedRows: TableRowData[]
+): { payload: Array<{ submission_id: number; is_accepted: boolean }>; allAccepted: boolean } {
   // Check if all selected rows are currently accepted
-  const allAccepted = selectedRows.every(
-    (row) => currentState[row.submission_id] ?? row.is_accepted
-  );
+  const allAccepted = selectedRows.every((row) => row.is_accepted);
   
   // Toggle: if all accepted, unaccept; otherwise accept
   const newValue = !allAccepted;
-  for (const row of selectedRows) {
-    updates[row.submission_id] = newValue;
-  }
   
-  return { updates, allAccepted };
+  return {
+    payload: selectedRows.map((row) => ({
+      submission_id: row.submission_id,
+      is_accepted: newValue,
+    })),
+    allAccepted,
+  };
 }
 
 /**
- * Get updated accepted state for "Accept Bulk" action
+ * Get API payload for "Accept Bulk" action
  * Accepts all submissions matching the provided Uni IDs
- * Returns the updated state and count of accepted submissions
+ * Returns the payload array and count of matched submissions
  */
-export function getBulkAcceptUpdates(
+export function getBulkAcceptPayload(
   allRows: TableRowData[],
-  uniIds: string[],
-  currentState: Record<number, boolean>
-): { updates: Record<number, boolean>; acceptedCount: number } {
-  const updates = { ...currentState };
+  uniIds: string[]
+): { payload: Array<{ submission_id: number; is_accepted: boolean }>; acceptedCount: number } {
   const uniIdSet = new Set(uniIds.map((id) => id.trim().toLowerCase()));
-  let acceptedCount = 0;
+  const payload: Array<{ submission_id: number; is_accepted: boolean }> = [];
 
   for (const row of allRows) {
     const rowUniId = String(row.uni_id || "").trim().toLowerCase();
     if (uniIdSet.has(rowUniId)) {
-      updates[row.submission_id] = true;
-      acceptedCount++;
+      payload.push({
+        submission_id: row.submission_id,
+        is_accepted: true,
+      });
     }
   }
 
-  return { updates, acceptedCount };
+  return { payload, acceptedCount: payload.length };
 }

@@ -8,13 +8,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Copy, CheckCheck, Users } from "lucide-react";
+import { ChevronDown, Copy, CheckCheck, Users, Loader2 } from "lucide-react";
 
 interface ActionsDropdownProps {
   onCopyAsTSV: () => void;
   onAcceptAll: () => void;
   onAcceptBulk: () => void;
   filteredRowCount: number;
+  isLoading?: boolean;
 }
 
 export function ActionsDropdown({
@@ -22,6 +23,7 @@ export function ActionsDropdown({
   onAcceptAll,
   onAcceptBulk,
   filteredRowCount,
+  isLoading = false,
 }: ActionsDropdownProps) {
   return (
     <DropdownMenu>
@@ -37,13 +39,31 @@ export function ActionsDropdown({
           Copy as TSV
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={onAcceptAll}>
-          <CheckCheck className="mr-2 h-4 w-4" />
-          Accept All ({filteredRowCount})
+        <DropdownMenuItem onClick={onAcceptAll} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <CheckCheck className="mr-2 h-4 w-4" />
+              Accept All ({filteredRowCount})
+            </>
+          )}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={onAcceptBulk}>
-          <Users className="mr-2 h-4 w-4" />
-          Accept Bulk
+        <DropdownMenuItem onClick={onAcceptBulk} disabled={isLoading}>
+          {isLoading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            <>
+              <Users className="mr-2 h-4 w-4" />
+              Accept Bulk
+            </>
+          )}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -8,7 +8,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { useSubmissions } from "@/hooks/use-submissions";
+import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
@@ -17,9 +17,9 @@ import {
   createColumns,
   generateTSV,
   filterTableDataByStatus,
-  getAcceptAllUpdates,
-  getBulkAcceptUpdates,
-  getToggleSelectedUpdates,
+  getAcceptAllPayload,
+  getBulkAcceptPayload,
+  getToggleSelectedPayload,
   type StatusFilter,
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
@@ -65,6 +65,7 @@ import {
   TableSkeleton,
   ActionsDropdown,
   BulkAcceptDialog,
+  AcceptAllDialog,
   Pagination,
   SelectedRowsActions,
 } from "@/components/responses-tab-components";
@@ -79,6 +80,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
   const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event.id, getToken);
   const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
+  const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
 
   // Determine if we need formSchema (if googleFormId exists then its a google form, we need to wait for schema)
   // We also need to wait for formData to load to know if we need formSchema
@@ -88,14 +90,14 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
   // Overall loading state: wait for submissions, formData (to know if we need schema), and formSchema if needed
   const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
 
-  // Local state for is_accepted (UI only, no backend call)
-  const [acceptedState, setAcceptedState] = useState<Record<number, boolean>>({});
-
   // Status filter state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
 
   // Bulk accept dialog state
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
+  
+  // Accept all confirmation dialog state
+  const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
 
   // Table state
   const [sorting, setSorting] = useState<SortingState>([
@@ -113,7 +115,7 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
 
   // Summary stats
   const total = submissions?.length ?? 0;
-  const accepted = submissions?.filter((s) => acceptedState[s.submission_id] ?? s.is_accepted).length ?? 0;
+  const accepted = submissions?.filter((s) => s.is_accepted).length ?? 0;
   const pending = total - accepted;
 
   // Parse Google submissions
@@ -154,13 +156,8 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
   // Transform data for table (without filtering)
   const allTableData = useMemo(() => {
     if (!submissions) return [];
-    const rows = transformSubmissionsToRows(submissions, parsedGoogleSubmissions);
-    // Apply local accepted state overrides
-    return rows.map((row) => ({
-      ...row,
-      is_accepted: acceptedState[row.submission_id] ?? row.is_accepted,
-    }));
-  }, [submissions, parsedGoogleSubmissions, acceptedState]);
+    return transformSubmissionsToRows(submissions, parsedGoogleSubmissions);
+  }, [submissions, parsedGoogleSubmissions]);
 
   // Apply status filter to table data
   const tableData = useMemo(() => {
@@ -224,53 +221,77 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     }
   };
 
-  // Accept all filtered rows
-  const handleAcceptAll = () => {
+  // Open accept all confirmation dialog
+  const handleAcceptAllClick = () => {
+    setAcceptAllDialogOpen(true);
+  };
+
+  // Accept all filtered rows (called after confirmation)
+  const handleAcceptAll = async () => {
     const allRows = table.getFilteredRowModel().rows.map((row) => row.original);
-    const updates = getAcceptAllUpdates(allRows, acceptedState);
-    setAcceptedState(updates);
-    toast.success(`Accepted ${allRows.length} submission${allRows.length !== 1 ? "s" : ""}`);
+    const payload = getAcceptAllPayload(allRows);
+    
+    if (payload.length === 0) return;
+    
+    try {
+      await acceptSubmissionsMutation.mutateAsync(payload);
+      toast.success(`Accepted ${allRows.length} submission${allRows.length !== 1 ? "s" : ""}`);
+      setAcceptAllDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to accept submissions:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to accept submissions");
+    }
   };
 
   // Accept bulk by Uni IDs
-  const handleAcceptBulk = (uniIds: string[]) => {
+  const handleAcceptBulk = async (uniIds: string[]) => {
     // Use allTableData to search through all submissions (not just filtered)
-    const { updates, acceptedCount } = getBulkAcceptUpdates(
-      allTableData,
-      uniIds,
-      acceptedState
-    );
-    setAcceptedState(updates);
+    const { payload, acceptedCount } = getBulkAcceptPayload(allTableData, uniIds);
     
-    if (acceptedCount > 0) {
+    if (acceptedCount === 0) {
+      toast.warning("No submissions found matching the provided Uni IDs");
+      return;
+    }
+    
+    try {
+      await acceptSubmissionsMutation.mutateAsync(payload);
       toast.success(
         `Accepted ${acceptedCount} submission${acceptedCount !== 1 ? "s" : ""} by Uni ID`
       );
-    } else {
-      toast.warning("No submissions found matching the provided Uni IDs");
+      // Close dialog after successful submission
+      setBulkAcceptDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to accept submissions:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to accept submissions");
     }
   };
 
   // Toggle acceptance for selected rows
-  const handleAcceptSelected = () => {
+  const handleAcceptSelected = async () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
     if (selectedRows.length === 0) return;
     
-    const { updates, allAccepted } = getToggleSelectedUpdates(selectedRows, acceptedState);
-    setAcceptedState(updates);
-    setRowSelection({});
+    const { payload, allAccepted } = getToggleSelectedPayload(selectedRows);
     
-    const action = allAccepted ? "Removed acceptance from" : "Accepted";
-    toast.success(`${action} ${selectedRows.length} submission${selectedRows.length !== 1 ? "s" : ""}`);
+    try {
+      await acceptSubmissionsMutation.mutateAsync(payload);
+      setRowSelection({});
+      
+      const action = allAccepted ? "Removed acceptance from" : "Accepted";
+      toast.success(`${action} ${selectedRows.length} submission${selectedRows.length !== 1 ? "s" : ""}`);
+    } catch (error) {
+      console.error("Failed to update submissions:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to update submissions");
+    }
   };
 
   // Check if all selected rows are accepted
   const allSelectedAccepted = useMemo(() => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
-    return selectedRows.length > 0 && selectedRows.every(
-      (row) => acceptedState[row.submission_id] ?? row.is_accepted
-    );
-  }, [table, acceptedState, rowSelection]);
+    return selectedRows.length > 0 && selectedRows.every((row) => row.is_accepted);
+    // rowSelection is needed to recalculate when selection changes
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [table, rowSelection]);
 
   return (
     <Card className="max-w-full mx-auto">
@@ -344,14 +365,16 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                 selectedCount={table.getFilteredSelectedRowModel().rows.length}
                 allAccepted={allSelectedAccepted}
                 onAcceptSelected={handleAcceptSelected}
+                isLoading={acceptSubmissionsMutation.isPending}
               />
 
               {/* Actions Dropdown */}
               <ActionsDropdown
                 onCopyAsTSV={handleCopyAsTSV}
-                onAcceptAll={handleAcceptAll}
+                onAcceptAll={handleAcceptAllClick}
                 onAcceptBulk={() => setBulkAcceptDialogOpen(true)}
                 filteredRowCount={table.getFilteredRowModel().rows.length}
+                isLoading={acceptSubmissionsMutation.isPending}
               />
 
               {/* Column Visibility */}
@@ -445,6 +468,15 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
         open={bulkAcceptDialogOpen}
         onOpenChange={setBulkAcceptDialogOpen}
         onSubmit={handleAcceptBulk}
+        isLoading={acceptSubmissionsMutation.isPending}
+      />
+      
+      <AcceptAllDialog
+        open={acceptAllDialogOpen}
+        onOpenChange={setAcceptAllDialogOpen}
+        onSubmit={handleAcceptAll}
+        submissionCount={table.getFilteredRowModel().rows.length}
+        isLoading={acceptSubmissionsMutation.isPending}
       />
     </Card>
   );
