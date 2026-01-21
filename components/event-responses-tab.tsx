@@ -115,9 +115,6 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
   const total = submissions?.length ?? 0;
   const accepted = submissions?.filter((s) => acceptedState[s.submission_id] ?? s.is_accepted).length ?? 0;
   const pending = total - accepted;
-  const noneType = submissions?.filter((s) => s.submission_type === "none").length ?? 0;
-  const googleType = submissions?.filter((s) => s.submission_type === "google").length ?? 0;
-  const partialType = submissions?.filter((s) => s.submission_type === "partial").length ?? 0;
 
   // Parse Google submissions
   const parsedGoogleSubmissions = useMemo(() => {

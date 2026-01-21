@@ -8,6 +8,7 @@ import type {
   CreateFormPayload,
   UpdateFormPayload,
   Submission,
+  AcceptSubmissionPayload,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -245,6 +246,16 @@ export async function getSubmissions(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Submission[]>> {
   return apiFetch<Submission[]>(`/events/submissions/${eventId}`, {}, getToken);
+}
+
+export async function acceptSubmissions(
+  payload: AcceptSubmissionPayload[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>("/submissions/accept", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
 }
 
 // =============================================================================

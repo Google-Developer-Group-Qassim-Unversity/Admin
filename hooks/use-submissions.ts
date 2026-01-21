@@ -1,6 +1,6 @@
-import { useQuery } from "@tanstack/react-query";
-import { getSubmissions } from "@/lib/api";
-import type { Submission } from "@/lib/api-types";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { getSubmissions, acceptSubmissions } from "@/lib/api";
+import type { Submission, AcceptSubmissionPayload } from "@/lib/api-types";
 
 // Query keys
 export const submissionKeys = {
@@ -26,3 +26,22 @@ export function useSubmissions(
   });
 }
 
+export function useAcceptSubmissions(
+  getToken: () => Promise<string | null>
+) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (payload: AcceptSubmissionPayload[]) => {
+      const result = await acceptSubmissions(payload, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: () => {
+      // Invalidate all submission queries to refetch updated data
+      queryClient.invalidateQueries({ queryKey: submissionKeys.all });
+    },
+  });
+}

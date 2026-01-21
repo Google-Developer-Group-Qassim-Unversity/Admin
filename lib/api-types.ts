@@ -137,3 +137,8 @@ export interface Submission {
   form_id: number;
   google_form_id: string;
 }
+
+export interface AcceptSubmissionPayload {
+  submission_id: number;
+  is_accepted: boolean;
+}
