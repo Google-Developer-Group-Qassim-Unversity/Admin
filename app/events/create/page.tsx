@@ -19,7 +19,15 @@ import { LocationToggle } from "@/components/ui/location-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useCreateEventForm } from "@/hooks/use-create-event-form";
+import { useActions, useDepartments } from "@/hooks/use-event";
 import { createEvent, shouldContactSupport } from "@/lib/api";
 import type { LocationType } from "@/lib/api-types";
 
@@ -33,6 +41,8 @@ const eventFormSchema = z.object({
   endDate: z.date({ message: "End date is required" }),
   is_official: z.boolean(),
   image_url: z.string().nullable(),
+  department_id: z.number({ required_error: "Department is required" }),
+  composite_action: z.array(z.any()).length(2, "Composite action is required"),
 });
 
 type EventFormData = z.infer<typeof eventFormSchema>;
@@ -60,6 +70,8 @@ export default function CreateEventPage() {
       location: "",
       is_official: false,
       image_url: "",
+      department_id: undefined,
+      composite_action: undefined,
     },
   });
 
@@ -75,26 +87,48 @@ export default function CreateEventPage() {
     errors,
   });
 
+  // Fetch actions and departments
+  const { data: actionsData, isLoading: isLoadingActions } = useActions();
+  const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
+
+  // Get composite actions directly
+  const compositeActions = React.useMemo(() => {
+    if (!actionsData?.composite_actions) return [];
+    return actionsData.composite_actions;
+  }, [actionsData]);
+
+  // Filter to only show practical departments
+  const practicalDepartments = React.useMemo(() => {
+    if (!departments) return [];
+    return departments.filter((dept) => dept.type === "practical");
+  }, [departments]);
+
   // Form submission
   const onSubmit = async (data: EventFormData) => {
     setIsSubmitting(true);
 
     try {
+      // Extract department_action_id and member_action_id from the composite action
+      const department_action_id = data.composite_action[0].id;
+      const member_action_id = data.composite_action[1].id;
+
       const payload = {
-        name: data.name.trim(),
-        description: data.description?.trim() || null,
-        location_type: data.location_type as LocationType,
-        location: data.location,
-        start_datetime: data.startDate.toISOString(),
-        end_datetime: data.endDate.toISOString(),
-        status: "closed" as const,
-        image_url: data.image_url || null,
-        is_official: data.is_official,
+        event: {
+          id: null,
+          name: data.name.trim(),
+          description: data.description?.trim() || null,
+          location_type: data.location_type as LocationType,
+          location: data.location,
+          start_datetime: data.startDate.toISOString(),
+          end_datetime: data.endDate.toISOString(),
+          status: "closed" as const,
+          image_url: data.image_url || null,
+          is_official: data.is_official,
+        },
         form_type: "none" as const,
-        google_form_id: null,
-        google_refresh_token: null,
-        google_watch_id: null,
-        google_responders_url: null,
+        department_action_id: department_action_id,
+        member_action_id: member_action_id,
+        department_id: data.department_id,
       };
 
       const result = await createEvent(payload, getToken);
@@ -122,7 +156,7 @@ export default function CreateEventPage() {
     }
   };
 
-  if (isLoadingData) {
+  if (isLoadingData || isLoadingActions || isLoadingDepartments) {
     return (
       <div className="flex justify-center">
         <Card className="w-full max-w-2xl">
@@ -280,6 +314,77 @@ export default function CreateEventPage() {
                     : "Event will be marked as unofficial/community event"}
                 </p>
               </div>
+            </div>
+          </div>
+
+          {/* Department and Composite Action Selection - Side by Side */}
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            {/* Department Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="department_id">Department *</Label>
+              <Controller
+                name="department_id"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value !== undefined ? field.value.toString() : undefined}
+                    onValueChange={(value) => field.onChange(parseInt(value, 10))}
+                  >
+                    <SelectTrigger
+                      id="department_id"
+                      className={errors.department_id ? "border-destructive" : ""}
+                    >
+                      <SelectValue placeholder="Select a department..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {practicalDepartments.map((dept) => (
+                        <SelectItem key={dept.id} value={dept.id.toString()}>
+                          {dept.arabic_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.department_id && (
+                <p className="text-sm text-destructive">
+                  {errors.department_id.message}
+                </p>
+              )}
+            </div>
+
+            {/* Composite Action Selection */}
+            <div className="space-y-2">
+              <Label htmlFor="composite_action">Department Action *</Label>
+              <Controller
+                name="composite_action"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value ? JSON.stringify(field.value) : undefined}
+                    onValueChange={(value) => field.onChange(JSON.parse(value))}
+                  >
+                    <SelectTrigger
+                      id="composite_action"
+                      className={errors.composite_action ? "border-destructive" : ""}
+                    >
+                      <SelectValue placeholder="Select a department action..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {compositeActions.map((action, index) => (
+                        <SelectItem key={index} value={JSON.stringify(action)}>
+                          {action[0].arabic_action_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
+              {errors.composite_action && (
+                <p className="text-sm text-destructive">
+                  {errors.composite_action.message}
+                </p>
+              )}
             </div>
           </div>
 

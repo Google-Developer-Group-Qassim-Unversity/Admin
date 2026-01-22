@@ -9,6 +9,8 @@ import type {
   UpdateFormPayload,
   Submission,
   AcceptSubmissionPayload,
+  ActionsResponse,
+  Department,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -195,6 +197,18 @@ export async function updateEvent(
     method: "PUT",
     body: JSON.stringify(payload),
   }, getToken);
+}
+
+// =============================================================================
+// Actions and Departments API
+// =============================================================================
+
+export async function getActions(): Promise<ApiResponse<ActionsResponse>> {
+  return apiFetch<ActionsResponse>("/actions");
+}
+
+export async function getDepartments(): Promise<ApiResponse<Department[]>> {
+  return apiFetch<Department[]>("/departments");
 }
 
 // =============================================================================

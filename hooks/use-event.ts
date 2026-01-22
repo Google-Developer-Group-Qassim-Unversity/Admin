@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEvents, updateEvent } from '@/lib/api';
+import { getEvent, getEvents, updateEvent, getActions, getDepartments } from '@/lib/api';
 import type { Event } from '@/lib/api-types';
 
 // Query keys
@@ -9,6 +9,8 @@ export const eventKeys = {
   list: (params?: { limit?: number; offset?: number }) => [...eventKeys.lists(), params] as const,
   details: () => [...eventKeys.all, 'detail'] as const,
   detail: (id: number | string) => [...eventKeys.details(), id] as const,
+  actions: () => [...eventKeys.all, 'actions'] as const,
+  departments: () => [...eventKeys.all, 'departments'] as const,
 };
 
 // Hooks
@@ -54,6 +56,32 @@ export function useUpdateEvent(getToken: () => Promise<string | null>) {
       queryClient.setQueryData(eventKeys.detail(id), data);
       // Invalidate the list to refetch
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+export function useActions() {
+  return useQuery({
+    queryKey: eventKeys.actions(),
+    queryFn: async () => {
+      const result = await getActions();
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+  });
+}
+
+export function useDepartments() {
+  return useQuery({
+    queryKey: eventKeys.departments(),
+    queryFn: async () => {
+      const result = await getDepartments();
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
     },
   });
 }

@@ -18,20 +18,11 @@ export interface Event {
 }
 
 export interface CreateEventPayload {
-  name: string;
-  description: string | null;
-  location_type: LocationType;
-  location: string;
-  start_datetime: string;
-  end_datetime: string;
-  status: EventStatus;
-  image_url: string | null;
-  is_official: boolean;
+  event: Omit<Event, 'id'> & { id: number | null };
   form_type: FormType;
-  google_form_id: string | null;
-  google_refresh_token: string | null;
-  google_watch_id: string | null;
-  google_responders_url: string | null;
+  department_action_id: number;
+  member_action_id: number;
+  department_id: number;
 }
 
 // Upload types
@@ -141,4 +132,33 @@ export interface Submission {
 export interface AcceptSubmissionPayload {
   submission_id: number;
   is_accepted: boolean;
+}
+
+// =============================================================================
+// Actions and Departments
+// =============================================================================
+
+export type ActionType = "composite" | "department" | "member" | "bonus";
+
+export interface Action {
+  id: number;
+  action_name: string;
+  arabic_action_name: string;
+  action_type: ActionType;
+  action_description: string;
+  points: number;
+}
+
+export interface ActionsResponse {
+  composite_actions: Action[][];
+  department_actions: Action[];
+  member_actions: Action[];
+  custom_actions: Action[];
+}
+
+export interface Department {
+  id: number;
+  name: string;
+  arabic_name: string;
+  type: "administrative" | "practical";
 }
