@@ -7,6 +7,7 @@ import { EventInfoTab } from "@/components/event-info-tab";
 import { EventManageTab } from "@/components/event-manage-tab";
 import { EventResponsesTab } from "@/components/event-responses-tab";
 import { EventEditTab } from "@/components/event-edit-tab";
+import { EventAttendanceTab } from "@/components/event-attendance-tab";
 import { useEvent } from "@/hooks/use-event";
 import { saveRefreshToken } from "@/lib/google-token-storage";
 
@@ -59,6 +60,7 @@ export default function EventPage() {
         <TabsTrigger value="info">Event Info</TabsTrigger>
         <TabsTrigger value="manage">Google Form & Publish</TabsTrigger>
         <TabsTrigger value="responses">Manage Responses</TabsTrigger>
+        <TabsTrigger value="attendance">Attendance</TabsTrigger>
         <TabsTrigger value="edit">Edit Event</TabsTrigger>
       </TabsList>
 
@@ -72,6 +74,10 @@ export default function EventPage() {
 
       <TabsContent value="responses">
         <EventResponsesTab event={event} onEventChange={refetch} />
+      </TabsContent>
+
+      <TabsContent value="attendance">
+        <EventAttendanceTab event={event} />
       </TabsContent>
 
       <TabsContent value="edit">

@@ -287,6 +287,75 @@ export async function uploadFile(
 }
 
 // =============================================================================
+// Attendance API
+// =============================================================================
+
+export interface AttendanceTokenResponse {
+  token: string;
+  expiresAt: string;
+  attendanceUrl: string;
+}
+
+export async function generateAttendanceToken(
+  eventId: number,
+  expirationMinutes: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<AttendanceTokenResponse>> {
+  try {
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+    };
+
+    if (getToken) {
+      const token = await getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+
+    const response = await fetch("/api/attendance/generate-token", {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ eventId, expirationMinutes }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return {
+        success: false,
+        error: {
+          message: errorData.error || "Failed to generate attendance token",
+          status: response.status,
+          isServerError: response.status >= 500,
+        },
+      };
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    return {
+      success: false,
+      error: {
+        message: error instanceof Error ? error.message : "Network error occurred",
+        status: 0,
+        isServerError: true,
+      },
+    };
+  }
+}
+
+export async function markAttendance(
+  eventId: number,
+  attendanceToken: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(`/events/${eventId}/attend?token=${attendanceToken}`, {
+    method: "POST",
+  }, getToken);
+}
+
+// =============================================================================
 // Helper to check if error requires user to contact support
 // =============================================================================
 

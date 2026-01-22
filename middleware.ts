@@ -3,8 +3,10 @@ import { NextResponse } from 'next/server';
 
 // Define public routes that don't require authentication
 // In this admin app, we have NO public routes - everything requires auth
+// Exception: attendance pages are accessed by regular users via QR code
 const isPublicRoute = createRouteMatcher([
   '/access-denied(.*)',
+  '/events/:id/attend',
 ]);
 
 // Define routes that are API routes (for special handling)
