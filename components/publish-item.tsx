@@ -54,7 +54,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
     try {
       await updateEvent.mutateAsync({
         id: event.id,
-        data: { ...event, status: 'announced' },
+        data: { ...event, status: 'open' },
       });
 
       toast.success('Event unpublished successfully!');

@@ -39,10 +39,12 @@ export function EventCard({ event }: EventCardProps) {
   // Get status badge variant
   const getStatusVariant = (status: Event["status"]) => {
     switch (status) {
-      case "open":
+      case "draft":
         return "default";
-      case "announced":
+      case "open":
         return "secondary";
+      case "active":
+        return "default";
       case "closed":
         return "outline";
       default:

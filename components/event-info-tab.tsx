@@ -74,8 +74,10 @@ export function EventInfoTab({ event }: EventInfoTabProps) {
     switch (status) {
       case "open":
         return "default";
-      case "announced":
+      case "open":
         return "secondary";
+      case "active":
+        return "default";
       case "closed":
         return "outline";
       default:

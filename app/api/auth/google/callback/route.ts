@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
           // Create new form with form_type: 'none' as initial state
           const createResult = await createForm({
             event_id: eventId,
-            form_type: 'none',
+            form_type: 'registration',
             google_form_id: null,
             google_refresh_token: null,
           }, getToken);
@@ -88,13 +88,11 @@ export async function GET(request: NextRequest) {
         // Step 4: Update form to success state with google form details
         // Get the form schema and responder URI from Google Forms API
         let respondersLink = null;
-        let formSchema = null;
         try {
           oauth2Client.setCredentials(tokens);
           const forms = google.forms({ version: 'v1', auth: oauth2Client });
           const formDetails = await forms.forms.get({ formId: copyResult.id });
           respondersLink = formDetails.data.responderUri || null;
-          formSchema = formDetails.data; // Store the complete form schema
         } catch (formError) {
           console.error('Error fetching form schema:', formError);
         }
@@ -106,7 +104,6 @@ export async function GET(request: NextRequest) {
           google_refresh_token: tokens.refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
-          google_form_schema: formSchema,
         }, getToken);
         
         if (!updateResult.success) {

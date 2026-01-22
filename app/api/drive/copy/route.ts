@@ -87,12 +87,10 @@ export async function POST(request: NextRequest) {
         
         // Get the form schema and responder URI from Google Forms API
         let respondersLink = null;
-        let formSchema = null;
         try {
           const forms = google.forms({ version: 'v1', auth: oauth2Client });
           const formDetails = await forms.forms.get({ formId });
           respondersLink = formDetails.data.responderUri || undefined;
-          formSchema = formDetails.data; // Store the complete form schema
         } catch (formError) {
           console.error('Error fetching form schema:', formError);
         }
@@ -109,7 +107,6 @@ export async function POST(request: NextRequest) {
           google_refresh_token: refreshToken || currentForm.google_refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
-          google_form_schema: formSchema,
         }, getToken);
         
         if (!updateResult.success) {

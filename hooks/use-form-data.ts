@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { GoogleFormData } from '@/lib/api-types';
-import { getFormByEventId } from '@/lib/api';
+import type { GoogleFormData, FormType } from '@/lib/api-types';
+import { getFormByEventId, updateForm } from '@/lib/api';
 
 // Query keys
 export const formKeys = {
@@ -43,7 +43,9 @@ export function useFormData(eventId: number) {
       
       return {
         id: result.data.id,
+        formType: result.data.form_type,
         googleFormId: result.data.google_form_id,
+        googleRefreshToken: result.data.google_refresh_token,
         googleRespondersUrl: result.data.google_responders_url,
       };
     },
@@ -115,6 +117,64 @@ export function useUnattachForm(eventId: number) {
       });
       if (!res.ok) throw new Error('Failed to un-attach form');
       return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
+    },
+  });
+}
+
+/**
+ * Hook to update form type (registration requirement toggle)
+ * - Toggle OFF: sets form_type to "none" but preserves Google form data
+ * - Toggle ON: sets form_type to "google" if Google form exists, otherwise "registration"
+ */
+export function useUpdateFormType(eventId: number, getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ 
+      formData, 
+      requireRegistration 
+    }: { 
+      formData: GoogleFormData; 
+      requireRegistration: boolean;
+    }) => {
+      if (!formData.id) {
+        throw new Error('Form ID is required');
+      }
+
+      // Determine the target form_type based on toggle state and existing Google data
+      let targetFormType: FormType;
+      if (!requireRegistration) {
+        // Toggling OFF: set to "none" but preserve all Google data
+        targetFormType = 'none';
+      } else {
+        // Toggling ON: check if Google form data exists
+        if (formData.googleFormId) {
+          // Google form data exists, set to "google"
+          targetFormType = 'google';
+        } else {
+          // No Google form data, set to "registration"
+          targetFormType = 'registration';
+        }
+      }
+
+      const result = await updateForm(formData.id, {
+        event_id: eventId,
+        form_type: targetFormType,
+        // Preserve all Google form data regardless of toggle state
+        google_form_id: formData.googleFormId,
+        google_refresh_token: formData.googleRefreshToken ?? null,
+        google_responders_url: formData.googleRespondersUrl ?? null,
+        google_watch_id: null, // Keep watch_id handling separate
+      }, getToken);
+
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });

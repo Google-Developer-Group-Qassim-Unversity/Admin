@@ -2,7 +2,7 @@
 
 // Event types
 export type LocationType = "online" | "on-site" | "none";
-export type EventStatus = "announced" | "open" | "closed";
+export type EventStatus = "draft" | "open" | "active" | "closed";
 
 export interface Event {
   id: number;
@@ -52,7 +52,7 @@ export type ApiResponse<T> =
   | { success: false; error: ApiError };
 
 // Form types
-export type FormType = "google" | "none";
+export type FormType = "google" | "none" | "registration";
 
 export interface Form {
   id: number;
@@ -88,7 +88,9 @@ export interface UpdateFormPayload {
 // Client-side Google Form data (camelCase mapping of Form)
 export interface GoogleFormData {
   id?: number;
+  formType: FormType;
   googleFormId: string | null;
+  googleRefreshToken?: string | null;
   googleRespondersUrl?: string | null;
 }
 

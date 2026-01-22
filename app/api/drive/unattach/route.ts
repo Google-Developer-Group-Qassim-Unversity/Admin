@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
         const currentForm = formResult.data;
         const updateResult = await updateForm(currentForm.id, {
           event_id: currentForm.event_id,
-          form_type: 'none',
+          form_type: 'registration',
           google_form_id: null,
           google_refresh_token: null,
           google_watch_id: null,

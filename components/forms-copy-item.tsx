@@ -10,6 +10,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import {
   Item,
   ItemActions,
   ItemContent,
@@ -29,9 +34,10 @@ interface FormsCopyItemProps {
   formData: GoogleFormData | null;
   onFormChange: () => void;
   user?: { name?: string; email?: string; picture?: string } | null;
+  disabled?: boolean;
 }
 
-export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCopyItemProps) {
+export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled = false }: FormsCopyItemProps) {
   const [imgError, setImgError] = useState(false);
   const hasSavedToken = hasRefreshToken();
 
@@ -66,10 +72,10 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
     });
   };
 
-  return (
+  const itemContent = (
     <Item 
       variant="outline"
-      className={isCopied ? 'bg-green-500/10 border-green-500/30' : ''}
+      className={`${isCopied ? 'bg-green-500/10 border-green-500/30' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
       <ItemMedia variant="image">
         <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-500/20' : 'bg-muted'}`}>
@@ -94,7 +100,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
       <ItemActions>
         {isCopied ? (
           <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" asChild>
+            <Button variant="outline" size="sm" asChild disabled={disabled}>
               <a 
                 href={`https://docs.google.com/forms/d/${fileId}/edit`} 
                 target="_blank" 
@@ -107,7 +113,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
             {user && (
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon">
+                  <Button variant="outline" size="icon" disabled={disabled}>
                     <Info className="h-4 w-4" />
                   </Button>
                 </PopoverTrigger>
@@ -140,7 +146,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
             )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" disabled={isLoading}>
+                <Button variant="outline" size="icon" disabled={isLoading || disabled}>
                   {isLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
@@ -157,7 +163,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
             </DropdownMenu>
           </div>
         ) : (
-          <Button onClick={handleConnect} disabled={isLoading}>
+          <Button onClick={handleConnect} disabled={isLoading || disabled}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -178,4 +184,20 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user }: FormsCo
       </ItemActions>
     </Item>
   );
+
+  // Wrap in tooltip when disabled to explain why
+  if (disabled) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <div className="cursor-not-allowed">{itemContent}</div>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Registration is disabled. Enable registration to manage Google Forms.</p>
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return itemContent;
 }
