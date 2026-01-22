@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
+import { useUpdateEvent } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
@@ -45,7 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Columns3, Search } from "lucide-react";
+import { Columns3, Search, FileX, Loader2, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -68,19 +69,23 @@ import {
   AcceptAllDialog,
   Pagination,
   SelectedRowsActions,
+  StatusAlert,
+  SummaryStatistics,
 } from "@/components/responses-tab-components";
 import { cn } from "@/lib/utils";
 
 interface EventResponsesTabProps {
   event: Event;
+  onEventChange?: () => void;
 }
 
-export function EventResponsesTab({ event }: EventResponsesTabProps) {
+export function EventResponsesTab({ event, onEventChange }: EventResponsesTabProps) {
   const { getToken } = useAuth();
   const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event.id, getToken);
   const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
+  const updateEventMutation = useUpdateEvent(getToken);
 
   // Determine if we need formSchema (if googleFormId exists then its a google form, we need to wait for schema)
   // We also need to wait for formData to load to know if we need formSchema
@@ -293,6 +298,43 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, rowSelection]);
 
+  // Handle closing responses (open → active)
+  const handleCloseResponses = async () => {
+    try {
+      await updateEventMutation.mutateAsync({
+        id: event.id,
+        data: { ...event, status: 'active' },
+      });
+      toast.success('Responses have been closed. Event is now active.');
+      onEventChange?.();
+    } catch {
+      toast.error('Failed to close responses. Please try again.');
+    }
+  };
+
+  // Early return for form_type 'none'
+  if (!formDataLoading && formData?.formType === 'none') {
+    return (
+      <Card className="max-w-full mx-auto">
+        <CardHeader>
+          <CardTitle>Manage Responses: {event.name}</CardTitle>
+          <CardDescription>
+            View and manage responses for this event.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="rounded-lg border border-dashed p-12 text-center">
+            <FileX className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">No Signups Required</h3>
+            <p className="text-muted-foreground">
+              This event does not require signups. Responses are not being collected.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="max-w-full mx-auto">
       <CardHeader>
@@ -313,24 +355,14 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
           </div>
         ) : (
           <>
+            {/* Status Alert */}
+            <StatusAlert
+              eventStatus={event.status}
+              formType={formData?.formType}
+            />
+
             {/* Summary Statistics */}
-            <div className="rounded-lg border p-6 mb-6">
-              <div className="text-sm text-muted-foreground">Summary</div>
-              <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
-                <div className="p-2 rounded bg-muted/50">
-                  <span className="text-muted-foreground">Total:</span>{" "}
-                  <span className="font-medium">{total}</span>
-                </div>
-                <div className="p-2 rounded bg-green-500/10">
-                  <span className="text-muted-foreground">Accepted:</span>{" "}
-                  <span className="font-medium text-green-600">{accepted}</span>
-                </div>
-                <div className="p-2 rounded bg-yellow-500/10">
-                  <span className="text-muted-foreground">Pending:</span>{" "}
-                  <span className="font-medium text-yellow-600">{pending}</span>
-                </div>
-              </div>
-            </div>
+            <SummaryStatistics total={total} accepted={accepted} pending={pending} />
 
             {/* Table Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
@@ -403,6 +435,28 @@ export function EventResponsesTab({ event }: EventResponsesTabProps) {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              {/* Close Responses Button */}
+              {event.status === 'open' && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleCloseResponses}
+                  disabled={updateEventMutation.isPending}
+                >
+                  {updateEventMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Closing...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Close Responses
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             {/* Data Table */}
