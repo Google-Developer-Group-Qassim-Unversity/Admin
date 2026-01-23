@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { QRCodeSVG } from 'qrcode.react';
-import { Clock, Copy, QrCode, RefreshCw, Check, Timer } from 'lucide-react';
+import { Clock, Copy, QrCode, RefreshCw, Check, Timer, AlertCircle, FileX, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -131,6 +131,63 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
   };
 
   const isExpired = timeRemaining === 'Expired';
+
+  // Check if event is active - attendance is only available for active events
+  if (event.status !== 'active') {
+    const getStatusMessage = () => {
+      switch (event.status) {
+        case 'draft':
+          return {
+            icon: FileX,
+            title: 'Event Not Published',
+            description: 'This event is still a draft. Please publish the event to enable attendance tracking.',
+          };
+        case 'open':
+          return {
+            icon: AlertCircle,
+            title: 'Event Still Open',
+            description: 'This event is open for registration. Please close responses to enable attendance tracking.',
+          };
+        case 'closed':
+          return {
+            icon: Lock,
+            title: 'Event Closed',
+            description: 'This event is closed and attendance tracking is no longer available.',
+          };
+        default:
+          return {
+            icon: AlertCircle,
+            title: 'Attendance Unavailable',
+            description: 'Attendance tracking is not available for this event status.',
+          };
+      }
+    };
+
+    const statusInfo = getStatusMessage();
+    const StatusIcon = statusInfo.icon;
+
+    return (
+      <Card className="max-w-4xl mx-auto">
+        <CardHeader>
+          <CardTitle>Attendance QR Code</CardTitle>
+          <CardDescription>
+            Generate a time-limited QR code for members to mark their attendance at this event.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col items-center justify-center py-12 px-4">
+            <div className="flex items-center justify-center w-20 h-20 rounded-full bg-muted mb-4">
+              <StatusIcon className="h-10 w-10 text-muted-foreground" />
+            </div>
+            <h3 className="text-xl font-semibold mb-2">{statusInfo.title}</h3>
+            <p className="text-muted-foreground text-center max-w-md">
+              {statusInfo.description}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card className="max-w-4xl mx-auto">
