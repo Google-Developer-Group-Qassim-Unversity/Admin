@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, CalendarPlus, FileBadge } from "lucide-react";
+import { Loader2, CalendarPlus, FileBadge, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
@@ -172,6 +173,14 @@ export default function CreateEventPage() {
     <div className="flex justify-center">
       <Card className="w-full max-w-2xl">
       <CardHeader>
+        <div className="mb-4">
+          <Button variant="ghost" size="sm" asChild>
+            <Link href="/events" className="flex items-center gap-2">
+              <ArrowLeft className="h-4 w-4" />
+              Back to Events
+            </Link>
+          </Button>
+        </div>
         <CardTitle className="flex items-center gap-2">
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
             <CalendarPlus className="h-5 w-5 text-primary" />
