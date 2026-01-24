@@ -8,12 +8,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ChevronDown, Copy, CheckCheck, Users, Loader2 } from "lucide-react";
+import { ChevronDown, Copy, CheckCheck, Users, Loader2, Mail } from "lucide-react";
 
 interface ActionsDropdownProps {
   onCopyAsTSV: () => void;
   onAcceptAll: () => void;
   onAcceptBulk: () => void;
+  onCopyAcceptedEmails: () => void;
   filteredRowCount: number;
   isLoading?: boolean;
 }
@@ -22,6 +23,7 @@ export function ActionsDropdown({
   onCopyAsTSV,
   onAcceptAll,
   onAcceptBulk,
+  onCopyAcceptedEmails,
   filteredRowCount,
   isLoading = false,
 }: ActionsDropdownProps) {
@@ -37,6 +39,10 @@ export function ActionsDropdown({
         <DropdownMenuItem onClick={onCopyAsTSV}>
           <Copy className="mr-2 h-4 w-4" />
           Copy as TSV
+        </DropdownMenuItem>
+        <DropdownMenuItem onClick={onCopyAcceptedEmails}>
+          <Mail className="mr-2 h-4 w-4" />
+          Copy Accepted Emails
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onAcceptAll} disabled={isLoading}>

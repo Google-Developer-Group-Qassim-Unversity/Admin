@@ -72,6 +72,15 @@ import {
   StatusAlert,
   SummaryStatistics,
 } from "@/components/responses-tab-components";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 interface EventResponsesTabProps {
@@ -103,6 +112,9 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   
   // Accept all confirmation dialog state
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
+  
+  // Close responses confirmation dialog state
+  const [closeResponsesDialogOpen, setCloseResponsesDialogOpen] = useState(false);
 
   // Table state
   const [sorting, setSorting] = useState<SortingState>([
@@ -226,6 +238,40 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
+  // Copy emails of all accepted members
+  const handleCopyAcceptedEmails = () => {
+    if (!submissions) {
+      toast.error("No submissions available");
+      return;
+    }
+
+    try {
+      // Filter accepted submissions and extract emails
+      const acceptedEmails = submissions
+        .filter((submission) => submission.is_accepted)
+        .map((submission) => submission.member.email)
+        .filter((email) => email && email.trim() !== ""); // Filter out empty emails
+
+      if (acceptedEmails.length === 0) {
+        toast.warning("No accepted submissions with emails found");
+        return;
+      }
+
+      // Copy emails as comma-separated string
+      const emailsText = acceptedEmails.join(", ");
+
+      navigator.clipboard.writeText(emailsText).then(() => {
+        toast.success(`Copied ${acceptedEmails.length} email${acceptedEmails.length !== 1 ? "s" : ""} to clipboard`);
+      }).catch((err) => {
+        console.error("Failed to copy:", err);
+        toast.error("Failed to copy emails to clipboard");
+      });
+    } catch (error) {
+      console.error("Error copying emails:", error);
+      toast.error("Failed to copy emails");
+    }
+  };
+
   // Open accept all confirmation dialog
   const handleAcceptAllClick = () => {
     setAcceptAllDialogOpen(true);
@@ -298,7 +344,12 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, rowSelection]);
 
-  // Handle closing responses (open → active)
+  // Open close responses confirmation dialog
+  const handleCloseResponsesClick = () => {
+    setCloseResponsesDialogOpen(true);
+  };
+
+  // Handle closing responses (open → active) - called after confirmation
   const handleCloseResponses = async () => {
     try {
       await updateEventMutation.mutateAsync({
@@ -306,6 +357,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
         data: { ...event, status: 'active' },
       });
       toast.success('Responses have been closed. Event is now active.');
+      setCloseResponsesDialogOpen(false);
       onEventChange?.();
     } catch {
       toast.error('Failed to close responses. Please try again.');
@@ -405,6 +457,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 onCopyAsTSV={handleCopyAsTSV}
                 onAcceptAll={handleAcceptAllClick}
                 onAcceptBulk={() => setBulkAcceptDialogOpen(true)}
+                onCopyAcceptedEmails={handleCopyAcceptedEmails}
                 filteredRowCount={table.getFilteredRowModel().rows.length}
                 isLoading={acceptSubmissionsMutation.isPending}
               />
@@ -441,7 +494,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={handleCloseResponses}
+                  onClick={handleCloseResponsesClick}
                   disabled={updateEventMutation.isPending}
                 >
                   {updateEventMutation.isPending ? (
@@ -532,6 +585,43 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
         submissionCount={table.getFilteredRowModel().rows.length}
         isLoading={acceptSubmissionsMutation.isPending}
       />
+      
+      {/* Close Responses Confirmation Dialog */}
+      <AlertDialog open={closeResponsesDialogOpen} onOpenChange={(open) => {
+        if (!updateEventMutation.isPending) {
+          setCloseResponsesDialogOpen(open);
+        }
+      }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Close Responses?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to close responses for this event? Once closed, the event status will change from &quot;open&quot; to &quot;active&quot; and no new responses will be accepted.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={updateEventMutation.isPending}>
+              Cancel
+            </AlertDialogCancel>
+            <Button
+              onClick={handleCloseResponses}
+              disabled={updateEventMutation.isPending}
+            >
+              {updateEventMutation.isPending ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Closing...
+                </>
+              ) : (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Close Responses
+                </>
+              )}
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Card>
   );
 }

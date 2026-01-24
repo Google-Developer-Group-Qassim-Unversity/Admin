@@ -25,7 +25,6 @@ export async function GET(
         { status: 401 }
       );
     }
-
     // Initialize Google Forms API
     const forms = google.forms({ version: 'v1', auth: oauth2Client });
 
