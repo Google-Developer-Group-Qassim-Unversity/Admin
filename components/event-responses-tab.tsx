@@ -96,6 +96,12 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const updateEventMutation = useUpdateEvent(getToken);
 
+  // Filter out partial submissions (intermediate state while user is filling)
+  const filteredSubmissions = useMemo(() => {
+    if (!submissions) return undefined;
+    return submissions.filter((s) => s.submission_type !== "partial");
+  }, [submissions]);
+
   // Determine if we need formSchema (if googleFormId exists then its a google form, we need to wait for schema)
   // We also need to wait for formData to load to know if we need formSchema
   const needsFormSchema = !!formData?.googleFormId;
@@ -131,15 +137,15 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   // Summary stats
-  const total = submissions?.length ?? 0;
-  const accepted = submissions?.filter((s) => s.is_accepted).length ?? 0;
+  const total = filteredSubmissions?.length ?? 0;
+  const accepted = filteredSubmissions?.filter((s) => s.is_accepted).length ?? 0;
   const pending = total - accepted;
 
   // Parse Google submissions
   const parsedGoogleSubmissions = useMemo(() => {
-    if (!submissions || !formSchema) return [];
+    if (!filteredSubmissions || !formSchema) return [];
 
-    const googleSubmissions = submissions.filter(
+    const googleSubmissions = filteredSubmissions.filter(
       (s) => s.submission_type === "google"
     );
 
@@ -162,7 +168,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
         };
       }
     });
-  }, [submissions, formSchema]);
+  }, [filteredSubmissions, formSchema]);
 
   // Get question keys for dynamic columns
   const questionKeys = useMemo(
@@ -172,9 +178,9 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
 
   // Transform data for table (without filtering)
   const allTableData = useMemo(() => {
-    if (!submissions) return [];
-    return transformSubmissionsToRows(submissions, parsedGoogleSubmissions);
-  }, [submissions, parsedGoogleSubmissions]);
+    if (!filteredSubmissions) return [];
+    return transformSubmissionsToRows(filteredSubmissions, parsedGoogleSubmissions);
+  }, [filteredSubmissions, parsedGoogleSubmissions]);
 
   // Apply status filter to table data
   const tableData = useMemo(() => {
@@ -240,14 +246,14 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
 
   // Copy emails of all accepted members
   const handleCopyAcceptedEmails = () => {
-    if (!submissions) {
+    if (!filteredSubmissions) {
       toast.error("No submissions available");
       return;
     }
 
     try {
       // Filter accepted submissions and extract emails
-      const acceptedEmails = submissions
+      const acceptedEmails = filteredSubmissions
         .filter((submission) => submission.is_accepted)
         .map((submission) => submission.member.email)
         .filter((email) => email && email.trim() !== ""); // Filter out empty emails
