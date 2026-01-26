@@ -3,6 +3,8 @@ import type {
   ApiResponse,
   Event,
   CreateEventPayload,
+  UpdateEventPayload,
+  EventDetails,
   UploadResponse,
   Form,
   CreateFormPayload,
@@ -178,6 +180,13 @@ export async function getEvent(id: number | string): Promise<ApiResponse<Event>>
   return apiFetch<Event>(`/events/${id}`);
 }
 
+export async function getEventDetails(
+  id: number | string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EventDetails>> {
+  return apiFetch<EventDetails>(`/events/${id}/details`, {}, getToken);
+}
+
 export async function createEvent(
   payload: CreateEventPayload,
   getToken?: GetTokenFn
@@ -190,11 +199,22 @@ export async function createEvent(
 
 export async function updateEvent(
   id: number,
-  payload: Partial<Event>,
+  payload: UpdateEventPayload,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Event>> {
   return apiFetch<Event>(`/events/${id}`, {
     method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function updateEventPartial(
+  id: number,
+  payload: Partial<Event>,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}`, {
+    method: "PATCH",
     body: JSON.stringify(payload),
   }, getToken);
 }

@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Check, Upload, Loader2, ExternalLink, Lock } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
-import { useUpdateEvent } from '@/hooks/use-event';
+import { useUpdateEventPartial } from '@/hooks/use-event';
 import { usePublishForm } from '@/hooks/use-form-data';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
@@ -29,10 +29,10 @@ interface PublishItemProps {
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
   const { getToken } = useAuth();
-  const updateEvent = useUpdateEvent(getToken);
+  const updateEventPartial = useUpdateEventPartial(getToken);
   const publishForm = usePublishForm(event.id);
 
-  const isLoading = updateEvent.isPending || publishForm.isPending;
+  const isLoading = updateEventPartial.isPending || publishForm.isPending;
   const isPublished = event.status === 'open';
   const hasGoogleForm = formData?.googleFormId;
   // Disable publish/unpublish when event is active or closed
@@ -45,9 +45,9 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
         await publishForm.mutateAsync(formData.googleFormId);
       }
 
-      await updateEvent.mutateAsync({
+      await updateEventPartial.mutateAsync({
         id: event.id,
-        data: { ...event, status: 'open' },
+        data: { status: 'open' },
       });
 
       toast.success('Event published successfully!');
@@ -59,9 +59,9 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
 
   const handleUnpublish = async () => {
     try {
-      await updateEvent.mutateAsync({
+      await updateEventPartial.mutateAsync({
         id: event.id,
-        data: { ...event, status: 'draft' },
+        data: { status: 'draft' },
       });
 
       toast.success('Event unpublished successfully!');

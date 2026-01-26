@@ -91,7 +91,7 @@ export default function EventPage() {
       </TabsContent>
 
       <TabsContent value="edit">
-        <EventEditTab event={event} />
+        <EventEditTab event={event} onEventChange={refetch} />
       </TabsContent>
       </Tabs>
     </div>

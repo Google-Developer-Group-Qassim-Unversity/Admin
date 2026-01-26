@@ -25,6 +25,40 @@ export interface CreateEventPayload {
   department_id: number;
 }
 
+// Action info used in event details and update payloads
+// First action is always for department, second is for members
+export interface EventAction {
+  action_id: number;
+  ar_action_name: string;
+  department_id: number;
+  department_ar_name: string;
+}
+
+// Event with is_official as number (0 or 1) for API compatibility
+export interface EventApiPayload {
+  id: number;
+  name: string;
+  description: string | null;
+  location_type: LocationType;
+  location: string;
+  start_datetime: string;
+  end_datetime: string;
+  status: EventStatus;
+  image_url: string | null;
+  is_official: number; // 0 or 1
+}
+
+export interface UpdateEventPayload {
+  event: EventApiPayload;
+  actions: [EventAction, EventAction]; // [department_action, member_action]
+}
+
+// Extended event details returned from GET /events/{id}/details
+export interface EventDetails {
+  event: EventApiPayload;
+  actions: [EventAction, EventAction]; // [department_action, member_action]
+}
+
 // Upload types
 export interface UploadResponse {
   file: string;
@@ -145,7 +179,7 @@ export type ActionType = "composite" | "department" | "member" | "bonus";
 export interface Action {
   id: number;
   action_name: string;
-  arabic_action_name: string;
+  ar_action_name: string;
   action_type: ActionType;
   action_description: string;
   points: number;
@@ -161,6 +195,6 @@ export interface ActionsResponse {
 export interface Department {
   id: number;
   name: string;
-  arabic_name: string;
+  ar_name: string;
   type: "administrative" | "practical";
 }

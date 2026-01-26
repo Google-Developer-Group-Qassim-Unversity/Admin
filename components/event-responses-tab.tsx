@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
-import { useUpdateEvent } from "@/hooks/use-event";
+import { useUpdateEventPartial } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
@@ -94,7 +94,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
-  const updateEventMutation = useUpdateEvent(getToken);
+  const updateEventMutation = useUpdateEventPartial(getToken);
 
   // Filter out partial submissions (intermediate state while user is filling)
   const filteredSubmissions = useMemo(() => {
@@ -360,7 +360,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     try {
       await updateEventMutation.mutateAsync({
         id: event.id,
-        data: { ...event, status: 'active' },
+        data: { status: 'active' },
       });
       toast.success('Responses have been closed. Event is now active.');
       setCloseResponsesDialogOpen(false);

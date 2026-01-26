@@ -3,26 +3,33 @@ import type { FieldValues, Path, UseFormSetValue, UseFormSetError, UseFormClearE
 import { getEvents } from "@/lib/api";
 import type { Event, LocationType } from "@/lib/api-types";
 
-interface UseCreateEventFormOptions<T extends FieldValues> {
+interface UseEventFormOptions<T extends FieldValues> {
   watchName: string;
   watchLocationType: LocationType;
   setValue: UseFormSetValue<T>;
   setError: UseFormSetError<T>;
   clearErrors: UseFormClearErrors<T>;
   errors: FieldErrors<T>;
+  /** Event ID to exclude from name uniqueness check (for edit mode) */
+  excludeEventId?: number;
+  /** Skip clearing location when location type changes (for edit mode initial load) */
+  skipLocationClear?: boolean;
 }
 
-export function useCreateEventForm<T extends FieldValues>({
+export function useEventForm<T extends FieldValues>({
   watchName,
   watchLocationType,
   setValue,
   setError,
   clearErrors,
   errors,
-}: UseCreateEventFormOptions<T>) {
+  excludeEventId,
+  skipLocationClear = false,
+}: UseEventFormOptions<T>) {
   const [existingEvents, setExistingEvents] = React.useState<Event[]>([]);
   const [isLoadingData, setIsLoadingData] = React.useState(true);
   const previousLocationType = React.useRef<LocationType>(watchLocationType);
+  const isInitialMount = React.useRef(true);
 
   // Fetch existing events on mount
   React.useEffect(() => {
@@ -56,19 +63,27 @@ export function useCreateEventForm<T extends FieldValues>({
     return Array.from(uniqueLocations).sort((a, b) => a.localeCompare(b));
   }, [existingEvents, watchLocationType]);
 
-  // Clear location when location type changes
+  // Clear location when location type changes (skip on initial mount for edit mode)
   React.useEffect(() => {
-    if (previousLocationType.current !== watchLocationType) {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      previousLocationType.current = watchLocationType;
+      return;
+    }
+
+    if (previousLocationType.current !== watchLocationType && !skipLocationClear) {
       setValue("location" as Path<T>, "" as T[Path<T>]);
       previousLocationType.current = watchLocationType;
     }
-  }, [watchLocationType, setValue]);
+  }, [watchLocationType, setValue, skipLocationClear]);
 
-  // Validate event name uniqueness
+  // Validate event name uniqueness (exclude current event in edit mode)
   React.useEffect(() => {
     const normalizedName = watchName.trim().toLowerCase();
     const isDuplicate = existingEvents.some(
-      (event) => event.name.trim().toLowerCase() === normalizedName
+      (event) => 
+        event.name.trim().toLowerCase() === normalizedName &&
+        event.id !== excludeEventId
     );
 
     if (isDuplicate && normalizedName.length > 0) {
@@ -79,10 +94,15 @@ export function useCreateEventForm<T extends FieldValues>({
     } else if (errors.name?.type === "manual") {
       clearErrors("name" as Path<T>);
     }
-  }, [watchName, existingEvents, setError, clearErrors, errors.name?.type]);
+  }, [watchName, existingEvents, setError, clearErrors, errors.name?.type, excludeEventId]);
 
   return {
     isLoadingData,
     locationOptions,
   };
+}
+
+/** @deprecated Use useEventForm instead */
+export function useCreateEventForm<T extends FieldValues>(options: Omit<UseEventFormOptions<T>, 'excludeEventId' | 'skipLocationClear'>) {
+  return useEventForm(options);
 }
