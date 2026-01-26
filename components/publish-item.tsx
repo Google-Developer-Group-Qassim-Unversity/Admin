@@ -16,8 +16,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Check, Upload, Loader2, ExternalLink, Lock } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
-import { useUpdateEventPartial } from '@/hooks/use-event';
-import { usePublishForm } from '@/hooks/use-form-data';
+import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
 
@@ -29,10 +28,10 @@ interface PublishItemProps {
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
   const { getToken } = useAuth();
-  const updateEventPartial = useUpdateEventPartial(getToken);
-  const publishForm = usePublishForm(event.id);
+  const publishEvent = usePublishEvent(getToken);
+  const unpublishEvent = useUnpublishEvent(getToken);
 
-  const isLoading = updateEventPartial.isPending || publishForm.isPending;
+  const isLoading = publishEvent.isPending || unpublishEvent.isPending;
   const isPublished = event.status === 'open';
   const hasGoogleForm = formData?.googleFormId;
   // Disable publish/unpublish when event is active or closed
@@ -40,16 +39,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
 
   const handlePublish = async () => {
     try {
-      // If event has a Google form, ensure it's published first
-      if (hasGoogleForm && formData?.googleFormId) {
-        await publishForm.mutateAsync(formData.googleFormId);
-      }
-
-      await updateEventPartial.mutateAsync({
-        id: event.id,
-        data: { status: 'open' },
-      });
-
+      await publishEvent.mutateAsync(event.id);
       toast.success('Event published successfully!');
       onEventChange();
     } catch {
@@ -59,11 +49,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
 
   const handleUnpublish = async () => {
     try {
-      await updateEventPartial.mutateAsync({
-        id: event.id,
-        data: { status: 'draft' },
-      });
-
+      await unpublishEvent.mutateAsync(event.id);
       toast.success('Event unpublished successfully!');
       onEventChange();
     } catch {

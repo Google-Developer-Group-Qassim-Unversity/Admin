@@ -219,6 +219,24 @@ export async function updateEventPartial(
   }, getToken);
 }
 
+export async function publishEvent(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}/publish`, {
+    method: "POST",
+  }, getToken);
+}
+
+export async function unpublishEvent(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}/unpublish`, {
+    method: "POST",
+  }, getToken);
+}
+
 // =============================================================================
 // Actions and Departments API
 // =============================================================================

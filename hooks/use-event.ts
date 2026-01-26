@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, getActions, getDepartments } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, getActions, getDepartments } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -123,6 +123,54 @@ export function useDepartments() {
         throw new Error(result.error.message);
       }
       return result.data;
+    },
+  });
+}
+
+/**
+ * Hook for publishing an event via POST /events/[id]/publish.
+ */
+export function usePublishEvent(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await publishEvent(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, id) => {
+      // Update the cache with the new data
+      queryClient.setQueryData(eventKeys.detail(id), data);
+      // Invalidate details and list to refetch
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook for unpublishing an event via POST /events/[id]/unpublish.
+ */
+export function useUnpublishEvent(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await unpublishEvent(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, id) => {
+      // Update the cache with the new data
+      queryClient.setQueryData(eventKeys.detail(id), data);
+      // Invalidate details and list to refetch
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },
   });
 }
