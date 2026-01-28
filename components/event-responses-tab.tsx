@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
-import { useUpdateEventPartial } from "@/hooks/use-event";
+import { useCloseEventResponses } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
@@ -94,7 +94,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
-  const updateEventMutation = useUpdateEventPartial(getToken);
+  const closeResponsesMutation = useCloseEventResponses(getToken);
 
   // Filter out partial submissions (intermediate state while user is filling)
   const filteredSubmissions = useMemo(() => {
@@ -358,10 +358,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   // Handle closing responses (open → active) - called after confirmation
   const handleCloseResponses = async () => {
     try {
-      await updateEventMutation.mutateAsync({
-        id: event.id,
-        data: { status: 'active' },
-      });
+      await closeResponsesMutation.mutateAsync(event.id);
       toast.success('Responses have been closed. Event is now active.');
       setCloseResponsesDialogOpen(false);
       onEventChange?.();
@@ -501,9 +498,9 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                   variant="default"
                   size="sm"
                   onClick={handleCloseResponsesClick}
-                  disabled={updateEventMutation.isPending}
+                  disabled={closeResponsesMutation.isPending}
                 >
-                  {updateEventMutation.isPending ? (
+                  {closeResponsesMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Closing...
@@ -594,7 +591,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
       
       {/* Close Responses Confirmation Dialog */}
       <AlertDialog open={closeResponsesDialogOpen} onOpenChange={(open) => {
-        if (!updateEventMutation.isPending) {
+        if (!closeResponsesMutation.isPending) {
           setCloseResponsesDialogOpen(open);
         }
       }}>
@@ -606,14 +603,14 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={updateEventMutation.isPending}>
+            <AlertDialogCancel disabled={closeResponsesMutation.isPending}>
               Cancel
             </AlertDialogCancel>
             <Button
               onClick={handleCloseResponses}
-              disabled={updateEventMutation.isPending}
+              disabled={closeResponsesMutation.isPending}
             >
-              {updateEventMutation.isPending ? (
+              {closeResponsesMutation.isPending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Closing...

@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, getActions, getDepartments } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, getActions, getDepartments } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -160,6 +160,31 @@ export function useUnpublishEvent(getToken: () => Promise<string | null>) {
   return useMutation({
     mutationFn: async (id: number) => {
       const result = await unpublishEvent(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, id) => {
+      // Update the cache with the new data
+      queryClient.setQueryData(eventKeys.detail(id), data);
+      // Invalidate details and list to refetch
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook for closing event responses via POST /events/[id]/close.
+ * Changes event status from "open" to "active".
+ */
+export function useCloseEventResponses(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await closeEventResponses(id, getToken);
       if (!result.success) {
         throw new Error(result.error.message);
       }

@@ -237,6 +237,15 @@ export async function unpublishEvent(
   }, getToken);
 }
 
+export async function closeEventResponses(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}/close`, {
+    method: "POST",
+  }, getToken);
+}
+
 // =============================================================================
 // Actions and Departments API
 // =============================================================================
