@@ -10,22 +10,18 @@ import { EventsList } from "@/components/events-list";
 import { getEvents } from "@/lib/api";
 
 export default function ManageEventsPage() {
-  const [page, setPage] = React.useState(1);
   const [eventsResponse, setEventsResponse] = React.useState<Awaited<ReturnType<typeof getEvents>> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
-
-  const limit = 50;
 
   React.useEffect(() => {
     async function fetchEvents() {
       setIsLoading(true);
-      const offset = (page - 1) * limit;
-      const response = await getEvents({ limit, offset });
+      const response = await getEvents();
       setEventsResponse(response);
       setIsLoading(false);
     }
     fetchEvents();
-  }, [page]);
+  }, []);
 
   return (
     <div className="space-y-8">
@@ -72,7 +68,7 @@ export default function ManageEventsPage() {
 
       {/* Success State - Has Events */}
       {!isLoading && eventsResponse?.success && eventsResponse.data.length > 0 && (
-        <EventsList events={eventsResponse.data} page={page} onPageChange={setPage} totalEvents={eventsResponse.data.length} limit={limit} />
+        <EventsList events={eventsResponse.data} />
       )}
 
       {/* Empty State - No Events */}

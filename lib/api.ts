@@ -167,13 +167,8 @@ async function apiUpload<T>(
 // Events API
 // =============================================================================
 
-export async function getEvents(params?: { limit?: number; offset?: number }): Promise<ApiResponse<Event[]>> {
-  const queryParams = new URLSearchParams();
-  if (params?.limit) queryParams.append('limit', params.limit.toString());
-  if (params?.offset) queryParams.append('offset', params.offset.toString());
-  
-  const endpoint = queryParams.toString() ? `/events?${queryParams.toString()}` : '/events';
-  return apiFetch<Event[]>(endpoint);
+export async function getEvents(): Promise<ApiResponse<Event[]>> {
+  return apiFetch<Event[]>('/events');
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {

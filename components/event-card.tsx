@@ -75,9 +75,15 @@ export function EventCard({ event }: EventCardProps) {
       {/* Event Details */}
       <CardHeader className="flex-1 pb-3">
         <div className="flex items-start justify-between gap-2 mb-2">
-          <h3 className="font-semibold text-lg line-clamp-2 flex-1">
-            {event.name}
-          </h3>
+          <Button
+            asChild
+            variant="link"
+            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-left whitespace-normal text-foreground hover:text-foreground"
+          >
+            <Link href={`/events/${event.id}`} className="line-clamp-2">
+              {event.name}
+            </Link>
+          </Button>
           <Badge variant={getStatusVariant(event.status)}>
             {event.status}
           </Badge>
