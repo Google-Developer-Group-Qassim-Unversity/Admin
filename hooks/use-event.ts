@@ -29,11 +29,11 @@ export function useEvent(id: number | string) {
   });
 }
 
-export function useEvents(params?: { limit?: number; offset?: number }) {
+export function useEvents() {
   return useQuery({
-    queryKey: eventKeys.list(params),
+    queryKey: eventKeys.list(),
     queryFn: async () => {
-      const result = await getEvents(params);
+      const result = await getEvents();
       if (!result.success) {
         throw new Error(result.error.message);
       }
