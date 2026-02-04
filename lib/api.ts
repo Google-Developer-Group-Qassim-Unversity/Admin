@@ -2,6 +2,7 @@ import type {
   ApiError,
   ApiResponse,
   Event,
+  EventStatus,
   CreateEventPayload,
   UpdateEventPayload,
   EventDetails,
@@ -214,31 +215,37 @@ export async function updateEventPartial(
   }, getToken);
 }
 
+export async function updateEventStatus(
+  id: number,
+  status: EventStatus,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}/status`, {
+    method: "PUT",
+    body: JSON.stringify({ status }),
+  }, getToken);
+}
+
+// Convenience wrappers for common status transitions
 export async function publishEvent(
   id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}/publish`, {
-    method: "POST",
-  }, getToken);
+  return updateEventStatus(id, "open", getToken);
 }
 
 export async function unpublishEvent(
   id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}/unpublish`, {
-    method: "POST",
-  }, getToken);
+  return updateEventStatus(id, "draft", getToken);
 }
 
 export async function closeEventResponses(
   id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}/close`, {
-    method: "POST",
-  }, getToken);
+  return updateEventStatus(id, "active", getToken);
 }
 
 // =============================================================================

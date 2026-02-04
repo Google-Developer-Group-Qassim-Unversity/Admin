@@ -2,6 +2,11 @@
 
 // Event types
 export type LocationType = "online" | "on-site" | "none";
+
+// the event types represent the status of an event in its lifecycle
+//  'draft' means the event is being created but not yet open to members
+//  'open' means the event is published and members can register
+//  'active' means registeration is closed but the event is ongoing and taking attendance
 export type EventStatus = "draft" | "open" | "active" | "closed";
 
 export interface Event {

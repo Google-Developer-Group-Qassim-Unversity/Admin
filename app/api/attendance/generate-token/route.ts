@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import { auth, clerkClient } from '@clerk/nextjs/server';
 
 const JWT_SECRET = process.env.JWT_SECRET;
+const MEMBER_APP_URL = process.env.NEXT_PUBLIC_MEMBER_APP_URL;
 
 interface TokenPayload {
   eventId: number;
@@ -32,10 +33,10 @@ export async function POST(request: NextRequest) {
   }
 
   // Check for JWT_SECRET
-  if (!JWT_SECRET) {
-    console.error('JWT_SECRET environment variable is not set');
+  if (!JWT_SECRET || !MEMBER_APP_URL) {
+    console.error('JWT_SECRET or MEMBER_APP_URL environment variable is not set');
     return NextResponse.json(
-      { error: 'Server configuration error' },
+      { error: 'Server configuration error: JWT_SECRET or MEMBER_APP_URL is not set' },
       { status: 500 }
     );
   }
@@ -74,8 +75,8 @@ export async function POST(request: NextRequest) {
     const token = jwt.sign(payload, JWT_SECRET);
 
     // Build the attendance URL
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || request.nextUrl.origin;
-    const attendanceUrl = `${appUrl}/events/${eventId}/attend?token=${token}`;
+    const appUrl = process.env.NEXT_PUBLIC_MEMBER_APP_URL;
+    const attendanceUrl = `${appUrl}/events/${eventId}/attendance?token=${token}`;
 
     // Calculate expiration date
     const expiresAt = new Date(exp * 1000).toISOString();

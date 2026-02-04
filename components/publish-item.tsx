@@ -14,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Check, Upload, Loader2, ExternalLink, Lock } from 'lucide-react';
+import { Check, Upload, Loader2, ExternalLink, Lock, Copy } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
@@ -54,6 +54,16 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       onEventChange();
     } catch {
       toast.error('Failed to unpublish event. Please try again.');
+    }
+  };
+
+  const handleCopyLink = async () => {
+    const eventUrl = `${process.env.NEXT_PUBLIC_MEMBER_APP_URL}/events/${event.id}`;
+    try {
+      await navigator.clipboard.writeText(eventUrl);
+      toast.success('Event link copied to clipboard!');
+    } catch {
+      toast.error('Failed to copy link. Please try again.');
     }
   };
 
@@ -106,17 +116,22 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       </ItemContent>
       <ItemActions>
         <div className="flex items-center gap-2">
-          {isPublished && hasGoogleForm && formData?.googleRespondersUrl && (
-            <Button variant="outline" size="sm" asChild>
-              <a 
-                href={formData.googleRespondersUrl} 
-                target="_blank" 
-                rel="noopener noreferrer"
-              >
-                Open Form
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
+          {isPublished && (
+            <>
+              <Button variant="outline" size="sm" onClick={handleCopyLink}>
+                <Copy className="h-4 w-4" />
+              </Button>
+              <Button variant="outline" size="sm" asChild>
+                <a 
+                  href={`${process.env.NEXT_PUBLIC_MEMBER_APP_URL}/events/${event.id}`}
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                >
+                  Open Event
+                  <ExternalLink className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            </>
           )}
           {isLocked ? (
             <Tooltip>
