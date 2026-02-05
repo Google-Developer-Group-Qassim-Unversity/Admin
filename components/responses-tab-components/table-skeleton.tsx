@@ -18,7 +18,7 @@ export function TableSkeleton() {
       <div className="rounded-lg border p-6 mb-6">
         <div className="text-sm text-muted-foreground">Summary</div>
         <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
-          {Array.from({ length: 6 }).map((_, i) => (
+          {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="p-2 rounded bg-muted/50">
               <Skeleton className="h-5 w-20" />
             </div>
