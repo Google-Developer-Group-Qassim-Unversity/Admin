@@ -7,6 +7,7 @@ import { CalendarPlus, AlertCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EventsList } from "@/components/events-list";
+import { EventsListSkeleton } from "@/components/events-list-skeleton";
 import { getEvents } from "@/lib/api";
 
 export default function ManageEventsPage() {
@@ -42,11 +43,7 @@ export default function ManageEventsPage() {
       </div>
 
       {/* Loading State */}
-      {isLoading && (
-        <div className="text-center py-12 text-muted-foreground">
-          Loading events...
-        </div>
-      )}
+      {isLoading && <EventsListSkeleton />}
 
       {/* Error State - Fetch Failed */}
       {!isLoading && eventsResponse && !eventsResponse.success && (

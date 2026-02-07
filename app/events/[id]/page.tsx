@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { EventInfoTab } from "@/components/event-info-tab";
 import { EventManageTab } from "@/components/event-manage-tab";
@@ -13,6 +13,7 @@ import { EventAttendanceTab } from "@/components/event-attendance-tab";
 import { useEvent } from "@/hooks/use-event";
 import { saveRefreshToken } from "@/lib/google-token-storage";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function EventPage() {
   const params = useParams();
@@ -34,9 +35,56 @@ export default function EventPage() {
   }, [searchParams]);
 
   if (isLoading) {
+    const TabSkeleton = ({ w }: { w: string }) => (
+      <div className="flex items-center gap-2 pb-3">
+        <Skeleton className="h-4 w-4" />
+        <Skeleton className={`h-4 ${w}`} />
+      </div>
+    );
+
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Loading event...
+      <div className="space-y-6">
+        <Skeleton className="h-9 w-32" />
+        <div className="space-y-6">
+          <div className="border-b">
+            <div className="flex gap-6">
+              <div className="flex items-center gap-2 pb-3 border-b-2 border-primary">
+                <Skeleton className="h-4 w-4" />
+                <Skeleton className="h-4 w-20" />
+              </div>
+              {["w-36", "w-32", "w-24", "w-20"].map((w, i) => (
+                <TabSkeleton key={i} w={w} />
+              ))}
+            </div>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <Skeleton className="w-full h-150 rounded-lg" />
+            
+            <div className="space-y-6">
+              <Skeleton className="h-12 w-3/4" />
+              <div className="flex gap-2">
+                <Skeleton className="h-7 w-20" />
+                <Skeleton className="h-7 w-32" />
+              </div>
+              
+              <div className="space-y-4">
+                {["w-56", "w-48", "w-40"].map((w, i) => (
+                  <Skeleton key={i} className={`h-6 ${w}`} />
+                ))}
+              </div>
+              
+              <div className="space-y-4 rounded-lg border bg-card p-6 mt-8">
+                <Skeleton className="h-7 w-32" />
+                <div className="space-y-3">
+                  {["w-full", "w-full", "w-5/6", "w-full", "w-3/4"].map((w, i) => (
+                    <Skeleton key={i} className={`h-4 ${w}`} />
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }
@@ -67,11 +115,26 @@ export default function EventPage() {
       </Button>
       <Tabs defaultValue="info" className="space-y-6">
         <TabsList variant="line">
-        <TabsTrigger value="info">Event Info</TabsTrigger>
-        <TabsTrigger value="manage">Google Form & Publish</TabsTrigger>
-        <TabsTrigger value="responses">Manage Responses</TabsTrigger>
-        <TabsTrigger value="attendance">Attendance</TabsTrigger>
-        <TabsTrigger value="edit">Edit Event</TabsTrigger>
+        <TabsTrigger value="info" className="flex items-center gap-2">
+          <Info className="h-4 w-4" />
+          Event Info
+        </TabsTrigger>
+        <TabsTrigger value="manage" className="flex items-center gap-2">
+          <Link2 className="h-4 w-4" />
+          Google Form & Publish
+        </TabsTrigger>
+        <TabsTrigger value="responses" className="flex items-center gap-2">
+          <Users className="h-4 w-4" />
+          Manage Responses
+        </TabsTrigger>
+        <TabsTrigger value="attendance" className="flex items-center gap-2">
+          <ClipboardCheck className="h-4 w-4" />
+          Attendance
+        </TabsTrigger>
+        <TabsTrigger value="edit" className="flex items-center gap-2">
+          <Pencil className="h-4 w-4" />
+          Edit Event
+        </TabsTrigger>
       </TabsList>
 
       <TabsContent value="info">

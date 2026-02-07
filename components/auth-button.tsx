@@ -10,12 +10,7 @@ export function AuthButton() {
 
   // Loading state
   if (!isLoaded) {
-    return (
-      <div className="flex gap-2">
-        <Skeleton className="h-9 w-20 sm:w-24" />
-        <Skeleton className="h-9 w-20 sm:w-24" />
-      </div>
-    );
+    return <Skeleton className="h-8 w-8 rounded-full" />;
   }
 
   // Signed in state - show user button
