@@ -5,7 +5,7 @@ import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/query-provider";
-import { Navbar } from "@/components/navbar";
+import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
@@ -50,8 +50,8 @@ export default function RootLayout({
           >
             <QueryProvider>
               <div className="relative min-h-screen flex flex-col">
-                <Navbar />
-                <main className="flex-1 container mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+                <ConditionalNavbar />
+                <ConditionalWrapper>{children}</ConditionalWrapper>
               </div>
               <Toaster />
             </QueryProvider>

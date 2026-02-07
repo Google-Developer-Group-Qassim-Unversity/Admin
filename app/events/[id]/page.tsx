@@ -150,7 +150,7 @@ export default function EventPage() {
       </TabsContent>
 
       <TabsContent value="attendance">
-        <EventAttendanceTab event={event} />
+        <EventAttendanceTab event={event} onEventChange={refetch} />
       </TabsContent>
 
       <TabsContent value="edit">

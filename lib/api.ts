@@ -248,6 +248,22 @@ export async function closeEventResponses(
   return updateEventStatus(id, "active", getToken);
 }
 
+export async function closeEvent(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return updateEventStatus(id, "closed", getToken);
+}
+
+export async function sendEventCertificates(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(`/events/${id}/certificates`, {
+    method: "POST",
+  }, getToken);
+}
+
 // =============================================================================
 // Actions and Departments API
 // =============================================================================

@@ -3,11 +3,19 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@clerk/nextjs';
 import { QRCodeSVG } from 'qrcode.react';
-import { Clock, Copy, QrCode, RefreshCw, Check, Timer, AlertCircle, FileX, Lock } from 'lucide-react';
+import { Clock, Copy, QrCode, RefreshCw, Check, Timer, AlertCircle, FileX, Lock, DoorClosed, Maximize2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import {
+  Item,
+  ItemActions,
+  ItemContent,
+  ItemDescription,
+  ItemMedia,
+  ItemTitle,
+} from '@/components/ui/item';
 import {
   Select,
   SelectContent,
@@ -15,10 +23,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { CloseEventModal } from '@/components/close-event-modal';
 import type { Event } from '@/lib/api-types';
 
 interface EventAttendanceTabProps {
   event: Event;
+  onEventChange?: () => void;
 }
 
 interface TokenResponse {
@@ -34,13 +44,14 @@ const EXPIRATION_OPTIONS = [
   { value: '120', label: '2 hours' },
 ];
 
-export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
+export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabProps) {
   const { getToken } = useAuth();
   const [expirationMinutes, setExpirationMinutes] = useState('30');
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
+  const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
 
   // Calculate time remaining
   const updateTimeRemaining = useCallback(() => {
@@ -106,6 +117,10 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
       const data: TokenResponse = await response.json();
       setTokenData(data);
       toast.success('Attendance link generated successfully');
+      
+      // Open fullscreen QR code in new tab
+      const qrDisplayUrl = `/qr-display?url=${encodeURIComponent(data.attendanceUrl)}`;
+      window.open(qrDisplayUrl, '_blank');
     } catch (error) {
       console.error('Error generating token:', error);
       toast.error('Failed to generate attendance link', {
@@ -128,6 +143,13 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
     } catch {
       toast.error('Failed to copy link');
     }
+  };
+
+  const handleOpenFullscreen = () => {
+    if (!tokenData?.attendanceUrl) return;
+
+    const qrDisplayUrl = `/qr-display?url=${encodeURIComponent(tokenData.attendanceUrl)}`;
+    window.open(qrDisplayUrl, '_blank');
   };
 
   const isExpired = timeRemaining === 'Expired';
@@ -208,6 +230,12 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
                   size={240}
                   level="H"
                   includeMargin
+                  imageSettings={{
+                    src: "/gdg.ico",
+                    height: 48,
+                    width: 48,
+                    excavate: true,
+                  }}
                 />
               </div>
             ) : (
@@ -287,25 +315,35 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
               )}
             </Button>
 
-            {/* Copy Link Button */}
+            {/* Copy Link and Fullscreen Buttons */}
             {tokenData && !isExpired && (
-              <Button
-                variant="outline"
-                onClick={handleCopyLink}
-                className="w-full"
-              >
-                {copied ? (
-                  <>
-                    <Check className="h-4 w-4" />
-                    Copied!
-                  </>
-                ) : (
-                  <>
-                    <Copy className="h-4 w-4" />
-                    Copy Attendance Link
-                  </>
-                )}
-              </Button>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  onClick={handleCopyLink}
+                  className="flex-1"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="h-4 w-4" />
+                      Copied!
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-4 w-4" />
+                      Copy Link
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleOpenFullscreen}
+                  className="flex-1"
+                >
+                  <Maximize2 className="h-4 w-4" />
+                  Fullscreen
+                </Button>
+              </div>
             )}
 
             {/* Link Preview */}
@@ -319,6 +357,40 @@ export function EventAttendanceTab({ event }: EventAttendanceTabProps) {
             )}
           </div>
         </div>
+
+        {/* Close Event Section - Only show for active events */}
+        <div className="mt-8 pt-8 border-t">
+          <Item variant="outline">
+            <ItemMedia variant="image">
+              <div className="w-12 h-12 rounded-lg flex items-center justify-center bg-muted">
+                <DoorClosed className="w-6 h-6 text-muted-foreground" />
+              </div>
+            </ItemMedia>
+            <ItemContent>
+              <ItemTitle>Close Event</ItemTitle>
+              <ItemDescription>
+                When attendance is complete, close the event to finalize and optionally send certificates.
+              </ItemDescription>
+            </ItemContent>
+            <ItemActions>
+              <Button
+                variant="outline"
+                onClick={() => setIsCloseModalOpen(true)}
+              >
+                <DoorClosed className="h-4 w-4" />
+                Close Event
+              </Button>
+            </ItemActions>
+          </Item>
+        </div>
+
+        {/* Close Event Modal */}
+        <CloseEventModal
+          event={event}
+          open={isCloseModalOpen}
+          onOpenChange={setIsCloseModalOpen}
+          onSuccess={onEventChange}
+        />
       </CardContent>
     </Card>
   );
