@@ -88,8 +88,8 @@ export default function AccessDeniedPage() {
           )}
           {reason === "not_admin" && (
             <p className="text-sm text-muted-foreground text-center">
-              If you believe you should have access, please contact your
-              organization administrator.
+              If you believe you should have access, 
+              please contact albrrak773 or anyone else on the development team.
             </p>
           )}
         </CardContent>
