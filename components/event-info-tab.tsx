@@ -5,6 +5,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users } from "lucide-react";
 
@@ -25,7 +26,7 @@ export function EventInfoTab({ event }: EventInfoTabProps) {
 
   // Format date only
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDateTime(dateString);
     return date.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -36,7 +37,7 @@ export function EventInfoTab({ event }: EventInfoTabProps) {
 
   // Format time only
   const formatTime = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDateTime(dateString);
     return date.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
@@ -50,12 +51,12 @@ export function EventInfoTab({ event }: EventInfoTabProps) {
 
   // Check if start and end are on the same day
   const isSameDay =
-    new Date(event.start_datetime).toDateString() ===
-    new Date(event.end_datetime).toDateString();
+    parseLocalDateTime(event.start_datetime).toDateString() ===
+    parseLocalDateTime(event.end_datetime).toDateString();
 
   // Calculate duration in days
-  const start = new Date(event.start_datetime);
-  const end = new Date(event.end_datetime);
+  const start = parseLocalDateTime(event.start_datetime);
+  const end = parseLocalDateTime(event.end_datetime);
   const startDateOnly = new Date(
     start.getFullYear(),
     start.getMonth(),

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventForm, type EventFormData } from "@/components/event-form";
 import { createEvent, shouldContactSupport } from "@/lib/api";
+import { formatLocalDateTime } from "@/lib/utils";
 import type { LocationType } from "@/lib/api-types";
 
 export default function CreateEventPage() {
@@ -33,8 +34,8 @@ export default function CreateEventPage() {
           description: data.description?.trim() || null,
           location_type: data.location_type as LocationType,
           location: data.location,
-          start_datetime: data.startDate.toISOString(),
-          end_datetime: data.endDate.toISOString(),
+          start_datetime: formatLocalDateTime(data.startDate),
+          end_datetime: formatLocalDateTime(data.endDate),
           status: "draft" as const,
           image_url: data.image_url || null,
           is_official: data.is_official,

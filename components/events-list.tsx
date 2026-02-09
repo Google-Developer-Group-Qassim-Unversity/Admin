@@ -27,6 +27,11 @@ export function EventsList({ events }: EventsListProps) {
 
   const filteredEvents = React.useMemo(() => {
     const filtered = events.filter((event) => {
+      // Always hide events with location_type=none
+      if (event.location_type === "none") {
+        return false;
+      }
+
       // Search filter
       if (
         searchQuery &&

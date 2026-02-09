@@ -8,6 +8,7 @@ import {
   CardHeader,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import { MapPin, Globe } from "lucide-react";
 
@@ -18,7 +19,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   // Format the start date to "MMM DD" format
   const formatStartDate = (dateString: string) => {
-    const date = new Date(dateString);
+    const date = parseLocalDateTime(dateString);
     return date.toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",

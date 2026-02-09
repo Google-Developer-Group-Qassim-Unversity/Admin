@@ -9,6 +9,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { EventForm, type EventFormData } from "@/components/event-form";
 import { useEventDetails, useActions, useUpdateEvent, useDepartments } from "@/hooks/use-event";
 import { shouldContactSupport } from "@/lib/api";
+import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import type { Event, Action, LocationType, EventAction } from "@/lib/api-types";
 
 interface EventEditTabProps {
@@ -67,8 +68,8 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
       description: eventDetails.event.description,
       location_type: eventDetails.event.location_type as "online" | "on-site",
       location: eventDetails.event.location,
-      startDate: new Date(eventDetails.event.start_datetime),
-      endDate: new Date(eventDetails.event.end_datetime),
+      startDate: parseLocalDateTime(eventDetails.event.start_datetime),
+      endDate: parseLocalDateTime(eventDetails.event.end_datetime),
       is_official: eventDetails.event.is_official === 1, // Convert number to boolean
       image_url: eventDetails.event.image_url,
       department_id: departmentId,
@@ -104,8 +105,8 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
           description: data.description?.trim() || null,
           location_type: data.location_type as LocationType,
           location: data.location,
-          start_datetime: data.startDate.toISOString(),
-          end_datetime: data.endDate.toISOString(),
+          start_datetime: formatLocalDateTime(data.startDate),
+          end_datetime: formatLocalDateTime(data.endDate),
           status: event.status, // Preserve existing status
           image_url: data.image_url || null,
           is_official: data.is_official ? 1 : 0, // Convert boolean to number
