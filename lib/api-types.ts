@@ -203,3 +203,13 @@ export interface Department {
   ar_name: string;
   type: "administrative" | "practical";
 }
+
+// =============================================================================
+// Member Roles (Admin Management)
+// =============================================================================
+
+export type MemberRole = 'admin' | 'super_admin' | 'none';
+
+export interface MemberWithRole extends Member {
+  role: MemberRole;
+}

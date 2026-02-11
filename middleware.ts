@@ -54,6 +54,14 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(new URL('/access-denied?reason=not_admin', req.url));
   }
 
+  // Check for super admin on specific routes
+  if (req.nextUrl.pathname.startsWith('/manage-admins')) {
+    const isSuperAdmin = publicMetadata?.is_super_admin === true;
+    if (!isSuperAdmin) {
+      return NextResponse.redirect(new URL('/access-denied?reason=not_super_admin', req.url));
+    }
+  }
+
   // User is authenticated and is an admin - allow access
   return NextResponse.next();
 });

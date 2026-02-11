@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { CalendarPlus, Users, Trophy } from "lucide-react";
+import { CalendarPlus, Users, Trophy, ShieldCheck } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,6 +41,24 @@ export default function Page() {
           <CardFooter>
             <Button asChild className="w-full">
               <Link href="/events">Manage Events</Link>
+            </Button>
+          </CardFooter>
+        </Card>
+
+        {/* Manage Admins Module */}
+        <Card className="flex flex-col">
+          <CardHeader className="flex-1">
+            <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 mb-3">
+              <ShieldCheck className="h-6 w-6 text-primary" />
+            </div>
+            <CardTitle className="text-lg">Manage Admins</CardTitle>
+            <CardDescription>
+              Add, view, and manage administrator roles and permissions
+            </CardDescription>
+          </CardHeader>
+          <CardFooter>
+            <Button asChild className="w-full">
+              <Link href="/manage-admins">Manage Admins</Link>
             </Button>
           </CardFooter>
         </Card>

@@ -14,6 +14,9 @@ import type {
   AcceptSubmissionPayload,
   ActionsResponse,
   Department,
+  Member,
+  MemberWithRole,
+  MemberRole,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -426,4 +429,30 @@ export async function markAttendance(
 
 export function shouldContactSupport(error: ApiError): boolean {
   return error.isValidationError === true || error.isServerError === true;
+}
+
+// =============================================================================
+// Members API
+// =============================================================================
+
+export async function getMembers(
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Member[]>> {
+  return apiFetch<Member[]>("/members", {}, getToken);
+}
+
+export async function getMemberRoles(
+  getToken?: GetTokenFn
+): Promise<ApiResponse<MemberWithRole[]>> {
+  return apiFetch<MemberWithRole[]>("/members/roles", {}, getToken);
+}
+
+export async function updateMemberRole(
+  memberId: number,
+  newRole: MemberRole,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(`/members/roles?member_id=${memberId}&new_role=${newRole}`, {
+    method: "POST",
+  }, getToken);
 }

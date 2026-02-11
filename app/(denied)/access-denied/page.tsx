@@ -46,6 +46,13 @@ export default function AccessDeniedPage() {
             "Your account does not have administrator privileges. This dashboard is restricted to authorized administrators only.",
           showSignIn: false,
         };
+      case "not_super_admin":
+        return {
+          title: "Super Admin Access Required",
+          description:
+            "This page requires super administrator privileges. Only super admins can manage administrator roles.",
+          showSignIn: false,
+        };
       case "config":
         return {
           title: "Configuration Error",
@@ -90,6 +97,11 @@ export default function AccessDeniedPage() {
             <p className="text-sm text-muted-foreground text-center">
               If you believe you should have access, 
               please contact albrrak773 or anyone else on the development team.
+            </p>
+          )}
+          {reason === "not_super_admin" && (
+            <p className="text-sm text-muted-foreground text-center">
+              If you need super admin access, please contact an existing super administrator.
             </p>
           )}
         </CardContent>
