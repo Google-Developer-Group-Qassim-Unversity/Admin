@@ -2,9 +2,16 @@
 
 import Link from "next/link";
 import Image from "next/image";
+import { Home, CalendarPlus, ShieldCheck } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthButton } from "@/components/auth-button";
+
+const navLinks = [
+  { href: "/", label: "Home", icon: Home },
+  { href: "/events", label: "Events", icon: CalendarPlus },
+  { href: "/manage-admins", label: "Admins", icon: ShieldCheck },
+];
 
 export function Navbar() {
   return (
@@ -18,18 +25,19 @@ export function Navbar() {
 
         {/* Navigation */}
         <nav className="flex items-center gap-6">
-          <Link
-            href="/events"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Events
-          </Link>
-          <Link
-            href="/events/create"
-            className="text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Create Event
-          </Link>
+          {navLinks.map((link) => {
+            const Icon = link.icon;
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <Icon className="h-4 w-4" />
+                <span>{link.label}</span>
+              </Link>
+            );
+          })}
         </nav>
 
         {/* Right side - Theme toggle and User profile */}
