@@ -511,7 +511,7 @@ export async function updateCustomPointDetail(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<UpdateCustomPointDetailPayload>> {
   return apiFetch<UpdateCustomPointDetailPayload>(
-    `/custom/department/${logId}`,
+    `/custom/departments/${logId}`,
     {
       method: "PUT",
       body: JSON.stringify(payload),

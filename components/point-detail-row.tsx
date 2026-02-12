@@ -8,10 +8,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  DepartmentCombobox,
-  type ComboboxOption,
-} from "@/components/ui/department-combobox";
+  MultiSelect,
+  MultiSelectTrigger,
+  MultiSelectValue,
+  MultiSelectContent,
+  MultiSelectGroup,
+  MultiSelectItem,
+} from "@/components/ui/multi-select";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
+import type { ComboboxOption } from "@/components/ui/department-combobox";
 
 export interface PointDetailRowData {
   /** Existing log_id for edit mode, undefined for new rows */
@@ -60,15 +65,33 @@ export function PointDetailRow({
         {/* Department Selector */}
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <Label className="text-sm font-medium">Department</Label>
-          <DepartmentCombobox
-            options={departmentOptions}
-            value={data.departments_id[0] ?? null}
-            onChange={(id) =>
-              updateField("departments_id", id !== null ? [id] : [])
+          <MultiSelect
+            values={data.departments_id.map(String)}
+            onValuesChange={(values) =>
+              updateField("departments_id", values.map(Number))
             }
-            placeholder="Select department..."
-            searchPlaceholder="Search departments..."
-          />
+          >
+            <MultiSelectTrigger className="h-9 w-full">
+              <MultiSelectValue 
+                placeholder="Select departments..." 
+                overflowBehavior="cutoff" 
+              />
+            </MultiSelectTrigger>
+            <MultiSelectContent 
+              search={{ 
+                placeholder: "Search departments...", 
+                emptyMessage: "No departments found." 
+              }}
+            >
+              <MultiSelectGroup>
+                {departmentOptions.map((dept) => (
+                  <MultiSelectItem key={dept.id} value={String(dept.id)}>
+                    {dept.label}
+                  </MultiSelectItem>
+                ))}
+              </MultiSelectGroup>
+            </MultiSelectContent>
+          </MultiSelect>
         </div>
 
         {/* Points Adjuster */}
@@ -79,10 +102,11 @@ export function PointDetailRow({
               type="button"
               variant="outline"
               size="sm"
-              className="h-9 w-9 p-0 text-xs font-bold"
+              className="h-9 w-12 p-0 gap-0.5"
               onClick={() => adjustPoints(-5)}
             >
-              <Minus className="h-3 w-3" />5
+              <Minus className="h-3 w-3 shrink-0" />
+              <span className="text-xs font-semibold">5</span>
             </Button>
             <Button
               type="button"
@@ -116,10 +140,11 @@ export function PointDetailRow({
               type="button"
               variant="outline"
               size="sm"
-              className="h-9 w-9 p-0 text-xs font-bold"
+              className="h-9 w-12 p-0 gap-0.5"
               onClick={() => adjustPoints(5)}
             >
-              <Plus className="h-3 w-3" />5
+              <Plus className="h-3 w-3 shrink-0" />
+              <span className="text-xs font-semibold">5</span>
             </Button>
           </div>
         </div>
@@ -134,13 +159,14 @@ export function PointDetailRow({
             options={actionOptions}
             value={data.action_name ?? ""}
             onChange={(val) => {
-              updateField("action_name", val || null);
-              // Clear action_id when user types a custom reason
+              // Explicitly set to null when empty string
+              updateField("action_name", val === "" ? null : val);
+              // Always clear action_id when user types custom reason
               updateField("action_id", null);
             }}
-            placeholder="Add reason..."
-            searchPlaceholder="Search reasons..."
-            emptyMessage="No matching reasons."
+            placeholder="Leave empty or add reason..."
+            searchPlaceholder="Search or type reason..."
+            emptyMessage="Type to create custom reason"
             className="border-dashed opacity-80 hover:opacity-100 focus-within:opacity-100"
           />
         </div>

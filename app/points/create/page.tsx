@@ -89,13 +89,11 @@ export default function CreateCustomEventPage() {
     setIsSubmitting(true);
 
     try {
-      const [startH, startM] = data.start_time.split(":").map(Number);
-      const [endH, endM] = data.end_time.split(":").map(Number);
-
+      // Set default times: 10:00 AM to 12:00 PM
       const startDate = new Date(data.date);
-      startDate.setHours(startH, startM, 0, 0);
+      startDate.setHours(10, 0, 0, 0);
       const endDate = new Date(data.date);
-      endDate.setHours(endH, endM, 0, 0);
+      endDate.setHours(12, 0, 0, 0);
 
       const payload = {
         start_datetime: formatLocalDateTime(startDate),

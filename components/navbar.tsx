@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { Home, CalendarPlus, ShieldCheck } from "lucide-react";
+import { Home, CalendarPlus, ShieldCheck, Trophy } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthButton } from "@/components/auth-button";
@@ -10,6 +10,7 @@ import { AuthButton } from "@/components/auth-button";
 const navLinks = [
   { href: "/", label: "Home", icon: Home },
   { href: "/events", label: "Events", icon: CalendarPlus },
+  { href: "/points", label: "Points", icon: Trophy },
   { href: "/manage-admins", label: "Admins", icon: ShieldCheck },
 ];
 

@@ -32,7 +32,7 @@ import {
   updateEventPartial,
   shouldContactSupport,
 } from "@/lib/api";
-import { formatLocalDateTime } from "@/lib/utils";
+import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
 
 export default function EditCustomEventPage() {
   const params = useParams();
@@ -48,6 +48,7 @@ export default function EditCustomEventPage() {
   const [initialData, setInitialData] =
     React.useState<CustomEventDepartment | null>(null);
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
+  const [allEvents, setAllEvents] = React.useState<Array<{ name: string; start_datetime: string }>>([]);
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
@@ -77,6 +78,11 @@ export default function EditCustomEventPage() {
       if (eventsRes.success) {
         const names = [...new Set(eventsRes.data.map((e) => e.name))];
         setEventNameOptions(names);
+        // Store all events for date synchronization
+        setAllEvents(eventsRes.data.map((e) => ({
+          name: e.name,
+          start_datetime: e.start_datetime,
+        })));
       }
 
       if (deptsRes.success) {
@@ -108,21 +114,31 @@ export default function EditCustomEventPage() {
     setIsSubmitting(true);
 
     try {
-      const [startH, startM] = data.start_time.split(":").map(Number);
-      const [endH, endM] = data.end_time.split(":").map(Number);
+      // Parse the original start_datetime to get original date (ignoring time)
+      const originalDate = parseLocalDateTime(initialData.start_datetime);
+      const originalDateOnly = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate());
+      const newDateOnly = new Date(data.date.getFullYear(), data.date.getMonth(), data.date.getDate());
+      
+      // Only compare date part, preserve original time from initialData
+      const dateChanged = originalDateOnly.getTime() !== newDateOnly.getTime();
+      const nameChanged = data.event_name !== initialData.event_name;
 
-      const startDate = new Date(data.date);
-      startDate.setHours(startH, startM, 0, 0);
-      const endDate = new Date(data.date);
-      endDate.setHours(endH, endM, 0, 0);
+      // 1. Update event info if name or date changed
+      if (nameChanged || dateChanged) {
+        // If date changed, use new date with default times (10:00-12:00)
+        // If date unchanged, preserve original times
+        let startDate, endDate;
+        if (dateChanged) {
+          startDate = new Date(data.date);
+          startDate.setHours(10, 0, 0, 0);
+          endDate = new Date(data.date);
+          endDate.setHours(12, 0, 0, 0);
+        } else {
+          // Keep original times
+          startDate = parseLocalDateTime(initialData.start_datetime);
+          endDate = parseLocalDateTime(initialData.end_datetime);
+        }
 
-      // 1. Update event info if changed
-      const eventChanged =
-        data.event_name !== initialData.event_name ||
-        formatLocalDateTime(startDate) !== initialData.start_datetime ||
-        formatLocalDateTime(endDate) !== initialData.end_datetime;
-
-      if (eventChanged) {
         const eventUpdateRes = await updateEventPartial(
           initialData.event_id,
           {
@@ -154,20 +170,35 @@ export default function EditCustomEventPage() {
       const existingRows = data.point_details.filter((pd) => pd.log_id);
       const newRows = data.point_details.filter((pd) => !pd.log_id);
 
-      // 3. Update existing point details
-      const updatePromises = existingRows.map((pd) =>
-        updateCustomPointDetail(
-          pd.log_id!,
-          {
-            log_id: pd.log_id!,
-            departments_id: pd.departments_id,
-            points: pd.points,
-            action_id: pd.action_name ? pd.action_id : null,
-            action_name: pd.action_name || null,
-          },
-          getToken
-        )
-      );
+      // 3. Update existing point details (only those that changed)
+      const updatePromises = existingRows
+        .filter((pd) => {
+          // Find original point detail
+          const original = initialData.point_details.find((orig) => orig.log_id === pd.log_id);
+          if (!original) return true; // If not found, update it
+
+          // Check if anything changed
+          const pointsChanged = pd.points !== original.points;
+          const actionChanged = pd.action_name !== (original.action_name ?? null);
+          const depsChanged = 
+            pd.departments_id.length !== original.departments_id.length ||
+            !pd.departments_id.every((id, idx) => original.departments_id.includes(id));
+
+          return pointsChanged || actionChanged || depsChanged;
+        })
+        .map((pd) =>
+          updateCustomPointDetail(
+            pd.log_id!,
+            {
+              log_id: pd.log_id!,
+              departments_id: pd.departments_id,
+              points: pd.points,
+              action_id: pd.action_name ? pd.action_id : null,
+              action_name: pd.action_name || null,
+            },
+            getToken
+          )
+        );
 
       const updateResults = await Promise.all(updatePromises);
 
@@ -187,9 +218,15 @@ export default function EditCustomEventPage() {
 
       // 4. Create new rows if any
       if (newRows.length > 0) {
+        // Use current event date with default times for new rows
+        const newStartDate = new Date(data.date);
+        newStartDate.setHours(10, 0, 0, 0);
+        const newEndDate = new Date(data.date);
+        newEndDate.setHours(12, 0, 0, 0);
+
         const createPayload = {
-          start_datetime: formatLocalDateTime(startDate),
-          end_datetime: formatLocalDateTime(endDate),
+          start_datetime: formatLocalDateTime(newStartDate),
+          end_datetime: formatLocalDateTime(newEndDate),
           event_name: data.event_name,
           point_deatils: newRows.map((pd) => ({
             departments_id: pd.departments_id,
@@ -329,6 +366,7 @@ export default function EditCustomEventPage() {
             mode="edit"
             initialData={initialData}
             eventNameOptions={eventNameOptions}
+            allEvents={allEvents}
             departmentOptions={departmentOptions}
             actionOptions={actionOptions}
             onSubmit={handleSubmit}

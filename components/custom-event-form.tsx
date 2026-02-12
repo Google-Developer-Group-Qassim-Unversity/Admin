@@ -23,10 +23,11 @@ import type { CustomEventDepartment } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { parseLocalDateTime } from "@/lib/utils";
 
-interface CustomEventFormProps {
+export interface CustomEventFormProps {
   mode: "create" | "edit";
   initialData?: CustomEventDepartment;
   eventNameOptions: string[];
+  allEvents?: Array<{ name: string; start_datetime: string }>;
   departmentOptions: ComboboxOption[];
   actionOptions: string[];
   onSubmit: (data: CustomEventFormData) => void;
@@ -36,8 +37,6 @@ interface CustomEventFormProps {
 export interface CustomEventFormData {
   event_name: string;
   date: Date;
-  start_time: string;
-  end_time: string;
   point_details: PointDetailRowData[];
 }
 
@@ -55,6 +54,7 @@ export function CustomEventForm({
   mode,
   initialData,
   eventNameOptions,
+  allEvents = [],
   departmentOptions,
   actionOptions,
   onSubmit,
@@ -69,20 +69,6 @@ export function CustomEventForm({
       return parseLocalDateTime(initialData.start_datetime);
     }
     return undefined;
-  });
-  const [startTime, setStartTime] = React.useState(() => {
-    if (initialData?.start_datetime) {
-      const d = parseLocalDateTime(initialData.start_datetime);
-      return format(d, "HH:mm");
-    }
-    return "10:00";
-  });
-  const [endTime, setEndTime] = React.useState(() => {
-    if (initialData?.end_datetime) {
-      const d = parseLocalDateTime(initialData.end_datetime);
-      return format(d, "HH:mm");
-    }
-    return "12:00";
   });
 
   // Section 2: Point Details
@@ -105,6 +91,20 @@ export function CustomEventForm({
 
   // Validation errors
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  // Sync event name with date in edit mode
+  React.useEffect(() => {
+    if (mode === "edit" && eventName && allEvents.length > 0) {
+      const matchingEvent = allEvents.find((e) => e.name === eventName);
+      if (matchingEvent && matchingEvent.start_datetime) {
+        const eventDate = parseLocalDateTime(matchingEvent.start_datetime);
+        // Only update if it's different to avoid unnecessary re-renders
+        if (!date || eventDate.toDateString() !== date.toDateString()) {
+          setDate(eventDate);
+        }
+      }
+    }
+  }, [eventName, allEvents, mode, date]);
 
   const handleRowChange = (index: number, data: PointDetailRowData) => {
     setRows((prev) => prev.map((r, i) => (i === index ? data : r)));
@@ -149,17 +149,13 @@ export function CustomEventForm({
 
     if (!validate() || !date) return;
 
-    const [startH, startM] = startTime.split(":").map(Number);
-    const [endH, endM] = endTime.split(":").map(Number);
-
-    const startDate = setMinutes(setHours(new Date(date), startH), startM);
-    const endDate = setMinutes(setHours(new Date(date), endH), endM);
+    // Set default times: 10:00 AM to 12:00 PM
+    const startDate = setMinutes(setHours(new Date(date), 10), 0);
+    const endDate = setMinutes(setHours(new Date(date), 12), 0);
 
     onSubmit({
       event_name: eventName.trim(),
       date: startDate,
-      start_time: startTime,
-      end_time: endTime,
       point_details: rows,
     });
   };
@@ -220,28 +216,6 @@ export function CustomEventForm({
             {errors.date && (
               <p className="text-sm text-destructive">{errors.date}</p>
             )}
-          </div>
-
-          {/* Time Inputs */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Start Time</Label>
-              <Input
-                type="time"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>End Time</Label>
-              <Input
-                type="time"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
-                disabled={isSubmitting}
-              />
-            </div>
           </div>
         </div>
       </div>
