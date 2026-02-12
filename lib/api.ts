@@ -17,6 +17,10 @@ import type {
   Member,
   MemberWithRole,
   MemberRole,
+  CustomEventDepartment,
+  CreateCustomDepartmentPayload,
+  UpdateCustomPointDetailPayload,
+  CustomAction,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -455,4 +459,68 @@ export async function updateMemberRole(
   return apiFetch<void>(`/members/roles?member_id=${memberId}&new_role=${newRole}`, {
     method: "POST",
   }, getToken);
+}
+
+// =============================================================================
+// Custom Points API
+// =============================================================================
+
+/** Fetch all events and filter to custom events (location_type='none') */
+export async function getCustomEvents(): Promise<ApiResponse<Event[]>> {
+  const result = await getEvents();
+  if (result.success) {
+    return {
+      success: true,
+      data: result.data.filter((e) => e.location_type === "none"),
+    };
+  }
+  return result;
+}
+
+/** Get custom event department details for editing */
+export async function getCustomEventDepartment(
+  eventId: number | string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEventDepartment>> {
+  return apiFetch<CustomEventDepartment>(
+    `/custom/departments/${eventId}`,
+    {},
+    getToken
+  );
+}
+
+/** Create a new custom event with department point details */
+export async function createCustomDepartmentPoints(
+  payload: CreateCustomDepartmentPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEventDepartment>> {
+  return apiFetch<CustomEventDepartment>(
+    "/custom/departments",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+/** Update a single point detail row by log_id */
+export async function updateCustomPointDetail(
+  logId: number,
+  payload: UpdateCustomPointDetailPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<UpdateCustomPointDetailPayload>> {
+  return apiFetch<UpdateCustomPointDetailPayload>(
+    `/custom/department/${logId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+/** Get custom actions for the Reason combobox */
+export async function getCustomActions(): Promise<ApiResponse<CustomAction[]>> {
+  return apiFetch<CustomAction[]>("/action/custom");
 }

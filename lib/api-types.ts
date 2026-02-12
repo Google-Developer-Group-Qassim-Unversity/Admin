@@ -213,3 +213,49 @@ export type MemberRole = 'admin' | 'super_admin' | 'none';
 export interface MemberWithRole extends Member {
   role: MemberRole;
 }
+
+// =============================================================================
+// Custom Points (Department)
+// =============================================================================
+
+/** A single point detail row in a custom event */
+export interface CustomPointDetail {
+  log_id?: number;
+  departments_id: number[];
+  points: number;
+  action_id: number | null;
+  action_name: string | null;
+}
+
+/** Response from GET /custom/department/{event_id} */
+export interface CustomEventDepartment {
+  event_id: number;
+  start_datetime: string;
+  end_datetime: string;
+  event_name: string;
+  point_details: CustomPointDetail[];
+}
+
+/** Payload for POST /custom/departments */
+export interface CreateCustomDepartmentPayload {
+  start_datetime: string;
+  end_datetime: string;
+  event_name: string;
+  point_deatils: CustomPointDetail[];
+}
+
+/** Payload for PUT /custom/department/{log_id} */
+export interface UpdateCustomPointDetailPayload {
+  log_id: number;
+  departments_id: number[];
+  points: number;
+  action_id: number | null;
+  action_name: string | null;
+}
+
+/** Custom action from GET /action/custom */
+export interface CustomAction {
+  id: number;
+  action_name: string;
+  points: number;
+}
