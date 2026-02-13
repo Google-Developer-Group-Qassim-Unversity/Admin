@@ -29,7 +29,7 @@ export default function CreateEventPage() {
 
       const payload = {
         event: {
-          id: null,
+          id: data.event_id ?? null, // Use event_id if selecting existing event
           name: data.name.trim(),
           description: data.description?.trim() || null,
           location_type: data.location_type as LocationType,

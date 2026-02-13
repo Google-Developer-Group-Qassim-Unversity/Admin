@@ -471,7 +471,7 @@ export async function getCustomEvents(): Promise<ApiResponse<Event[]>> {
   if (result.success) {
     return {
       success: true,
-      data: result.data.filter((e) => e.location_type === "none"),
+      data: result.data.filter((e) => e.location_type === "none" || e.location_type === "hidden"),
     };
   }
   return result;
@@ -520,7 +520,4 @@ export async function updateCustomPointDetail(
   );
 }
 
-/** Get custom actions for the Reason combobox */
-export async function getCustomActions(): Promise<ApiResponse<CustomAction[]>> {
-  return apiFetch<CustomAction[]>("/action/custom");
-}
+

@@ -11,12 +11,11 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
-import { Calendar, Trophy } from "lucide-react";
+import { Calendar, Trophy, EyeOff, Eye } from "lucide-react";
 
 interface CustomEventCardProps {
   event: Event;
 }
-
 export function CustomEventCard({ event }: CustomEventCardProps) {
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
@@ -25,21 +24,6 @@ export function CustomEventCard({ event }: CustomEventCardProps) {
       day: "numeric",
       year: "numeric",
     });
-  };
-
-  const getStatusVariant = (status: Event["status"]) => {
-    switch (status) {
-      case "draft":
-        return "default";
-      case "open":
-        return "secondary";
-      case "active":
-        return "default";
-      case "closed":
-        return "outline";
-      default:
-        return "secondary";
-    }
   };
 
   return (
@@ -61,8 +45,18 @@ export function CustomEventCard({ event }: CustomEventCardProps) {
               {event.name}
             </Link>
           </Button>
-          <Badge variant={getStatusVariant(event.status)}>
-            {event.status}
+          <Badge variant="secondary" className="gap-1">
+            {event.location_type === "hidden" ? (
+              <>
+                <EyeOff className="h-3 w-3" />
+                Hidden
+              </>
+            ) : (
+              <>
+                <Eye className="h-3 w-3" />
+                Visible
+              </>
+            )}
           </Badge>
         </div>
 

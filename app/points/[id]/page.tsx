@@ -21,15 +21,16 @@ import {
   type CustomEventFormData,
 } from "@/components/custom-event-form";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment } from "@/lib/api-types";
+import type { CustomEventDepartment, Action, EventDetails } from "@/lib/api-types";
 import {
   getCustomEvents,
   getCustomEventDepartment,
+  getEventDetails,
   getDepartments,
-  getCustomActions,
+  getActions,
   updateCustomPointDetail,
   createCustomDepartmentPoints,
-  updateEventPartial,
+  updateEvent,
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
@@ -47,12 +48,16 @@ export default function EditCustomEventPage() {
   // Loaded data
   const [initialData, setInitialData] =
     React.useState<CustomEventDepartment | null>(null);
+  const [eventDetails, setEventDetails] = 
+    React.useState<EventDetails | null>(null);
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
-  const [allEvents, setAllEvents] = React.useState<Array<{ name: string; start_datetime: string }>>([]);
+  const [allEvents, setAllEvents] = React.useState<
+    Array<{ name: string; start_datetime: string; location_type: import("@/lib/api-types").LocationType }>
+  >([]);
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
-  const [actionOptions, setActionOptions] = React.useState<string[]>([]);
+  const [actionOptions, setActionOptions] = React.useState<Action[]>([]);
 
   // Fetch all data
   React.useEffect(() => {
@@ -60,11 +65,12 @@ export default function EditCustomEventPage() {
       setIsLoading(true);
       setError(null);
 
-      const [eventRes, eventsRes, deptsRes, actionsRes] = await Promise.all([
+      const [eventRes, eventDetailsRes, eventsRes, deptsRes, actionsRes] = await Promise.all([
         getCustomEventDepartment(eventId, getToken),
+        getEventDetails(eventId, getToken),
         getCustomEvents(),
         getDepartments(),
-        getCustomActions(),
+        getActions(),
       ]);
 
       if (!eventRes.success) {
@@ -73,15 +79,23 @@ export default function EditCustomEventPage() {
         return;
       }
 
+      if (!eventDetailsRes.success) {
+        setError(eventDetailsRes.error.message || "Failed to load event details.");
+        setIsLoading(false);
+        return;
+      }
+
       setInitialData(eventRes.data);
+      setEventDetails(eventDetailsRes.data);
 
       if (eventsRes.success) {
         const names = [...new Set(eventsRes.data.map((e) => e.name))];
         setEventNameOptions(names);
-        // Store all events for date synchronization
+        // Store all events for date and visibility synchronization
         setAllEvents(eventsRes.data.map((e) => ({
           name: e.name,
           start_datetime: e.start_datetime,
+          location_type: e.location_type,
         })));
       }
 
@@ -95,12 +109,14 @@ export default function EditCustomEventPage() {
       }
 
       if (actionsRes.success) {
-        const actionNames = [
-          ...new Set(
-            actionsRes.data.map((a) => a.action_name).filter(Boolean)
-          ),
+        // Combine department_actions, member_actions, and custom_actions
+        // Filter out composite actions (they're for events, not manual point entries)
+        const allActions = [
+          ...actionsRes.data.department_actions,
+          ...actionsRes.data.member_actions,
+          ...actionsRes.data.custom_actions,
         ];
-        setActionOptions(actionNames);
+        setActionOptions(allActions);
       }
 
       setIsLoading(false);
@@ -109,7 +125,7 @@ export default function EditCustomEventPage() {
   }, [eventId, getToken]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
-    if (!initialData) return;
+    if (!initialData || !eventDetails) return;
 
     setIsSubmitting(true);
 
@@ -122,9 +138,14 @@ export default function EditCustomEventPage() {
       // Only compare date part, preserve original time from initialData
       const dateChanged = originalDateOnly.getTime() !== newDateOnly.getTime();
       const nameChanged = data.event_name !== initialData.event_name;
+      
+      // Check if visibility changed by comparing with event's location_type from allEvents
+      const currentEvent = allEvents.find((e) => e.name === initialData.event_name);
+      const currentVisibility = currentEvent ? currentEvent.location_type !== "hidden" : true;
+      const visibilityChanged = data.is_visible !== currentVisibility;
 
-      // 1. Update event info if name or date changed
-      if (nameChanged || dateChanged) {
+      // 1. Update event info if name, date, or visibility changed
+      if (nameChanged || dateChanged || visibilityChanged) {
         // If date changed, use new date with default times (10:00-12:00)
         // If date unchanged, preserve original times
         let startDate, endDate;
@@ -139,13 +160,26 @@ export default function EditCustomEventPage() {
           endDate = parseLocalDateTime(initialData.end_datetime);
         }
 
-        const eventUpdateRes = await updateEventPartial(
-          initialData.event_id,
-          {
+        // Build the full update payload with event object and actions
+        const updatePayload = {
+          event: {
+            id: eventDetails.event.id,
             name: data.event_name,
+            description: eventDetails.event.description,
+            location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
+            location: eventDetails.event.location,
             start_datetime: formatLocalDateTime(startDate),
             end_datetime: formatLocalDateTime(endDate),
-          } as Parameters<typeof updateEventPartial>[1],
+            status: eventDetails.event.status,
+            image_url: eventDetails.event.image_url,
+            is_official: eventDetails.event.is_official,
+          },
+          actions: eventDetails.actions,
+        };
+
+        const eventUpdateRes = await updateEvent(
+          initialData.event_id,
+          updatePayload,
           getToken
         );
 
@@ -193,8 +227,9 @@ export default function EditCustomEventPage() {
               log_id: pd.log_id!,
               departments_id: pd.departments_id,
               points: pd.points,
-              action_id: pd.action_name ? pd.action_id : null,
-              action_name: pd.action_name || null,
+              // PATCH: Always send null for action fields (Reason feature temporarily disabled)
+              action_id: null,
+              action_name: null,
             },
             getToken
           )
@@ -228,11 +263,13 @@ export default function EditCustomEventPage() {
           start_datetime: formatLocalDateTime(newStartDate),
           end_datetime: formatLocalDateTime(newEndDate),
           event_name: data.event_name,
+          location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
           point_deatils: newRows.map((pd) => ({
             departments_id: pd.departments_id,
             points: pd.points,
-            action_id: pd.action_name ? pd.action_id : null,
-            action_name: pd.action_name || null,
+            // PATCH: Always send null for action fields (Reason feature temporarily disabled)
+            action_id: null,
+            action_name: null,
           })),
         };
 

@@ -28,6 +28,7 @@ import type { Action, LocationType } from "@/lib/api-types";
 
 // Form validation schema
 export const eventFormSchema = z.object({
+  event_id: z.number().nullable().optional(), // ID of existing event if reusing
   name: z.string().min(1, "Event name is required").max(100, "Name is too long"),
   description: z.string().nullable(),
   location_type: z.enum(["online", "on-site"]),
@@ -76,6 +77,7 @@ export function EventForm({
   } = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
     defaultValues: {
+      event_id: initialData?.event_id ?? null,
       name: initialData?.name ?? "",
       description: initialData?.description ?? null,
       location_type: initialData?.location_type ?? "on-site",

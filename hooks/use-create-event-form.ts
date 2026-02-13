@@ -77,24 +77,28 @@ export function useEventForm<T extends FieldValues>({
     }
   }, [watchLocationType, setValue, skipLocationClear]);
 
-  // Validate event name uniqueness (exclude current event in edit mode)
+  // Validate event name uniqueness and set event_id if selecting existing event
   React.useEffect(() => {
     const normalizedName = watchName.trim().toLowerCase();
-    const isDuplicate = existingEvents.some(
+    const existingEvent = existingEvents.find(
       (event) => 
         event.name.trim().toLowerCase() === normalizedName &&
         event.id !== excludeEventId
     );
 
-    if (isDuplicate && normalizedName.length > 0) {
-      setError("name" as Path<T>, {
-        type: "manual",
-        message: "An event with this name already exists",
-      });
-    } else if (errors.name?.type === "manual") {
-      clearErrors("name" as Path<T>);
+    if (existingEvent) {
+      // Found existing event with this name - store its ID to reuse it
+      setValue("event_id" as Path<T>, existingEvent.id as T[Path<T>]);
+      // Clear any name errors since we're reusing an existing event
+      if (errors.name?.type === "manual") {
+        clearErrors("name" as Path<T>);
+      }
+    } else {
+      // New event name - clear event_id
+      setValue("event_id" as Path<T>, null as T[Path<T>]);
+      // No need to show error anymore since reusing is allowed
     }
-  }, [watchName, existingEvents, setError, clearErrors, errors.name?.type, excludeEventId]);
+  }, [watchName, existingEvents, setValue, clearErrors, errors.name?.type, excludeEventId]);
 
   return {
     isLoadingData,

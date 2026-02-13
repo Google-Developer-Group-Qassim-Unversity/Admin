@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/multi-select";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
+import type { Action } from "@/lib/api-types";
 
 export interface PointDetailRowData {
   /** Existing log_id for edit mode, undefined for new rows */
@@ -25,15 +26,13 @@ export interface PointDetailRowData {
   points: number;
   action_id: number | null;
   action_name: string | null;
-  /** Client-side only: visibility toggle (not connected to API) */
-  visible: boolean;
 }
 
 interface PointDetailRowProps {
   data: PointDetailRowData;
   index: number;
   departmentOptions: ComboboxOption[];
-  actionOptions: string[];
+  actionOptions: Action[];
   onChange: (index: number, data: PointDetailRowData) => void;
   onRemove: (index: number) => void;
   canRemove: boolean;
@@ -149,42 +148,52 @@ export function PointDetailRow({
           </div>
         </div>
 
-        {/* Reason (Optional) */}
-        <div className="flex-1 min-w-[180px] space-y-1.5">
+        {/* Reason (Optional) - TEMPORARILY HIDDEN FOR PATCH */}
+        {/* TODO: Fix Reason field functionality in future release */}
+        {/* <div className="flex-1 min-w-[180px] space-y-1.5">
           <Label className="text-sm font-medium text-muted-foreground">
             Reason{" "}
             <span className="text-xs font-normal">(optional)</span>
           </Label>
           <CreatableCombobox
-            options={actionOptions}
-            value={data.action_name ?? ""}
+            options={actionOptions.map(
+              (action) => `${action.action_name}    +${action.points}`
+            )}
+            value={
+              data.action_id
+                ? (() => {
+                    const matchedAction = actionOptions.find(
+                      (a) => a.id === data.action_id
+                    );
+                    return matchedAction
+                      ? `${matchedAction.action_name}    +${matchedAction.points}`
+                      : data.action_name ?? "";
+                  })()
+                : data.action_name ?? ""
+            }
             onChange={(val) => {
-              // Explicitly set to null when empty string
-              updateField("action_name", val === "" ? null : val);
-              // Always clear action_id when user types custom reason
-              updateField("action_id", null);
+              // Check if selected value matches an existing action
+              const matchedAction = actionOptions.find(
+                (action) =>
+                  `${action.action_name}    +${action.points}` === val
+              );
+
+              if (matchedAction) {
+                // Pre-existing action selected
+                updateField("action_id", matchedAction.id);
+                updateField("action_name", matchedAction.action_name);
+              } else {
+                // Custom action typed or cleared
+                updateField("action_id", null);
+                updateField("action_name", val === "" ? null : val);
+              }
             }}
             placeholder="Leave empty or add reason..."
             searchPlaceholder="Search or type reason..."
             emptyMessage="Type to create custom reason"
             className="border-dashed opacity-80 hover:opacity-100 focus-within:opacity-100"
           />
-        </div>
-
-        {/* Visibility Toggle */}
-        <div className="space-y-1.5 flex flex-col items-center min-w-[70px]">
-          <Label className="text-sm font-medium text-muted-foreground">
-            Visible
-          </Label>
-          <div className="flex items-center h-9">
-            <Switch
-              checked={data.visible}
-              onCheckedChange={(checked) =>
-                updateField("visible", !!checked)
-              }
-            />
-          </div>
-        </div>
+        </div> */}
 
         {/* Remove Button */}
         <div className="space-y-1.5 flex flex-col items-center">

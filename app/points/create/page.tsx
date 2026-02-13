@@ -24,11 +24,12 @@ import type { ComboboxOption } from "@/components/ui/department-combobox";
 import {
   getCustomEvents,
   getDepartments,
-  getCustomActions,
+  getActions,
   createCustomDepartmentPoints,
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
+import type { Action, LocationType } from "@/lib/api-types";
 
 export default function CreateCustomEventPage() {
   const router = useRouter();
@@ -37,10 +38,13 @@ export default function CreateCustomEventPage() {
 
   // Data for comboboxes
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
+  const [allEvents, setAllEvents] = React.useState<
+    Array<{ name: string; start_datetime: string; location_type: LocationType }>
+  >([]);
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
-  const [actionOptions, setActionOptions] = React.useState<string[]>([]);
+  const [actionOptions, setActionOptions] = React.useState<Action[]>([]);
   const [isLoadingData, setIsLoadingData] = React.useState(true);
 
   // Fetch reference data
@@ -50,7 +54,7 @@ export default function CreateCustomEventPage() {
       const [eventsRes, deptsRes, actionsRes] = await Promise.all([
         getCustomEvents(),
         getDepartments(),
-        getCustomActions(),
+        getActions(),
       ]);
 
       if (eventsRes.success) {
@@ -58,6 +62,11 @@ export default function CreateCustomEventPage() {
           ...new Set(eventsRes.data.map((e) => e.name)),
         ];
         setEventNameOptions(names);
+        setAllEvents(eventsRes.data.map((e) => ({
+          name: e.name,
+          start_datetime: e.start_datetime,
+          location_type: e.location_type,
+        })));
       }
 
       if (deptsRes.success) {
@@ -70,14 +79,14 @@ export default function CreateCustomEventPage() {
       }
 
       if (actionsRes.success) {
-        const actionNames = [
-          ...new Set(
-            actionsRes.data
-              .map((a) => a.action_name)
-              .filter(Boolean)
-          ),
+        // Combine department_actions, member_actions, and custom_actions
+        // Filter out composite actions (they're for events, not manual point entries)
+        const allActions = [
+          ...actionsRes.data.department_actions,
+          ...actionsRes.data.member_actions,
+          ...actionsRes.data.custom_actions,
         ];
-        setActionOptions(actionNames);
+        setActionOptions(allActions);
       }
 
       setIsLoadingData(false);
@@ -99,11 +108,13 @@ export default function CreateCustomEventPage() {
         start_datetime: formatLocalDateTime(startDate),
         end_datetime: formatLocalDateTime(endDate),
         event_name: data.event_name,
+        location_type: (data.is_visible ? "none" : "hidden") as LocationType,
         point_deatils: data.point_details.map((pd) => ({
           departments_id: pd.departments_id,
           points: pd.points,
-          action_id: pd.action_name ? pd.action_id : null,
-          action_name: pd.action_name || null,
+          // PATCH: Always send null for action fields (Reason feature temporarily disabled)
+          action_id: null,
+          action_name: null,
         })),
       };
 
@@ -175,6 +186,7 @@ export default function CreateCustomEventPage() {
             <CustomEventForm
               mode="create"
               eventNameOptions={eventNameOptions}
+              allEvents={allEvents}
               departmentOptions={departmentOptions}
               actionOptions={actionOptions}
               onSubmit={handleSubmit}

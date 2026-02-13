@@ -6,20 +6,20 @@ import { CalendarIcon, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Switch } from "@/components/ui/switch";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import {
   PointDetailRow,
   type PointDetailRowData,
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment } from "@/lib/api-types";
+import type { CustomEventDepartment, Action, LocationType } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { parseLocalDateTime } from "@/lib/utils";
 
@@ -27,9 +27,9 @@ export interface CustomEventFormProps {
   mode: "create" | "edit";
   initialData?: CustomEventDepartment;
   eventNameOptions: string[];
-  allEvents?: Array<{ name: string; start_datetime: string }>;
+  allEvents?: Array<{ name: string; start_datetime: string; location_type: LocationType }>;
   departmentOptions: ComboboxOption[];
-  actionOptions: string[];
+  actionOptions: Action[];
   onSubmit: (data: CustomEventFormData) => void;
   isSubmitting: boolean;
 }
@@ -37,6 +37,7 @@ export interface CustomEventFormProps {
 export interface CustomEventFormData {
   event_name: string;
   date: Date;
+  is_visible: boolean;
   point_details: PointDetailRowData[];
 }
 
@@ -46,7 +47,6 @@ function createEmptyRow(): PointDetailRowData {
     points: 0,
     action_id: null,
     action_name: null,
-    visible: true,
   };
 }
 
@@ -61,14 +61,25 @@ export function CustomEventForm({
   isSubmitting,
 }: CustomEventFormProps) {
   // Section 1: Event Info
-  const [eventName, setEventName] = React.useState(
-    initialData?.event_name ?? ""
-  );
+  const [eventName, setEventName] = React.useState(initialData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {
+    if (mode === "create") {
+      return new Date(); // Default to today in create mode
+    }
     if (initialData?.start_datetime) {
       return parseLocalDateTime(initialData.start_datetime);
     }
     return undefined;
+  });
+  const [isVisible, setIsVisible] = React.useState(() => {
+    // In edit mode, find the event's location_type from allEvents
+    if (mode === "edit" && initialData?.event_name && allEvents.length > 0) {
+      const matchingEvent = allEvents.find((e) => e.name === initialData.event_name);
+      if (matchingEvent) {
+        return matchingEvent.location_type !== "hidden";
+      }
+    }
+    return true; // Default to visible
   });
 
   // Section 2: Point Details
@@ -80,7 +91,6 @@ export function CustomEventForm({
         points: pd.points,
         action_id: pd.action_id ?? null,
         action_name: pd.action_name ?? null,
-        visible: true,
       }));
     }
     return [createEmptyRow()];
@@ -92,19 +102,27 @@ export function CustomEventForm({
   // Validation errors
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  // Sync event name with date in edit mode
-  React.useEffect(() => {
-    if (mode === "edit" && eventName && allEvents.length > 0) {
-      const matchingEvent = allEvents.find((e) => e.name === eventName);
-      if (matchingEvent && matchingEvent.start_datetime) {
-        const eventDate = parseLocalDateTime(matchingEvent.start_datetime);
-        // Only update if it's different to avoid unnecessary re-renders
-        if (!date || eventDate.toDateString() !== date.toDateString()) {
+  // Handle event name change and sync date/visibility when selecting existing event
+  const handleEventNameChange = (newName: string) => {
+    setEventName(newName);
+    
+    // Only sync when selecting an existing event
+    if (newName && allEvents.length > 0) {
+      const matchingEvent = allEvents.find((e) => e.name === newName);
+      if (matchingEvent) {
+        // Update date
+        if (matchingEvent.start_datetime) {
+          const eventDate = parseLocalDateTime(matchingEvent.start_datetime);
           setDate(eventDate);
         }
+        
+        // Update visibility based on location_type
+        // "none" = visible, "hidden" = hidden
+        const shouldBeVisible = matchingEvent.location_type !== "hidden";
+        setIsVisible(shouldBeVisible);
       }
     }
-  }, [eventName, allEvents, mode, date]);
+  };
 
   const handleRowChange = (index: number, data: PointDetailRowData) => {
     setRows((prev) => prev.map((r, i) => (i === index ? data : r)));
@@ -156,6 +174,7 @@ export function CustomEventForm({
     onSubmit({
       event_name: eventName.trim(),
       date: startDate,
+      is_visible: isVisible,
       point_details: rows,
     });
   };
@@ -169,12 +188,12 @@ export function CustomEventForm({
         <h3 className="text-lg font-semibold">Event Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Event Name */}
-          <div className="space-y-1.5 md:col-span-2">
+          <div className="space-y-1.5">
             <Label htmlFor="event-name">Event Name</Label>
             <CreatableCombobox
               options={eventNameOptions}
               value={eventName}
-              onChange={setEventName}
+              onChange={handleEventNameChange}
               placeholder="Select or create event..."
               searchPlaceholder="Search events..."
               emptyMessage="No matching events."
@@ -216,6 +235,29 @@ export function CustomEventForm({
             {errors.date && (
               <p className="text-sm text-destructive">{errors.date}</p>
             )}
+          </div>
+
+          {/* Visibility Toggle */}
+          <div className="space-y-1.5">
+            <Label htmlFor="is_visible">Event Visibility</Label>
+            <div className="flex items-center gap-4 rounded-lg border p-4">
+              <Switch
+                id="is_visible"
+                checked={isVisible}
+                onCheckedChange={setIsVisible}
+                disabled={isSubmitting}
+              />
+              <div className="flex-1">
+                <p className="text-sm font-medium">
+                  {isVisible ? "Visible" : "Hidden"}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {isVisible 
+                    ? "This custom event will be visible in reports" 
+                    : "This custom event will be hidden from reports"}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

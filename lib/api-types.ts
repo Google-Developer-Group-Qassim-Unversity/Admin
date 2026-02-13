@@ -1,7 +1,7 @@
 // API Types for Score Tracker Admin
 
 // Event types
-export type LocationType = "online" | "on-site" | "none";
+export type LocationType = "online" | "on-site" | "none" | "hidden";
 
 // the event types represent the status of an event in its lifecycle
 //  'draft' means the event is being created but not yet open to members
@@ -241,6 +241,7 @@ export interface CreateCustomDepartmentPayload {
   start_datetime: string;
   end_datetime: string;
   event_name: string;
+  location_type?: LocationType;
   point_deatils: CustomPointDetail[];
 }
 
