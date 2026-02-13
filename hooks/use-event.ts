@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -13,6 +13,7 @@ export const eventKeys = {
   fullDetail: (id: number | string) => [...eventKeys.fullDetails(), id] as const,
   actions: () => [...eventKeys.all, 'actions'] as const,
   departments: () => [...eventKeys.all, 'departments'] as const,
+  attendance: (id: number | string, day: string) => [...eventKeys.all, 'attendance', id, day] as const,
 };
 
 // Hooks
@@ -237,6 +238,52 @@ export function useSendCertificates(getToken: () => Promise<string | null>) {
         throw new Error(result.error.message);
       }
       return result.data;
+    },
+  });
+}
+
+/**
+ * Hook for fetching event attendance records.
+ * @param day - "1", "2", ..., "all", or "exclusive_all"
+ */
+export function useEventAttendance(
+  eventId: number | string,
+  day: string,
+  getToken: () => Promise<string | null>,
+  enabled = true
+) {
+  return useQuery({
+    queryKey: eventKeys.attendance(eventId, day),
+    queryFn: async () => {
+      const result = await getEventAttendance(Number(eventId), day, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    enabled,
+  });
+}
+
+/**
+ * Hook for re-opening a closed event.
+ * Changes event status from "closed" back to "active".
+ */
+export function useOpenEvent(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await openEvent(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, id) => {
+      queryClient.setQueryData(eventKeys.detail(id), data);
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },
   });
 }

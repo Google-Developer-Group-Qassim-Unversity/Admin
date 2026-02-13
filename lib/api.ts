@@ -21,6 +21,7 @@ import type {
   CreateCustomDepartmentPayload,
   UpdateCustomPointDetailPayload,
   CustomAction,
+  AttendanceResponse,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -269,6 +270,32 @@ export async function sendEventCertificates(
   return apiFetch<void>(`/events/${id}/certificates`, {
     method: "POST",
   }, getToken);
+}
+
+/**
+ * Fetch attendance records for an event.
+ * @param day - Day filter: "1", "2", ..., "all", or "exclusive_all"
+ */
+export async function getEventAttendance(
+  id: number,
+  day: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<AttendanceResponse>> {
+  return apiFetch<AttendanceResponse>(
+    `/events/${id}/attendance?day=${encodeURIComponent(day)}`,
+    { method: "GET" },
+    getToken
+  );
+}
+
+/**
+ * Re-open a closed event by setting its status back to "active".
+ */
+export async function openEvent(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return updateEventStatus(id, "active", getToken);
 }
 
 // =============================================================================

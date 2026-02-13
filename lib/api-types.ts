@@ -260,3 +260,31 @@ export interface CustomAction {
   action_name: string;
   points: number;
 }
+
+// =============================================================================
+// Attendance
+// =============================================================================
+
+/** A single member's attendance record returned by GET /events/{id}/attendance */
+export interface AttendanceRecord {
+  Members: {
+    id: number;
+    gender: Gender;
+    uni_college: string;
+    updated_at: string;
+    email: string;
+    name: string;
+    uni_id: string;
+    uni_level: number;
+    created_at: string;
+    is_authenticated: number;
+    phone_number: string;
+  };
+  dates: string[];
+}
+
+/** Response from GET /events/{id}/attendance */
+export interface AttendanceResponse {
+  attendance_count: number;
+  attendance: AttendanceRecord[];
+}
