@@ -69,7 +69,6 @@ import {
   AcceptAllDialog,
   Pagination,
   SelectedRowsActions,
-  StatusAlert,
   SummaryStatistics,
 } from "@/components/responses-tab-components";
 import {
@@ -410,12 +409,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
           </div>
         ) : (
           <>
-            {/* Status Alert */}
-            <StatusAlert
-              eventStatus={event.status}
-              formType={formData?.formType}
-            />
-
             {/* Summary Statistics */}
             <SummaryStatistics total={total} accepted={accepted} pending={pending} />
 

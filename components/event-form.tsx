@@ -108,17 +108,13 @@ export function EventForm({
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
 
+
   // Get composite actions directly
   const compositeActions = React.useMemo(() => {
     if (!actionsData?.composite_actions) return [];
     return actionsData.composite_actions;
   }, [actionsData]);
 
-  // Filter to only show practical departments
-  const practicalDepartments = React.useMemo(() => {
-    if (!departments) return [];
-    return departments.filter((dept) => dept.type === "practical");
-  }, [departments]);
 
   // Helper to find matching composite action for display
   const findCompositeActionValue = (action: Action[] | undefined): string | undefined => {
@@ -135,6 +131,18 @@ export function EventForm({
     return (
       <div className="flex items-center justify-center py-10">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+
+  if ((!isLoadingDepartments || isLoadingActions) && (!actionsData || !departments)) {
+    return (
+      <div className="flex items-center justify-center py-10">
+        <p className="text-sm text-destructive">
+          Failed to load necessary data for the form. Please try again later.
+          and contact support if the issue persists.
+        </p>
       </div>
     );
   }
@@ -294,7 +302,7 @@ export function EventForm({
                   <SelectValue placeholder="Select a department..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {practicalDepartments.map((dept) => (
+                  {departments.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id.toString()}>
                       {dept.ar_name}
                     </SelectItem>
