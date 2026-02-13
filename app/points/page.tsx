@@ -1,69 +1,13 @@
-"use client";
-
-import * as React from "react";
 import Link from "next/link";
 import { Trophy, AlertCircle, Calendar } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CustomEventsList } from "@/components/custom-events-list";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { getCustomEvents } from "@/lib/api";
 
-function CustomEventsListSkeleton() {
-  return (
-    <div className="space-y-4">
-      {/* Search Skeleton */}
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-9 w-64" />
-      </div>
-
-      {/* Grid Skeleton */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {Array.from({ length: 8 }).map((_, index) => (
-          <Card key={index} className="overflow-hidden flex flex-col h-full">
-            <Skeleton className="w-full aspect-video" />
-            <CardHeader className="flex-1 pb-3">
-              <div className="flex items-start justify-between gap-2 mb-2">
-                <div className="flex-1 space-y-2">
-                  <Skeleton className="h-6 w-full" />
-                  <Skeleton className="h-6 w-3/4" />
-                </div>
-                <Skeleton className="h-5 w-14" />
-              </div>
-            </CardHeader>
-            <CardContent className="pb-3 space-y-2">
-              <div className="flex items-center gap-2">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-32" />
-              </div>
-            </CardContent>
-            <CardFooter className="pt-3">
-              <Skeleton className="h-9 flex-1" />
-            </CardFooter>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-export default function ManagePointsPage() {
-  const [eventsResponse, setEventsResponse] = React.useState<Awaited<
-    ReturnType<typeof getCustomEvents>
-  > | null>(null);
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  React.useEffect(() => {
-    async function fetchEvents() {
-      setIsLoading(true);
-      const response = await getCustomEvents();
-      setEventsResponse(response);
-      setIsLoading(false);
-    }
-    fetchEvents();
-  }, []);
+export default async function ManagePointsPage() {
+  const eventsResponse = await getCustomEvents();
 
   return (
     <div className="space-y-8">
@@ -85,11 +29,8 @@ export default function ManagePointsPage() {
         </Button>
       </div>
 
-      {/* Loading State */}
-      {isLoading && <CustomEventsListSkeleton />}
-
       {/* Error State */}
-      {!isLoading && eventsResponse && !eventsResponse.success && (
+      {eventsResponse && !eventsResponse.success && (
         <div className="flex justify-center">
           <Alert variant="destructive" className="max-w-2xl">
             <AlertCircle className="h-4 w-4" />
@@ -109,16 +50,12 @@ export default function ManagePointsPage() {
       )}
 
       {/* Success State - Has Events */}
-      {!isLoading &&
-        eventsResponse?.success &&
-        eventsResponse.data.length > 0 && (
+      {eventsResponse?.success && eventsResponse.data.length > 0 && (
           <CustomEventsList events={eventsResponse.data} />
         )}
 
       {/* Empty State */}
-      {!isLoading &&
-        eventsResponse?.success &&
-        eventsResponse.data.length === 0 && (
+      {eventsResponse?.success && eventsResponse.data.length === 0 && (
           <div className="flex justify-center">
             <Alert className="max-w-2xl">
               <Calendar className="h-4 w-4" />
