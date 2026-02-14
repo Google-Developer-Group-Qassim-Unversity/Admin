@@ -302,7 +302,7 @@ export function EventForm({
                   <SelectValue placeholder="Select a department..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments.map((dept) => (
+                  {departments?.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id.toString()}>
                       {dept.ar_name}
                     </SelectItem>
