@@ -12,7 +12,7 @@ import {
   Timer,
   DoorClosed,
   DoorOpen,
-  Maximize2,
+  ExternalLink,
   Search,
   Users,
   Loader2,
@@ -86,9 +86,50 @@ function getDayNumber(dateStr: string, eventStart: Date): number {
   return Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
 }
 
+/**
+ * Get the localStorage key for storing attendance token data.
+ */
+function getTokenStorageKey(eventId: string): string {
+  return `attendance-token-${eventId}`;
+}
+
+/**
+ * Load stored token data from localStorage for the given event.
+ */
+function getStoredToken(eventId: string): TokenResponse | null {
+  try {
+    const key = getTokenStorageKey(eventId);
+    const stored = localStorage.getItem(key);
+    if (!stored) return null;
+
+    const data = JSON.parse(stored) as TokenResponse;
+    // Validate required fields
+    if (!data.token || !data.expiresAt || !data.attendanceUrl) {
+      return null;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Error loading stored token:', error);
+    return null;
+  }
+}
+
+/**
+ * Save token data to localStorage for the given event.
+ */
+function saveToken(eventId: string, tokenData: TokenResponse): void {
+  try {
+    const key = getTokenStorageKey(eventId);
+    localStorage.setItem(key, JSON.stringify(tokenData));
+  } catch (error) {
+    console.error('Error saving token to localStorage:', error);
+  }
+}
+
 export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabProps) {
   const { getToken } = useAuth();
-  const [expirationMinutes, setExpirationMinutes] = useState('30');
+  const [expirationMinutes, setExpirationMinutes] = useState('15');
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -115,6 +156,14 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
 
   // Open event mutation
   const openEventMutation = useOpenEvent(getToken);
+
+  // Load stored token from localStorage on mount
+  useEffect(() => {
+    const storedToken = getStoredToken(String(event.id));
+    if (storedToken) {
+      setTokenData(storedToken);
+    }
+  }, [event.id]);
 
   // Filtered attendance list (client-side name search)
   // Uses word-based matching: all words in the query must exist in the name
@@ -208,6 +257,7 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
 
       const data: TokenResponse = await response.json();
       setTokenData(data);
+      saveToken(String(event.id), data);
       toast.success('Attendance link generated successfully');
 
       // Open fullscreen QR code in new tab
@@ -389,8 +439,8 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                     onClick={handleOpenFullscreen}
                     className="flex-1"
                   >
-                    <Maximize2 className="h-4 w-4" />
-                    Fullscreen
+                    <ExternalLink className="h-4 w-4" />
+                    Open in Tab
                   </Button>
                 </div>
               )}
