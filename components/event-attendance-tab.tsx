@@ -141,7 +141,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
   const [searchQuery, setSearchQuery] = useState('');
 
   const isEventClosed = event.status === 'closed';
-  const showAttendance = event.status === 'active' || event.status === 'closed';
   const dayCount = getEventDayCount(event);
   const isMultiDay = dayCount > 1;
   const eventStart = useMemo(() => new Date(event.start_datetime), [event.start_datetime]);
@@ -152,7 +151,7 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     isLoading: isLoadingAttendance,
     isFetching: isFetchingAttendance,
     refetch: refetchAttendance,
-  } = useEventAttendance(event.id, selectedDay, getToken, showAttendance);
+  } = useEventAttendance(event.id, selectedDay, getToken, true);
 
   // Open event mutation
   const openEventMutation = useOpenEvent(getToken);
@@ -513,9 +512,8 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
       </Card>
 
       {/* Attendance List Card */}
-      {showAttendance && (
-        <Card>
-          <CardHeader>
+      <Card>
+        <CardHeader>
             <div className="flex items-center justify-between">
               <div className="space-y-1.5">
                 <CardTitle className="flex items-center gap-2">
@@ -639,7 +637,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
             )}
           </CardContent>
         </Card>
-      )}
     </div>
   );
 }
