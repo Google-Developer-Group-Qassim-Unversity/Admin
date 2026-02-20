@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { FieldValues, Path, UseFormSetValue, UseFormSetError, UseFormClearErrors, FieldErrors } from "react-hook-form";
+import type { FieldValues, Path, UseFormSetValue } from "react-hook-form";
 import { getEvents } from "@/lib/api";
 import type { Event, LocationType } from "@/lib/api-types";
 
@@ -7,11 +7,6 @@ interface UseEventFormOptions<T extends FieldValues> {
   watchName: string;
   watchLocationType: LocationType;
   setValue: UseFormSetValue<T>;
-  setError: UseFormSetError<T>;
-  clearErrors: UseFormClearErrors<T>;
-  errors: FieldErrors<T>;
-  /** Event ID to exclude from name uniqueness check (for edit mode) */
-  excludeEventId?: number;
   /** Skip clearing location when location type changes (for edit mode initial load) */
   skipLocationClear?: boolean;
 }
@@ -20,10 +15,6 @@ export function useEventForm<T extends FieldValues>({
   watchName,
   watchLocationType,
   setValue,
-  setError,
-  clearErrors,
-  errors,
-  excludeEventId,
   skipLocationClear = false,
 }: UseEventFormOptions<T>) {
   const [existingEvents, setExistingEvents] = React.useState<Event[]>([]);
@@ -77,29 +68,6 @@ export function useEventForm<T extends FieldValues>({
     }
   }, [watchLocationType, setValue, skipLocationClear]);
 
-  // Validate event name uniqueness and set event_id if selecting existing event
-  React.useEffect(() => {
-    const normalizedName = watchName.trim().toLowerCase();
-    const existingEvent = existingEvents.find(
-      (event) => 
-        event.name.trim().toLowerCase() === normalizedName &&
-        event.id !== excludeEventId
-    );
-
-    if (existingEvent) {
-      // Found existing event with this name - store its ID to reuse it
-      setValue("event_id" as Path<T>, existingEvent.id as T[Path<T>]);
-      // Clear any name errors since we're reusing an existing event
-      if (errors.name?.type === "manual") {
-        clearErrors("name" as Path<T>);
-      }
-    } else {
-      // New event name - clear event_id
-      setValue("event_id" as Path<T>, null as T[Path<T>]);
-      // No need to show error anymore since reusing is allowed
-    }
-  }, [watchName, existingEvents, setValue, clearErrors, errors.name?.type, excludeEventId]);
-
   return {
     isLoadingData,
     locationOptions,
@@ -107,6 +75,6 @@ export function useEventForm<T extends FieldValues>({
 }
 
 /** @deprecated Use useEventForm instead */
-export function useCreateEventForm<T extends FieldValues>(options: Omit<UseEventFormOptions<T>, 'excludeEventId' | 'skipLocationClear'>) {
+export function useCreateEventForm<T extends FieldValues>(options: Omit<UseEventFormOptions<T>, 'skipLocationClear'>) {
   return useEventForm(options);
 }

@@ -46,7 +46,7 @@ export type EventFormData = z.infer<typeof eventFormSchema>;
 export interface EventFormProps {
   mode: "create" | "edit";
   initialData?: Partial<EventFormData>;
-  /** Event ID for edit mode (used to exclude from name uniqueness check) */
+  /** Event ID for edit mode (reserved for future use) */
   eventId?: number;
   onSubmit: (data: EventFormData) => Promise<void>;
   isSubmitting?: boolean;
@@ -98,10 +98,6 @@ export function EventForm({
     watchName,
     watchLocationType,
     setValue,
-    setError,
-    clearErrors,
-    errors,
-    excludeEventId: mode === "edit" ? eventId : undefined,
   });
 
   // Fetch actions and departments
