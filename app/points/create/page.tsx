@@ -29,7 +29,7 @@ import {
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
-import type { Action, LocationType } from "@/lib/api-types";
+import type { GroupedActions, LocationType } from "@/lib/api-types";
 
 export default function CreateCustomEventPage() {
   const router = useRouter();
@@ -44,7 +44,10 @@ export default function CreateCustomEventPage() {
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
-  const [actionOptions, setActionOptions] = React.useState<Action[]>([]);
+  const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
+    department: [],
+    bonus: [],
+  });
   const [isLoadingData, setIsLoadingData] = React.useState(true);
 
   // Fetch reference data
@@ -79,14 +82,11 @@ export default function CreateCustomEventPage() {
       }
 
       if (actionsRes.success) {
-        // Combine department_actions, member_actions, and custom_actions
-        // Filter out composite actions (they're for events, not manual point entries)
-        const allActions = [
-          ...actionsRes.data.department_actions,
-          ...actionsRes.data.member_actions,
-          ...actionsRes.data.custom_actions,
-        ];
-        setActionOptions(allActions);
+        // Group actions by type for the reason selector
+        setActionOptions({
+          department: actionsRes.data.department_actions,
+          bonus: actionsRes.data.custom_actions,
+        });
       }
 
       setIsLoadingData(false);
@@ -112,9 +112,8 @@ export default function CreateCustomEventPage() {
         point_deatils: data.point_details.map((pd) => ({
           departments_id: pd.departments_id,
           points: pd.points,
-          // PATCH: Always send null for action fields (Reason feature temporarily disabled)
-          action_id: null,
-          action_name: null,
+          action_id: pd.action_id,
+          action_name: pd.action_name,
         })),
       };
 

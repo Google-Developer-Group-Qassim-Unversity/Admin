@@ -19,7 +19,7 @@ import {
   type PointDetailRowData,
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment, Action, LocationType } from "@/lib/api-types";
+import type { CustomEventDepartment, GroupedActions, LocationType } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { parseLocalDateTime } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export interface CustomEventFormProps {
   eventNameOptions: string[];
   allEvents?: Array<{ name: string; start_datetime: string; location_type: LocationType }>;
   departmentOptions: ComboboxOption[];
-  actionOptions: Action[];
+  actionOptions: GroupedActions;
   onSubmit: (data: CustomEventFormData) => void;
   isSubmitting: boolean;
 }
