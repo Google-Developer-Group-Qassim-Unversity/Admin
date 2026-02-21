@@ -259,6 +259,7 @@ export default function EditCustomEventPage() {
         newEndDate.setHours(12, 0, 0, 0);
 
         const createPayload = {
+          event_id: initialData.event_id,
           start_datetime: formatLocalDateTime(newStartDate),
           end_datetime: formatLocalDateTime(newEndDate),
           event_name: data.event_name,
