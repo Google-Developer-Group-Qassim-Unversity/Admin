@@ -66,6 +66,7 @@ export default function EditCustomEventPage() {
   const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
   const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
     department: [],
+    member: [],
     bonus: [],
   });
 
@@ -129,12 +130,13 @@ export default function EditCustomEventPage() {
         );
       }
 
-      if (actionsRes.success) {
-        setActionOptions({
-          department: actionsRes.data.department_actions,
-          bonus: actionsRes.data.custom_actions,
-        });
-      }
+if (actionsRes.success) {
+          setActionOptions({
+            department: actionsRes.data.department_actions,
+            member: actionsRes.data.member_actions,
+            bonus: actionsRes.data.custom_actions,
+          });
+        }
 
       setIsLoading(false);
     }

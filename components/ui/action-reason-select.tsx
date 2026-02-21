@@ -55,7 +55,7 @@ export function ActionReasonSelect({
   const [searchValue, setSearchValue] = React.useState("");
 
   // Find the currently selected action
-  const allActions = [...actionOptions.department, ...actionOptions.bonus];
+  const allActions = [...actionOptions.department, ...actionOptions.member, ...actionOptions.bonus];
   const selectedAction = selectedActionId
     ? allActions.find((a) => a.id === selectedActionId)
     : null;
@@ -84,12 +84,13 @@ export function ActionReasonSelect({
     );
 
   const filteredDepartment = filterActions(actionOptions.department);
+  const filteredMember = filterActions(actionOptions.member);
   const filteredBonus = filterActions(actionOptions.bonus);
 
   // Always show create option when user types - allows creating new action
   // with same name but different points
   const showCreateOption = normalizedSearch.length > 0;
-  const hasAnyResults = filteredDepartment.length > 0 || filteredBonus.length > 0 || showCreateOption;
+  const hasAnyResults = filteredDepartment.length > 0 || filteredMember.length > 0 || filteredBonus.length > 0 || showCreateOption;
 
   const handleSelectAction = (action: Action) => {
     onChange(action.id, action.action_name, action.points);
@@ -187,7 +188,7 @@ export function ActionReasonSelect({
                     <span>Create &quot;{searchValue.trim()}&quot;</span>
                   </CommandItem>
                 </CommandGroup>
-                {(filteredDepartment.length > 0 || filteredBonus.length > 0) && (
+                {(filteredDepartment.length > 0 || filteredMember.length > 0 || filteredBonus.length > 0) && (
                   <CommandSeparator />
                 )}
               </>
@@ -214,8 +215,39 @@ export function ActionReasonSelect({
               </CommandGroup>
             )}
 
-            {/* Separator between groups */}
-            {filteredDepartment.length > 0 && filteredBonus.length > 0 && (
+            {/* Separator between department and member */}
+            {filteredDepartment.length > 0 && filteredMember.length > 0 && (
+              <CommandSeparator />
+            )}
+
+            {/* Member actions group */}
+            {filteredMember.length > 0 && (
+              <CommandGroup heading="Member">
+                {filteredMember.map((action) => (
+                  <CommandItem
+                    key={action.id}
+                    value={String(action.id)}
+                    onSelect={() => handleSelectAction(action)}
+                  >
+                    <Check
+                      className={cn(
+                        "mr-2 h-4 w-4",
+                        selectedActionId === action.id ? "opacity-100" : "opacity-0"
+                      )}
+                    />
+                    {formatActionLabel(action)}
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            {/* Separator between member and custom */}
+            {filteredMember.length > 0 && filteredBonus.length > 0 && (
+              <CommandSeparator />
+            )}
+
+            {/* Separator between department and custom when member is empty */}
+            {filteredDepartment.length > 0 && filteredMember.length === 0 && filteredBonus.length > 0 && (
               <CommandSeparator />
             )}
 

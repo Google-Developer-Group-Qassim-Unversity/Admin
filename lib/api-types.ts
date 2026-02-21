@@ -200,6 +200,7 @@ export interface ActionsResponse {
 /** Grouped actions for the reason selector in custom points UI */
 export interface GroupedActions {
   department: Action[];
+  member: Action[];
   bonus: Action[];
 }
 
