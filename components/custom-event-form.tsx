@@ -20,8 +20,8 @@ import {
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { CustomEventDepartment, GroupedActions, LocationType } from "@/lib/api-types";
-import { cn } from "@/lib/utils";
-import { parseLocalDateTime } from "@/lib/utils";
+import { cn, parseLocalDateTime } from "@/lib/utils";
+import { useFormDirty } from "@/lib/use-form-dirty";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
@@ -101,6 +101,54 @@ export function CustomEventForm({
 
   // Validation errors
   const [errors, setErrors] = React.useState<Record<string, string>>({});
+
+  // Dirty state tracking - compute initial snapshot (only in edit mode)
+  const initialSnapshot = React.useMemo(() => {
+    if (mode === "create") return null; // Always dirty in create mode
+
+    // Get initial visibility from allEvents
+    const matchingEvent = allEvents.find((e) => e.name === initialData?.event_name);
+    const initialVisibility = matchingEvent
+      ? matchingEvent.location_type !== "hidden"
+      : true;
+
+    return {
+      eventName: initialData?.event_name ?? "",
+      date: initialData?.start_datetime
+        ? parseLocalDateTime(initialData.start_datetime).getTime()
+        : null,
+      isVisible: initialVisibility,
+      rows:
+        initialData?.point_details?.map((pd) => ({
+          log_id: pd.log_id,
+          departments_id: [...pd.departments_id].sort((a, b) => a - b),
+          points: pd.points,
+          action_id: pd.action_id ?? null,
+          action_name: pd.action_name ?? null,
+        })) ?? [],
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only compute once on mount
+
+  // Current form state snapshot for comparison
+  const currentSnapshot = React.useMemo(
+    () => ({
+      eventName,
+      date: date?.getTime() ?? null,
+      isVisible,
+      rows: rows.map((r) => ({
+        log_id: r.log_id,
+        departments_id: [...r.departments_id].sort((a, b) => a - b),
+        points: r.points,
+        action_id: r.action_id,
+        action_name: r.action_name,
+      })),
+    }),
+    [eventName, date, isVisible, rows]
+  );
+
+  // Check if form has unsaved changes
+  const isDirty = useFormDirty(initialSnapshot, currentSnapshot);
 
   // Handle event name change and sync date/visibility when selecting existing event
   const handleEventNameChange = (newName: string) => {
@@ -312,7 +360,7 @@ export function CustomEventForm({
 
       {/* Submit */}
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isSubmitting}>
+        <Button type="submit" disabled={isSubmitting || !isDirty}>
           {isSubmitting
             ? mode === "create"
               ? "Creating..."

@@ -39,7 +39,7 @@ export default function CreateCustomEventPage() {
   // Data for comboboxes
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
   const [allEvents, setAllEvents] = React.useState<
-    Array<{ name: string; start_datetime: string; location_type: LocationType }>
+    Array<{ id: number; name: string; start_datetime: string; location_type: LocationType }>
   >([]);
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
@@ -66,6 +66,7 @@ export default function CreateCustomEventPage() {
         ];
         setEventNameOptions(names);
         setAllEvents(eventsRes.data.map((e) => ({
+          id: e.id,
           name: e.name,
           start_datetime: e.start_datetime,
           location_type: e.location_type,
@@ -104,7 +105,11 @@ export default function CreateCustomEventPage() {
       const endDate = new Date(data.date);
       endDate.setHours(12, 0, 0, 0);
 
+      // Look up event_id if selecting an existing event
+      const existingEvent = allEvents.find((e) => e.name === data.event_name);
+
       const payload = {
+        event_id: existingEvent?.id ?? null,
         start_datetime: formatLocalDateTime(startDate),
         end_datetime: formatLocalDateTime(endDate),
         event_name: data.event_name,

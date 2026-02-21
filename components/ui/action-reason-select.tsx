@@ -86,14 +86,9 @@ export function ActionReasonSelect({
   const filteredDepartment = filterActions(actionOptions.department);
   const filteredBonus = filterActions(actionOptions.bonus);
 
-  // Check if exact match exists (for creatable)
-  const exactMatchExists = allActions.some(
-    (action) =>
-      action.action_name.toLowerCase() === normalizedSearch ||
-      action.ar_action_name.toLowerCase() === normalizedSearch
-  );
-
-  const showCreateOption = normalizedSearch.length > 0 && !exactMatchExists;
+  // Always show create option when user types - allows creating new action
+  // with same name but different points
+  const showCreateOption = normalizedSearch.length > 0;
   const hasAnyResults = filteredDepartment.length > 0 || filteredBonus.length > 0 || showCreateOption;
 
   const handleSelectAction = (action: Action) => {
