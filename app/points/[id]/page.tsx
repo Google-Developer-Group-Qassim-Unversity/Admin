@@ -21,15 +21,20 @@ import {
   type CustomEventFormData,
 } from "@/components/custom-event-form";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment, GroupedActions, EventDetails } from "@/lib/api-types";
+import type { MemberOption } from "@/components/point-detail-row";
+import type { CustomEventDepartment, CustomEventMember, GroupedActions, EventDetails } from "@/lib/api-types";
 import {
   getCustomEvents,
   getCustomEventDepartment,
+  getCustomEventMember,
   getEventDetails,
   getDepartments,
+  getMembers,
   getActions,
   updateCustomPointDetail,
+  updateCustomMemberPointDetail,
   createCustomDepartmentPoints,
+  createCustomMemberPoints,
   updateEvent,
   shouldContactSupport,
 } from "@/lib/api";
@@ -45,9 +50,10 @@ export default function EditCustomEventPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Loaded data
   const [initialData, setInitialData] =
     React.useState<CustomEventDepartment | null>(null);
+  const [initialMemberData, setInitialMemberData] =
+    React.useState<CustomEventMember | null>(null);
   const [eventDetails, setEventDetails] = 
     React.useState<EventDetails | null>(null);
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
@@ -57,30 +63,26 @@ export default function EditCustomEventPage() {
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
+  const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
   const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
     department: [],
     bonus: [],
   });
 
-  // Fetch all data
   React.useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       setError(null);
 
-      const [eventRes, eventDetailsRes, eventsRes, deptsRes, actionsRes] = await Promise.all([
+      const [eventRes, eventDetailsRes, eventsRes, deptsRes, membersRes, actionsRes, memberEventRes] = await Promise.all([
         getCustomEventDepartment(eventId, getToken),
         getEventDetails(eventId, getToken),
         getCustomEvents(),
         getDepartments(),
+        getMembers(getToken),
         getActions(),
+        getCustomEventMember(eventId, getToken),
       ]);
-
-      if (!eventRes.success) {
-        setError(eventRes.error.message || "Failed to load custom event.");
-        setIsLoading(false);
-        return;
-      }
 
       if (!eventDetailsRes.success) {
         setError(eventDetailsRes.error.message || "Failed to load event details.");
@@ -88,13 +90,19 @@ export default function EditCustomEventPage() {
         return;
       }
 
-      setInitialData(eventRes.data);
       setEventDetails(eventDetailsRes.data);
+
+      if (eventRes.success) {
+        setInitialData(eventRes.data);
+      }
+
+      if (memberEventRes.success) {
+        setInitialMemberData(memberEventRes.data);
+      }
 
       if (eventsRes.success) {
         const names = [...new Set(eventsRes.data.map((e) => e.name))];
         setEventNameOptions(names);
-        // Store all events for date and visibility synchronization
         setAllEvents(eventsRes.data.map((e) => ({
           name: e.name,
           start_datetime: e.start_datetime,
@@ -111,8 +119,17 @@ export default function EditCustomEventPage() {
         );
       }
 
+      if (membersRes.success) {
+        setMemberOptions(
+          membersRes.data.map((m) => ({
+            id: m.id,
+            label: m.name,
+            uni_id: m.uni_id,
+          }))
+        );
+      }
+
       if (actionsRes.success) {
-        // Group actions by type for the reason selector
         setActionOptions({
           department: actionsRes.data.department_actions,
           bonus: actionsRes.data.custom_actions,
@@ -125,29 +142,26 @@ export default function EditCustomEventPage() {
   }, [eventId, getToken]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
-    if (!initialData || !eventDetails) return;
+    if (!eventDetails) return;
+
+    const initialEventName = initialData?.event_name ?? initialMemberData?.event_name;
+    const initialStartDt = initialData?.start_datetime ?? initialMemberData?.start_datetime;
 
     setIsSubmitting(true);
 
     try {
-      // Parse the original start_datetime to get original date (ignoring time)
-      const originalDate = parseLocalDateTime(initialData.start_datetime);
+      const originalDate = parseLocalDateTime(initialStartDt || "");
       const originalDateOnly = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate());
       const newDateOnly = new Date(data.date.getFullYear(), data.date.getMonth(), data.date.getDate());
       
-      // Only compare date part, preserve original time from initialData
-      const dateChanged = originalDateOnly.getTime() !== newDateOnly.getTime();
-      const nameChanged = data.event_name !== initialData.event_name;
+      const dateChanged = initialStartDt ? originalDateOnly.getTime() !== newDateOnly.getTime() : true;
+      const nameChanged = data.event_name !== initialEventName;
       
-      // Check if visibility changed by comparing with event's location_type from allEvents
-      const currentEvent = allEvents.find((e) => e.name === initialData.event_name);
+      const currentEvent = allEvents.find((e) => e.name === initialEventName);
       const currentVisibility = currentEvent ? currentEvent.location_type !== "hidden" : true;
       const visibilityChanged = data.is_visible !== currentVisibility;
 
-      // 1. Update event info if name, date, or visibility changed
       if (nameChanged || dateChanged || visibilityChanged) {
-        // If date changed, use new date with default times (10:00-12:00)
-        // If date unchanged, preserve original times
         let startDate, endDate;
         if (dateChanged) {
           startDate = new Date(data.date);
@@ -155,12 +169,10 @@ export default function EditCustomEventPage() {
           endDate = new Date(data.date);
           endDate.setHours(12, 0, 0, 0);
         } else {
-          // Keep original times
-          startDate = parseLocalDateTime(initialData.start_datetime);
-          endDate = parseLocalDateTime(initialData.end_datetime);
+          startDate = parseLocalDateTime(initialStartDt || "");
+          endDate = parseLocalDateTime((initialData?.end_datetime ?? initialMemberData?.end_datetime) || "");
         }
 
-        // Build the full update payload with event object and actions
         const updatePayload = {
           event: {
             id: eventDetails.event.id,
@@ -178,7 +190,7 @@ export default function EditCustomEventPage() {
         };
 
         const eventUpdateRes = await updateEvent(
-          initialData.event_id,
+          parseInt(eventId),
           updatePayload,
           getToken
         );
@@ -200,24 +212,20 @@ export default function EditCustomEventPage() {
         }
       }
 
-      // 2. Separate existing rows (have log_id) from new rows
-      const existingRows = data.point_details.filter((pd) => pd.log_id);
-      const newRows = data.point_details.filter((pd) => !pd.log_id);
+      const existingDeptRows = data.point_details.filter((pd) => pd.row_type === "department" && pd.log_id);
+      const newDeptRows = data.point_details.filter((pd) => pd.row_type === "department" && !pd.log_id);
+      const existingMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && pd.log_id);
+      const newMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && !pd.log_id);
 
-      // 3. Update existing point details (only those that changed)
-      const updatePromises = existingRows
+      const updateDeptPromises = existingDeptRows
         .filter((pd) => {
-          // Find original point detail
-          const original = initialData.point_details.find((orig) => orig.log_id === pd.log_id);
-          if (!original) return true; // If not found, update it
-
-          // Check if anything changed
+          const original = initialData?.point_details.find((orig) => orig.log_id === pd.log_id);
+          if (!original) return true;
           const pointsChanged = pd.points !== original.points;
           const actionChanged = pd.action_name !== (original.action_name ?? null);
           const depsChanged = 
             pd.departments_id.length !== original.departments_id.length ||
-            !pd.departments_id.every((id, idx) => original.departments_id.includes(id));
-
+            !pd.departments_id.every((id) => original.departments_id.includes(id));
           return pointsChanged || actionChanged || depsChanged;
         })
         .map((pd) =>
@@ -234,9 +242,33 @@ export default function EditCustomEventPage() {
           )
         );
 
-      const updateResults = await Promise.all(updatePromises);
+      const updateMemberPromises = existingMemberRows
+        .filter((pd) => {
+          const original = initialMemberData?.point_details.find((orig) => orig.log_id === pd.log_id);
+          if (!original) return true;
+          const pointsChanged = pd.points !== original.points;
+          const actionChanged = pd.action_name !== (original.action_name ?? null);
+          const membersChanged = 
+            pd.member_ids.length !== original.member_ids.length ||
+            !pd.member_ids.every((id) => original.member_ids.includes(id));
+          return pointsChanged || actionChanged || membersChanged;
+        })
+        .map((pd) =>
+          updateCustomMemberPointDetail(
+            pd.log_id!,
+            {
+              log_id: pd.log_id!,
+              member_ids: pd.member_ids,
+              points: pd.points,
+              action_id: pd.action_id,
+              action_name: pd.action_name,
+            },
+            getToken
+          )
+        );
 
-      // Check for update failures
+      const updateResults = await Promise.all([...updateDeptPromises, ...updateMemberPromises]);
+
       const failedUpdates = updateResults.filter((r) => !r.success);
       if (failedUpdates.length > 0) {
         const firstError = failedUpdates[0];
@@ -250,21 +282,19 @@ export default function EditCustomEventPage() {
         }
       }
 
-      // 4. Create new rows if any
-      if (newRows.length > 0) {
-        // Use current event date with default times for new rows
-        const newStartDate = new Date(data.date);
-        newStartDate.setHours(10, 0, 0, 0);
-        const newEndDate = new Date(data.date);
-        newEndDate.setHours(12, 0, 0, 0);
+      const newStartDate = new Date(data.date);
+      newStartDate.setHours(10, 0, 0, 0);
+      const newEndDate = new Date(data.date);
+      newEndDate.setHours(12, 0, 0, 0);
 
-        const createPayload = {
-          event_id: initialData.event_id,
+      if (newDeptRows.length > 0) {
+        const createDeptPayload = {
+          event_id: parseInt(eventId),
           start_datetime: formatLocalDateTime(newStartDate),
           end_datetime: formatLocalDateTime(newEndDate),
           event_name: data.event_name,
           location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
-          point_deatils: newRows.map((pd) => ({
+          point_deatils: newDeptRows.map((pd) => ({
             departments_id: pd.departments_id,
             points: pd.points,
             action_id: pd.action_id,
@@ -273,14 +303,14 @@ export default function EditCustomEventPage() {
         };
 
         const createRes = await createCustomDepartmentPoints(
-          createPayload,
+          createDeptPayload,
           getToken
         );
 
         if (!createRes.success) {
           if (shouldContactSupport(createRes.error)) {
             toast.error(
-              "Failed to create new point details. Please contact support.",
+              "Failed to create new department point details. Please contact support.",
               {
                 description: `Error: ${createRes.error.message}`,
                 duration: 10000,
@@ -294,7 +324,43 @@ export default function EditCustomEventPage() {
         }
       }
 
-      // Success
+      if (newMemberRows.length > 0) {
+        const createMemberPayload = {
+          event_id: parseInt(eventId),
+          start_datetime: formatLocalDateTime(newStartDate),
+          end_datetime: formatLocalDateTime(newEndDate),
+          event_name: data.event_name,
+          location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
+          point_deatils: newMemberRows.map((pd) => ({
+            member_ids: pd.member_ids,
+            points: pd.points,
+            action_id: pd.action_id,
+            action_name: pd.action_name,
+          })),
+        };
+
+        const createRes = await createCustomMemberPoints(
+          createMemberPayload,
+          getToken
+        );
+
+        if (!createRes.success) {
+          if (shouldContactSupport(createRes.error)) {
+            toast.error(
+              "Failed to create new member point details. Please contact support.",
+              {
+                description: `Error: ${createRes.error.message}`,
+                duration: 10000,
+              }
+            );
+          } else {
+            toast.error(createRes.error.message);
+          }
+          setIsSubmitting(false);
+          return;
+        }
+      }
+
       if (failedUpdates.length === 0) {
         toast.success("Custom event updated successfully!");
       }
@@ -359,7 +425,7 @@ export default function EditCustomEventPage() {
     );
   }
 
-  if (!initialData) {
+  if (!initialData && !initialMemberData) {
     return (
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
@@ -394,16 +460,18 @@ export default function EditCustomEventPage() {
             Edit Custom Event
           </CardTitle>
           <CardDescription>
-            Edit event details and department point assignments
+            Edit event details and department/member point assignments
           </CardDescription>
         </CardHeader>
         <CardContent>
           <CustomEventForm
             mode="edit"
-            initialData={initialData}
+            initialData={initialData ?? undefined}
+            initialMemberData={initialMemberData ?? undefined}
             eventNameOptions={eventNameOptions}
             allEvents={allEvents}
             departmentOptions={departmentOptions}
+            memberOptions={memberOptions}
             actionOptions={actionOptions}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}

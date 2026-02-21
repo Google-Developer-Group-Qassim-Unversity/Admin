@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Minus, Plus, Trash2, Lock } from "lucide-react";
+import { Minus, Plus, Trash2, Lock, Building2, User, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,18 +16,26 @@ import {
 } from "@/components/ui/multi-select";
 import { ActionReasonSelect } from "@/components/ui/action-reason-select";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { GroupedActions } from "@/lib/api-types";
+import type { GroupedActions, PointRowType } from "@/lib/api-types";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { MemberSelectDialog } from "./member-select-dialog";
+
+export interface MemberOption {
+  id: number;
+  label: string;
+  uni_id: string;
+}
 
 export interface PointDetailRowData {
-  /** Existing log_id for edit mode, undefined for new rows */
   log_id?: number;
+  row_type: PointRowType;
   departments_id: number[];
+  member_ids: number[];
   points: number;
   action_id: number | null;
   action_name: string | null;
@@ -37,6 +45,7 @@ interface PointDetailRowProps {
   data: PointDetailRowData;
   index: number;
   departmentOptions: ComboboxOption[];
+  memberOptions: MemberOption[];
   actionOptions: GroupedActions;
   onChange: (index: number, data: PointDetailRowData) => void;
   onRemove: (index: number) => void;
@@ -47,13 +56,14 @@ export function PointDetailRow({
   data,
   index,
   departmentOptions,
+  memberOptions,
   actionOptions,
   onChange,
   onRemove,
   canRemove,
 }: PointDetailRowProps) {
-  // Check if a predefined action is selected (points should be locked)
   const isPointsLocked = data.action_id !== null;
+  const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
   const updateField = <K extends keyof PointDetailRowData>(
     field: K,
@@ -77,58 +87,110 @@ export function PointDetailRow({
     actionPoints: number | null
   ) => {
     if (actionId !== null && actionPoints !== null) {
-      // Predefined action selected - lock points to action's value
       updateMultipleFields({
         action_id: actionId,
         action_name: actionName,
         points: actionPoints,
       });
     } else {
-      // Custom action or cleared - allow manual points entry
       updateMultipleFields({
         action_id: null,
         action_name: actionName,
-        // Keep current points when switching to custom/cleared
       });
     }
+  };
+
+  const entityLabel = data.row_type === "department" ? "Department" : "Member";
+  const entityIds = data.row_type === "department" ? data.departments_id : data.member_ids;
+  const entityField = data.row_type === "department" ? "departments_id" : "member_ids";
+
+  const selectedMemberNames = React.useMemo(() => {
+    if (data.row_type !== "member") return [];
+    return memberOptions
+      .filter((m) => data.member_ids.includes(m.id))
+      .map((m) => m.label);
+  }, [data.row_type, data.member_ids, memberOptions]);
+
+  const getMemberDisplayText = () => {
+    const count = data.member_ids.length;
+    if (count === 0) return "Select members...";
+    if (count === 1) return selectedMemberNames[0] || "1 member";
+    if (count <= 3) return selectedMemberNames.join(", ");
+    return `${selectedMemberNames.slice(0, 2).join(", ")}, +${count - 2} more`;
   };
 
   return (
     <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-start gap-4 flex-wrap">
-        {/* Department Selector */}
         <div className="flex-1 min-w-[200px] max-w-[300px] space-y-1.5">
-          <Label className="text-sm font-medium">Department</Label>
-          <MultiSelect
-            values={data.departments_id.map(String)}
-            onValuesChange={(values) =>
-              updateField("departments_id", values.map(Number))
-            }
-          >
-            <MultiSelectTrigger className="h-9 w-full max-w-full">
-              <MultiSelectValue 
-                placeholder="Select departments..." 
-                overflowBehavior="cutoff" 
-              />
-            </MultiSelectTrigger>
-            <MultiSelectContent 
-              search={{ 
-                placeholder: "Search departments...", 
-                emptyMessage: "No departments found." 
-              }}
+          <Label className="text-sm font-medium flex items-center gap-1.5">
+            {data.row_type === "department" ? (
+              <Building2 className="h-3.5 w-3.5 text-muted-foreground" />
+            ) : (
+              <User className="h-3.5 w-3.5 text-muted-foreground" />
+            )}
+            {entityLabel}
+          </Label>
+          {data.row_type === "department" ? (
+            <MultiSelect
+              values={entityIds.map(String)}
+              onValuesChange={(values) =>
+                updateField(
+                  entityField as keyof PointDetailRowData,
+                  values.map(Number)
+                )
+              }
             >
-              <MultiSelectGroup>
-                {departmentOptions.map((dept) => (
-                  <MultiSelectItem key={dept.id} value={String(dept.id)}>
-                    {dept.label}
-                  </MultiSelectItem>
-                ))}
-              </MultiSelectGroup>
-            </MultiSelectContent>
-          </MultiSelect>
+              <MultiSelectTrigger className="h-9 w-full max-w-full">
+                <MultiSelectValue
+                  placeholder={`Select ${entityLabel.toLowerCase()}s...`}
+                  overflowBehavior="cutoff"
+                />
+              </MultiSelectTrigger>
+              <MultiSelectContent
+                search={{
+                  placeholder: `Search ${entityLabel.toLowerCase()}s...`,
+                  emptyMessage: `No ${entityLabel.toLowerCase()}s found.`,
+                }}
+              >
+                <MultiSelectGroup>
+                  {departmentOptions.map((opt) => (
+                    <MultiSelectItem key={opt.id} value={String(opt.id)}>
+                      {opt.label}
+                    </MultiSelectItem>
+                  ))}
+                </MultiSelectGroup>
+              </MultiSelectContent>
+            </MultiSelect>
+          ) : (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="h-9 w-full justify-start font-normal"
+                onClick={() => setMemberDialogOpen(true)}
+              >
+                <Users className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
+                <span className={`truncate min-w-0 ${data.member_ids.length === 0 ? "text-muted-foreground" : ""}`}>
+                  {getMemberDisplayText()}
+                </span>
+                {data.member_ids.length > 0 && (
+                  <span className="ml-auto text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                    {data.member_ids.length}
+                  </span>
+                )}
+              </Button>
+              <MemberSelectDialog
+                open={memberDialogOpen}
+                onOpenChange={setMemberDialogOpen}
+                memberOptions={memberOptions}
+                selectedIds={data.member_ids}
+                onSelectionChange={(ids) => updateField("member_ids", ids)}
+              />
+            </>
+          )}
         </div>
 
-        {/* Points Adjuster */}
         <div className="space-y-1.5">
           <Label className="text-sm font-medium flex items-center gap-1">
             Points
@@ -171,7 +233,8 @@ export function PointDetailRow({
               type="number"
               value={data.points}
               onChange={(e) =>
-                !isPointsLocked && updateField("points", parseInt(e.target.value) || 0)
+                !isPointsLocked &&
+                updateField("points", parseInt(e.target.value) || 0)
               }
               disabled={isPointsLocked}
               className={`h-9 w-20 text-center font-mono text-sm ${
@@ -202,7 +265,6 @@ export function PointDetailRow({
           </div>
         </div>
 
-        {/* Reason (Optional) - Action selector with groups */}
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <Label className="text-sm font-medium text-muted-foreground">
             Reason{" "}
@@ -217,7 +279,6 @@ export function PointDetailRow({
           />
         </div>
 
-        {/* Remove Button */}
         <div className="space-y-1.5 flex flex-col items-center">
           <Label className="text-sm font-medium text-transparent select-none">
             Del

@@ -267,6 +267,40 @@ export interface CustomAction {
   points: number;
 }
 
+export type PointRowType = "department" | "member";
+
+export interface MemberPointDetail {
+  log_id?: number;
+  member_ids: number[];
+  points: number;
+  action_id: number | null;
+  action_name: string | null;
+}
+
+export interface CustomEventMember {
+  event_id: number;
+  start_datetime: string;
+  end_datetime: string;
+  event_name: string;
+  point_details: MemberPointDetail[];
+}
+
+export interface CreateCustomMemberPayload {
+  start_datetime: string;
+  end_datetime: string;
+  event_name: string;
+  location_type?: LocationType;
+  point_deatils: MemberPointDetail[];
+}
+
+export interface UpdateCustomMemberPointDetailPayload {
+  log_id: number;
+  member_ids: number[];
+  points: number;
+  action_id: number | null;
+  action_name: string | null;
+}
+
 // =============================================================================
 // Attendance
 // =============================================================================

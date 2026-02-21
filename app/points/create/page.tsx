@@ -21,11 +21,14 @@ import {
   type CustomEventFormData,
 } from "@/components/custom-event-form";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
+import type { MemberOption } from "@/components/point-detail-row";
 import {
   getCustomEvents,
   getDepartments,
+  getMembers,
   getActions,
   createCustomDepartmentPoints,
+  createCustomMemberPoints,
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
@@ -36,7 +39,6 @@ export default function CreateCustomEventPage() {
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  // Data for comboboxes
   const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
   const [allEvents, setAllEvents] = React.useState<
     Array<{ id: number; name: string; start_datetime: string; location_type: LocationType }>
@@ -44,19 +46,20 @@ export default function CreateCustomEventPage() {
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
+  const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
   const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
     department: [],
     bonus: [],
   });
   const [isLoadingData, setIsLoadingData] = React.useState(true);
 
-  // Fetch reference data
   React.useEffect(() => {
     async function fetchData() {
       setIsLoadingData(true);
-      const [eventsRes, deptsRes, actionsRes] = await Promise.all([
+      const [eventsRes, deptsRes, membersRes, actionsRes] = await Promise.all([
         getCustomEvents(),
         getDepartments(),
+        getMembers(getToken),
         getActions(),
       ]);
 
@@ -82,8 +85,17 @@ export default function CreateCustomEventPage() {
         );
       }
 
+      if (membersRes.success) {
+        setMemberOptions(
+          membersRes.data.map((m) => ({
+            id: m.id,
+            label: m.name,
+            uni_id: m.uni_id,
+          }))
+        );
+      }
+
       if (actionsRes.success) {
-        // Group actions by type for the reason selector
         setActionOptions({
           department: actionsRes.data.department_actions,
           bonus: actionsRes.data.custom_actions,
@@ -93,52 +105,81 @@ export default function CreateCustomEventPage() {
       setIsLoadingData(false);
     }
     fetchData();
-  }, []);
+  }, [getToken]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
     setIsSubmitting(true);
 
     try {
-      // Set default times: 10:00 AM to 12:00 PM
       const startDate = new Date(data.date);
       startDate.setHours(10, 0, 0, 0);
       const endDate = new Date(data.date);
       endDate.setHours(12, 0, 0, 0);
 
-      // Look up event_id if selecting an existing event
       const existingEvent = allEvents.find((e) => e.name === data.event_name);
 
-      const payload = {
-        event_id: existingEvent?.id ?? null,
-        start_datetime: formatLocalDateTime(startDate),
-        end_datetime: formatLocalDateTime(endDate),
-        event_name: data.event_name,
-        location_type: (data.is_visible ? "none" : "hidden") as LocationType,
-        point_deatils: data.point_details.map((pd) => ({
-          departments_id: pd.departments_id,
-          points: pd.points,
-          action_id: pd.action_id,
-          action_name: pd.action_name,
-        })),
-      };
+      const departmentRows = data.point_details.filter((pd) => pd.row_type === "department");
+      const memberRows = data.point_details.filter((pd) => pd.row_type === "member");
 
-      const result = await createCustomDepartmentPoints(payload, getToken);
+      const results = [];
 
-      if (result.success) {
+      if (departmentRows.length > 0) {
+        const deptPayload = {
+          event_id: existingEvent?.id ?? null,
+          start_datetime: formatLocalDateTime(startDate),
+          end_datetime: formatLocalDateTime(endDate),
+          event_name: data.event_name,
+          location_type: (data.is_visible ? "none" : "hidden") as LocationType,
+          point_deatils: departmentRows.map((pd) => ({
+            departments_id: pd.departments_id,
+            points: pd.points,
+            action_id: pd.action_id,
+            action_name: pd.action_name,
+          })),
+        };
+
+        const deptResult = await createCustomDepartmentPoints(deptPayload, getToken);
+        results.push({ type: "department", result: deptResult });
+      }
+
+      if (memberRows.length > 0) {
+        const memberPayload = {
+          event_id: existingEvent?.id ?? null,
+          start_datetime: formatLocalDateTime(startDate),
+          end_datetime: formatLocalDateTime(endDate),
+          event_name: data.event_name,
+          location_type: (data.is_visible ? "none" : "hidden") as LocationType,
+          point_deatils: memberRows.map((pd) => ({
+            member_ids: pd.member_ids,
+            points: pd.points,
+            action_id: pd.action_id,
+            action_name: pd.action_name,
+          })),
+        };
+
+        const memberResult = await createCustomMemberPoints(memberPayload, getToken);
+        results.push({ type: "member", result: memberResult });
+      }
+
+      const failures = results.filter((r) => !r.result.success);
+      if (failures.length > 0) {
+        const firstError = failures[0].result;
+        if (!firstError.success) {
+          if (shouldContactSupport(firstError.error)) {
+            toast.error(
+              "Failed to create custom event. Please contact support.",
+              {
+                description: `Error: ${firstError.error.message}`,
+                duration: 10000,
+              }
+            );
+          } else {
+            toast.error(firstError.error.message);
+          }
+        }
+      } else {
         toast.success("Custom event created successfully!");
         router.push("/points");
-      } else {
-        if (shouldContactSupport(result.error)) {
-          toast.error(
-            "Failed to create custom event. Please contact support.",
-            {
-              description: `Error: ${result.error.message}`,
-              duration: 10000,
-            }
-          );
-        } else {
-          toast.error(result.error.message);
-        }
       }
     } catch {
       toast.error("An unexpected error occurred. Please contact support.");
@@ -166,7 +207,7 @@ export default function CreateCustomEventPage() {
             Create Custom Event
           </CardTitle>
           <CardDescription>
-            Create a new custom event with department point details
+            Create a new custom event with department or member point details
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -192,6 +233,7 @@ export default function CreateCustomEventPage() {
               eventNameOptions={eventNameOptions}
               allEvents={allEvents}
               departmentOptions={departmentOptions}
+              memberOptions={memberOptions}
               actionOptions={actionOptions}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}

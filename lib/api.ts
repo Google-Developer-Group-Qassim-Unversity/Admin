@@ -22,6 +22,9 @@ import type {
   UpdateCustomPointDetailPayload,
   CustomAction,
   AttendanceResponse,
+  CustomEventMember,
+  CreateCustomMemberPayload,
+  UpdateCustomMemberPointDetailPayload,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -539,6 +542,46 @@ export async function updateCustomPointDetail(
 ): Promise<ApiResponse<UpdateCustomPointDetailPayload>> {
   return apiFetch<UpdateCustomPointDetailPayload>(
     `/custom/departments/${logId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+export async function getCustomEventMember(
+  eventId: number | string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEventMember>> {
+  return apiFetch<CustomEventMember>(
+    `/custom/members/${eventId}`,
+    {},
+    getToken
+  );
+}
+
+export async function createCustomMemberPoints(
+  payload: CreateCustomMemberPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEventMember>> {
+  return apiFetch<CustomEventMember>(
+    "/custom/members",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+export async function updateCustomMemberPointDetail(
+  logId: number,
+  payload: UpdateCustomMemberPointDetailPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<UpdateCustomMemberPointDetailPayload>> {
+  return apiFetch<UpdateCustomMemberPointDetailPayload>(
+    `/custom/members/${logId}`,
     {
       method: "PUT",
       body: JSON.stringify(payload),

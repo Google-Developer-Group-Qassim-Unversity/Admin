@@ -46,12 +46,14 @@ export function MultiSelect({
   defaultValues,
   onValuesChange,
   single = false,
+  onOpenChange,
 }: {
   children: ReactNode
   values?: string[]
   defaultValues?: string[]
   onValuesChange?: (values: string[]) => void
   single?: boolean
+  onOpenChange?: (open: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
   const [internalValues, setInternalValues] = useState(
@@ -85,6 +87,11 @@ export function MultiSelect({
     })
   }, [])
 
+  const handleOpenChange = useCallback((newOpen: boolean) => {
+    setOpen(newOpen)
+    onOpenChange?.(newOpen)
+  }, [onOpenChange])
+
   return (
     <MultiSelectContext
       value={{
@@ -97,7 +104,7 @@ export function MultiSelect({
         onItemAdded,
       }}
     >
-      <Popover open={open} onOpenChange={setOpen} modal={true}>
+      <Popover open={open} onOpenChange={handleOpenChange} modal={true}>
         {children}
       </Popover>
     </MultiSelectContext>

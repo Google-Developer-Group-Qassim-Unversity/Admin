@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { format, setHours, setMinutes } from "date-fns";
-import { CalendarIcon, Plus } from "lucide-react";
+import { CalendarIcon, Plus, Building2, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -17,18 +17,21 @@ import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import {
   PointDetailRow,
   type PointDetailRowData,
+  type MemberOption,
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment, GroupedActions, LocationType } from "@/lib/api-types";
+import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, PointRowType } from "@/lib/api-types";
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
   initialData?: CustomEventDepartment;
+  initialMemberData?: CustomEventMember;
   eventNameOptions: string[];
   allEvents?: Array<{ name: string; start_datetime: string; location_type: LocationType }>;
   departmentOptions: ComboboxOption[];
+  memberOptions: MemberOption[];
   actionOptions: GroupedActions;
   onSubmit: (data: CustomEventFormData) => void;
   isSubmitting: boolean;
@@ -41,9 +44,11 @@ export interface CustomEventFormData {
   point_details: PointDetailRowData[];
 }
 
-function createEmptyRow(): PointDetailRowData {
+function createEmptyRow(type: PointRowType = "department"): PointDetailRowData {
   return {
+    row_type: type,
     departments_id: [],
+    member_ids: [],
     points: 0,
     action_id: null,
     action_name: null,
@@ -53,84 +58,102 @@ function createEmptyRow(): PointDetailRowData {
 export function CustomEventForm({
   mode,
   initialData,
+  initialMemberData,
   eventNameOptions,
   allEvents = [],
   departmentOptions,
+  memberOptions,
   actionOptions,
   onSubmit,
   isSubmitting,
 }: CustomEventFormProps) {
-  // Section 1: Event Info
-  const [eventName, setEventName] = React.useState(initialData?.event_name ?? "");
+  const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (mode === "create") {
-      return new Date(); // Default to today in create mode
+      return new Date();
     }
-    if (initialData?.start_datetime) {
-      return parseLocalDateTime(initialData.start_datetime);
+    const initialDt = initialData?.start_datetime ?? initialMemberData?.start_datetime;
+    if (initialDt) {
+      return parseLocalDateTime(initialDt);
     }
     return undefined;
   });
   const [isVisible, setIsVisible] = React.useState(() => {
-    // In edit mode, find the event's location_type from allEvents
-    if (mode === "edit" && initialData?.event_name && allEvents.length > 0) {
-      const matchingEvent = allEvents.find((e) => e.name === initialData.event_name);
+    if (mode === "edit" && (initialData?.event_name || initialMemberData?.event_name) && allEvents.length > 0) {
+      const matchingEvent = allEvents.find((e) => e.name === (initialData?.event_name ?? initialMemberData?.event_name));
       if (matchingEvent) {
         return matchingEvent.location_type !== "hidden";
       }
     }
-    return true; // Default to visible
+    return true;
   });
 
-  // Section 2: Point Details
   const [rows, setRows] = React.useState<PointDetailRowData[]>(() => {
-    if (initialData?.point_details && initialData.point_details.length > 0) {
-      return initialData.point_details.map((pd) => ({
-        log_id: pd.log_id,
-        departments_id: pd.departments_id,
-        points: pd.points,
-        action_id: pd.action_id ?? null,
-        action_name: pd.action_name ?? null,
-      }));
-    }
-    return [createEmptyRow()];
+    const deptRows = initialData?.point_details?.map((pd) => ({
+      log_id: pd.log_id,
+      row_type: "department" as PointRowType,
+      departments_id: pd.departments_id,
+      member_ids: [],
+      points: pd.points,
+      action_id: pd.action_id ?? null,
+      action_name: pd.action_name ?? null,
+    })) ?? [];
+    const memRows = initialMemberData?.point_details?.map((pd) => ({
+      log_id: pd.log_id,
+      row_type: "member" as PointRowType,
+      departments_id: [],
+      member_ids: pd.member_ids,
+      points: pd.points,
+      action_id: pd.action_id ?? null,
+      action_name: pd.action_name ?? null,
+    })) ?? [];
+    const allRows = [...deptRows, ...memRows];
+    return allRows.length > 0 ? allRows : [createEmptyRow("department")];
   });
 
-  // Calendar popover state
   const [calendarOpen, setCalendarOpen] = React.useState(false);
+  const [showTypeSelector, setShowTypeSelector] = React.useState(false);
 
-  // Validation errors
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
-  // Dirty state tracking - compute initial snapshot (only in edit mode)
   const initialSnapshot = React.useMemo(() => {
-    if (mode === "create") return null; // Always dirty in create mode
+    if (mode === "create") return null;
 
-    // Get initial visibility from allEvents
-    const matchingEvent = allEvents.find((e) => e.name === initialData?.event_name);
+    const matchingEvent = allEvents.find((e) => e.name === (initialData?.event_name ?? initialMemberData?.event_name));
     const initialVisibility = matchingEvent
       ? matchingEvent.location_type !== "hidden"
       : true;
 
+    const deptRows = initialData?.point_details?.map((pd) => ({
+      log_id: pd.log_id,
+      row_type: "department" as PointRowType,
+      departments_id: [...pd.departments_id].sort((a, b) => a - b),
+      member_ids: [],
+      points: pd.points,
+      action_id: pd.action_id ?? null,
+      action_name: pd.action_name ?? null,
+    })) ?? [];
+    const memRows = initialMemberData?.point_details?.map((pd) => ({
+      log_id: pd.log_id,
+      row_type: "member" as PointRowType,
+      departments_id: [],
+      member_ids: [...pd.member_ids].sort((a, b) => a - b),
+      points: pd.points,
+      action_id: pd.action_id ?? null,
+      action_name: pd.action_name ?? null,
+    })) ?? [];
+
     return {
-      eventName: initialData?.event_name ?? "",
-      date: initialData?.start_datetime
-        ? parseLocalDateTime(initialData.start_datetime).getTime()
+      eventName: initialData?.event_name ?? initialMemberData?.event_name ?? "",
+      date: (initialData?.start_datetime ?? initialMemberData?.start_datetime)
+        ? parseLocalDateTime(initialData?.start_datetime ?? initialMemberData!.start_datetime).getTime()
         : null,
       isVisible: initialVisibility,
-      rows:
-        initialData?.point_details?.map((pd) => ({
-          log_id: pd.log_id,
-          departments_id: [...pd.departments_id].sort((a, b) => a - b),
-          points: pd.points,
-          action_id: pd.action_id ?? null,
-          action_name: pd.action_name ?? null,
-        })) ?? [],
+      rows: [...deptRows, ...memRows],
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only compute once on mount
+  }, []);
 
-  // Current form state snapshot for comparison
   const currentSnapshot = React.useMemo(
     () => ({
       eventName,
@@ -138,7 +161,9 @@ export function CustomEventForm({
       isVisible,
       rows: rows.map((r) => ({
         log_id: r.log_id,
+        row_type: r.row_type,
         departments_id: [...r.departments_id].sort((a, b) => a - b),
+        member_ids: [...r.member_ids].sort((a, b) => a - b),
         points: r.points,
         action_id: r.action_id,
         action_name: r.action_name,
@@ -147,25 +172,19 @@ export function CustomEventForm({
     [eventName, date, isVisible, rows]
   );
 
-  // Check if form has unsaved changes
   const isDirty = useFormDirty(initialSnapshot, currentSnapshot);
 
-  // Handle event name change and sync date/visibility when selecting existing event
   const handleEventNameChange = (newName: string) => {
     setEventName(newName);
     
-    // Only sync when selecting an existing event
     if (newName && allEvents.length > 0) {
       const matchingEvent = allEvents.find((e) => e.name === newName);
       if (matchingEvent) {
-        // Update date
         if (matchingEvent.start_datetime) {
           const eventDate = parseLocalDateTime(matchingEvent.start_datetime);
           setDate(eventDate);
         }
         
-        // Update visibility based on location_type
-        // "none" = visible, "hidden" = hidden
         const shouldBeVisible = matchingEvent.location_type !== "hidden";
         setIsVisible(shouldBeVisible);
       }
@@ -180,8 +199,9 @@ export function CustomEventForm({
     setRows((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const addRow = () => {
-    setRows((prev) => [...prev, createEmptyRow()]);
+  const addRow = (type: PointRowType) => {
+    setRows((prev) => [...prev, createEmptyRow(type)]);
+    setShowTypeSelector(false);
   };
 
   const validate = (): boolean => {
@@ -199,10 +219,12 @@ export function CustomEventForm({
       newErrors.rows = "At least one point detail is required";
     }
 
-    // Validate each row
     rows.forEach((row, i) => {
-      if (row.departments_id.length === 0) {
-        newErrors[`row_${i}_dept`] = `Row ${i + 1}: Department is required`;
+      if (row.row_type === "department" && row.departments_id.length === 0) {
+        newErrors[`row_${i}_entity`] = `Row ${i + 1}: Department is required`;
+      }
+      if (row.row_type === "member" && row.member_ids.length === 0) {
+        newErrors[`row_${i}_entity`] = `Row ${i + 1}: Member is required`;
       }
     });
 
@@ -215,7 +237,6 @@ export function CustomEventForm({
 
     if (!validate() || !date) return;
 
-    // Set default times: 10:00 AM to 12:00 PM
     const startDate = setMinutes(setHours(new Date(date), 10), 0);
     const endDate = setMinutes(setHours(new Date(date), 12), 0);
 
@@ -231,11 +252,9 @@ export function CustomEventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      {/* Section 1: Event Information */}
       <div className="space-y-4">
         <h3 className="text-lg font-semibold">Event Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Event Name */}
           <div className="space-y-1.5">
             <Label htmlFor="event-name">Event Name</Label>
             <CreatableCombobox
@@ -251,7 +270,6 @@ export function CustomEventForm({
             )}
           </div>
 
-          {/* Date Picker (single day) */}
           <div className="space-y-1.5">
             <Label>Date</Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -285,7 +303,6 @@ export function CustomEventForm({
             )}
           </div>
 
-          {/* Visibility Toggle */}
           <div className="space-y-1.5">
             <Label htmlFor="is_visible">Event Visibility</Label>
             <div className="flex items-center gap-4 rounded-lg border p-4">
@@ -310,30 +327,51 @@ export function CustomEventForm({
         </div>
       </div>
 
-      {/* Divider */}
       <div className="border-t" />
 
-      {/* Section 2: Point Details */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <h3 className="text-lg font-semibold">Point Details</h3>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={addRow}
-            disabled={isSubmitting}
-          >
-            <Plus className="h-4 w-4 mr-1" />
-            Add Row
-          </Button>
+          <div className="relative">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setShowTypeSelector(!showTypeSelector)}
+              disabled={isSubmitting}
+            >
+              <Plus className="h-4 w-4 mr-1" />
+              Add Row
+            </Button>
+            {showTypeSelector && (
+              <div className="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-lg z-10">
+                <div className="p-1">
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-accent"
+                    onClick={() => addRow("department")}
+                  >
+                    <Building2 className="h-4 w-4" />
+                    Department Row
+                  </button>
+                  <button
+                    type="button"
+                    className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-accent"
+                    onClick={() => addRow("member")}
+                  >
+                    <User className="h-4 w-4" />
+                    Member Row
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
 
         {errors.rows && (
           <p className="text-sm text-destructive">{errors.rows}</p>
         )}
 
-        {/* Row-level validation errors */}
         {Object.entries(errors)
           .filter(([key]) => key.startsWith("row_"))
           .map(([key, msg]) => (
@@ -349,6 +387,7 @@ export function CustomEventForm({
               data={row}
               index={index}
               departmentOptions={departmentOptions}
+              memberOptions={memberOptions}
               actionOptions={actionOptions}
               onChange={handleRowChange}
               onRemove={handleRowRemove}
@@ -358,7 +397,6 @@ export function CustomEventForm({
         </div>
       </div>
 
-      {/* Submit */}
       <div className="flex justify-end gap-3">
         <Button type="submit" disabled={isSubmitting || !isDirty}>
           {isSubmitting
