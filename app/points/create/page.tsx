@@ -23,7 +23,6 @@ import {
 import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { MemberOption } from "@/components/point-detail-row";
 import {
-  getCustomEvents,
   getDepartments,
   getMembers,
   getActions,
@@ -39,10 +38,6 @@ export default function CreateCustomEventPage() {
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
-  const [allEvents, setAllEvents] = React.useState<
-    Array<{ id: number; name: string; start_datetime: string; location_type: LocationType }>
-  >([]);
   const [departmentOptions, setDepartmentOptions] = React.useState<
     ComboboxOption[]
   >([]);
@@ -57,25 +52,11 @@ export default function CreateCustomEventPage() {
   React.useEffect(() => {
     async function fetchData() {
       setIsLoadingData(true);
-      const [eventsRes, deptsRes, membersRes, actionsRes] = await Promise.all([
-        getCustomEvents(),
+      const [deptsRes, membersRes, actionsRes] = await Promise.all([
         getDepartments(),
         getMembers(getToken),
         getActions(),
       ]);
-
-      if (eventsRes.success) {
-        const names = [
-          ...new Set(eventsRes.data.map((e) => e.name)),
-        ];
-        setEventNameOptions(names);
-        setAllEvents(eventsRes.data.map((e) => ({
-          id: e.id,
-          name: e.name,
-          start_datetime: e.start_datetime,
-          location_type: e.location_type,
-        })));
-      }
 
       if (deptsRes.success) {
         setDepartmentOptions(
@@ -118,8 +99,6 @@ export default function CreateCustomEventPage() {
       const endDate = new Date(data.date);
       endDate.setHours(12, 0, 0, 0);
 
-      const existingEvent = allEvents.find((e) => e.name === data.event_name);
-
       const departmentRows = data.point_details.filter((pd) => pd.row_type === "department");
       const memberRows = data.point_details.filter((pd) => pd.row_type === "member");
 
@@ -127,7 +106,7 @@ export default function CreateCustomEventPage() {
 
       if (departmentRows.length > 0) {
         const deptPayload = {
-          event_id: existingEvent?.id ?? null,
+          event_id: null,
           start_datetime: formatLocalDateTime(startDate),
           end_datetime: formatLocalDateTime(endDate),
           event_name: data.event_name,
@@ -146,7 +125,7 @@ export default function CreateCustomEventPage() {
 
       if (memberRows.length > 0) {
         const memberPayload = {
-          event_id: existingEvent?.id ?? null,
+          event_id: null,
           start_datetime: formatLocalDateTime(startDate),
           end_datetime: formatLocalDateTime(endDate),
           event_name: data.event_name,
@@ -198,7 +177,7 @@ export default function CreateCustomEventPage() {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/points" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Custom Points
+                Back to Points
               </Link>
             </Button>
           </div>
@@ -232,13 +211,12 @@ export default function CreateCustomEventPage() {
           ) : (
             <CustomEventForm
               mode="create"
-              eventNameOptions={eventNameOptions}
-              allEvents={allEvents}
               departmentOptions={departmentOptions}
               memberOptions={memberOptions}
               actionOptions={actionOptions}
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
+              useSimpleInput={true}
             />
           )}
         </CardContent>

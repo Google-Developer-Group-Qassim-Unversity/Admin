@@ -70,6 +70,12 @@ export default function EditCustomEventPage() {
     bonus: [],
   });
 
+  const isFullEvent = React.useMemo(() => {
+    if (!eventDetails?.event) return false;
+    const locationType = eventDetails.event.location_type;
+    return locationType !== "none" && locationType !== "hidden";
+  }, [eventDetails]);
+
   React.useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
@@ -163,7 +169,7 @@ if (actionsRes.success) {
       const currentVisibility = currentEvent ? currentEvent.location_type !== "hidden" : true;
       const visibilityChanged = data.is_visible !== currentVisibility;
 
-      if (nameChanged || dateChanged || visibilityChanged) {
+      if (!isFullEvent && (nameChanged || dateChanged || visibilityChanged)) {
         let startDate, endDate;
         if (dateChanged) {
           startDate = new Date(data.date);
@@ -364,7 +370,7 @@ if (actionsRes.success) {
       }
 
       if (failedUpdates.length === 0) {
-        toast.success("Custom event updated successfully!");
+        toast.success("Event points updated successfully!");
       }
       router.push("/points");
     } catch {
@@ -417,7 +423,7 @@ if (actionsRes.success) {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/points" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Custom Points
+            Back to Points
           </Link>
         </Button>
         <div className="text-center py-12 text-destructive">
@@ -433,11 +439,11 @@ if (actionsRes.success) {
         <Button variant="ghost" size="sm" asChild>
           <Link href="/points" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Custom Points
+            Back to Points
           </Link>
         </Button>
         <div className="text-center py-12 text-muted-foreground">
-          Custom event not found
+          Event not found
         </div>
       </div>
     );
@@ -451,7 +457,7 @@ if (actionsRes.success) {
             <Button variant="ghost" size="sm" asChild>
               <Link href="/points" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4" />
-                Back to Custom Points
+                Back to Points
               </Link>
             </Button>
           </div>
@@ -459,10 +465,12 @@ if (actionsRes.success) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <Trophy className="h-5 w-5 text-primary" />
             </div>
-            Edit Custom Event
+            {isFullEvent ? "Edit Points for Full Event" : "Edit Custom Event"}
           </CardTitle>
           <CardDescription>
-            Edit event details and department/member point assignments
+            {isFullEvent 
+              ? "Edit department and member point assignments for this event"
+              : "Edit event details and department/member point assignments"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -477,6 +485,7 @@ if (actionsRes.success) {
             actionOptions={actionOptions}
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
+            isFullEvent={isFullEvent}
           />
         </CardContent>
       </Card>

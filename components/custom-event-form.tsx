@@ -6,6 +6,7 @@ import { CalendarIcon, Plus, Building2, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -28,13 +29,15 @@ export interface CustomEventFormProps {
   mode: "create" | "edit";
   initialData?: CustomEventDepartment;
   initialMemberData?: CustomEventMember;
-  eventNameOptions: string[];
+  eventNameOptions?: string[];
   allEvents?: Array<{ name: string; start_datetime: string; location_type: LocationType }>;
   departmentOptions: ComboboxOption[];
   memberOptions: MemberOption[];
   actionOptions: GroupedActions;
   onSubmit: (data: CustomEventFormData) => void;
   isSubmitting: boolean;
+  useSimpleInput?: boolean;
+  isFullEvent?: boolean;
 }
 
 export interface CustomEventFormData {
@@ -59,13 +62,15 @@ export function CustomEventForm({
   mode,
   initialData,
   initialMemberData,
-  eventNameOptions,
+  eventNameOptions = [],
   allEvents = [],
   departmentOptions,
   memberOptions,
   actionOptions,
   onSubmit,
   isSubmitting,
+  useSimpleInput = false,
+  isFullEvent = false,
 }: CustomEventFormProps) {
   const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {
@@ -177,7 +182,7 @@ export function CustomEventForm({
   const handleEventNameChange = (newName: string) => {
     setEventName(newName);
     
-    if (newName && allEvents.length > 0) {
+    if (!useSimpleInput && newName && allEvents.length > 0) {
       const matchingEvent = allEvents.find((e) => e.name === newName);
       if (matchingEvent) {
         if (matchingEvent.start_datetime) {
@@ -238,7 +243,6 @@ export function CustomEventForm({
     if (!validate() || !date) return;
 
     const startDate = setMinutes(setHours(new Date(date), 10), 0);
-    const endDate = setMinutes(setHours(new Date(date), 12), 0);
 
     onSubmit({
       event_name: eventName.trim(),
@@ -257,14 +261,25 @@ export function CustomEventForm({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="event-name">Event Name</Label>
-            <CreatableCombobox
-              options={eventNameOptions}
-              value={eventName}
-              onChange={handleEventNameChange}
-              placeholder="Select or create event..."
-              searchPlaceholder="Search events..."
-              emptyMessage="No matching events."
-            />
+            {useSimpleInput ? (
+              <Input
+                id="event-name"
+                value={eventName}
+                onChange={(e) => handleEventNameChange(e.target.value)}
+                placeholder="Enter event name..."
+                disabled={isSubmitting || isFullEvent}
+              />
+            ) : (
+              <CreatableCombobox
+                options={eventNameOptions}
+                value={eventName}
+                onChange={handleEventNameChange}
+                placeholder="Select or create event..."
+                searchPlaceholder="Search events..."
+                emptyMessage="No matching events."
+                disabled={isFullEvent}
+              />
+            )}
             {errors.eventName && (
               <p className="text-sm text-destructive">{errors.eventName}</p>
             )}
@@ -280,7 +295,7 @@ export function CustomEventForm({
                     "w-full justify-start text-left font-normal",
                     !date && "text-muted-foreground"
                   )}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isFullEvent}
                 >
                   <CalendarIcon className="mr-2 h-4 w-4" />
                   {displayDate ?? "Select date..."}
@@ -294,7 +309,7 @@ export function CustomEventForm({
                     setDate(d ?? undefined);
                     setCalendarOpen(false);
                   }}
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || isFullEvent}
                 />
               </PopoverContent>
             </Popover>
@@ -310,7 +325,7 @@ export function CustomEventForm({
                 id="is_visible"
                 checked={isVisible}
                 onCheckedChange={setIsVisible}
-                disabled={isSubmitting}
+                disabled={isSubmitting || isFullEvent}
               />
               <div className="flex-1">
                 <p className="text-sm font-medium">
@@ -398,7 +413,7 @@ export function CustomEventForm({
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isSubmitting || !isDirty}>
+        <Button type="submit" disabled={isSubmitting || (!isFullEvent && mode === "edit" && !isDirty)}>
           {isSubmitting
             ? mode === "create"
               ? "Creating..."
