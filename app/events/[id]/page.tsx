@@ -5,6 +5,7 @@ import { useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { EventInfoTab } from "@/components/event-info-tab";
 import { EventManageTab } from "@/components/event-manage-tab";
 import { EventResponsesTab } from "@/components/event-responses-tab";
@@ -105,37 +106,43 @@ export default function EventPage() {
     );
   }
 
+  const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
+  const backLabel = searchParams.get('from') === 'points' ? 'Back to Points' : 'Back to Events';
+
   return (
     <div className="space-y-6">
       <Button variant="ghost" size="sm" asChild>
-        <Link href="/events" className="flex items-center gap-2">
+        <Link href={backHref} className="flex items-center gap-2">
           <ArrowLeft className="h-4 w-4" />
-          Back to Events
+          {backLabel}
         </Link>
       </Button>
       <Tabs defaultValue="info" className="space-y-6">
-        <TabsList variant="line">
-        <TabsTrigger value="info" className="flex items-center gap-2">
-          <Info className="h-4 w-4" />
-          Event Info
-        </TabsTrigger>
-        <TabsTrigger value="manage" className="flex items-center gap-2">
-          <Link2 className="h-4 w-4" />
-          Google Form & Publish
-        </TabsTrigger>
-        <TabsTrigger value="responses" className="flex items-center gap-2">
-          <Users className="h-4 w-4" />
-          Manage Responses
-        </TabsTrigger>
-        <TabsTrigger value="attendance" className="flex items-center gap-2">
-          <ClipboardCheck className="h-4 w-4" />
-          Attendance
-        </TabsTrigger>
-        <TabsTrigger value="edit" className="flex items-center gap-2">
-          <Pencil className="h-4 w-4" />
-          Edit Event
-        </TabsTrigger>
-      </TabsList>
+        <ScrollArea className="w-full">
+          <TabsList variant="line">
+            <TabsTrigger value="info" className="flex items-center gap-2">
+              <Info className="h-4 w-4" />
+              Event Info
+            </TabsTrigger>
+            <TabsTrigger value="manage" className="flex items-center gap-2">
+              <Link2 className="h-4 w-4" />
+              Google Form & Publish
+            </TabsTrigger>
+            <TabsTrigger value="responses" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              Manage Responses
+            </TabsTrigger>
+            <TabsTrigger value="attendance" className="flex items-center gap-2">
+              <ClipboardCheck className="h-4 w-4" />
+              Attendance
+            </TabsTrigger>
+            <TabsTrigger value="edit" className="flex items-center gap-2">
+              <Pencil className="h-4 w-4" />
+              Edit Event
+            </TabsTrigger>
+          </TabsList>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
 
       <TabsContent value="info">
         <EventInfoTab event={event} />
