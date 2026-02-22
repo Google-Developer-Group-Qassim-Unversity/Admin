@@ -267,10 +267,10 @@ export async function closeEvent(
 }
 
 export async function sendEventCertificates(
-  id: number,
+  event_id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/events/${id}/certificates`, {
+  return apiFetch<void>(`/certificates/${event_id}`, {
     method: "POST",
   }, getToken);
 }
