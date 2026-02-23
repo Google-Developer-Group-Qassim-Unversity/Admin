@@ -25,6 +25,8 @@ import type {
   CustomEventMember,
   CreateCustomMemberPayload,
   UpdateCustomMemberPointDetailPayload,
+  CertificateMember,
+  CertificateJobResponse,
 } from "./api-types";
 
 // Base API URL - configure this based on your environment
@@ -272,6 +274,28 @@ export async function sendEventCertificates(
 ): Promise<ApiResponse<void>> {
   return apiFetch<void>(`/certificates/${event_id}`, {
     method: "POST",
+  }, getToken);
+}
+
+export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiResponse<Event[]>> {
+  const result = await getEvents();
+  if (result.success) {
+    return {
+      success: true,
+      data: result.data.filter((e) => e.location_type !== "none" && e.location_type !== "hidden"),
+    };
+  }
+  return result;
+}
+
+export async function sendManualCertificates(
+  eventId: number,
+  members: CertificateMember[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CertificateJobResponse>> {
+  return apiFetch<CertificateJobResponse>(`/certificates/manual/${eventId}`, {
+    method: "POST",
+    body: JSON.stringify({ members }),
   }, getToken);
 }
 

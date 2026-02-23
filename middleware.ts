@@ -55,8 +55,8 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Check for super admin on specific routes
-  if (req.nextUrl.pathname.startsWith('/manage-admins')) {
-    const isSuperAdmin = publicMetadata?.is_super_admin === true;
+  const isSuperAdmin = publicMetadata?.is_super_admin === true;
+  if (req.nextUrl.pathname.startsWith('/manage-admins') || req.nextUrl.pathname.startsWith('/certificates')) {
     if (!isSuperAdmin) {
       return NextResponse.redirect(new URL('/access-denied?reason=not_super_admin', req.url));
     }

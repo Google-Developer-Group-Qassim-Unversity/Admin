@@ -329,3 +329,19 @@ export interface AttendanceResponse {
   attendance_count: number;
   attendance: AttendanceRecord[];
 }
+
+export type CertificateJobStatus = "pending" | "processing" | "completed" | "failed";
+
+export interface CertificateMember {
+  name: string;
+  email: string;
+  gender: Gender;
+}
+
+export interface CertificateJobResponse {
+  job_id: string;
+  event_name: string;
+  folder_name: string;
+  status: CertificateJobStatus;
+  message: string;
+}
