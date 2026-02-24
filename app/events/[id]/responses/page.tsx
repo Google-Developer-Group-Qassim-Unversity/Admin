@@ -1,6 +1,5 @@
 "use client";
 
-import type { Event } from "@/lib/api-types";
 import {
   Card,
   CardHeader,
@@ -81,47 +80,36 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { useEventContext } from "@/contexts/event-context";
 
-interface EventResponsesTabProps {
-  event: Event;
-  onEventChange?: () => void;
-}
-
-export function EventResponsesTab({ event, onEventChange }: EventResponsesTabProps) {
+export default function EventResponsesPage() {
+  const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
-  const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event.id, getToken);
-  const { data: formData, isLoading: formDataLoading } = useFormData(event.id);
+  const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event?.id ?? 0, getToken);
+  const { data: formData, isLoading: formDataLoading } = useFormData(event?.id ?? 0);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
 
-  // Filter out partial submissions (intermediate state while user is filling)
+  if (!event) {
+    return null;
+  }
+
   const filteredSubmissions = useMemo(() => {
     if (!submissions) return undefined;
     return submissions.filter((s) => s.submission_type !== "partial");
   }, [submissions]);
 
-  // Determine if we need formSchema (if googleFormId exists then its a google form, we need to wait for schema)
-  // We also need to wait for formData to load to know if we need formSchema
   const needsFormSchema = !!formData?.googleFormId;
   const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
 
-  // Overall loading state: wait for submissions, formData (to know if we need schema), and formSchema if needed
   const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
 
-  // Status filter state
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-
-  // Bulk accept dialog state
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
-  
-  // Accept all confirmation dialog state
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
-  
-  // Close responses confirmation dialog state
   const [closeResponsesDialogOpen, setCloseResponsesDialogOpen] = useState(false);
 
-  // Table state
   const [sorting, setSorting] = useState<SortingState>([
     { id: "submitted_at", desc: true },
   ]);
@@ -135,12 +123,10 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  // Summary stats
   const total = filteredSubmissions?.length ?? 0;
   const accepted = filteredSubmissions?.filter((s) => s.is_accepted).length ?? 0;
   const pending = total - accepted;
 
-  // Parse Google submissions
   const parsedGoogleSubmissions = useMemo(() => {
     if (!filteredSubmissions || !formSchema) return [];
 
@@ -169,30 +155,25 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     });
   }, [filteredSubmissions, formSchema]);
 
-  // Get question keys for dynamic columns
   const questionKeys = useMemo(
     () => getQuestionKeys(parsedGoogleSubmissions),
     [parsedGoogleSubmissions]
   );
 
-  // Transform data for table (without filtering)
   const allTableData = useMemo(() => {
     if (!filteredSubmissions) return [];
     return transformSubmissionsToRows(filteredSubmissions, parsedGoogleSubmissions);
   }, [filteredSubmissions, parsedGoogleSubmissions]);
 
-  // Apply status filter to table data
   const tableData = useMemo(() => {
     return filterTableDataByStatus(allTableData, statusFilter);
   }, [allTableData, statusFilter]);
 
-  // Create columns
   const columns = useMemo(
     () => createColumns(questionKeys),
     [questionKeys]
   );
 
-  // Table instance
   const table = useReactTable({
     data: tableData,
     columns,
@@ -221,16 +202,11 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     },
   });
 
-  // Copy all data as TSV
   const handleCopyAsTSV = () => {
     try {
-      // Get all filtered rows (not just current page)
       const allRows = table.getFilteredRowModel().rows.map((row) => row.original);
-
-      // Generate TSV content using utility function
       const tsvContent = generateTSV(allRows, columns, columnVisibility);
 
-      // Copy to clipboard
       navigator.clipboard.writeText(tsvContent).then(() => {
         toast.success(`Copied ${allRows.length} row${allRows.length !== 1 ? "s" : ""} as TSV`);
       }).catch((err) => {
@@ -243,7 +219,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
-  // Copy emails of all accepted members
   const handleCopyAcceptedEmails = () => {
     if (!filteredSubmissions) {
       toast.error("No submissions available");
@@ -251,18 +226,16 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
 
     try {
-      // Filter accepted submissions and extract emails
       const acceptedEmails = filteredSubmissions
         .filter((submission) => submission.is_accepted)
         .map((submission) => submission.member.email)
-        .filter((email) => email && email.trim() !== ""); // Filter out empty emails
+        .filter((email) => email && email.trim() !== "");
 
       if (acceptedEmails.length === 0) {
         toast.warning("No accepted submissions with emails found");
         return;
       }
 
-      // Copy emails as comma-separated string
       const emailsText = acceptedEmails.join(", ");
 
       navigator.clipboard.writeText(emailsText).then(() => {
@@ -277,12 +250,10 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
-  // Open accept all confirmation dialog
   const handleAcceptAllClick = () => {
     setAcceptAllDialogOpen(true);
   };
 
-  // Accept all filtered rows (called after confirmation)
   const handleAcceptAll = async () => {
     const allRows = table.getFilteredRowModel().rows.map((row) => row.original);
     const payload = getAcceptAllPayload(allRows);
@@ -299,9 +270,7 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
-  // Accept bulk by Uni IDs
   const handleAcceptBulk = async (uniIds: string[]) => {
-    // Use allTableData to search through all submissions (not just filtered)
     const { payload, acceptedCount } = getBulkAcceptPayload(allTableData, uniIds);
     
     if (acceptedCount === 0) {
@@ -314,7 +283,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
       toast.success(
         `Accepted ${acceptedCount} submission${acceptedCount !== 1 ? "s" : ""} by Uni ID`
       );
-      // Close dialog after successful submission
       setBulkAcceptDialogOpen(false);
     } catch (error) {
       console.error("Failed to accept submissions:", error);
@@ -322,7 +290,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
-  // Toggle acceptance for selected rows
   const handleAcceptSelected = async () => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
     if (selectedRows.length === 0) return;
@@ -341,32 +308,26 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
     }
   };
 
-  // Check if all selected rows are accepted
   const allSelectedAccepted = useMemo(() => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
     return selectedRows.length > 0 && selectedRows.every((row) => row.is_accepted);
-    // rowSelection is needed to recalculate when selection changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [table, rowSelection]);
 
-  // Open close responses confirmation dialog
   const handleCloseResponsesClick = () => {
     setCloseResponsesDialogOpen(true);
   };
 
-  // Handle closing responses (open → active) - called after confirmation
   const handleCloseResponses = async () => {
     try {
       await closeResponsesMutation.mutateAsync(event.id);
       toast.success('Responses have been closed. Event is now active.');
       setCloseResponsesDialogOpen(false);
-      onEventChange?.();
+      refetch?.();
     } catch {
       toast.error('Failed to close responses. Please try again.');
     }
   };
 
-  // Early return for form_type 'none'
   if (!formDataLoading && formData?.formType === 'none') {
     return (
       <Card className="max-w-full mx-auto">
@@ -409,12 +370,9 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
           </div>
         ) : (
           <>
-            {/* Summary Statistics */}
             <SummaryStatistics total={total} accepted={accepted} pending={pending} />
 
-            {/* Table Controls */}
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
-              {/* Status Filter */}
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
@@ -429,7 +387,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 </SelectContent>
               </Select>
 
-              {/* Search */}
               <div className="relative flex-1 max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -440,7 +397,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 />
               </div>
 
-              {/* Selected Rows Actions */}
               <SelectedRowsActions
                 selectedCount={table.getFilteredSelectedRowModel().rows.length}
                 allAccepted={allSelectedAccepted}
@@ -448,7 +404,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 isLoading={acceptSubmissionsMutation.isPending}
               />
 
-              {/* Actions Dropdown */}
               <ActionsDropdown
                 onCopyAsTSV={handleCopyAsTSV}
                 onAcceptAll={handleAcceptAllClick}
@@ -458,7 +413,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 isLoading={acceptSubmissionsMutation.isPending}
               />
 
-              {/* Column Visibility */}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
@@ -485,7 +439,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
                 </DropdownMenuContent>
               </DropdownMenu>
 
-              {/* Close Responses Button */}
               {event.status === 'open' && (
                 <Button
                   variant="default"
@@ -508,7 +461,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
               )}
             </div>
 
-            {/* Data Table */}
             <div className="rounded-lg border">
               <Table>
                 <TableHeader>
@@ -562,7 +514,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
               </Table>
             </div>
 
-            {/* Pagination */}
             <Pagination table={table} />
           </>
         )}
@@ -582,7 +533,6 @@ export function EventResponsesTab({ event, onEventChange }: EventResponsesTabPro
         isLoading={acceptSubmissionsMutation.isPending}
       />
       
-      {/* Close Responses Confirmation Dialog */}
       <AlertDialog open={closeResponsesDialogOpen} onOpenChange={(open) => {
         if (!closeResponsesMutation.isPending) {
           setCloseResponsesDialogOpen(open);

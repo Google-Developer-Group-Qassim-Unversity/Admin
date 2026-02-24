@@ -40,12 +40,7 @@ import {
 } from '@/components/ui/select';
 import { CloseEventModal } from '@/components/close-event-modal';
 import { useEventAttendance, useOpenEvent } from '@/hooks/use-event';
-import type { Event } from '@/lib/api-types';
-
-interface EventAttendanceTabProps {
-  event: Event;
-  onEventChange?: () => void;
-}
+import { useEventContext } from '@/contexts/event-context';
 
 interface TokenResponse {
   token: string;
@@ -60,13 +55,9 @@ const EXPIRATION_OPTIONS = [
   { value: '120', label: '2 hours' },
 ];
 
-/**
- * Calculate the number of days an event spans.
- */
-function getEventDayCount(event: Event): number {
+function getEventDayCount(event: { start_datetime: string; end_datetime: string }): number {
   const start = new Date(event.start_datetime);
   const end = new Date(event.end_datetime);
-  // Normalize to date-only (ignore time)
   const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
   const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
   const diffMs = endDate.getTime() - startDate.getTime();
@@ -74,10 +65,6 @@ function getEventDayCount(event: Event): number {
   return Math.max(1, diffDays + 1);
 }
 
-/**
- * Given a date string from the attendance API and the event start date,
- * compute which day number (1-based) this corresponds to.
- */
 function getDayNumber(dateStr: string, eventStart: Date): number {
   const date = new Date(dateStr);
   const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
@@ -86,16 +73,10 @@ function getDayNumber(dateStr: string, eventStart: Date): number {
   return Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
 }
 
-/**
- * Get the localStorage key for storing attendance token data.
- */
 function getTokenStorageKey(eventId: string): string {
   return `attendance-token-${eventId}`;
 }
 
-/**
- * Load stored token data from localStorage for the given event.
- */
 function getStoredToken(eventId: string): TokenResponse | null {
   try {
     const key = getTokenStorageKey(eventId);
@@ -103,7 +84,6 @@ function getStoredToken(eventId: string): TokenResponse | null {
     if (!stored) return null;
 
     const data = JSON.parse(stored) as TokenResponse;
-    // Validate required fields
     if (!data.token || !data.expiresAt || !data.attendanceUrl) {
       return null;
     }
@@ -115,9 +95,6 @@ function getStoredToken(eventId: string): TokenResponse | null {
   }
 }
 
-/**
- * Save token data to localStorage for the given event.
- */
 function saveToken(eventId: string, tokenData: TokenResponse): void {
   try {
     const key = getTokenStorageKey(eventId);
@@ -127,7 +104,8 @@ function saveToken(eventId: string, tokenData: TokenResponse): void {
   }
 }
 
-export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabProps) {
+export default function EventAttendancePage() {
+  const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const [expirationMinutes, setExpirationMinutes] = useState('15');
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null);
@@ -135,17 +113,18 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
   const [copied, setCopied] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState<string | null>(null);
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
-
-  // Attendance state
   const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+
+  if (!event) {
+    return null;
+  }
 
   const isEventClosed = event.status === 'closed';
   const dayCount = getEventDayCount(event);
   const isMultiDay = dayCount > 1;
   const eventStart = useMemo(() => new Date(event.start_datetime), [event.start_datetime]);
 
-  // Attendance data
   const {
     data: attendanceData,
     isLoading: isLoadingAttendance,
@@ -153,10 +132,8 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     refetch: refetchAttendance,
   } = useEventAttendance(event.id, selectedDay, getToken, true);
 
-  // Open event mutation
   const openEventMutation = useOpenEvent(getToken);
 
-  // Load stored token from localStorage on mount
   useEffect(() => {
     const storedToken = getStoredToken(String(event.id));
     if (storedToken) {
@@ -164,8 +141,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     }
   }, [event.id]);
 
-  // Filtered attendance list (client-side name search)
-  // Uses word-based matching: all words in the query must exist in the name
   const filteredAttendance = useMemo(() => {
     if (!attendanceData?.attendance) return [];
     if (!searchQuery.trim()) return attendanceData.attendance;
@@ -173,12 +148,10 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     const queryWords = searchQuery.trim().toLowerCase().split(/\s+/);
     return attendanceData.attendance.filter((record) => {
       const name = record.Members.name.toLowerCase();
-      // All query words must be present in the name (in any order)
       return queryWords.every((word) => name.includes(word));
     });
   }, [attendanceData?.attendance, searchQuery]);
 
-  // Build day selector options
   const dayOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     if (isMultiDay) {
@@ -193,7 +166,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     return options;
   }, [dayCount, isMultiDay]);
 
-  // Calculate time remaining
   const updateTimeRemaining = useCallback(() => {
     if (!tokenData?.expiresAt) {
       setTimeRemaining(null);
@@ -222,7 +194,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     }
   }, [tokenData?.expiresAt]);
 
-  // Update countdown every second
   useEffect(() => {
     if (!tokenData) return;
 
@@ -259,7 +230,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
       saveToken(String(event.id), data);
       toast.success('Attendance link generated successfully');
 
-      // Open fullscreen QR code in new tab
       const qrDisplayUrl = `/qr-display?url=${encodeURIComponent(data.attendanceUrl)}`;
       window.open(qrDisplayUrl, '_blank');
     } catch (error) {
@@ -297,7 +267,7 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
     try {
       await openEventMutation.mutateAsync(event.id);
       toast.success('Event re-opened successfully');
-      onEventChange?.();
+      refetch?.();
     } catch (error) {
       toast.error('Failed to open event', {
         description: error instanceof Error ? error.message : 'Unknown error',
@@ -309,7 +279,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      {/* QR Code Card */}
       <Card>
         <CardHeader>
           <CardTitle>Attendance QR Code</CardTitle>
@@ -319,7 +288,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* QR Code Display */}
             <div className="flex flex-col items-center justify-center">
               {tokenData && !isExpired ? (
                 <div className="p-4 bg-white rounded-xl shadow-sm">
@@ -347,7 +315,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 </div>
               )}
 
-              {/* Expiration countdown */}
               {tokenData && !isExpired && timeRemaining && (
                 <div className="mt-4 flex items-center gap-2 text-sm">
                   <Timer className="h-4 w-4 text-muted-foreground" />
@@ -364,9 +331,7 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
               )}
             </div>
 
-            {/* Controls */}
             <div className="flex flex-col gap-6">
-              {/* Expiration Time Selector */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Expiration Time</label>
                 <Select
@@ -389,7 +354,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 </p>
               </div>
 
-              {/* Generate Button */}
               <Button
                 onClick={handleGenerateToken}
                 disabled={isGenerating}
@@ -413,7 +377,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 )}
               </Button>
 
-              {/* Copy Link and Fullscreen Buttons */}
               {tokenData && !isExpired && (
                 <div className="flex gap-2">
                   <Button
@@ -444,7 +407,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 </div>
               )}
 
-              {/* Link Preview */}
               {tokenData && !isExpired && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium">Attendance Link</label>
@@ -456,7 +418,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
             </div>
           </div>
 
-          {/* Close / Open Event Section */}
           <div className="mt-8 pt-8 border-t">
             <Item variant="outline">
               <ItemContent>
@@ -501,17 +462,15 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
             </Item>
           </div>
 
-          {/* Close Event Modal */}
           <CloseEventModal
             event={event}
             open={isCloseModalOpen}
             onOpenChange={setIsCloseModalOpen}
-            onSuccess={onEventChange}
+            onSuccess={refetch}
           />
         </CardContent>
       </Card>
 
-      {/* Attendance List Card */}
       <Card>
         <CardHeader>
             <div className="flex items-center justify-between">
@@ -530,9 +489,7 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
             </div>
           </CardHeader>
           <CardContent>
-            {/* Filter Controls */}
             <div className="flex flex-col sm:flex-row gap-3 mb-6">
-              {/* Day Selector */}
               {(isMultiDay || dayOptions.length > 1) && (
                 <Select value={selectedDay} onValueChange={setSelectedDay}>
                   <SelectTrigger className="w-full sm:w-[180px]">
@@ -548,7 +505,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 </Select>
               )}
 
-              {/* Search */}
               <div className="relative flex-1">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -559,7 +515,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 />
               </div>
 
-              {/* Refresh */}
               <Button
                 variant="outline"
                 size="icon"
@@ -573,7 +528,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
               </Button>
             </div>
 
-            {/* Attendance List */}
             {isLoadingAttendance ? (
               <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
                 <Loader2 className="h-8 w-8 animate-spin mb-3" />
@@ -590,7 +544,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
               </div>
             ) : (
               <>
-                {/* Filtered count hint */}
                 {searchQuery.trim() && (
                   <p className="text-xs text-muted-foreground mb-3">
                     Showing {filteredAttendance.length} of{' '}
@@ -601,7 +554,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                 <ItemGroup>
                   {filteredAttendance.map((record) => {
                     const member = record.Members;
-                    // Compute day numbers from dates
                     const dayNumbers = record.dates
                       .map((d) => getDayNumber(d, eventStart))
                       .sort((a, b) => a - b);
@@ -616,7 +568,6 @@ export function EventAttendanceTab({ event, onEventChange }: EventAttendanceTabP
                         </ItemContent>
                         <ItemActions>
                           <div className="flex flex-wrap gap-1.5 items-center">
-                            {/* Day badges - square shaped */}
                             {isMultiDay &&
                               dayNumbers.map((dayNum) => (
                                 <Badge

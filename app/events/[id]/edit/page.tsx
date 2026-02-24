@@ -10,33 +10,29 @@ import { EventForm, type EventFormData } from "@/components/event-form";
 import { useEventDetails, useActions, useUpdateEvent, useDepartments } from "@/hooks/use-event";
 import { shouldContactSupport } from "@/lib/api";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
-import type { Event, Action, LocationType, EventAction } from "@/lib/api-types";
+import { useEventContext } from "@/contexts/event-context";
+import type { LocationType, EventAction, Action } from "@/lib/api-types";
 
-interface EventEditTabProps {
-  event: Event;
-  onEventChange?: () => void;
-}
-
-export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
+export default function EventEditPage() {
+  const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
+
+  if (!event) {
+    return null;
+  }
   
-  // Fetch full event details (including actions array)
   const { 
     data: eventDetails, 
     isLoading: isLoadingDetails, 
     error: detailsError 
   } = useEventDetails(event.id, getToken);
   
-  // Fetch actions to find matching composite action
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
   
-  // Fetch departments for mapping
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
   
-  // Update mutation
   const updateEventMutation = useUpdateEvent(getToken);
 
-  // Find the matching composite action based on action IDs from event details
   const findCompositeAction = React.useCallback(
     (eventActions: [EventAction, EventAction]): Action[] | undefined => {
       if (!actionsData?.composite_actions || eventActions.length !== 2) return undefined;
@@ -54,13 +50,11 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
     [actionsData]
   );
 
-  // Transform event data to form data format
   const initialFormData = React.useMemo((): Partial<EventFormData> | undefined => {
     if (!eventDetails) return undefined;
 
     const compositeAction = findCompositeAction(eventDetails.actions);
     
-    // Get department_id from the first action (department action)
     const departmentId = eventDetails.actions[0]?.department_id;
 
     return {
@@ -70,20 +64,17 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
       location: eventDetails.event.location,
       startDate: parseLocalDateTime(eventDetails.event.start_datetime),
       endDate: parseLocalDateTime(eventDetails.event.end_datetime),
-      is_official: eventDetails.event.is_official === 1, // Convert number to boolean
+      is_official: eventDetails.event.is_official === 1,
       image_url: eventDetails.event.image_url,
       department_id: departmentId,
       composite_action: compositeAction,
     };
   }, [eventDetails, findCompositeAction]);
 
-  // Handle form submission
   const handleSubmit = async (data: EventFormData) => {
     try {
-      // Get the selected department info
       const selectedDepartment = departments?.find(d => d.id === data.department_id);
       
-      // Build EventAction objects from composite action
       const departmentAction: EventAction = {
         action_id: data.composite_action[0].id,
         ar_action_name: data.composite_action[0].ar_action_name,
@@ -107,9 +98,9 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
           location: data.location,
           start_datetime: formatLocalDateTime(data.startDate),
           end_datetime: formatLocalDateTime(data.endDate),
-          status: event.status, // Preserve existing status
+          status: event.status,
           image_url: data.image_url || null,
-          is_official: data.is_official ? 1 : 0, // Convert boolean to number
+          is_official: data.is_official ? 1 : 0,
         },
         actions: [departmentAction, memberAction] as [EventAction, EventAction],
       };
@@ -117,11 +108,10 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
       await updateEventMutation.mutateAsync({ id: event.id, data: payload });
       
       toast.success("Event updated successfully!");
-      onEventChange?.();
+      refetch?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : "Unknown error";
       
-      // Check if it's a validation or server error
       const apiError = { 
         message: errorMessage, 
         status: 0, 
@@ -139,7 +129,6 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
     }
   };
 
-  // Loading state
   if (isLoadingDetails || isLoadingActions || isLoadingDepartments) {
     return (
       <Card className="max-w-3xl mx-auto">
@@ -153,7 +142,6 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
     );
   }
 
-  // Error state
   if (detailsError) {
     return (
       <Card className="max-w-3xl mx-auto">
@@ -167,7 +155,6 @@ export function EventEditTab({ event, onEventChange }: EventEditTabProps) {
     );
   }
 
-  // No data state (shouldn't happen but handle gracefully)
   if (!eventDetails || !initialFormData) {
     return (
       <Card className="max-w-3xl mx-auto">

@@ -1,169 +1,212 @@
 "use client";
 
-import { useEffect } from "react";
-import { useParams, useSearchParams } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { EventInfoTab } from "@/components/event-info-tab";
-import { EventManageTab } from "@/components/event-manage-tab";
-import { EventResponsesTab } from "@/components/event-responses-tab";
-import { EventEditTab } from "@/components/event-edit-tab";
-import { EventAttendanceTab } from "@/components/event-attendance-tab";
-import { useEvent } from "@/hooks/use-event";
-import { saveRefreshToken } from "@/lib/google-token-storage";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import * as React from "react";
+import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { parseLocalDateTime } from "@/lib/utils";
+import { useEventContext } from "@/contexts/event-context";
+import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users } from "lucide-react";
 
-export default function EventPage() {
-  const params = useParams();
-  const searchParams = useSearchParams();
-  const eventId = params.id as string;
-
-  const { data: event, isLoading, error, refetch } = useEvent(eventId);
-
-  // Save refresh token from OAuth callback
-  useEffect(() => {
-    const refreshToken = searchParams.get('save_refresh_token');
-    if (refreshToken) {
-      saveRefreshToken(refreshToken);
-      // Clean up the URL
-      const url = new URL(window.location.href);
-      url.searchParams.delete('save_refresh_token');
-      window.history.replaceState({}, '', url);
-    }
-  }, [searchParams]);
-
-  if (isLoading) {
-    const TabSkeleton = ({ w }: { w: string }) => (
-      <div className="flex items-center gap-2 pb-3">
-        <Skeleton className="h-4 w-4" />
-        <Skeleton className={`h-4 ${w}`} />
-      </div>
-    );
-
-    return (
-      <div className="space-y-6">
-        <Skeleton className="h-9 w-32" />
-        <div className="space-y-6">
-          <div className="border-b">
-            <div className="flex gap-6">
-              <div className="flex items-center gap-2 pb-3 border-b-2 border-primary">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-              {["w-36", "w-32", "w-24", "w-20"].map((w, i) => (
-                <TabSkeleton key={i} w={w} />
-              ))}
-            </div>
-          </div>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Skeleton className="w-full h-150 rounded-lg" />
-            
-            <div className="space-y-6">
-              <Skeleton className="h-12 w-3/4" />
-              <div className="flex gap-2">
-                <Skeleton className="h-7 w-20" />
-                <Skeleton className="h-7 w-32" />
-              </div>
-              
-              <div className="space-y-4">
-                {["w-56", "w-48", "w-40"].map((w, i) => (
-                  <Skeleton key={i} className={`h-6 ${w}`} />
-                ))}
-              </div>
-              
-              <div className="space-y-4 rounded-lg border bg-card p-6 mt-8">
-                <Skeleton className="h-7 w-32" />
-                <div className="space-y-3">
-                  {["w-full", "w-full", "w-5/6", "w-full", "w-3/4"].map((w, i) => (
-                    <Skeleton key={i} className={`h-4 ${w}`} />
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="text-center py-12 text-destructive">
-        Error: {error.message}
-      </div>
-    );
-  }
+export default function EventInfoPage() {
+  const { event } = useEventContext();
 
   if (!event) {
-    return (
-      <div className="text-center py-12 text-muted-foreground">
-        Event not found
-      </div>
-    );
+    return null;
   }
 
-  const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
-  const backLabel = searchParams.get('from') === 'points' ? 'Back to Points' : 'Back to Events';
+  const imageSource =
+    process.env.NEXT_PUBLIC_DEV_IMAGE_SOURCE ||
+    process.env.NEXT_PUBLIC_IMAGE_SOURCE;
+  const imageUrl =
+    event.image_url && imageSource ? `${imageSource}${event.image_url}` : null;
+
+  const LocationIcon = event.location_type === "online" ? Globe : MapPin;
+
+  const formatDate = (dateString: string) => {
+    const date = parseLocalDateTime(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = parseLocalDateTime(dateString);
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const startDate = formatDate(event.start_datetime);
+  const endDate = formatDate(event.end_datetime);
+  const dailyStartTime = formatTime(event.start_datetime);
+  const dailyEndTime = formatTime(event.end_datetime);
+
+  const isSameDay =
+    parseLocalDateTime(event.start_datetime).toDateString() ===
+    parseLocalDateTime(event.end_datetime).toDateString();
+
+  const start = parseLocalDateTime(event.start_datetime);
+  const end = parseLocalDateTime(event.end_datetime);
+  const startDateOnly = new Date(
+    start.getFullYear(),
+    start.getMonth(),
+    start.getDate()
+  );
+  const endDateOnly = new Date(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate()
+  );
+  const diffTime = Math.abs(endDateOnly.getTime() - startDateOnly.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+  const getStatusVariant = (status: typeof event.status) => {
+    switch (status) {
+      case "open":
+        return "default";
+      case "open":
+        return "secondary";
+      case "active":
+        return "default";
+      case "closed":
+        return "outline";
+      default:
+        return "secondary";
+    }
+  };
+
+  const getLocationTypeLabel = () => {
+    switch (event.location_type) {
+      case "online":
+        return "Online Event";
+      case "on-site":
+        return "On-site Event";
+      case "none":
+        return "No Location";
+      default:
+        return event.location_type;
+    }
+  };
 
   return (
-    <div className="space-y-6">
-      <Button variant="ghost" size="sm" asChild>
-        <Link href={backHref} className="flex items-center gap-2">
-          <ArrowLeft className="h-4 w-4" />
-          {backLabel}
-        </Link>
-      </Button>
-      <Tabs defaultValue="info" className="space-y-6">
-        <ScrollArea className="w-full">
-          <TabsList variant="line">
-            <TabsTrigger value="info" className="flex items-center gap-2">
-              <Info className="h-4 w-4" />
-              Event Info
-            </TabsTrigger>
-            <TabsTrigger value="manage" className="flex items-center gap-2">
-              <Link2 className="h-4 w-4" />
-              Google Form & Publish
-            </TabsTrigger>
-            <TabsTrigger value="responses" className="flex items-center gap-2">
-              <Users className="h-4 w-4" />
-              Manage Responses
-            </TabsTrigger>
-            <TabsTrigger value="attendance" className="flex items-center gap-2">
-              <ClipboardCheck className="h-4 w-4" />
-              Attendance
-            </TabsTrigger>
-            <TabsTrigger value="edit" className="flex items-center gap-2">
-              <Pencil className="h-4 w-4" />
-              Edit Event
-            </TabsTrigger>
-          </TabsList>
-          <ScrollBar orientation="horizontal" />
-        </ScrollArea>
+    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
+      <div className="flex justify-center lg:justify-start">
+        {imageUrl ? (
+          <Image
+            src={imageUrl}
+            alt={event.name}
+            width={600}
+            height={200}
+            className="rounded-xl max-w-full lg:max-w-md xl:max-w-lg h-auto max-h-150 object-contain"
+          />
+        ) : (
+          <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-xl text-muted-foreground">
+            <div className="text-center">
+              <Calendar className="h-16 w-16 mx-auto mb-2 opacity-50" />
+              <span className="text-sm">No event image</span>
+            </div>
+          </div>
+        )}
+      </div>
 
-      <TabsContent value="info">
-        <EventInfoTab event={event} />
-      </TabsContent>
+      <div className="space-y-6 min-w-0">
+        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
+          {event.name}
+        </h1>
 
-      <TabsContent value="manage">
-        <EventManageTab event={event} onEventChange={refetch} />
-      </TabsContent>
+        <div className="flex flex-wrap items-center gap-3">
+          <Badge
+            variant={getStatusVariant(event.status)}
+            className="text-sm px-3 py-1"
+          >
+            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+          </Badge>
+          {event.is_official ? (
+            <Badge variant="secondary" className="text-sm px-3 py-1">
+              <Trophy className="h-3.5 w-3.5 mr-1" />
+              Official Event
+            </Badge>
+          ) : (
+            <Badge variant="outline" className="text-sm px-3 py-1">
+              <Users className="h-3.5 w-3.5 mr-1" />
+              Unoffical Event
+            </Badge>
+          )}
+        </div>
 
-      <TabsContent value="responses">
-        <EventResponsesTab event={event} onEventChange={refetch} />
-      </TabsContent>
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Calendar className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              {isSameDay ? (
+                <span className="font-medium text-foreground">
+                  {startDate}
+                </span>
+              ) : (
+                <>
+                  <span className="font-medium text-foreground">
+                    {startDate}
+                  </span>
+                  <span className="mx-2">—</span>
+                  <span className="font-medium text-foreground">
+                    {endDate}
+                  </span>
+                  {diffDays > 1 && (
+                    <span className="ml-2 text-sm text-muted-foreground font-normal">
+                      ({diffDays} Days)
+                    </span>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <Clock className="h-5 w-5 text-primary shrink-0" />
+            <span className="font-medium text-foreground">
+              {dailyStartTime} - {dailyEndTime}
+            </span>
+            {!isSameDay && (
+              <span className="text-sm text-muted-foreground">(daily)</span>
+            )}
+          </div>
+        </div>
 
-      <TabsContent value="attendance">
-        <EventAttendanceTab event={event} onEventChange={refetch} />
-      </TabsContent>
+        {event.location_type !== "none" && (
+          <div className="flex items-start gap-2 text-muted-foreground">
+            <LocationIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div>
+              <span className="text-sm">{getLocationTypeLabel()}</span>
+              <p className="font-medium text-foreground">{event.location}</p>
+            </div>
+          </div>
+        )}
 
-      <TabsContent value="edit">
-        <EventEditTab event={event} onEventChange={refetch} />
-      </TabsContent>
-      </Tabs>
+        <Separator />
+
+        <Card>
+          <CardHeader className="flex flex-row items-center gap-2 py-4">
+            <Info className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-xl font-semibold">Description</CardTitle>
+          </CardHeader>
+          <CardContent className="pb-6">
+            {event.description ? (
+              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+                {event.description}
+              </p>
+            ) : (
+              <p className="text-muted-foreground italic">
+                No description provided for this event.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

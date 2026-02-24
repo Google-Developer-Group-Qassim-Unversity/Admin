@@ -16,26 +16,25 @@ import {
 } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
 import { useFormData, useGoogleAuthStatus, useUpdateFormType } from '@/hooks/use-form-data';
-import type { Event } from '@/lib/api-types';
+import { useEventContext } from '@/contexts/event-context';
 
-interface EventManageTabProps {
-  event: Event;
-  onEventChange?: () => void;
-}
-
-export function EventManageTab({ event, onEventChange }: EventManageTabProps) {
+export default function EventManagePage() {
+  const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
-  const { data: formData = null, refetch: refetchForm } = useFormData(event.id);
-  const { data: user = null, refetch: refetchAuth } = useGoogleAuthStatus(event.id);
-  const updateFormType = useUpdateFormType(event.id, getToken);
+  const { data: formData = null, refetch: refetchForm } = useFormData(event?.id ?? 0);
+  const { data: user = null, refetch: refetchAuth } = useGoogleAuthStatus(event?.id ?? 0);
+  const updateFormType = useUpdateFormType(event?.id ?? 0, getToken);
 
-  // Determine if registration is required (form_type is "registration" or "google")
+  if (!event) {
+    return null;
+  }
+
   const requiresRegistration = formData?.formType !== 'none';
   const isFormTypeNone = formData?.formType === 'none';
 
   const handleFormChange = async () => {
     await Promise.all([refetchForm(), refetchAuth()]);
-    onEventChange?.();
+    refetch?.();
   };
 
   const handleRegistrationToggle = (checked: boolean) => {
@@ -70,7 +69,6 @@ export function EventManageTab({ event, onEventChange }: EventManageTabProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Registration Toggle */}
         <Item variant="outline">
           <ItemContent>
             <ItemTitle>Require Registration</ItemTitle>
