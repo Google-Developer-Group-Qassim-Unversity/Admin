@@ -190,6 +190,29 @@ export interface Action {
   points: number;
 }
 
+export interface ActionWithUsage {
+  id: number;
+  action_name: string;
+  ar_action_name: string;
+  action_type: ActionType;
+  points: number;
+  usage_count: number;
+}
+
+export interface CreateActionPayload {
+  action_name: string;
+  ar_action_name: string;
+  action_type: ActionType;
+  points: number;
+}
+
+export interface UpdateActionPayload {
+  action_name?: string;
+  ar_action_name?: string;
+  action_type?: ActionType;
+  points?: number;
+}
+
 export interface ActionsResponse {
   composite_actions: Action[][];
   department_actions: Action[];

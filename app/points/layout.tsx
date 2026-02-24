@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, CalendarPlus } from "lucide-react";
+import { Trophy, CalendarPlus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export default function PointsLayout({
@@ -15,6 +15,7 @@ export default function PointsLayout({
 
   const isCustomActive = pathname === "/points" || pathname === "/points/" || pathname === "/points/custom";
   const isFullActive = pathname === "/points/full";
+  const isManageActive = pathname === "/points/manage";
 
   return (
     <div className="space-y-8">
@@ -60,6 +61,20 @@ export default function PointsLayout({
             <CalendarPlus className="h-4 w-4" />
             Full Events
             {isFullActive && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+            )}
+          </Link>
+          <Link
+            href="/points/manage"
+            className={`flex items-center gap-2 px-3 py-3 text-sm font-medium transition-colors relative ${
+              isManageActive
+                ? "text-foreground"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Settings className="h-4 w-4" />
+            Manage Points
+            {isManageActive && (
               <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
             )}
           </Link>
