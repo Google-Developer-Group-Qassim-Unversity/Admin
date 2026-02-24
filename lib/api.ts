@@ -13,6 +13,10 @@ import type {
   Submission,
   AcceptSubmissionPayload,
   ActionsResponse,
+  Action,
+  ActionWithUsage,
+  CreateActionPayload,
+  UpdateActionPayload,
   Department,
   Member,
   MemberWithRole,
@@ -331,6 +335,31 @@ export async function openEvent(
 
 export async function getActions(): Promise<ApiResponse<ActionsResponse>> {
   return apiFetch<ActionsResponse>("/actions");
+}
+
+export async function getAllActions(): Promise<ApiResponse<ActionWithUsage[]>> {
+  return apiFetch<ActionWithUsage[]>("/actions/all");
+}
+
+export async function createAction(
+  payload: CreateActionPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Action>> {
+  return apiFetch<Action>("/actions", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function updateAction(
+  actionId: number,
+  payload: UpdateActionPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Action>> {
+  return apiFetch<Action>(`/actions/${actionId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
 }
 
 export async function getDepartments(): Promise<ApiResponse<Department[]>> {
