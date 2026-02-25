@@ -643,4 +643,30 @@ export async function updateCustomMemberPointDetail(
   );
 }
 
+export async function deleteCustomPointDetail(
+  logId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(
+    `/custom/departments/${logId}`,
+    {
+      method: "DELETE",
+    },
+    getToken
+  );
+}
+
+export async function deleteCustomMemberPointDetail(
+  logId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(
+    `/custom/members/${logId}`,
+    {
+      method: "DELETE",
+    },
+    getToken
+  );
+}
+
 

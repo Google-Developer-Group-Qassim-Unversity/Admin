@@ -42,6 +42,7 @@ interface ActionReasonSelectProps {
  * - Select predefined action → returns action_id, action_name, and action.points
  * - Type custom reason → returns action_id=null, action_name=typed, points=null
  * - Clear selection → returns action_id=null, action_name=null, points=null
+ * - Composite action (action_id set but not in options) → displays action_name, read-only
  */
 export function ActionReasonSelect({
   actionOptions,
@@ -59,6 +60,8 @@ export function ActionReasonSelect({
   const selectedAction = selectedActionId
     ? allActions.find((a) => a.id === selectedActionId)
     : null;
+
+  const isCompositeAction = !!(selectedActionId !== null && !selectedAction && customActionName);
 
   // Determine display value
   const displayValue = React.useMemo(() => {
@@ -131,10 +134,11 @@ export function ActionReasonSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          disabled={disabled}
+          disabled={disabled || isCompositeAction}
           className={cn(
             "w-full justify-between font-normal",
             !displayValue && "text-muted-foreground",
+            isCompositeAction && "cursor-not-allowed opacity-80",
             className
           )}
         >
@@ -142,7 +146,7 @@ export function ActionReasonSelect({
             {displayValue || "Select reason (optional)..."}
           </span>
           <div className="flex items-center gap-1 shrink-0">
-            {displayValue && (
+            {displayValue && !isCompositeAction && (
               <span
                 role="button"
                 tabIndex={0}
@@ -159,7 +163,7 @@ export function ActionReasonSelect({
                 <X className="h-4 w-4 opacity-50 hover:opacity-100" />
               </span>
             )}
-            <ChevronsUpDown className="h-4 w-4 opacity-50" />
+            {!isCompositeAction && <ChevronsUpDown className="h-4 w-4 opacity-50" />}
           </div>
         </Button>
       </PopoverTrigger>
