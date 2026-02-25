@@ -4,7 +4,7 @@ import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, FileBadge } from "lucide-react";
+import { Loader2, FileBadge, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import {
 import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
 import type { Action, LocationType } from "@/lib/api-types";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 // Form validation schema
 export const eventFormSchema = z.object({
@@ -140,6 +141,21 @@ export function EventForm({
           and contact support if the issue persists.
         </p>
       </div>
+    );
+  }
+
+  if (mode === "edit" && initialData?.department_id == null) {
+    return (
+      <Alert variant="destructive">
+        <AlertCircle className="h-4 w-4" />
+        <AlertTitle>Invalid Event Data</AlertTitle>
+        <AlertDescription>
+          This event has corrupted or missing department data and cannot be edited.
+          The event&apos;s department association is invalid (department_id is null).
+          <br /><br />
+          <strong>Please contact support</strong> with the event details so this can be resolved.
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -286,11 +302,11 @@ export function EventForm({
             control={control}
             render={({ field }) => (
               <Select
-                value={
-                  field.value !== undefined ? field.value.toString() : undefined
-                }
-                onValueChange={(value) => field.onChange(parseInt(value, 10))}
-              >
+                 value={
+                   field.value != null ? field.value.toString() : undefined
+                 }
+                 onValueChange={(value) => field.onChange(parseInt(value, 10))}
+               >
                 <SelectTrigger
                   id="department_id"
                   className={errors.department_id ? "border-destructive" : ""}
