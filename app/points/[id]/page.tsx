@@ -37,6 +37,8 @@ import {
   createCustomMemberPoints,
   updateEvent,
   shouldContactSupport,
+  deleteCustomPointDetail,
+  deleteCustomMemberPointDetail,
 } from "@/lib/api";
 import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
 
@@ -224,6 +226,37 @@ if (actionsRes.success) {
       const newDeptRows = data.point_details.filter((pd) => pd.row_type === "department" && !pd.log_id);
       const existingMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && pd.log_id);
       const newMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && !pd.log_id);
+
+      const currentDeptLogIds = new Set(existingDeptRows.map((pd) => pd.log_id));
+      const currentMemberLogIds = new Set(existingMemberRows.map((pd) => pd.log_id));
+      
+      const deletedDeptLogIds = (initialData?.point_details ?? [])
+        .map((pd) => pd.log_id)
+        .filter((logId) => logId !== undefined && !currentDeptLogIds.has(logId));
+      const deletedMemberLogIds = (initialMemberData?.point_details ?? [])
+        .map((pd) => pd.log_id)
+        .filter((logId) => logId !== undefined && !currentMemberLogIds.has(logId));
+
+      const deleteDeptPromises = deletedDeptLogIds.map((logId) =>
+        deleteCustomPointDetail(logId!, getToken)
+      );
+      const deleteMemberPromises = deletedMemberLogIds.map((logId) =>
+        deleteCustomMemberPointDetail(logId!, getToken)
+      );
+
+      const deleteResults = await Promise.all([...deleteDeptPromises, ...deleteMemberPromises]);
+      const failedDeletes = deleteResults.filter((r) => !r.success);
+      if (failedDeletes.length > 0) {
+        const firstError = failedDeletes[0];
+        if (!firstError.success) {
+          toast.error(
+            `Failed to delete ${failedDeletes.length} point detail(s).`,
+            {
+              description: firstError.error.message,
+            }
+          );
+        }
+      }
 
       const updateDeptPromises = existingDeptRows
         .filter((pd) => {

@@ -413,7 +413,7 @@ export function CustomEventForm({
       </div>
 
       <div className="flex justify-end gap-3">
-        <Button type="submit" disabled={isSubmitting || (!isFullEvent && mode === "edit" && !isDirty)}>
+        <Button type="submit" disabled={isSubmitting || (mode === "edit" && !isDirty)}>
           {isSubmitting
             ? mode === "create"
               ? "Creating..."
