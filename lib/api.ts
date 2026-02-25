@@ -186,7 +186,7 @@ async function apiUpload<T>(
 // =============================================================================
 
 export async function getEvents(): Promise<ApiResponse<Event[]>> {
-  return apiFetch<Event[]>('/events');
+  return apiFetch<Event[]>('/events/');
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
