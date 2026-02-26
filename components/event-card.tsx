@@ -118,7 +118,7 @@ export function EventCard({ event }: EventCardProps) {
       {/* Actions */}
       <CardFooter className="pt-3 gap-2">
         <Button asChild variant="outline" className="flex-1">
-          <Link href={`/events/${event.id}`}>Edit</Link>
+          <Link href={`/events/${event.id}/edit`}>Edit</Link>
         </Button>
         <Button asChild className="flex-1">
           <Link href={`/events/${event.id}`}>Manage</Link>

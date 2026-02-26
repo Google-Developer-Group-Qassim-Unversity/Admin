@@ -3,13 +3,16 @@
 import { useEffect } from "react";
 import { useParams, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil } from "lucide-react";
+import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventProvider } from "@/contexts/event-context";
 import { useEvent } from "@/hooks/use-event";
 import { saveRefreshToken } from "@/lib/google-token-storage";
+import { ApiRequestError } from "@/lib/api";
 
 const TAB_ITEMS = [
   { value: "info", label: "Event Info", icon: Info, path: "" },
@@ -101,6 +104,30 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
   }
 
   if (error) {
+    if (error instanceof ApiRequestError && error.isNotFound) {
+      return (
+        <div className="flex items-center justify-center min-h-[70vh]">
+          <Card className="max-w-md">
+            <CardContent className="pt-6">
+              <Empty>
+                <EmptyHeader>
+                  <EmptyMedia variant="icon">
+                    <CalendarX />
+                  </EmptyMedia>
+                  <EmptyTitle>Event not found</EmptyTitle>
+                  <EmptyDescription>
+                    The event you're looking for doesn't exist or has been deleted.
+                  </EmptyDescription>
+                </EmptyHeader>
+                <Button asChild>
+                  <Link href="/events">Go back to Events</Link>
+                </Button>
+              </Empty>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
     return (
       <div className="text-center py-12 text-destructive">
         Error: {error.message}
@@ -110,8 +137,25 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
 
   if (!event) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        Event not found
+      <div className="flex items-center justify-center min-h-[70vh]">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <Empty>
+              <EmptyHeader>
+                <EmptyMedia variant="icon">
+                  <CalendarX />
+                </EmptyMedia>
+                <EmptyTitle>Event not found</EmptyTitle>
+                <EmptyDescription>
+                  The event you're looking for doesn't exist or has been deleted.
+                </EmptyDescription>
+              </EmptyHeader>
+              <Button asChild>
+                <Link href="/events">Go back to Events</Link>
+              </Button>
+            </Empty>
+          </CardContent>
+        </Card>
       </div>
     );
   }

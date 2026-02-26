@@ -33,6 +33,22 @@ import type {
   CertificateJobResponse,
 } from "./api-types";
 
+export class ApiRequestError extends Error {
+  status: number;
+  isValidationError: boolean;
+  isServerError: boolean;
+  isNotFound: boolean;
+
+  constructor(error: ApiError) {
+    super(error.message);
+    this.name = "ApiRequestError";
+    this.status = error.status;
+    this.isValidationError = error.isValidationError ?? false;
+    this.isServerError = error.isServerError ?? false;
+    this.isNotFound = error.isNotFound ?? false;
+  }
+}
+
 // Base API URL - configure this based on your environment
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001";
 export const UPLOAD_BASE_URL = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE || API_BASE_URL;
@@ -74,6 +90,7 @@ async function apiFetch<T>(
     if (!response.ok) {
       const isValidationError = response.status === 422;
       const isServerError = response.status >= 500;
+      const isNotFound = response.status === 404;
 
       let message = "An unexpected error occurred";
       try {
@@ -96,6 +113,7 @@ async function apiFetch<T>(
           status: response.status,
           isValidationError,
           isServerError,
+          isNotFound,
         },
       };
     }

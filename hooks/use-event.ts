@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, ApiRequestError } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -23,7 +23,7 @@ export function useEvent(id: number | string) {
     queryFn: async () => {
       const result = await getEvent(id);
       if (!result.success) {
-        throw new Error(result.error.message);
+        throw new ApiRequestError(result.error);
       }
       return result.data;
     },

@@ -83,6 +83,7 @@ export interface ApiError {
   status: number;
   isValidationError?: boolean;
   isServerError?: boolean;
+  isNotFound?: boolean;
 }
 
 // Response wrapper for consistent error handling
