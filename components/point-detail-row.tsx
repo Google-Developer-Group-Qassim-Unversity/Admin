@@ -65,6 +65,9 @@ export function PointDetailRow({
   const isPointsLocked = data.action_id !== null;
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
+  const allActions = [...actionOptions.department, ...actionOptions.member, ...actionOptions.bonus];
+  const isCompositeAction = !!(data.action_id !== null && !allActions.find((a) => a.id === data.action_id) && data.action_name);
+
   const updateField = <K extends keyof PointDetailRowData>(
     field: K,
     value: PointDetailRowData[K]
@@ -141,7 +144,7 @@ export function PointDetailRow({
                 )
               }
             >
-              <MultiSelectTrigger className="h-9 w-full max-w-full">
+              <MultiSelectTrigger className="h-9 w-full max-w-full" disabled={isCompositeAction}>
                 <MultiSelectValue
                   placeholder={`Select ${entityLabel.toLowerCase()}s...`}
                   overflowBehavior="cutoff"
@@ -167,8 +170,9 @@ export function PointDetailRow({
               <Button
                 type="button"
                 variant="outline"
-                className="h-9 w-full justify-start font-normal"
-                onClick={() => setMemberDialogOpen(true)}
+                className={`h-9 w-full justify-start font-normal ${isCompositeAction ? "opacity-80 cursor-not-allowed" : ""}`}
+                onClick={() => !isCompositeAction && setMemberDialogOpen(true)}
+                disabled={isCompositeAction}
               >
                 <Users className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
                 <span className={`truncate min-w-0 ${data.member_ids.length === 0 ? "text-muted-foreground" : ""}`}>
@@ -273,7 +277,7 @@ export function PointDetailRow({
           <ActionReasonSelect
             actionOptions={actionOptions}
             selectedActionId={data.action_id}
-            customActionName={data.action_id ? null : data.action_name}
+            customActionName={data.action_name}
             onChange={handleActionChange}
             className="border-dashed opacity-80 hover:opacity-100 focus-within:opacity-100"
           />
@@ -289,7 +293,7 @@ export function PointDetailRow({
             size="sm"
             className="h-9 w-9 p-0 text-muted-foreground hover:text-destructive"
             onClick={() => onRemove(index)}
-            disabled={!canRemove}
+            disabled={!canRemove || isCompositeAction}
           >
             <Trash2 className="h-4 w-4" />
           </Button>

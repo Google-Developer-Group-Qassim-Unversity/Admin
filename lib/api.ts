@@ -186,7 +186,7 @@ async function apiUpload<T>(
 // =============================================================================
 
 export async function getEvents(): Promise<ApiResponse<Event[]>> {
-  return apiFetch<Event[]>('/events');
+  return apiFetch<Event[]>('/events/');
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
@@ -655,6 +655,32 @@ export async function getMemberByUniId(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Member>> {
   return apiFetch<Member>(`/members/uni-id/${uniId}`, {}, getToken);
+}
+
+export async function deleteCustomPointDetail(
+  logId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(
+    `/custom/departments/${logId}`,
+    {
+      method: "DELETE",
+    },
+    getToken
+  );
+}
+
+export async function deleteCustomMemberPointDetail(
+  logId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(
+    `/custom/members/${logId}`,
+    {
+      method: "DELETE",
+    },
+    getToken
+  );
 }
 
 
