@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import { useAuth } from "@clerk/nextjs";
-import {Award,Plus,Trash2,Send,AlertCircle,Loader2,Check,ChevronsUpDown,Search,Upload,X,Users,FileSpreadsheet,Globe,Calendar} from "lucide-react";
+import { Award, Plus, Trash2, Send, AlertCircle, Loader2, Check, ChevronsUpDown, Search, Upload, X, Users, FileSpreadsheet, Globe, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -13,8 +13,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
-import {Command,CommandEmpty,CommandGroup,CommandInput,CommandItem,CommandList,} from "@/components/ui/command";
-import {Popover,PopoverContent,PopoverTrigger,} from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, } from "@/components/ui/command";
+import { Popover, PopoverContent, PopoverTrigger, } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
@@ -147,24 +147,43 @@ export default function CertificatesPage() {
 
       const headers = lines[0].toLowerCase().split(",").map(h => h.trim().replace(/^"|"$/g, ''));
 
-      const eventIdx = headers.findIndex(h => h.includes("event") || h.includes("activity") || h.includes("الفعالية") || h.includes("اسم"));
-      const nameIdx = headers.findIndex(h => h.includes("name") || h.includes("full name") || h.includes("الاسم") && !h.includes("event"));
-      const emailIdx = headers.findIndex(h => h.includes("email") || h.includes("البريد") || h.includes("mail"));
-      const genderIdx = headers.findIndex(h => h.includes("gender") || h.includes("النوع") || h.includes("الجنس"));
+      // Improved header matching for Arabic and English
+      const eventIdx = headers.findIndex(h =>
+        h.includes("event") || h.includes("activity") ||
+        h.includes("اسم الفاعلية") || h.includes("الفعالية") || h.includes("اسم النشاط") ||
+        (h === "النشاط" || h === "المناسبة")
+      );
+
+      const nameIdx = headers.findIndex((h, idx) =>
+        idx !== eventIdx && (
+          h.includes("full name") || h.includes("name") ||
+          h.includes("الاسم كاملا") || h.includes("الاسم الثلاثي") ||
+          (h.includes("الاسم") && !h.includes("فعالية") && !h.includes("نشاط"))
+        )
+      );
+
+      const emailIdx = headers.findIndex(h =>
+        h.includes("email") || h.includes("mail") ||
+        h.includes("الايميل") || h.includes("البريد") || h.includes("البريد الإلكتروني")
+      );
+
+      const genderIdx = headers.findIndex(h =>
+        h.includes("gender") || h.includes("النوع") || h.includes("الجنس")
+      );
 
       if (eventIdx === -1 || nameIdx === -1 || emailIdx === -1) {
         toast.error("Required columns (Event Name, Name, Email) not found in CSV");
+        console.log("Headers found:", headers);
         return;
       }
 
       const parsedRows: CsvRow[] = [];
       for (let i = 1; i < lines.length; i++) {
-        if (!lines[i].trim()) continue;
+        // More robust CSV split regex to handle quotes and empty fields
+        const row = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        if (!row || row.length < Math.max(eventIdx, nameIdx, emailIdx) + 1) continue;
 
-        const row = lines[i].match(/(".*?"|[^",\s]+)(?=\s*,|\s*$)/g);
-        if (!row) continue;
-
-        const cleanRow = row.map(cell => cell.trim().replace(/^"|"$/g, ''));
+        const cleanRow = row.map(cell => cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
 
         const eventName = cleanRow[eventIdx] || "";
         const name = cleanRow[nameIdx] || "";
