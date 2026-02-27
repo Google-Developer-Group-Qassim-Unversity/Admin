@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
+import { differenceInHours, isSameDay } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -35,4 +36,16 @@ export function formatLocalDateTime(date: Date): string {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   
   return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}`;
+}
+
+/**
+ * Check if an event is an overnight event (< 24 hours but spans 2 calendar days)
+ * @param start - Start date
+ * @param end - End date
+ * @returns true if the event spans 2 calendar days but is less than 24 hours
+ */
+export function isOvernightEvent(start: Date | undefined, end: Date | undefined): boolean {
+  if (!start || !end) return false;
+  if (isSameDay(start, end)) return false;
+  return differenceInHours(end, start) < 24;
 }

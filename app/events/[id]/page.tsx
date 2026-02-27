@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { parseLocalDateTime } from "@/lib/utils";
+import { parseLocalDateTime, isOvernightEvent } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users } from "lucide-react";
 
@@ -47,24 +47,19 @@ export default function EventInfoPage() {
   const dailyStartTime = formatTime(event.start_datetime);
   const dailyEndTime = formatTime(event.end_datetime);
 
-  const isSameDay =
-    parseLocalDateTime(event.start_datetime).toDateString() ===
-    parseLocalDateTime(event.end_datetime).toDateString();
-
   const start = parseLocalDateTime(event.start_datetime);
   const end = parseLocalDateTime(event.end_datetime);
-  const startDateOnly = new Date(
-    start.getFullYear(),
-    start.getMonth(),
-    start.getDate()
-  );
-  const endDateOnly = new Date(
-    end.getFullYear(),
-    end.getMonth(),
-    end.getDate()
-  );
-  const diffTime = Math.abs(endDateOnly.getTime() - startDateOnly.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+
+  const isSameDay = start.toDateString() === end.toDateString();
+
+  const overnight = isOvernightEvent(start, end);
+
+  const diffDays =
+    Math.ceil(
+      (new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime() -
+        new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) + 1;
 
   const getStatusVariant = (status: typeof event.status) => {
     switch (status) {
@@ -144,7 +139,7 @@ export default function EventInfoPage() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <Calendar className="h-5 w-5 text-primary shrink-0" />
             <div>
-              {isSameDay ? (
+              {isSameDay || overnight ? (
                 <span className="font-medium text-foreground">
                   {startDate}
                 </span>
@@ -171,7 +166,7 @@ export default function EventInfoPage() {
             <span className="font-medium text-foreground">
               {dailyStartTime} - {dailyEndTime}
             </span>
-            {!isSameDay && (
+            {!isSameDay && !overnight && (
               <span className="text-sm text-muted-foreground">(daily)</span>
             )}
           </div>

@@ -101,7 +101,7 @@ export default function AccessDeniedPage() {
           )}
           {reason === "not_super_admin" && (
             <p className="text-sm text-muted-foreground text-center">
-              If you need super admin access, please contact an existing super administrator.
+              If you need super admin access, please contact an existing super administrators.
             </p>
           )}
         </CardContent>

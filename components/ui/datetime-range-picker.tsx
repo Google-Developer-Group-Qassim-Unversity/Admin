@@ -1,11 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { format, setHours, setMinutes, isSameDay } from "date-fns";
+import { format, setHours, setMinutes, isSameDay, addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
-import { cn } from "@/lib/utils";
+import { cn, isOvernightEvent } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -114,9 +114,21 @@ export function DateTimeRangePicker({
     const [hours, mins] = time.split(":").map(Number);
     const dateToUse = value.endDate || value.startDate;
 
-    if (!dateToUse) return;
+    if (!dateToUse || !value.startDate) return;
 
-    const newEndDate = setMinutes(setHours(dateToUse, hours), mins);
+    let newEndDate = setMinutes(setHours(dateToUse, hours), mins);
+
+    // Auto-adjust for overnight events: if same day and end time < start time,
+    // move end date to next day
+    if (isSameDay(value.startDate, newEndDate)) {
+      const endMinutes = hours * 60 + mins;
+      const startMinutes = value.startDate.getHours() * 60 + value.startDate.getMinutes();
+
+      if (endMinutes < startMinutes) {
+        newEndDate = addDays(newEndDate, 1);
+      }
+    }
+
     onChange({
       ...value,
       endDate: newEndDate,
@@ -139,8 +151,8 @@ export function DateTimeRangePicker({
     const endMonth = format(value.endDate, "MMM");
     const endTimeStr = format(value.endDate, "h:mm a");
 
-    // Check if same day
-    if (isSameDay(value.startDate, value.endDate)) {
+    // Check if same day or overnight event (display as single day)
+    if (isSameDay(value.startDate, value.endDate) || isOvernightEvent(value.startDate, value.endDate)) {
       return `${startDay} ${startMonth}, ${startTimeStr} - ${endTimeStr}`;
     }
 
@@ -152,11 +164,13 @@ export function DateTimeRangePicker({
     return `${startDay} ${startMonth} - ${endDay} ${endMonth}, ${startTimeStr} - ${endTimeStr}`;
   };
 
-  // Compute date range for calendar
+  // Compute date range for calendar (hide end date for overnight events)
   const dateRange: DateRange | undefined = value.startDate
     ? {
         from: value.startDate,
-        to: value.endDate || undefined,
+        to: value.endDate && !isOvernightEvent(value.startDate, value.endDate)
+          ? value.endDate
+          : undefined,
       }
     : undefined;
 
