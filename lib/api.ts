@@ -204,7 +204,7 @@ async function apiUpload<T>(
 // =============================================================================
 
 export async function getEvents(): Promise<ApiResponse<Event[]>> {
-  return apiFetch<Event[]>('/events');
+  return apiFetch<Event[]>('/events/');
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
@@ -453,8 +453,8 @@ export async function uploadFile(
   file: File,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<UploadResponse>> {
-  const uploadEndpoint = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE 
-    ? "" 
+  const uploadEndpoint = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE
+    ? ""
     : "/upload";
   return apiUpload<UploadResponse>(uploadEndpoint, file, getToken);
 }
@@ -544,6 +544,13 @@ export async function getMembers(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Member[]>> {
   return apiFetch<Member[]>("/members", {}, getToken);
+}
+
+export async function getMemberById(
+  memberId: number | string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Member>> {
+  return apiFetch<Member>(`/members/${memberId}`, {}, getToken);
 }
 
 export async function getMemberRoles(
@@ -659,6 +666,13 @@ export async function updateCustomMemberPointDetail(
     },
     getToken
   );
+}
+
+export async function getMemberByUniId(
+  uniId: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Member>> {
+  return apiFetch<Member>(`/members/uni-id/${uniId}`, {}, getToken);
 }
 
 export async function deleteCustomPointDetail(
