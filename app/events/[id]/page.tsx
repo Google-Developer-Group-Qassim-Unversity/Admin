@@ -2,15 +2,26 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { parseLocalDateTime, isOvernightEvent } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
-import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users } from "lucide-react";
+import { useEventAttendance } from "@/hooks/use-event";
+import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
 
 export default function EventInfoPage() {
   const { event } = useEventContext();
+  const { getToken } = useAuth();
+
+  const { data: attendanceData } = useEventAttendance(
+    event?.id ?? 0,
+    "all",
+    getToken,
+    !!event,
+    "count"
+  );
 
   if (!event) {
     return null;
@@ -178,6 +189,18 @@ export default function EventInfoPage() {
             <div>
               <span className="text-sm">{getLocationTypeLabel()}</span>
               <p className="font-medium text-foreground">{event.location}</p>
+            </div>
+          </div>
+        )}
+
+        {(event.status === "active" || event.status === "closed") && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <UserCheck className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <span className="text-sm">Attendance</span>
+              <p className="font-medium text-foreground">
+                {attendanceData?.attendance_count ?? 0} attendees
+              </p>
             </div>
           </div>
         )}
