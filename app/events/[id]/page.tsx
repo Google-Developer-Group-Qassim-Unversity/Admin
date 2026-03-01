@@ -6,7 +6,7 @@ import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { parseLocalDateTime, isOvernightEvent } from "@/lib/utils";
+import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
@@ -54,7 +54,6 @@ export default function EventInfoPage() {
   };
 
   const startDate = formatDate(event.start_datetime);
-  const endDate = formatDate(event.end_datetime);
   const dailyStartTime = formatTime(event.start_datetime);
   const dailyEndTime = formatTime(event.end_datetime);
 
@@ -62,15 +61,10 @@ export default function EventInfoPage() {
   const end = parseLocalDateTime(event.end_datetime);
 
   const isSameDay = start.toDateString() === end.toDateString();
-
   const overnight = isOvernightEvent(start, end);
-
-  const diffDays =
-    Math.ceil(
-      (new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime() -
-        new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()) /
-        (1000 * 60 * 60 * 24)
-    ) + 1;
+  const diffDays = getEventDayCount(start, end);
+  const effectiveEnd = getEffectiveEndDate(start, end);
+  const endDate = formatDate(effectiveEnd.toISOString());
 
   const getStatusVariant = (status: typeof event.status) => {
     switch (status) {
