@@ -13,7 +13,7 @@ export const eventKeys = {
   fullDetail: (id: number | string) => [...eventKeys.fullDetails(), id] as const,
   actions: () => [...eventKeys.all, 'actions'] as const,
   departments: () => [...eventKeys.all, 'departments'] as const,
-  attendance: (id: number | string, day: string) => [...eventKeys.all, 'attendance', id, day] as const,
+  attendance: (id: number | string, day: string, type?: string) => [...eventKeys.all, 'attendance', id, day, type] as const,
 };
 
 // Hooks
@@ -245,17 +245,19 @@ export function useSendCertificates(getToken: () => Promise<string | null>) {
 /**
  * Hook for fetching event attendance records.
  * @param day - "1", "2", ..., "all", or "exclusive_all"
+ * @param type - "count", "detailed", or "me" (defaults to "detailed")
  */
 export function useEventAttendance(
   eventId: number | string,
   day: string,
   getToken: () => Promise<string | null>,
-  enabled = true
+  enabled = true,
+  type: "count" | "detailed" | "me" = "detailed"
 ) {
   return useQuery({
-    queryKey: eventKeys.attendance(eventId, day),
+    queryKey: eventKeys.attendance(eventId, day, type),
     queryFn: async () => {
-      const result = await getEventAttendance(Number(eventId), day, getToken);
+      const result = await getEventAttendance(Number(eventId), day, getToken, type);
       if (!result.success) {
         throw new Error(result.error.message);
       }
