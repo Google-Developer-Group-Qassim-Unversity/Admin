@@ -5,7 +5,7 @@ import { format, setHours, setMinutes, isSameDay, addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
-import { cn, isOvernightEvent } from "@/lib/utils";
+import { cn, getEffectiveEndDate, getEventDayCount } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -147,16 +147,18 @@ export function DateTimeRangePicker({
       return `${startDay} ${startMonth}, ${startTimeStr}`;
     }
 
-    const endDay = format(value.endDate, "d");
-    const endMonth = format(value.endDate, "MMM");
+    const dayCount = getEventDayCount(value.startDate, value.endDate);
+    const effectiveEnd = getEffectiveEndDate(value.startDate, value.endDate);
+    const endDay = format(effectiveEnd, "d");
+    const endMonth = format(effectiveEnd, "MMM");
     const endTimeStr = format(value.endDate, "h:mm a");
 
-    // Check if same day or overnight event (display as single day)
-    if (isSameDay(value.startDate, value.endDate) || isOvernightEvent(value.startDate, value.endDate)) {
+    // Single day event (same day or overnight < 24 hours)
+    if (dayCount === 1) {
       return `${startDay} ${startMonth}, ${startTimeStr} - ${endTimeStr}`;
     }
 
-    // Check if same month
+    // Multi-day event - use effective end date for display
     if (startMonth === endMonth) {
       return `${startDay} - ${endDay} ${startMonth}, ${startTimeStr} - ${endTimeStr}`;
     }
@@ -164,13 +166,16 @@ export function DateTimeRangePicker({
     return `${startDay} ${startMonth} - ${endDay} ${endMonth}, ${startTimeStr} - ${endTimeStr}`;
   };
 
-  // Compute date range for calendar (hide end date for overnight events)
-  const dateRange: DateRange | undefined = value.startDate
+  // Compute date range for calendar (use effective end date for highlighting)
+  const dateRange: DateRange | undefined = value.startDate && value.endDate
     ? {
         from: value.startDate,
-        to: value.endDate && !isOvernightEvent(value.startDate, value.endDate)
-          ? value.endDate
-          : undefined,
+        to: getEffectiveEndDate(value.startDate, value.endDate),
+      }
+    : value.startDate
+    ? {
+        from: value.startDate,
+        to: undefined,
       }
     : undefined;
 

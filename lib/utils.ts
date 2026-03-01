@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { differenceInHours, isSameDay } from "date-fns"
+import { differenceInHours, isSameDay, addDays } from "date-fns"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -48,4 +48,31 @@ export function isOvernightEvent(start: Date | undefined, end: Date | undefined)
   if (!start || !end) return false;
   if (isSameDay(start, end)) return false;
   return differenceInHours(end, start) < 24;
+}
+
+/**
+ * Get the actual number of days for an event
+ * Uses floor of time difference (like Python's timedelta.days)
+ * Example: Mar 2 22:00 to Mar 4 00:00 = 26 hours = 1 day + 1 = 2 days
+ * @param start - Start date
+ * @param end - End date
+ * @returns Number of days (minimum 1)
+ */
+export function getEventDayCount(start: Date, end: Date): number {
+  const diffMs = end.getTime() - start.getTime();
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+  return Math.max(1, diffDays + 1);
+}
+
+/**
+ * Get the effective end date for display purposes
+ * For multi-day events, this returns start + (dayCount - 1) days
+ * Example: Mar 2 22:00 to Mar 4 00:00 (2 days) -> effective end is Mar 3
+ * @param start - Start date
+ * @param end - End date
+ * @returns Effective end date for display
+ */
+export function getEffectiveEndDate(start: Date, end: Date): Date {
+  const dayCount = getEventDayCount(start, end);
+  return addDays(start, dayCount - 1);
 }

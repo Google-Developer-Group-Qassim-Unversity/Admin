@@ -2,15 +2,26 @@
 
 import * as React from "react";
 import Image from "next/image";
+import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { parseLocalDateTime, isOvernightEvent } from "@/lib/utils";
+import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
-import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users } from "lucide-react";
+import { useEventAttendance } from "@/hooks/use-event";
+import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
 
 export default function EventInfoPage() {
   const { event } = useEventContext();
+  const { getToken } = useAuth();
+
+  const { data: attendanceData } = useEventAttendance(
+    event?.id ?? 0,
+    "all",
+    getToken,
+    !!event,
+    "count"
+  );
 
   if (!event) {
     return null;
@@ -43,7 +54,6 @@ export default function EventInfoPage() {
   };
 
   const startDate = formatDate(event.start_datetime);
-  const endDate = formatDate(event.end_datetime);
   const dailyStartTime = formatTime(event.start_datetime);
   const dailyEndTime = formatTime(event.end_datetime);
 
@@ -51,15 +61,10 @@ export default function EventInfoPage() {
   const end = parseLocalDateTime(event.end_datetime);
 
   const isSameDay = start.toDateString() === end.toDateString();
-
   const overnight = isOvernightEvent(start, end);
-
-  const diffDays =
-    Math.ceil(
-      (new Date(end.getFullYear(), end.getMonth(), end.getDate()).getTime() -
-        new Date(start.getFullYear(), start.getMonth(), start.getDate()).getTime()) /
-        (1000 * 60 * 60 * 24)
-    ) + 1;
+  const diffDays = getEventDayCount(start, end);
+  const effectiveEnd = getEffectiveEndDate(start, end);
+  const endDate = formatDate(effectiveEnd.toISOString());
 
   const getStatusVariant = (status: typeof event.status) => {
     switch (status) {
@@ -178,6 +183,18 @@ export default function EventInfoPage() {
             <div>
               <span className="text-sm">{getLocationTypeLabel()}</span>
               <p className="font-medium text-foreground">{event.location}</p>
+            </div>
+          </div>
+        )}
+
+        {(event.status === "active" || event.status === "closed") && (
+          <div className="flex items-center gap-2 text-muted-foreground">
+            <UserCheck className="h-5 w-5 text-primary shrink-0" />
+            <div>
+              <span className="text-sm">Attendance</span>
+              <p className="font-medium text-foreground">
+                {attendanceData?.attendance_count ?? 0} attendees
+              </p>
             </div>
           </div>
         )}

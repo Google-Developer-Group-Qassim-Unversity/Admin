@@ -41,6 +41,7 @@ import {
 import { CloseEventModal } from '@/components/close-event-modal';
 import { useEventAttendance, useOpenEvent } from '@/hooks/use-event';
 import { useEventContext } from '@/contexts/event-context';
+import { parseLocalDateTime, getEventDayCount } from '@/lib/utils';
 
 interface TokenResponse {
   token: string;
@@ -55,18 +56,8 @@ const EXPIRATION_OPTIONS = [
   { value: '120', label: '2 hours' },
 ];
 
-function getEventDayCount(event: { start_datetime: string; end_datetime: string }): number {
-  const start = new Date(event.start_datetime);
-  const end = new Date(event.end_datetime);
-  const startDate = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-  const endDate = new Date(end.getFullYear(), end.getMonth(), end.getDate());
-  const diffMs = endDate.getTime() - startDate.getTime();
-  const diffDays = Math.round(diffMs / (1000 * 60 * 60 * 24));
-  return Math.max(1, diffDays + 1);
-}
-
 function getDayNumber(dateStr: string, eventStart: Date): number {
-  const date = new Date(dateStr);
+  const date = parseLocalDateTime(dateStr);
   const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
   const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
   const diffMs = dateOnly.getTime() - startDate.getTime();
@@ -121,9 +112,10 @@ export default function EventAttendancePage() {
   }
 
   const isEventClosed = event.status === 'closed';
-  const dayCount = getEventDayCount(event);
+  const eventStart = parseLocalDateTime(event.start_datetime);
+  const eventEnd = parseLocalDateTime(event.end_datetime);
+  const dayCount = getEventDayCount(eventStart, eventEnd);
   const isMultiDay = dayCount > 1;
-  const eventStart = useMemo(() => new Date(event.start_datetime), [event.start_datetime]);
 
   const {
     data: attendanceData,

@@ -324,14 +324,16 @@ export async function sendManualCertificates(
 /**
  * Fetch attendance records for an event.
  * @param day - Day filter: "1", "2", ..., "all", or "exclusive_all"
+ * @param type - Attendance type: "count", "detailed", or "me" (defaults to "detailed")
  */
 export async function getEventAttendance(
   id: number,
   day: string,
-  getToken?: GetTokenFn
+  getToken?: GetTokenFn,
+  type: "count" | "detailed" | "me" = "detailed"
 ): Promise<ApiResponse<AttendanceResponse>> {
   return apiFetch<AttendanceResponse>(
-    `/events/${id}/attendance?day=${encodeURIComponent(day)}`,
+    `/attendance/${id}?type=${type}&day=${encodeURIComponent(day)}`,
     { method: "GET" },
     getToken
   );
@@ -516,16 +518,6 @@ export async function generateAttendanceToken(
       },
     };
   }
-}
-
-export async function markAttendance(
-  eventId: number,
-  attendanceToken: string,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/events/${eventId}/attend?token=${attendanceToken}`, {
-    method: "POST",
-  }, getToken);
 }
 
 // =============================================================================
