@@ -2,8 +2,10 @@
 
 import * as React from "react";
 import { useAuth } from "@clerk/nextjs";
-import { Award, Plus, Trash2, Send, AlertCircle, Loader2, Check, ChevronsUpDown, Search, Upload, X, Users, FileSpreadsheet, Globe, Calendar } from "lucide-react";
+import { Award, Plus, Trash2, Send, AlertCircle, Loader2, Check, ChevronsUpDown, Search, Upload, X, Users, FileSpreadsheet, Globe, Calendar, Settings2, RefreshCw } from "lucide-react";
 import { toast } from "sonner";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
@@ -40,6 +42,7 @@ interface CsvRow {
   email: string;
   gender: "Male" | "Female";
   matchedEvent?: Event;
+  included: boolean;
 }
 
 export default function CertificatesPage() {
@@ -60,6 +63,18 @@ export default function CertificatesPage() {
   // CSV batch state
   const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
   const [fileName, setFileName] = React.useState<string | null>(null);
+  const [rawCsvText, setRawCsvText] = React.useState<string | null>(null);
+
+  // Batch settings
+  const [useCustomColumns, setUseCustomColumns] = React.useState(false);
+  const [customNameCol, setCustomNameCol] = React.useState("name");
+  const [customEmailCol, setCustomEmailCol] = React.useState("email");
+
+  // Single Event Fallback
+  const [hasEventColumn, setHasEventColumn] = React.useState(true);
+  const [batchSelectedEventId, setBatchSelectedEventId] = React.useState<number | null>(null);
+  const [batchComboboxOpen, setBatchComboboxOpen] = React.useState(false);
+  const batchSelectedEvent = events.find((e) => e.id === batchSelectedEventId);
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [jobResults, setJobResults] = React.useState<CertificateJobResponse[]>([]);
@@ -132,12 +147,13 @@ export default function CertificatesPage() {
     const reader = new FileReader();
     reader.onload = (event) => {
       const text = event.target?.result as string;
-      parseCSV(text);
+      setRawCsvText(text);
+      parseCSV(text, useCustomColumns, customNameCol, customEmailCol);
     };
     reader.readAsText(file);
   };
 
-  const parseCSV = (text: string) => {
+  const parseCSV = (text: string, customCols: boolean = useCustomColumns, customName: string = customNameCol, customEmail: string = customEmailCol) => {
     try {
       const lines = text.split(/\r?\n/);
       if (lines.length < 2) {
@@ -147,45 +163,59 @@ export default function CertificatesPage() {
 
       const headers = lines[0].toLowerCase().split(",").map(h => h.trim().replace(/^"|"$/g, ''));
 
-      // Improved header matching for Arabic and English
-      const eventIdx = headers.findIndex(h =>
-        h.includes("event") || h.includes("activity") ||
-        h.includes("اسم الفاعلية") || h.includes("الفعالية") || h.includes("اسم النشاط") ||
-        (h === "النشاط" || h === "المناسبة")
-      );
+      let eventIdx = -1;
+      let nameIdx = -1;
+      let emailIdx = -1;
 
-      const nameIdx = headers.findIndex((h, idx) =>
-        idx !== eventIdx && (
-          h.includes("full name") || h.includes("name") ||
-          h.includes("الاسم كاملا") || h.includes("الاسم الثلاثي") ||
-          (h.includes("الاسم") && !h.includes("فعالية") && !h.includes("نشاط"))
-        )
-      );
+      if (customCols) {
+        nameIdx = headers.findIndex(h => h.includes(customName.toLowerCase().trim()));
+        emailIdx = headers.findIndex(h => h.includes(customEmail.toLowerCase().trim()));
+        eventIdx = headers.findIndex(h =>
+          h.includes("event") || h.includes("activity") ||
+          h.includes("اسم الفاعلية") || h.includes("الفعالية") || h.includes("اسم النشاط") ||
+          (h === "النشاط" || h === "المناسبة")
+        );
+      } else {
+        eventIdx = headers.findIndex(h =>
+          h.includes("event") || h.includes("activity") ||
+          h.includes("اسم الفاعلية") || h.includes("الفعالية") || h.includes("اسم النشاط") ||
+          (h === "النشاط" || h === "المناسبة")
+        );
 
-      const emailIdx = headers.findIndex(h =>
-        h.includes("email") || h.includes("mail") ||
-        h.includes("الايميل") || h.includes("البريد") || h.includes("البريد الإلكتروني")
-      );
+        nameIdx = headers.findIndex((h, idx) =>
+          idx !== eventIdx && (
+            h.includes("full name") || h.includes("name") ||
+            h.includes("الاسم كاملا") || h.includes("الاسم الثلاثي") ||
+            (h.includes("الاسم") && !h.includes("فعالية") && !h.includes("نشاط"))
+          )
+        );
+
+        emailIdx = headers.findIndex(h =>
+          h.includes("email") || h.includes("mail") ||
+          h.includes("الايميل") || h.includes("البريد") || h.includes("البريد الإلكتروني")
+        );
+      }
 
       const genderIdx = headers.findIndex(h =>
         h.includes("gender") || h.includes("النوع") || h.includes("الجنس")
       );
 
-      if (eventIdx === -1 || nameIdx === -1 || emailIdx === -1) {
-        toast.error("Required columns (Event Name, Name, Email) not found in CSV");
+      setHasEventColumn(eventIdx !== -1);
+
+      if (nameIdx === -1 || emailIdx === -1) {
+        toast.error("Required columns (Name, Email) not found in CSV. Try using custom columns.");
         console.log("Headers found:", headers);
         return;
       }
 
       const parsedRows: CsvRow[] = [];
       for (let i = 1; i < lines.length; i++) {
-        // More robust CSV split regex to handle quotes and empty fields
         const row = lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
-        if (!row || row.length < Math.max(eventIdx, nameIdx, emailIdx) + 1) continue;
+        if (!row || row.length < Math.max(nameIdx, emailIdx) + 1) continue;
 
         const cleanRow = row.map(cell => cell.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
 
-        const eventName = cleanRow[eventIdx] || "";
+        const eventName = eventIdx !== -1 ? (cleanRow[eventIdx] || "") : "";
         const name = cleanRow[nameIdx] || "";
         const email = cleanRow[emailIdx] || "";
         let gender = (cleanRow[genderIdx] || "Male") as "Male" | "Female";
@@ -197,9 +227,9 @@ export default function CertificatesPage() {
           gender = "Male";
         }
 
-        if (eventName && name && email) {
-          const matchedEvent = events.find(e => e.name.toLowerCase().trim() === eventName.toLowerCase().trim());
-          parsedRows.push({ eventName, name, email, gender, matchedEvent });
+        if (name && email) {
+          const matchedEvent = eventName ? events.find(e => e.name.toLowerCase().trim() === eventName.toLowerCase().trim()) : undefined;
+          parsedRows.push({ eventName, name, email, gender, matchedEvent, included: true });
         }
       }
 
@@ -214,6 +244,9 @@ export default function CertificatesPage() {
   const clearCsv = () => {
     setCsvRows([]);
     setFileName(null);
+    setRawCsvText(null);
+    setBatchSelectedEventId(null);
+    setHasEventColumn(true);
   };
 
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -259,23 +292,36 @@ export default function CertificatesPage() {
   };
 
   const handleCsvSubmit = async () => {
-    if (csvRows.length === 0) return;
-
-    // Group by matchedEvent ID
-    const groups: Record<number, CertificateMember[]> = {};
-    const unmappedRows = csvRows.filter(r => !r.matchedEvent);
-
-    if (unmappedRows.length > 0) {
-      toast.error(`${unmappedRows.length} rows have no matching event name. Please fix before sending.`);
+    const includedRows = csvRows.filter(r => r.included);
+    if (includedRows.length === 0) {
+      toast.error("No recipients selected to receive certificates.");
       return;
     }
 
-    csvRows.forEach(row => {
-      if (row.matchedEvent) {
-        if (!groups[row.matchedEvent.id]) groups[row.matchedEvent.id] = [];
-        groups[row.matchedEvent.id].push({ name: row.name, email: row.email, gender: row.gender });
+    // Group by matchedEvent ID or batchSelectedEventId
+    const groups: Record<number, CertificateMember[]> = {};
+
+    if (!hasEventColumn) {
+      if (!batchSelectedEventId) {
+        toast.error("Please select an event for this batch.");
+        return;
       }
-    });
+      groups[batchSelectedEventId] = includedRows.map(r => ({ name: r.name, email: r.email, gender: r.gender }));
+    } else {
+      const unmappedRows = includedRows.filter(r => !r.matchedEvent);
+
+      if (unmappedRows.length > 0) {
+        toast.error(`${unmappedRows.length} selected rows have no matching event name. Please fix before sending or unselect them.`);
+        return;
+      }
+
+      includedRows.forEach(row => {
+        if (row.matchedEvent) {
+          if (!groups[row.matchedEvent.id]) groups[row.matchedEvent.id] = [];
+          groups[row.matchedEvent.id].push({ name: row.name, email: row.email, gender: row.gender });
+        }
+      });
+    }
 
     setIsSubmitting(true);
     setJobResults([]);
@@ -514,102 +560,244 @@ export default function CertificatesPage() {
             </TabsContent>
 
             <TabsContent value="batch" className="mt-4 space-y-4">
-              <Card className="bg-card border-border shadow-sm overflow-hidden">
-                <CardHeader className="p-4 border-b border-border bg-muted/20">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <CardTitle className="text-base">Batch Import (Google Forms CSV)</CardTitle>
-                      <CardDescription className="text-xs">Match certificates to events automatically by name</CardDescription>
-                    </div>
-                    {fileName && (
-                      <Button variant="ghost" size="sm" onClick={clearCsv} className="h-8 text-destructive hover:bg-destructive/10">
-                        <Trash2 className="h-4 w-4 mr-2" /> Clear
-                      </Button>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  {!fileName ? (
-                    <div
-                      className="flex flex-col items-center justify-center py-12 px-6 cursor-pointer border-b-0 border-x-0 border-t-0 hover:bg-muted/30 transition-colors"
-                      onClick={() => document.getElementById("csv-upload")?.click()}
-                    >
-                      <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
-                      <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted shadow-inner">
-                        <Upload className="h-8 w-8 text-muted-foreground" />
+              <div className="grid gap-4 md:grid-cols-12">
+                {/* Left Side: Initial Config & Fallback Event */}
+                <div className="md:col-span-4 space-y-4">
+
+                  {/* Custom Columns Config */}
+                  <Card className="bg-card border-border shadow-sm">
+                    <CardHeader className="p-4">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Settings2 className="h-4 w-4 text-primary" />
+                          Column Settings
+                        </CardTitle>
+                        <Switch id="custom-cols" checked={useCustomColumns} onCheckedChange={setUseCustomColumns} />
                       </div>
-                      <h3 className="text-lg font-semibold">Upload CSV File</h3>
-                      <p className="text-xs text-muted-foreground mt-1">Accepts CSV with columns for Event Name, Name, and Email</p>
-                    </div>
-                  ) : (
-                    <div className="max-h-[500px] overflow-auto">
-                      <Table>
-                        <TableHeader className="bg-muted/50 sticky top-0 z-10">
-                          <TableRow className="h-10 hover:bg-transparent">
-                            <TableHead className="text-[10px] uppercase font-bold py-0">Event Info</TableHead>
-                            <TableHead className="text-[10px] uppercase font-bold py-0">Name</TableHead>
-                            <TableHead className="text-[10px] uppercase font-bold py-0">Email</TableHead>
-                            <TableHead className="text-[10px] uppercase font-bold py-0">Status</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {csvRows.map((row, i) => (
-                            <TableRow key={i} className="h-12">
-                              <TableCell className="py-2">
-                                <div className="flex flex-col">
-                                  <span className="font-medium text-xs truncate max-w-[200px]">{row.eventName}</span>
-                                  {row.matchedEvent ? (
-                                    <div className="flex items-center gap-2 mt-0.5">
-                                      <span className="text-[9px] text-muted-foreground">
-                                        {formatEventDate(row.matchedEvent)}
-                                      </span>
-                                      <span className={cn(
-                                        "text-[9px] px-1 rounded border",
-                                        row.matchedEvent.is_official ? "bg-primary/5 text-primary border-primary/20" : "bg-muted text-muted-foreground border-border"
-                                      )}>
-                                        {row.matchedEvent.is_official ? "Official" : "Regular"}
-                                      </span>
+                      <CardDescription className="text-xs">
+                        Configure non-standard CSV headers before uploading.
+                      </CardDescription>
+                    </CardHeader>
+                    {useCustomColumns && (
+                      <CardContent className="p-4 pt-0 space-y-3">
+                        <div className="space-y-1">
+                          <Label className="text-xs">Name Column Header</Label>
+                          <Input value={customNameCol} onChange={(e) => setCustomNameCol(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label className="text-xs">Email Column Header</Label>
+                          <Input value={customEmailCol} onChange={(e) => setCustomEmailCol(e.target.value)} className="h-8 text-xs" />
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+
+                  {/* Fallback Event Selector */}
+                  <Card className={cn("bg-card shadow-sm transition-colors", !hasEventColumn && csvRows.length > 0 ? "border-amber-200 dark:border-amber-900" : "border-border opacity-70")}>
+                    <CardHeader className="p-4">
+                      <CardTitle className={cn("text-base flex items-center gap-2", !hasEventColumn && csvRows.length > 0 ? "text-amber-800 dark:text-amber-500" : "")}>
+                        {!hasEventColumn && csvRows.length > 0 ? <AlertCircle className="h-4 w-4" /> : <Calendar className="h-4 w-4 text-primary" />}
+                        Event Selection
+                      </CardTitle>
+                      <CardDescription className={cn("text-xs", !hasEventColumn && csvRows.length > 0 ? "text-amber-700/80 dark:text-amber-400/80" : "text-muted-foreground")}>
+                        {hasEventColumn && csvRows.length > 0
+                          ? "Events are assigned automatically from CSV columns."
+                          : "Select an event to assign to this batch."}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                      <Popover open={batchComboboxOpen} onOpenChange={setBatchComboboxOpen}>
+                        <PopoverTrigger asChild>
+                          <Button
+                            variant="outline"
+                            role="combobox"
+                            disabled={hasEventColumn && csvRows.length > 0}
+                            className="w-full justify-between h-10 border-input bg-background px-3 hover:bg-accent text-sm"
+                          >
+                            {batchSelectedEvent ? (
+                              <span className="truncate font-medium">{batchSelectedEvent.name}</span>
+                            ) : (
+                              <span className="text-muted-foreground">Select event for batch...</span>
+                            )}
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0 shadow-lg border-border" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search events..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>No events found.</CommandEmpty>
+                              <CommandGroup>
+                                {events.map((event) => (
+                                  <CommandItem
+                                    key={event.id}
+                                    value={event.name}
+                                    onSelect={() => {
+                                      setBatchSelectedEventId(event.id);
+                                      setBatchComboboxOpen(false);
+                                    }}
+                                    className="text-sm px-3 py-2"
+                                  >
+                                    <Check className={cn("mr-2 h-4 w-4 text-primary", batchSelectedEventId === event.id ? "opacity-100" : "opacity-0")} />
+                                    <div className="flex flex-col">
+                                      <span>{event.name}</span>
+                                      <span className="text-[10px] text-muted-foreground">{formatEventDate(event)}</span>
                                     </div>
-                                  ) : (
-                                    <span className="text-[9px] text-destructive flex items-center gap-1">
-                                      <AlertCircle className="h-2.5 w-2.5" /> No match found
-                                    </span>
-                                  )}
-                                </div>
-                              </TableCell>
-                              <TableCell className="text-xs py-2">{row.name}</TableCell>
-                              <TableCell className="text-xs py-2 text-muted-foreground">{row.email}</TableCell>
-                              <TableCell className="py-2">
-                                <Badge variant="outline" className={cn(
-                                  "text-[10px] px-1.5 py-0",
-                                  row.gender === "Male" ? "border-blue-200 text-blue-600 bg-blue-50/50" : "border-pink-200 text-pink-600 bg-pink-50/50"
-                                )}>
-                                  {row.gender}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </CardContent>
-                {fileName && (
-                  <CardFooter className="p-4 border-t border-border bg-muted/10 flex items-center justify-between">
-                    <p className="text-xs text-muted-foreground">
-                      Total <span className="font-bold text-foreground">{csvRows.length}</span> recipients
-                    </p>
-                    <Button
-                      onClick={handleCsvSubmit}
-                      disabled={isSubmitting || csvRows.length === 0}
-                      className="h-9 gap-2 shadow-sm"
-                    >
-                      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      Dispatch All Certificates
-                    </Button>
-                  </CardFooter>
-                )}
-              </Card>
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
+                      {batchSelectedEvent && (
+                        <div className="mt-3 space-y-2">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <Calendar className="h-3 w-3" />
+                            {formatEventDate(batchSelectedEvent)}
+                          </div>
+                          <div className="flex items-center gap-2 text-xs">
+                            <Globe className="h-3 w-3 text-muted-foreground" />
+                            <Badge variant={batchSelectedEvent.is_official ? "default" : "secondary"} className="text-[10px] px-1.5 py-0 h-4">
+                              {batchSelectedEvent.is_official ? "Official" : "Regular"}
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Right Side: CSV Table and actions */}
+                <div className="md:col-span-8 space-y-4">
+                  <Card className="bg-card border-border shadow-sm overflow-hidden py-0">
+                    <CardHeader className="p-4 border-b border-border bg-muted/20">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-base flex items-center gap-2">
+                            <FileSpreadsheet className="h-4 w-4 text-primary" />
+                            Batch Import (CSV)
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            {fileName
+                              ? <><span className="font-bold text-foreground">{csvRows.filter(r => r.included).length}</span> selected of {csvRows.length} recipients</>
+                              : "Upload your CSV file"}
+                          </CardDescription>
+                        </div>
+                        {fileName && (
+                          <div className="flex items-center gap-2">
+                            <Button variant="outline" size="sm" onClick={() => setCsvRows([{ name: "", email: "", eventName: "", gender: "Male", included: true }, ...csvRows])} className="h-8 text-xs">
+                              <Plus className="h-4 w-4 mr-1" /> Add Row
+                            </Button>
+                            <Button variant="ghost" size="sm" onClick={clearCsv} className="h-8 text-destructive hover:bg-destructive/10">
+                              <Trash2 className="h-4 w-4 mr-2" /> Clear
+                            </Button>
+                            <Button
+                              onClick={handleCsvSubmit}
+                              disabled={isSubmitting || csvRows.length === 0}
+                              size="sm"
+                              className="h-8 gap-2 shadow-sm"
+                            >
+                              {isSubmitting ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                              Dispatch All
+                            </Button>
+                          </div>
+                        )}
+                      </div>
+                    </CardHeader>
+                    <CardContent className="p-0 border-t-0">
+                      {!fileName ? (
+                        <div
+                          className="flex flex-col items-center justify-center py-16 px-6 cursor-pointer border-b-0 border-x-0 border-t-0 hover:bg-muted/30 transition-colors"
+                          onClick={() => document.getElementById("csv-upload")?.click()}
+                        >
+                          <input id="csv-upload" type="file" accept=".csv" onChange={handleFileUpload} className="hidden" />
+                          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted shadow-inner">
+                            <Upload className="h-8 w-8 text-muted-foreground" />
+                          </div>
+                          <h3 className="text-lg font-semibold">Upload CSV File</h3>
+                          <p className="text-xs text-muted-foreground mt-1 text-center max-w-sm">
+                            Please select your column header configuration on the left before uploading the file.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="h-[500px] overflow-auto">
+                          <Table>
+                            <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                              <TableRow className="h-10 hover:bg-transparent">
+                                <TableHead className="w-12 text-center py-0">
+                                  <Checkbox
+                                    checked={csvRows.length > 0 && csvRows.every(r => r.included)}
+                                    onCheckedChange={(checked) => {
+                                      setCsvRows(rows => rows.map(r => ({ ...r, included: !!checked })));
+                                    }}
+                                    aria-label="Select all"
+                                  />
+                                </TableHead>
+                                <TableHead className="text-[10px] uppercase font-bold py-0">Name</TableHead>
+                                <TableHead className="text-[10px] uppercase font-bold py-0">Email</TableHead>
+                                <TableHead className="w-12 py-0 text-center"></TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {csvRows.map((row, i) => (
+                                <TableRow key={i} className={cn("h-12", !row.included && "opacity-50 bg-muted/30")}>
+                                  <TableCell className="w-12 text-center py-2">
+                                    <Checkbox
+                                      checked={row.included}
+                                      onCheckedChange={(checked) => {
+                                        setCsvRows(rows => {
+                                          const newRows = [...rows];
+                                          newRows[i].included = !!checked;
+                                          return newRows;
+                                        });
+                                      }}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="py-2">
+                                    <Input
+                                      value={row.name}
+                                      placeholder="Full Name"
+                                      className="h-8 text-xs bg-background md:max-w-[200px]"
+                                      onChange={(e) => setCsvRows(rows => {
+                                        const newRows = [...rows];
+                                        newRows[i].name = e.target.value;
+                                        return newRows;
+                                      })}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="py-2">
+                                    <Input
+                                      value={row.email}
+                                      placeholder="email@example.com"
+                                      className="h-8 text-xs bg-background md:max-w-[250px]"
+                                      onChange={(e) => setCsvRows(rows => {
+                                        const newRows = [...rows];
+                                        newRows[i].email = e.target.value;
+                                        return newRows;
+                                      })}
+                                    />
+                                  </TableCell>
+                                  <TableCell className="w-12 text-center py-2">
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => setCsvRows(rows => rows.filter((_, idx) => idx !== i))}
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                    >
+                                      <Trash2 className="h-3 w-3" />
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
             </TabsContent>
           </Tabs>
 
