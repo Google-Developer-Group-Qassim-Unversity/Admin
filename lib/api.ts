@@ -397,6 +397,15 @@ export async function openEvent(
   return updateEventStatus(id, "active", getToken);
 }
 
+export async function deleteEvent(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ detail: string }>> {
+  return apiFetch<{ detail: string }>(`/events/${id}`, {
+    method: "DELETE",
+  }, getToken);
+}
+
 // =============================================================================
 // Actions and Departments API
 // =============================================================================
