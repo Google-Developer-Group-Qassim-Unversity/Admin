@@ -339,6 +339,54 @@ export async function getEventAttendance(
   );
 }
 
+export async function markAttendanceManual(
+  eventId: number,
+  memberIds: number[],
+  days?: number[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ success: number; failed: number }>> {
+  return apiFetch<{ success: number; failed: number }>(
+    `/attendance/${eventId}/manual`,
+    {
+      method: "POST",
+      body: JSON.stringify({ member_ids: memberIds, days }),
+    },
+    getToken
+  );
+}
+
+export async function removeAttendanceManual(
+  eventId: number,
+  memberIds: number[],
+  day?: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ success: number; failed: number }>> {
+  return apiFetch<{ success: number; failed: number }>(
+    `/attendance/${eventId}/manual`,
+    {
+      method: "DELETE",
+      body: JSON.stringify({ member_ids: memberIds, day }),
+    },
+    getToken
+  );
+}
+
+export async function copyAttendance(
+  eventId: number,
+  sourceDay: number,
+  targetDays: number[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ copied: number; skipped: number }>> {
+  return apiFetch<{ copied: number; skipped: number }>(
+    `/attendance/${eventId}/copy`,
+    {
+      method: "POST",
+      body: JSON.stringify({ source_day: sourceDay, target_days: targetDays }),
+    },
+    getToken
+  );
+}
+
 /**
  * Re-open a closed event by setting its status back to "active".
  */

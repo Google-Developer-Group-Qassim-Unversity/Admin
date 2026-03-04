@@ -63,6 +63,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-9 w-32" />
+        <Skeleton className="h-8 w-64" />
         <div className="space-y-6">
           <div className="border-b">
             <div className="flex gap-6">
@@ -169,6 +170,8 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
             {backLabel}
           </Link>
         </Button>
+
+        <h1 className="text-2xl font-bold">{event.name}</h1>
         
         <nav className="border-b">
           <ScrollArea className="w-full">

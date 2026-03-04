@@ -76,3 +76,14 @@ export function getEffectiveEndDate(start: Date, end: Date): Date {
   const dayCount = getEventDayCount(start, end);
   return addDays(start, dayCount - 1);
 }
+
+const ATTENDANCE_EARLY_HOURS_THRESHOLD = 6;
+
+export function getEffectiveDate(dt: Date, threshold: number = ATTENDANCE_EARLY_HOURS_THRESHOLD): Date {
+  if (dt.getHours() < threshold) {
+    const effectiveDate = new Date(dt);
+    effectiveDate.setDate(effectiveDate.getDate() - 1);
+    return effectiveDate;
+  }
+  return dt;
+}
