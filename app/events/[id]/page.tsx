@@ -208,7 +208,7 @@ export default function EventInfoPage() {
           </CardHeader>
           <CardContent className="pb-6">
             {event.description ? (
-              <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
+              <p dir="auto" className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                 {event.description}
               </p>
             ) : (

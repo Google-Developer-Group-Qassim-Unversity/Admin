@@ -91,7 +91,7 @@ export function EventCard({ event }: EventCardProps) {
         </div>
 
         {event.description && (
-          <p className="text-sm text-muted-foreground line-clamp-1">
+          <p dir="auto" className="text-sm text-muted-foreground line-clamp-1">
             {event.description}
           </p>
         )}
