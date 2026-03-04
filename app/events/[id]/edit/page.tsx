@@ -1,13 +1,26 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Pencil } from "lucide-react";
+import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { EventForm, type EventFormData } from "@/components/event-form";
-import { useEventDetails, useActions, useUpdateEvent, useDepartments } from "@/hooks/use-event";
+import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDeleteEvent } from "@/hooks/use-event";
 import { shouldContactSupport } from "@/lib/api";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
@@ -16,6 +29,7 @@ import type { LocationType, EventAction, Action } from "@/lib/api-types";
 export default function EventEditPage() {
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
+  const router = useRouter();
 
   if (!event) {
     return null;
@@ -32,6 +46,9 @@ export default function EventEditPage() {
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
   
   const updateEventMutation = useUpdateEvent(getToken);
+  const deleteEventMutation = useDeleteEvent(getToken);
+
+  const isDraft = event.status === "draft";
 
   const findCompositeAction = React.useCallback(
     (eventActions: [EventAction, EventAction]): Action[] | undefined => {
@@ -129,6 +146,19 @@ export default function EventEditPage() {
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteEventMutation.mutateAsync(event.id);
+      toast.success("Event deleted successfully");
+      router.push("/events");
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      toast.error("Failed to delete event", {
+        description: errorMessage,
+      });
+    }
+  };
+
   if (isLoadingDetails || isLoadingActions || isLoadingDepartments) {
     return (
       <Card className="max-w-3xl mx-auto">
@@ -170,15 +200,55 @@ export default function EventEditPage() {
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <Pencil className="h-5 w-5 text-primary" />
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="flex items-center gap-2">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <Pencil className="h-5 w-5 text-primary" />
+              </div>
+              Edit Event: {event.name}
+            </CardTitle>
+            <CardDescription className="mt-1.5">
+              Update the event details and configuration.
+            </CardDescription>
           </div>
-          Edit Event: {event.name}
-        </CardTitle>
-        <CardDescription>
-          Update the event details and configuration.
-        </CardDescription>
+          {isDraft && (
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  disabled={deleteEventMutation.isPending}
+                >
+                  {deleteEventMutation.isPending ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Delete Draft
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete <strong>{event.name}</strong>?
+                    This action cannot be undone. All associated data (forms, logs, submissions) will be permanently removed.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="destructive"
+                    onClick={handleDelete}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </div>
       </CardHeader>
       <CardContent>
         <EventForm

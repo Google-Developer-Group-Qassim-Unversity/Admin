@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, ApiRequestError } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, ApiRequestError } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -337,6 +337,29 @@ export function useCopyAttendance(getToken: () => Promise<string | null>) {
     },
     onSuccess: (_, { eventId }) => {
       queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
+    },
+  });
+}
+
+/**
+ * Hook for deleting a draft event.
+ * Only events with status "draft" can be deleted.
+ */
+export function useDeleteEvent(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await deleteEvent(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (_, id) => {
+      queryClient.removeQueries({ queryKey: eventKeys.detail(id) });
+      queryClient.removeQueries({ queryKey: eventKeys.fullDetail(id) });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },
   });
 }
