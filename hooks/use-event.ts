@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, ApiRequestError } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, ApiRequestError } from '@/lib/api';
 import type { Event, UpdateEventPayload } from '@/lib/api-types';
 
 // Query keys
@@ -286,6 +286,57 @@ export function useOpenEvent(getToken: () => Promise<string | null>) {
       queryClient.setQueryData(eventKeys.detail(id), data);
       queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+export function useMarkAttendanceManual(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, memberIds, days }: { eventId: number; memberIds: number[]; days?: number[] }) => {
+      const result = await markAttendanceManual(eventId, memberIds, days, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
+    },
+  });
+}
+
+export function useRemoveAttendanceManual(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, memberIds, day }: { eventId: number; memberIds: number[]; day?: number }) => {
+      const result = await removeAttendanceManual(eventId, memberIds, day, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
+    },
+  });
+}
+
+export function useCopyAttendance(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, sourceDay, targetDays }: { eventId: number; sourceDay: number; targetDays: number[] }) => {
+      const result = await copyAttendance(eventId, sourceDay, targetDays, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
     },
   });
 }

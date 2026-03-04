@@ -16,6 +16,7 @@ import {
   Search,
   Users,
   Loader2,
+  UserPlus,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -39,9 +40,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CloseEventModal } from '@/components/close-event-modal';
+import { ManageAttendanceDialog } from './manage-attendance-dialog';
 import { useEventAttendance, useOpenEvent } from '@/hooks/use-event';
 import { useEventContext } from '@/contexts/event-context';
-import { parseLocalDateTime, getEventDayCount } from '@/lib/utils';
+import { parseLocalDateTime, getEventDayCount, getEffectiveDate } from '@/lib/utils';
 
 interface TokenResponse {
   token: string;
@@ -58,8 +60,9 @@ const EXPIRATION_OPTIONS = [
 
 function getDayNumber(dateStr: string, eventStart: Date): number {
   const date = parseLocalDateTime(dateStr);
+  const effectiveDate = getEffectiveDate(date);
   const startDate = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
-  const dateOnly = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dateOnly = new Date(effectiveDate.getFullYear(), effectiveDate.getMonth(), effectiveDate.getDate());
   const diffMs = dateOnly.getTime() - startDate.getTime();
   return Math.round(diffMs / (1000 * 60 * 60 * 24)) + 1;
 }
@@ -106,6 +109,7 @@ export default function EventAttendancePage() {
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
 
   if (!event) {
     return null;
@@ -475,9 +479,20 @@ export default function EventAttendancePage() {
                   Members who scanned the QR code and marked their attendance.
                 </CardDescription>
               </div>
-              <Badge variant="secondary" className="text-sm h-7 px-3">
-                {attendanceData?.attendance_count ?? 0} attendees
-              </Badge>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsMarkAttendanceOpen(true)}
+                  disabled={isEventClosed}
+                >
+                  <UserPlus className="h-4 w-4 mr-1" />
+                  Manage
+                </Button>
+                <Badge variant="secondary" className="text-sm h-7 px-3">
+                  {attendanceData?.attendance_count ?? 0} attendees
+                </Badge>
+              </div>
             </div>
           </CardHeader>
           <CardContent>
@@ -580,6 +595,16 @@ export default function EventAttendancePage() {
             )}
           </CardContent>
         </Card>
+
+        <ManageAttendanceDialog
+          open={isMarkAttendanceOpen}
+          onOpenChange={setIsMarkAttendanceOpen}
+          eventId={event.id}
+          dayCount={dayCount}
+          isMultiDay={isMultiDay}
+          eventStart={eventStart}
+          attendanceData={attendanceData?.attendance}
+        />
     </div>
   );
 }
