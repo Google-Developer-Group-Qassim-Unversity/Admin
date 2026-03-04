@@ -228,8 +228,15 @@ export default function CertificatesPage() {
         }
 
         if (name && email) {
-          const matchedEvent = eventName ? events.find(e => e.name.toLowerCase().trim() === eventName.toLowerCase().trim()) : undefined;
-          parsedRows.push({ eventName, name, email, gender, matchedEvent, included: true });
+          let cleanedEventName = eventName;
+          if (eventName.includes("|")) {
+            cleanedEventName = eventName.split("|")[0].trim();
+          } else {
+            cleanedEventName = eventName.trim();
+          }
+
+          const matchedEvent = cleanedEventName ? events.find(e => e.name.toLowerCase().trim() === cleanedEventName.toLowerCase().trim()) : undefined;
+          parsedRows.push({ eventName: cleanedEventName, name, email, gender, matchedEvent, included: true });
         }
       }
 
@@ -736,6 +743,9 @@ export default function CertificatesPage() {
                                 </TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold py-0">Name</TableHead>
                                 <TableHead className="text-[10px] uppercase font-bold py-0">Email</TableHead>
+                                {hasEventColumn && (
+                                  <TableHead className="text-[10px] uppercase font-bold py-0">Event</TableHead>
+                                )}
                                 <TableHead className="w-12 py-0 text-center"></TableHead>
                               </TableRow>
                             </TableHeader>
@@ -778,6 +788,21 @@ export default function CertificatesPage() {
                                       })}
                                     />
                                   </TableCell>
+                                  {hasEventColumn && (
+                                    <TableCell className="py-2">
+                                      <div className="flex flex-col gap-0.5">
+                                        <div className={cn("text-xs font-medium truncate max-w-[150px]", row.matchedEvent ? "text-foreground" : "text-amber-600 dark:text-amber-500 flex items-center gap-1")}>
+                                          {!row.matchedEvent && <AlertCircle className="h-3 w-3" />}
+                                          {row.eventName || "—"}
+                                        </div>
+                                        {row.matchedEvent ? (
+                                          <div className="text-[9px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider">Matched</div>
+                                        ) : row.eventName ? (
+                                          <div className="text-[9px] text-amber-600 dark:text-amber-500 font-bold uppercase tracking-wider">Unmatched</div>
+                                        ) : null}
+                                      </div>
+                                    </TableCell>
+                                  )}
                                   <TableCell className="w-12 text-center py-2">
                                     <Button
                                       variant="ghost"
