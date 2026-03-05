@@ -19,10 +19,11 @@ import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, Command
 import { Popover, PopoverContent, PopoverTrigger, } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-import { getCertificateEvents, sendManualCertificates, getMemberByUniId } from "@/lib/api";
-import type { Event, CertificateMember, CertificateJobResponse } from "@/lib/api-types";
+import { getCertificateEvents, sendManualCertificates, getMemberByUniId, getSubmissions } from "@/lib/api";
+import type { Event, CertificateMember, CertificateJobResponse, Submission } from "@/lib/api-types";
 
 function formatEventDate(event: Event): string {
   const start = new Date(event.start_datetime);
@@ -40,6 +41,7 @@ interface CsvRow {
   eventName: string;
   name: string;
   email: string;
+  uniId?: string;
   gender: "Male" | "Female";
   matchedEvent?: Event;
   included: boolean;
@@ -78,6 +80,11 @@ export default function CertificatesPage() {
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [jobResults, setJobResults] = React.useState<CertificateJobResponse[]>([]);
+
+  // Attendance Verification state
+  const [unverifiedRows, setUnverifiedRows] = React.useState<CsvRow[]>([]);
+  const [showVerificationDialog, setShowVerificationDialog] = React.useState(false);
+  const [isCheckingAttendance, setIsCheckingAttendance] = React.useState(false);
 
   React.useEffect(() => {
     async function fetchEvents() {
@@ -166,6 +173,7 @@ export default function CertificatesPage() {
       let eventIdx = -1;
       let nameIdx = -1;
       let emailIdx = -1;
+      let uniIdIdx = -1;
 
       if (customCols) {
         nameIdx = headers.findIndex(h => h.includes(customName.toLowerCase().trim()));
@@ -194,6 +202,11 @@ export default function CertificatesPage() {
           h.includes("email") || h.includes("mail") ||
           h.includes("الايميل") || h.includes("البريد") || h.includes("البريد الإلكتروني")
         );
+
+        uniIdIdx = headers.findIndex(h =>
+          h.includes("uni id") || h.includes("university id") || h.includes("student id") ||
+          h.includes("الرقم الجامعي") || h.includes("رقم الطالب")
+        );
       }
 
       const genderIdx = headers.findIndex(h =>
@@ -218,6 +231,7 @@ export default function CertificatesPage() {
         const eventName = eventIdx !== -1 ? (cleanRow[eventIdx] || "") : "";
         const name = cleanRow[nameIdx] || "";
         const email = cleanRow[emailIdx] || "";
+        const uniId = uniIdIdx !== -1 ? cleanRow[uniIdIdx] : undefined;
         let gender = (cleanRow[genderIdx] || "Male") as "Male" | "Female";
 
         const genderLower = gender.toLowerCase();
@@ -236,16 +250,103 @@ export default function CertificatesPage() {
           }
 
           const matchedEvent = cleanedEventName ? events.find(e => e.name.toLowerCase().trim() === cleanedEventName.toLowerCase().trim()) : undefined;
-          parsedRows.push({ eventName: cleanedEventName, name, email, gender, matchedEvent, included: true });
+          parsedRows.push({ eventName: cleanedEventName, name, email, uniId, gender, matchedEvent, included: true });
         }
       }
 
       setCsvRows(parsedRows);
+      if (hasEventColumn && parsedRows.length > 0) {
+        verifyAttendance(parsedRows);
+      }
       toast.success(`Parsed ${parsedRows.length} members from CSV`);
     } catch (err) {
       toast.error("Failed to parse CSV file");
       console.error(err);
     }
+  };
+
+  const verifyAttendance = async (rows: CsvRow[]) => {
+    const rowsWithEvent = rows.filter(r => r.matchedEvent);
+    if (rowsWithEvent.length === 0) {
+      setCsvRows(rows);
+      return;
+    }
+
+    setIsCheckingAttendance(true);
+    try {
+      const eventIds = Array.from(new Set(rowsWithEvent.map(r => r.matchedEvent!.id)));
+      const allSubmissions: Record<number, Submission[]> = {};
+
+      for (const eventId of eventIds) {
+        const response = await getSubmissions(eventId, getToken);
+        if (response.success) {
+          allSubmissions[eventId] = response.data;
+        }
+      }
+
+      const verified: CsvRow[] = [];
+      const needsVerification: CsvRow[] = [];
+
+      rows.forEach(row => {
+        if (!row.matchedEvent) {
+          verified.push(row);
+          return;
+        }
+
+        const submissions = allSubmissions[row.matchedEvent.id] || [];
+        const isFound = submissions.some(s => {
+          const sUniId = s.member.uni_id?.toString().trim().toLowerCase();
+          const rUniId = row.uniId?.toString().trim().toLowerCase();
+
+          if (sUniId && rUniId) {
+            return sUniId === rUniId;
+          }
+
+          // Fallback to name/email if uniId is missing in either
+          return s.member.name.toLowerCase().trim() === row.name.toLowerCase().trim() ||
+            s.member.email.toLowerCase().trim() === row.email.toLowerCase().trim();
+        });
+
+        if (isFound) {
+          verified.push(row);
+        } else {
+          needsVerification.push(row);
+        }
+      });
+
+      setCsvRows(verified);
+      if (needsVerification.length > 0) {
+        setUnverifiedRows(needsVerification);
+        setShowVerificationDialog(true);
+      }
+    } catch (err) {
+      console.error("Verification failed:", err);
+      toast.error("Attendance verification failed. Showing all rows.");
+      setCsvRows(rows);
+    } finally {
+      setIsCheckingAttendance(false);
+    }
+  };
+
+  const handleAllowUnverified = (index: number) => {
+    const row = unverifiedRows[index];
+    setCsvRows(prev => [row, ...prev]);
+    setUnverifiedRows(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) setShowVerificationDialog(false);
+      return updated;
+    });
+    toast.success(`Allowed: ${row.name}`);
+  };
+
+  const handleDenyUnverified = (index: number) => {
+    const rowName = unverifiedRows[index].name;
+    setUnverifiedRows(prev => {
+      const updated = prev.filter((_, i) => i !== index);
+      if (updated.length === 0) setShowVerificationDialog(false);
+      return updated;
+    });
+    toast.info(`Discarded: ${rowName}`);
   };
 
   const clearCsv = () => {
@@ -676,7 +777,13 @@ export default function CertificatesPage() {
                 </div>
 
                 {/* Right Side: CSV Table and actions */}
-                <div className="md:col-span-8 space-y-4">
+                <div className="md:col-span-8 space-y-4 relative">
+                  {isCheckingAttendance && (
+                    <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center gap-2 animate-in fade-in duration-300 rounded-xl border border-border">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                      <p className="text-sm font-medium">Verifying attendance...</p>
+                    </div>
+                  )}
                   <Card className="bg-card border-border shadow-sm overflow-hidden py-0">
                     <CardHeader className="p-4 border-b border-border bg-muted/20">
                       <div className="flex items-center justify-between">
@@ -859,6 +966,89 @@ export default function CertificatesPage() {
           )}
         </div>
       )}
+
+      {/* Attendance Verification Dialog */}
+      <Dialog open={showVerificationDialog} onOpenChange={setShowVerificationDialog}>
+        <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-0 overflow-hidden border-border bg-card">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle className="flex items-center gap-2 text-xl text-amber-600 dark:text-amber-500">
+              <AlertCircle className="h-5 w-5" />
+              Attendance Verification
+            </DialogTitle>
+            <DialogDescription className="text-sm">
+              The following students were not found in the official event submission list. Would you like to allow them anyway?
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-auto px-6 py-2">
+            <Table>
+              <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                <TableRow className="h-10">
+                  <TableHead className="text-[10px] uppercase font-bold py-0">Student Name</TableHead>
+                  <TableHead className="text-[10px] uppercase font-bold py-0">Claimed Event</TableHead>
+                  <TableHead className="w-24 text-right py-0 px-4">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {unverifiedRows.map((row, i) => (
+                  <TableRow key={i} className="h-12 border-b border-border/50">
+                    <TableCell className="py-2">
+                      <div className="font-medium text-sm">{row.name}</div>
+                      <div className="text-[10px] text-muted-foreground flex items-center gap-2">
+                        <span>{row.email}</span>
+                        {row.uniId && (
+                          <>
+                            <span className="text-border">•</span>
+                            <span className="font-mono text-amber-600/80 dark:text-amber-500/80">{row.uniId}</span>
+                          </>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="py-2">
+                      <Badge variant="outline" className="text-[10px] border-amber-500/30 bg-amber-500/5 text-amber-700 dark:text-amber-400">
+                        {row.eventName}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="py-2 px-4 text-right">
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                          onClick={() => handleDenyUnverified(i)}
+                          title="Deny"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-600/10"
+                          onClick={() => handleAllowUnverified(i)}
+                          title="Allow"
+                        >
+                          <Check className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+
+          <DialogFooter className="p-6 pt-2 border-t border-border bg-muted/30">
+            <div className="flex items-center justify-between w-full">
+              <div className="text-xs text-muted-foreground">
+                <span className="font-bold text-foreground">{unverifiedRows.length}</span> unverified students remaining
+              </div>
+              <Button onClick={() => setShowVerificationDialog(false)}>
+                Done
+              </Button>
+            </div>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
