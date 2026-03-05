@@ -246,7 +246,7 @@ export interface Department {
 // Member Roles (Admin Management)
 // =============================================================================
 
-export type MemberRole = 'admin' | 'super_admin' | 'none';
+export type MemberRole = 'admin' | 'admin_points' | 'super_admin' | 'none';
 
 export interface MemberWithRole extends Member {
   role: MemberRole;

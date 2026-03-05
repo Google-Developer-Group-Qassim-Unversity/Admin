@@ -20,15 +20,15 @@ export default function AccessDeniedPage() {
   const { user, isLoaded } = useUser();
 
   // Check if user has gained admin access - if so, redirect to dashboard
+  // But don't redirect if the reason is "not_authorized" (user is logged in but lacks specific permission)
   useEffect(() => {
-    if (isLoaded && user) {
+    if (isLoaded && user && reason !== "not_authorized") {
       const isAdmin = user.publicMetadata?.is_admin === true;
       if (isAdmin) {
-        // User now has admin access, redirect to dashboard
         router.push("/");
       }
     }
-  }, [isLoaded, user, router]);
+  }, [isLoaded, user, router, reason]);
 
   const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
   const appUrl = process.env.NEXT_PUBLIC_APP_URL;
@@ -51,6 +51,13 @@ export default function AccessDeniedPage() {
           title: "Super Admin Access Required",
           description:
             "This page requires super administrator privileges. Only super admins can manage administrator roles.",
+          showSignIn: false,
+        };
+      case "not_authorized":
+        return {
+          title: "Insufficient Permissions",
+          description:
+            "You don't have the required permissions to access this page. Please contact an administrator if you believe this is an error.",
           showSignIn: false,
         };
       case "config":

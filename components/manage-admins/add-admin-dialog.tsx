@@ -250,26 +250,35 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                           {member.uni_id} • {member.email}
                         </p>
                       </div>
-                      <div className="flex gap-2 shrink-0 pt-0.5">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSelectMember(member, "admin")}
-                          disabled={isSubmitting}
-                          className="whitespace-nowrap"
-                        >
-                          Admin
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSelectMember(member, "super_admin")}
-                          disabled={isSubmitting}
-                          className="whitespace-nowrap"
-                        >
-                          Super Admin
-                        </Button>
-                      </div>
+                       <div className="flex gap-2 shrink-0 pt-0.5">
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleSelectMember(member, "admin")}
+                           disabled={isSubmitting}
+                           className="whitespace-nowrap"
+                         >
+                           Admin
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleSelectMember(member, "admin_points")}
+                           disabled={isSubmitting}
+                           className="whitespace-nowrap"
+                         >
+                           Admin Points
+                         </Button>
+                         <Button
+                           size="sm"
+                           variant="outline"
+                           onClick={() => handleSelectMember(member, "super_admin")}
+                           disabled={isSubmitting}
+                           className="whitespace-nowrap"
+                         >
+                           Super Admin
+                         </Button>
+                       </div>
                     </div>
                   ))}
                 </div>
@@ -298,10 +307,13 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                           {member.uni_id}
                         </p>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <Badge variant={role === "super_admin" ? "default" : "secondary"} className="whitespace-nowrap">
-                          {role === "super_admin" ? "Super Admin" : "Admin"}
-                        </Badge>
+                       <div className="flex items-center gap-2 shrink-0">
+                         <Badge 
+                           variant={role === "super_admin" ? "default" : role === "admin_points" ? "secondary" : "outline"} 
+                           className="whitespace-nowrap"
+                         >
+                           {role === "super_admin" ? "Super Admin" : role === "admin_points" ? "Admin Points" : "Admin"}
+                         </Badge>
                         <Button
                           size="icon-sm"
                           variant="ghost"

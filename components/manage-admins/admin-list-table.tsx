@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { ShieldCheck, ShieldAlert, UserMinus } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Shield, UserMinus } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,8 +39,16 @@ export function AdminListTable({
         </Badge>
       );
     }
+    if (role === "admin_points") {
+      return (
+        <Badge variant="secondary" className="gap-1">
+          <Shield className="h-3 w-3" />
+          Admin Points
+        </Badge>
+      );
+    }
     return (
-      <Badge variant="secondary" className="gap-1">
+      <Badge variant="outline" className="gap-1">
         <ShieldCheck className="h-3 w-3" />
         Admin
       </Badge>
