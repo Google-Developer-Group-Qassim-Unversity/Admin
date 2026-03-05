@@ -17,6 +17,7 @@ import type {
   ActionWithUsage,
   CreateActionPayload,
   UpdateActionPayload,
+  ReorderActionsPayload,
   Department,
   Member,
   MemberWithRole,
@@ -436,6 +437,29 @@ export async function updateAction(
   return apiFetch<Action>(`/actions/${actionId}`, {
     method: "PUT",
     body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function reorderActions(
+  payload: ReorderActionsPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>("/actions/reorder", {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function deleteAction(
+  actionId: number,
+  replacementId?: number | null,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  const url = replacementId 
+    ? `/actions/${actionId}?replacement_id=${replacementId}`
+    : `/actions/${actionId}`;
+  return apiFetch<void>(url, {
+    method: "DELETE",
   }, getToken);
 }
 
