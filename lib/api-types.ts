@@ -198,6 +198,8 @@ export interface ActionWithUsage {
   action_type: ActionType;
   points: number;
   usage_count: number;
+  order: number;
+  is_hidden: boolean;
 }
 
 export interface CreateActionPayload {
@@ -212,6 +214,11 @@ export interface UpdateActionPayload {
   ar_action_name?: string;
   action_type?: ActionType;
   points?: number;
+  is_hidden?: boolean;
+}
+
+export interface ReorderActionsPayload {
+  action_orders: Array<{ id: number; order: number }>;
 }
 
 export interface ActionsResponse {
