@@ -32,6 +32,10 @@ interface ActionReasonSelectProps {
   onChange: (actionId: number | null, actionName: string | null, points: number | null) => void;
   /** Disable the input */
   disabled?: boolean;
+  /** Restrict to Department and Member actions only (no Custom/Bonus, no creation) */
+  restricted?: boolean;
+  /** Show error state */
+  error?: boolean;
   className?: string;
 }
 
@@ -50,6 +54,8 @@ export function ActionReasonSelect({
   customActionName,
   onChange,
   disabled = false,
+  restricted = false,
+  error = false,
   className,
 }: ActionReasonSelectProps) {
   const [open, setOpen] = React.useState(false);
@@ -92,8 +98,9 @@ export function ActionReasonSelect({
 
   // Always show create option when user types - allows creating new action
   // with same name but different points
-  const showCreateOption = normalizedSearch.length > 0;
-  const hasAnyResults = filteredDepartment.length > 0 || filteredMember.length > 0 || filteredBonus.length > 0 || showCreateOption;
+  // In restricted mode, don't show create option
+  const showCreateOption = !restricted && normalizedSearch.length > 0;
+  const hasAnyResults = filteredDepartment.length > 0 || filteredMember.length > 0 || (restricted ? false : filteredBonus.length > 0) || showCreateOption;
 
   const handleSelectAction = (action: Action) => {
     onChange(action.id, action.action_name, action.points);
@@ -139,14 +146,15 @@ export function ActionReasonSelect({
             "w-full justify-between font-normal",
             !displayValue && "text-muted-foreground",
             isCompositeAction && "cursor-not-allowed opacity-80",
+            error && !displayValue && "border-destructive focus-visible:ring-destructive",
             className
           )}
         >
           <span className="truncate">
-            {displayValue || "Select reason (optional)..."}
+            {displayValue || (restricted ? "Select action..." : "Select reason (optional)...")}
           </span>
           <div className="flex items-center gap-1 shrink-0">
-            {displayValue && !isCompositeAction && (
+            {displayValue && !isCompositeAction && !restricted && (
               <span
                 role="button"
                 tabIndex={0}
@@ -170,14 +178,16 @@ export function ActionReasonSelect({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder="Search or type custom reason..."
+            placeholder={restricted ? "Search actions..." : "Search or type custom reason..."}
             value={searchValue}
             onValueChange={setSearchValue}
             onKeyDown={handleKeyDown}
           />
           <CommandList>
             {!hasAnyResults && (
-              <CommandEmpty>No actions found. Type to create custom.</CommandEmpty>
+              <CommandEmpty>
+                {restricted ? "No actions found." : "No actions found. Type to create custom."}
+              </CommandEmpty>
             )}
 
             {/* Create custom option */}
@@ -246,17 +256,17 @@ export function ActionReasonSelect({
             )}
 
             {/* Separator between member and custom */}
-            {filteredMember.length > 0 && filteredBonus.length > 0 && (
+            {filteredMember.length > 0 && !restricted && filteredBonus.length > 0 && (
               <CommandSeparator />
             )}
 
             {/* Separator between department and custom when member is empty */}
-            {filteredDepartment.length > 0 && filteredMember.length === 0 && filteredBonus.length > 0 && (
+            {filteredDepartment.length > 0 && filteredMember.length === 0 && !restricted && filteredBonus.length > 0 && (
               <CommandSeparator />
             )}
 
-            {/* Custom/Bonus actions group */}
-            {filteredBonus.length > 0 && (
+            {/* Custom/Bonus actions group - hidden in restricted mode */}
+            {!restricted && filteredBonus.length > 0 && (
               <CommandGroup heading="Custom">
                 {filteredBonus.map((action) => (
                   <CommandItem

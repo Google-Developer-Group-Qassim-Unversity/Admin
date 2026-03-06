@@ -24,6 +24,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MemberSelectDialog } from "./member-select-dialog";
+import { useUserRole } from "@/hooks/use-rbac";
 
 export interface MemberOption {
   id: number;
@@ -62,11 +63,14 @@ export function PointDetailRow({
   onRemove,
   canRemove,
 }: PointDetailRowProps) {
+  const userRole = useUserRole();
   const isPointsLocked = data.action_id !== null;
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
   const allActions = [...actionOptions.department, ...actionOptions.member, ...actionOptions.bonus];
   const isCompositeAction = !!(data.action_id !== null && !allActions.find((a) => a.id === data.action_id) && data.action_name);
+
+  const isRestrictedMode = userRole === "admin_points";
 
   const updateField = <K extends keyof PointDetailRowData>(
     field: K,
@@ -195,90 +199,102 @@ export function PointDetailRow({
           )}
         </div>
 
-        <div className="space-y-1.5">
-          <Label className="text-sm font-medium flex items-center gap-1">
-            Points
-            {isPointsLocked && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Lock className="h-3 w-3 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Points locked to selected action&apos;s value</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-          </Label>
-          <div className="flex items-center gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 w-12 p-0 gap-0.5"
-              onClick={() => adjustPoints(-5)}
-              disabled={isPointsLocked}
-            >
-              <Minus className="h-3 w-3 shrink-0" />
-              <span className="text-xs font-semibold">5</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 w-9 p-0"
-              onClick={() => adjustPoints(-1)}
-              disabled={isPointsLocked}
-            >
-              <Minus className="h-3 w-3" />
-            </Button>
-            <Input
-              type="number"
-              value={data.points}
-              onChange={(e) =>
-                !isPointsLocked &&
-                updateField("points", parseInt(e.target.value) || 0)
-              }
-              disabled={isPointsLocked}
-              className={`h-9 w-20 text-center font-mono text-sm ${
-                data.points < 0 ? "text-destructive" : ""
-              } ${isPointsLocked ? "bg-muted cursor-not-allowed" : ""}`}
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 w-9 p-0"
-              onClick={() => adjustPoints(1)}
-              disabled={isPointsLocked}
-            >
-              <Plus className="h-3 w-3" />
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="h-9 w-12 p-0 gap-0.5"
-              onClick={() => adjustPoints(5)}
-              disabled={isPointsLocked}
-            >
-              <Plus className="h-3 w-3 shrink-0" />
-              <span className="text-xs font-semibold">5</span>
-            </Button>
+        {!isRestrictedMode && (
+          <div className="space-y-1.5">
+            <Label className="text-sm font-medium flex items-center gap-1">
+              Points
+              {isPointsLocked && (
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Lock className="h-3 w-3 text-muted-foreground" />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Points locked to selected action&apos;s value</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              )}
+            </Label>
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 w-12 p-0 gap-0.5"
+                onClick={() => adjustPoints(-5)}
+                disabled={isPointsLocked}
+              >
+                <Minus className="h-3 w-3 shrink-0" />
+                <span className="text-xs font-semibold">5</span>
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0"
+                onClick={() => adjustPoints(-1)}
+                disabled={isPointsLocked}
+              >
+                <Minus className="h-3 w-3" />
+              </Button>
+              <Input
+                type="number"
+                value={data.points}
+                onChange={(e) =>
+                  !isPointsLocked &&
+                  updateField("points", parseInt(e.target.value) || 0)
+                }
+                disabled={isPointsLocked}
+                className={`h-9 w-20 text-center font-mono text-sm ${
+                  data.points < 0 ? "text-destructive" : ""
+                } ${isPointsLocked ? "bg-muted cursor-not-allowed" : ""}`}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 w-9 p-0"
+                onClick={() => adjustPoints(1)}
+                disabled={isPointsLocked}
+              >
+                <Plus className="h-3 w-3" />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-9 w-12 p-0 gap-0.5"
+                onClick={() => adjustPoints(5)}
+                disabled={isPointsLocked}
+              >
+                <Plus className="h-3 w-3 shrink-0" />
+                <span className="text-xs font-semibold">5</span>
+              </Button>
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex-1 min-w-[200px] space-y-1.5">
           <Label className="text-sm font-medium text-muted-foreground">
-            Reason{" "}
-            <span className="text-xs font-normal">(optional)</span>
+            {isRestrictedMode ? (
+              <>
+                Action <span className="text-destructive">*</span>
+              </>
+            ) : (
+              <>
+                Reason{" "}
+                <span className="text-xs font-normal">(optional)</span>
+              </>
+            )}
           </Label>
           <ActionReasonSelect
             actionOptions={actionOptions}
             selectedActionId={data.action_id}
             customActionName={data.action_name}
             onChange={handleActionChange}
+            restricted={isRestrictedMode}
+            error={isRestrictedMode && data.action_id === null}
             className="border-dashed opacity-80 hover:opacity-100 focus-within:opacity-100"
           />
         </div>

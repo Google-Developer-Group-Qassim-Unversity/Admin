@@ -24,6 +24,7 @@ import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, PointRowType } from "@/lib/api-types";
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
+import { useUserRole } from "@/hooks/use-rbac";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
@@ -72,6 +73,9 @@ export function CustomEventForm({
   useSimpleInput = false,
   isFullEvent = false,
 }: CustomEventFormProps) {
+  const userRole = useUserRole();
+  const isRestrictedMode = userRole === "admin_points";
+  
   const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (mode === "create") {
@@ -230,6 +234,9 @@ export function CustomEventForm({
       }
       if (row.row_type === "member" && row.member_ids.length === 0) {
         newErrors[`row_${i}_entity`] = `Row ${i + 1}: Member is required`;
+      }
+      if (isRestrictedMode && row.action_id === null) {
+        newErrors[`row_${i}_action`] = `Row ${i + 1}: Action is required`;
       }
     });
 
