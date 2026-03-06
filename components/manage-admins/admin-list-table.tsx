@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { ShieldCheck, ShieldAlert, Shield, UserMinus } from "lucide-react";
+import { ShieldCheck, ShieldAlert, Shield, UserMinus, Pencil, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -21,6 +22,7 @@ interface AdminListTableProps {
   admins: MemberWithRole[];
   currentUserId?: string;
   onRevoke: (admin: MemberWithRole) => void;
+  onEditRole: (admin: MemberWithRole) => void;
   isLoading?: boolean;
 }
 
@@ -28,8 +30,11 @@ export function AdminListTable({
   admins,
   currentUserId,
   onRevoke,
+  onEditRole,
   isLoading = false,
 }: AdminListTableProps) {
+  const [searchQuery, setSearchQuery] = React.useState("");
+
   const getRoleBadge = (role: string) => {
     if (role === "super_admin") {
       return (
@@ -55,22 +60,48 @@ export function AdminListTable({
     );
   };
 
-  // Filter out members with role='none'
   const activeAdmins = admins.filter((admin) => admin.role !== "none");
+
+  const filteredAdmins = React.useMemo(() => {
+    if (!searchQuery.trim()) return activeAdmins;
+
+    const query = searchQuery.toLowerCase().trim();
+    return activeAdmins.filter(
+      (admin) =>
+        admin.name.toLowerCase().includes(query) ||
+        admin.email.toLowerCase().includes(query) ||
+        admin.uni_id.toLowerCase().includes(query)
+    );
+  }, [activeAdmins, searchQuery]);
+
+  const isCurrentUser = (admin: MemberWithRole) => 
+    currentUserId && admin.uni_id === currentUserId;
 
   return (
     <Card>
       <CardHeader>
         <CardTitle>Current Admins</CardTitle>
         <CardDescription>
-          {activeAdmins.length} active administrator{activeAdmins.length !== 1 ? "s" : ""}
+          {searchQuery.trim()
+            ? `${filteredAdmins.length} of ${activeAdmins.length} administrator${activeAdmins.length !== 1 ? "s" : ""}`
+            : `${activeAdmins.length} active administrator${activeAdmins.length !== 1 ? "s" : ""}`
+          }
         </CardDescription>
+        <div className="relative mt-2">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, email, or uni ID..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+          />
+        </div>
       </CardHeader>
       <CardContent>
-        {activeAdmins.length === 0 ? (
+        {filteredAdmins.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ShieldCheck className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>No administrators found</p>
+            <p>{searchQuery.trim() ? "No matching administrators found" : "No administrators found"}</p>
           </div>
         ) : (
           <div className="rounded-md border">
@@ -85,14 +116,14 @@ export function AdminListTable({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {activeAdmins.map((admin) => {
-                  const isCurrentUser = currentUserId && admin.email === `${currentUserId}@qu.edu.sa`;
+                {filteredAdmins.map((admin) => {
+                  const isCurrent = isCurrentUser(admin);
                   
                   return (
                     <TableRow key={admin.id}>
                       <TableCell className="font-medium">
                         {admin.name}
-                        {isCurrentUser && (
+                        {isCurrent && (
                           <span className="ml-2 text-xs text-muted-foreground">(You)</span>
                         )}
                       </TableCell>
@@ -100,16 +131,27 @@ export function AdminListTable({
                       <TableCell>{admin.uni_id}</TableCell>
                       <TableCell>{getRoleBadge(admin.role)}</TableCell>
                       <TableCell className="text-right">
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => onRevoke(admin)}
-                          disabled={isCurrentUser || isLoading}
-                          className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                        >
-                          <UserMinus className="h-4 w-4 mr-1" />
-                          Revoke
-                        </Button>
+                        <div className="flex items-center justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onEditRole(admin)}
+                            disabled={isCurrent || isLoading}
+                            title="Edit role"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onRevoke(admin)}
+                            disabled={isCurrent || isLoading}
+                            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                            title="Revoke access"
+                          >
+                            <UserMinus className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
