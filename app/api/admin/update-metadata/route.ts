@@ -56,14 +56,20 @@ export async function POST(request: NextRequest) {
     // Update metadata based on role
     if (role === "admin") {
       existingMetadata.is_admin = true;
-      // Don't modify is_super_admin
+      // Don't modify is_super_admin or is_admin_points
+    } else if (role === "admin_points") {
+      existingMetadata.is_admin = true;
+      existingMetadata.is_admin_points = true;
+      // Don't set is_super_admin
     } else if (role === "super_admin") {
       existingMetadata.is_admin = true;
       existingMetadata.is_super_admin = true;
+      existingMetadata.is_admin_points = true;
     } else if (role === "none") {
       // Remove admin-related fields only
       delete existingMetadata.is_admin;
       delete existingMetadata.is_super_admin;
+      delete existingMetadata.is_admin_points;
     } else {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
