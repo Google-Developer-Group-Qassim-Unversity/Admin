@@ -51,7 +51,6 @@ export default function EventAttendancePage() {
         eventStart={eventStart}
         isMultiDay={isMultiDay}
         dayCount={dayCount}
-        isEventClosed={isEventClosed}
         attendanceCount={attendanceData?.attendance_count ?? 0}
         attendanceData={attendanceData?.attendance}
         isLoading={isLoadingAttendance}

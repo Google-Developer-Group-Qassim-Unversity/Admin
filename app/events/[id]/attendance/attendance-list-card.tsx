@@ -30,7 +30,6 @@ interface AttendanceListCardProps {
   eventStart: Date;
   isMultiDay: boolean;
   dayCount: number;
-  isEventClosed: boolean;
   attendanceCount: number;
   attendanceData: AttendanceRecord[] | undefined;
   isLoading: boolean;
@@ -47,7 +46,6 @@ export function AttendanceListCard({
   eventStart,
   isMultiDay,
   dayCount,
-  isEventClosed,
   attendanceCount,
   attendanceData,
   isLoading,
@@ -102,7 +100,6 @@ export function AttendanceListCard({
               variant="outline"
               size="sm"
               onClick={onManageClick}
-              disabled={isEventClosed}
             >
               <UserPlus className="h-4 w-4 mr-1" />
               Manage
