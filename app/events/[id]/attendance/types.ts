@@ -25,8 +25,6 @@ export interface CopyTabProps {
   dayCount: number;
   sourceDay: string;
   onSourceDayChange: (day: string) => void;
-  targetMode: "single" | "all";
-  onTargetModeChange: (mode: "single" | "all") => void;
   targetDay: string;
   onTargetDayChange: (day: string) => void;
   preview: { sourceCount: number };

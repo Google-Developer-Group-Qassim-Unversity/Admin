@@ -118,7 +118,7 @@ export function ManageAttendanceDialog({
   }, [attendanceData, activeTab, dayInt, eventStart]);
 
   const availableMembers = React.useMemo(() => {
-    let source = activeTab === "remove" ? attendedMembers : allMembers;
+    const source = activeTab === "remove" ? attendedMembers : allMembers;
     let result = source.filter((m) => !selectedMemberIds.has(m.id));
 
     if (searchWords.length > 0) {
@@ -211,7 +211,6 @@ export function ManageAttendanceDialog({
   };
 
   const [copySourceDay, setCopySourceDay] = React.useState<string>("1");
-  const [copyTargetMode, setCopyTargetMode] = React.useState<"single" | "all">("single");
   const [copyTargetDay, setCopyTargetDay] = React.useState<string>("2");
 
   const copySourceInt = parseInt(copySourceDay, 10);
@@ -230,21 +229,16 @@ export function ManageAttendanceDialog({
   }, [attendanceData, copySourceInt, eventStart]);
 
   const handleCopy = () => {
-    const targetDays =
-      copyTargetMode === "all"
-        ? Array.from({ length: dayCount - copySourceInt }, (_, i) => copySourceInt + 1 + i)
-        : [copyTargetInt];
-
     setConfirmDialog({
       open: true,
       title: "Copy Attendance",
-      description: `Copy attendance from Day ${copySourceDay} to Day${targetDays.length > 1 ? "s" : ""} ${targetDays.join(", ")}. Members who already have attendance on target days will be skipped.`,
+      description: `Copy attendance from Day ${copySourceDay} to Day ${copyTargetDay}. Members who already have attendance on the target day will be skipped.`,
       items: [`${copyPreview.sourceCount} members from Day ${copySourceDay}`],
       onConfirm: async () => {
         const result = await copyMutation.mutateAsync({
           eventId,
           sourceDay: copySourceInt,
-          targetDays,
+          targetDays: [copyTargetInt],
         });
         toast.success(
           `Copied ${result.copied} attendance record${result.copied !== 1 ? "s" : ""}`
@@ -261,7 +255,7 @@ export function ManageAttendanceDialog({
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "mark", label: "Mark", icon: <UserPlus className="h-4 w-4" /> },
     { id: "remove", label: "Remove", icon: <UserMinus className="h-4 w-4" /> },
-    ...(isMultiDay ? [{ id: "copy" as Tab, label: "Copy", icon: <Copy className="h-4 w-4" /> }] : []),
+    { id: "copy", label: "Copy", icon: <Copy className="h-4 w-4" /> },
   ];
 
   return (
@@ -339,8 +333,6 @@ export function ManageAttendanceDialog({
                 dayCount={dayCount}
                 sourceDay={copySourceDay}
                 onSourceDayChange={setCopySourceDay}
-                targetMode={copyTargetMode}
-                onTargetModeChange={setCopyTargetMode}
                 targetDay={copyTargetDay}
                 onTargetDayChange={setCopyTargetDay}
                 preview={copyPreview}

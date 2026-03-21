@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   Select,
   SelectContent,
@@ -7,8 +8,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-
-import { RequireRole } from "@/hooks/use-rbac";
+import { AccessDenied } from "@/components/ui/access-denied";
+import { useHasPermission } from "@/hooks/use-rbac";
 
 import type { CopyTabProps } from "./types";
 
@@ -16,91 +17,85 @@ export function CopyTab({
   dayCount,
   sourceDay,
   onSourceDayChange,
-  targetMode,
-  onTargetModeChange,
   targetDay,
   onTargetDayChange,
   preview,
 }: CopyTabProps) {
+  const hasAccess = useHasPermission(["super_admin"]);
+
   const sourceInt = parseInt(sourceDay, 10);
-  const remainingDays = Array.from({ length: dayCount - sourceInt }, (_, i) => sourceInt + 1 + i);
+  const allDays = Array.from({ length: dayCount }, (_, i) => i + 1);
+  const remainingDays = allDays.filter((d) => d !== sourceInt);
+
+  React.useEffect(() => {
+    if (remainingDays.length > 0 && !remainingDays.includes(parseInt(targetDay, 10))) {
+      onTargetDayChange(String(remainingDays[0]));
+    }
+  }, [sourceDay, dayCount]);
+
+  if (dayCount <= 1) {
+    return (
+      <AccessDenied
+        title="Multi-day Event Required"
+        description="Copying attendance requires an event with at least 2 days."
+      />
+    );
+  }
+
+  if (!hasAccess) {
+    return (
+      <AccessDenied
+        title="Super Admin Access Required"
+        description="Only super admins can copy attendance between days."
+      />
+    );
+  }
 
   return (
-    <RequireRole role="super_admin">
-      <div className="space-y-6 py-4">
-        <div className="space-y-4">
-          <div className="flex items-center gap-4">
-            <span className="text-sm font-medium w-24">Source Day:</span>
-            <Select value={sourceDay} onValueChange={onSourceDayChange}>
-              <SelectTrigger className="w-[140px]">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: dayCount }, (_, i) => i + 1).map((day) => (
-                  <SelectItem key={day} value={String(day)}>
-                    Day {day}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-start gap-4">
-            <span className="text-sm font-medium w-24">Target:</span>
-            <div className="space-y-2">
-              <label className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  checked={targetMode === "single"}
-                  onChange={() => onTargetModeChange("single")}
-                  className="h-4 w-4"
-                />
-                <span className="text-sm">Single day:</span>
-                <Select
-                  value={targetDay}
-                  onValueChange={onTargetDayChange}
-                  disabled={targetMode !== "single"}
-                >
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {remainingDays.map((day) => (
-                      <SelectItem key={day} value={String(day)}>
-                        Day {day}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </label>
-              {remainingDays.length > 1 && (
-                <label className="flex items-center gap-2">
-                  <input
-                    type="radio"
-                    checked={targetMode === "all"}
-                    onChange={() => onTargetModeChange("all")}
-                    className="h-4 w-4"
-                  />
-                  <span className="text-sm">
-                    All remaining days (Day {remainingDays[0]} -{" "}
-                    {remainingDays[remainingDays.length - 1]})
-                  </span>
-                </label>
-              )}
-            </div>
-          </div>
+    <div className="space-y-6 py-4">
+      <div className="space-y-4">
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium w-24">Source Day:</span>
+          <Select value={sourceDay} onValueChange={onSourceDayChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {allDays.map((day) => (
+                <SelectItem key={day} value={String(day)}>
+                  Day {day}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
-        <div className="border rounded-lg p-4 bg-muted/30">
-          <h4 className="text-sm font-medium mb-2">Preview</h4>
-          <p className="text-sm text-muted-foreground">
-            {preview.sourceCount} members attended Day {sourceDay}
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Members who already have attendance on target days will be skipped.
-          </p>
+        <div className="flex items-center gap-4">
+          <span className="text-sm font-medium w-24">Target Day:</span>
+          <Select value={targetDay} onValueChange={onTargetDayChange}>
+            <SelectTrigger className="w-[140px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {remainingDays.map((day) => (
+                <SelectItem key={day} value={String(day)}>
+                  Day {day}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
-    </RequireRole>
+
+      <div className="border rounded-lg p-4 bg-muted/30">
+        <h4 className="text-sm font-medium mb-2">Preview</h4>
+        <p className="text-sm text-muted-foreground">
+          {preview.sourceCount} members attended Day {sourceDay}
+        </p>
+        <p className="text-xs text-muted-foreground mt-1">
+          Members who already have attendance on the target day will be skipped.
+        </p>
+      </div>
+    </div>
   );
 }
