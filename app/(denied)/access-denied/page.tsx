@@ -3,15 +3,13 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useEffect } from "react";
-import { ShieldX, LogIn } from "lucide-react";
+import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
 } from "@/components/ui/card";
+import { AccessDenied } from "@/components/ui/access-denied";
 
 export default function AccessDeniedPage() {
   const searchParams = useSearchParams();
@@ -82,15 +80,7 @@ export default function AccessDeniedPage() {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-background">
       <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-            <ShieldX className="h-8 w-8 text-destructive" />
-          </div>
-          <CardTitle className="text-2xl">{content.title}</CardTitle>
-          <CardDescription className="text-base">
-            {content.description}
-          </CardDescription>
-        </CardHeader>
+        <AccessDenied title={content.title} description={content.description} />
         <CardContent className="flex flex-col gap-3">
           {content.showSignIn && (
             <Button asChild className="w-full gap-2">
