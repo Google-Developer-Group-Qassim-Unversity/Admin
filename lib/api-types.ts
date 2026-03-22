@@ -20,6 +20,7 @@ export interface Event {
   status: EventStatus;
   image_url: string | null;
   is_official: boolean;
+  created_at: string;
 }
 
 export interface CreateEventPayload {
@@ -51,6 +52,7 @@ export interface EventApiPayload {
   status: EventStatus;
   image_url: string | null;
   is_official: number; // 0 or 1
+  created_at: string;
 }
 
 export interface UpdateEventPayload {
