@@ -13,16 +13,18 @@ import { getEvents } from "@/lib/api";
 export default function ManageEventsPage() {
   const [eventsResponse, setEventsResponse] = React.useState<Awaited<ReturnType<typeof getEvents>> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
+  const [semester, setSemester] = React.useState<string>("all");
 
   React.useEffect(() => {
     async function fetchEvents() {
       setIsLoading(true);
-      const response = await getEvents();
+      const filters = semester !== "all" ? { semester } : undefined;
+      const response = await getEvents(filters);
       setEventsResponse(response);
       setIsLoading(false);
     }
     fetchEvents();
-  }, []);
+  }, [semester]);
 
   return (
     <div className="space-y-8">
@@ -65,7 +67,11 @@ export default function ManageEventsPage() {
 
       {/* Success State - Has Events */}
       {!isLoading && eventsResponse?.success && eventsResponse.data.length > 0 && (
-        <EventsList events={eventsResponse.data} />
+        <EventsList 
+          events={eventsResponse.data}
+          semester={semester}
+          onSemesterChange={setSemester}
+        />
       )}
 
       {/* Empty State - No Events */}
@@ -73,14 +79,14 @@ export default function ManageEventsPage() {
         <div className="flex justify-center">
           <Alert className="max-w-2xl">
             <Calendar className="h-4 w-4" />
-            <AlertTitle>No Events Yet</AlertTitle>
+            <AlertTitle>No Events Found</AlertTitle>
             <AlertDescription>
-              Get started by creating your first event.
+              No events match the selected semester filter.
               <div className="mt-4">
                 <Button asChild size="sm">
                   <Link href="/events/create" className="flex items-center gap-2">
                     <CalendarPlus className="h-4 w-4" />
-                    Create Your First Event
+                    Create New Event
                   </Link>
                 </Button>
               </div>

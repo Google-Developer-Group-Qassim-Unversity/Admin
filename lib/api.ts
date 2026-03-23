@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import type {
   ApiError,
   ApiResponse,
@@ -206,8 +207,25 @@ async function apiUpload<T>(
 // Events API
 // =============================================================================
 
-export async function getEvents(): Promise<ApiResponse<Event[]>> {
-  return apiFetch<Event[]>('/events/');
+export interface EventsFilters {
+  semester?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export async function getEvents(filters?: EventsFilters): Promise<ApiResponse<Event[]>> {
+  const params = new URLSearchParams();
+  if (filters?.semester && filters.semester !== "all") {
+    params.append("semester", filters.semester);
+  }
+  if (filters?.startDate) {
+    params.append("start_date", format(filters.startDate, "yyyy-MM-dd"));
+  }
+  if (filters?.endDate) {
+    params.append("end_date", format(filters.endDate, "yyyy-MM-dd"));
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<Event[]>(`/events/${query}`);
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
