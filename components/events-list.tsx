@@ -7,14 +7,19 @@ import type { Event, LocationType } from "@/lib/api-types";
 
 interface EventsListProps {
   events: Event[];
+  semester?: string;
+  onSemesterChange?: (semester: string) => void;
 }
 
-export function EventsList({ events }: EventsListProps) {
+export function EventsList({ 
+  events, 
+  semester, 
+  onSemesterChange, 
+}: EventsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
   const [locationTypes, setLocationTypes] = React.useState<LocationType[]>([]);
   const [selectedLocations, setSelectedLocations] = React.useState<string[]>([]);
 
-  // Extract unique locations from events
   const uniqueLocations = React.useMemo(() => {
     const locations = new Set<string>();
     events.forEach((event) => {
@@ -27,12 +32,10 @@ export function EventsList({ events }: EventsListProps) {
 
   const filteredEvents = React.useMemo(() => {
     const filtered = events.filter((event) => {
-      // Always hide events with location_type=none
       if (event.location_type === "none" || event.location_type === "hidden") {
         return false;
       }
 
-      // Search filter
       if (
         searchQuery &&
         !event.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -40,12 +43,10 @@ export function EventsList({ events }: EventsListProps) {
         return false;
       }
 
-      // Location type filter (event type)
       if (locationTypes.length > 0 && !locationTypes.includes(event.location_type)) {
         return false;
       }
 
-      // Location filter
       if (selectedLocations.length > 0 && !selectedLocations.includes(event.location)) {
         return false;
       }
@@ -53,12 +54,10 @@ export function EventsList({ events }: EventsListProps) {
       return true;
     });
 
-    // Always sort by start_datetime DESC
     const sorted = filtered.sort((a, b) => 
       new Date(b.start_datetime).getTime() - new Date(a.start_datetime).getTime()
     );
 
-    // Limit to 50 events to encourage using search/filters
     return sorted.slice(0, 50);
   }, [events, searchQuery, locationTypes, selectedLocations]);
 
@@ -66,6 +65,7 @@ export function EventsList({ events }: EventsListProps) {
     setSearchQuery("");
     setLocationTypes([]);
     setSelectedLocations([]);
+    onSemesterChange?.("all");
   };
 
   return (
@@ -79,9 +79,10 @@ export function EventsList({ events }: EventsListProps) {
         selectedLocations={selectedLocations}
         onSelectedLocationsChange={setSelectedLocations}
         onClearFilters={handleClearFilters}
+        semester={semester}
+        onSemesterChange={onSemesterChange}
       />
 
-      {/* Filtered Events Grid */}
       {filteredEvents.length > 0 ? (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvents.map((event) => (

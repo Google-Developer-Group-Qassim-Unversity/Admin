@@ -38,7 +38,7 @@ export default function CreateEventPage() {
           end_datetime: formatLocalDateTime(data.endDate),
           status: "draft" as const,
           image_url: data.image_url || null,
-          is_official: data.is_official,
+          is_official: data.is_official ? 1 : 0,
         },
         form_type: "registration" as const,
         department_action_id: department_action_id,

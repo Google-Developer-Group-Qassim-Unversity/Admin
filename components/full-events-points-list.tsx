@@ -4,14 +4,22 @@ import * as React from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FullEventPointsCard } from "@/components/full-event-points-card";
 import type { Event } from "@/lib/api-types";
+import { AVAILABLE_SEMESTERS } from "@/lib/constants";
 
 interface FullEventsPointsListProps {
   events: Event[];
+  semester?: string;
+  onSemesterChange?: (semester: string) => void;
 }
 
-export function FullEventsPointsList({ events }: FullEventsPointsListProps) {
+export function FullEventsPointsList({ 
+  events, 
+  semester, 
+  onSemesterChange, 
+}: FullEventsPointsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const filteredEvents = React.useMemo(() => {
@@ -41,7 +49,10 @@ export function FullEventsPointsList({ events }: FullEventsPointsListProps) {
 
   const handleClearFilters = () => {
     setSearchQuery("");
+    onSemesterChange?.("all");
   };
+
+  const hasActiveFilters = searchQuery || (semester && semester !== "all");
 
   return (
     <div className="space-y-4">
@@ -56,7 +67,21 @@ export function FullEventsPointsList({ events }: FullEventsPointsListProps) {
           />
         </div>
 
-        {searchQuery && (
+        {onSemesterChange && (
+          <Select value={semester || "all"} onValueChange={onSemesterChange}>
+            <SelectTrigger className="h-9 w-36">
+              <SelectValue placeholder="Semester" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All</SelectItem>
+              {AVAILABLE_SEMESTERS.map((s) => (
+                <SelectItem key={s} value={s}>{s}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
+
+        {hasActiveFilters && (
           <Button
             variant="destructive"
             size="sm"

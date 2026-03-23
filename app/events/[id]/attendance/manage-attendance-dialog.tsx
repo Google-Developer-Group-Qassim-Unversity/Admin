@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { UserPlus, UserMinus, Copy, Loader2 } from "lucide-react";
+import { UserPlus, UserMinus, Copy, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
@@ -23,6 +23,7 @@ import { DISPLAY_LIMIT } from "./types";
 import { getDayNumberFromEffectiveDate, getMatchScore } from "./utils";
 import { MemberSelectionTab } from "./member-selection-tab";
 import { CopyTab } from "./copy-tab";
+import { BackfillTab } from "./backfill-tab";
 import { DaySelectDialog } from "./day-select-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 
@@ -53,6 +54,7 @@ export function ManageAttendanceDialog({
   const [searchQuery, setSearchQuery] = React.useState("");
   const [selectedMemberIds, setSelectedMemberIds] = React.useState<Set<number>>(new Set());
   const [selectedDay, setSelectedDay] = React.useState<string>("1");
+  const [backfillDay, setBackfillDay] = React.useState<string>("1");
   const [daySelectDialogOpen, setDaySelectDialogOpen] = React.useState(false);
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmDialogState | null>(null);
 
@@ -74,6 +76,7 @@ export function ManageAttendanceDialog({
       setSearchQuery("");
       setActiveTab("mark");
       setSelectedDay("1");
+      setBackfillDay("1");
     }
   }, [open]);
 
@@ -252,10 +255,15 @@ export function ManageAttendanceDialog({
     });
   };
 
+  const handleBackfillComplete = () => {
+    onOpenChange(false);
+  };
+
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
     { id: "mark", label: "Mark", icon: <UserPlus className="h-4 w-4" /> },
     { id: "remove", label: "Remove", icon: <UserMinus className="h-4 w-4" /> },
     { id: "copy", label: "Copy", icon: <Copy className="h-4 w-4" /> },
+    { id: "backfill", label: "Backfill", icon: <Upload className="h-4 w-4" /> },
   ];
 
   return (
@@ -338,53 +346,66 @@ export function ManageAttendanceDialog({
                 preview={copyPreview}
               />
             )}
+
+            {activeTab === "backfill" && (
+              <BackfillTab
+                dayCount={dayCount}
+                selectedDay={backfillDay}
+                onDayChange={setBackfillDay}
+                onBackfillComplete={handleBackfillComplete}
+                eventId={eventId}
+                getToken={getToken}
+              />
+            )}
           </div>
 
-          <div className="flex justify-end gap-2 pt-4 border-t">
-            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-              Cancel
-            </Button>
-            {activeTab === "mark" && (
-              <Button
-                onClick={() => (isMultiDay ? setDaySelectDialogOpen(true) : handleMark())}
-                disabled={selectedMemberIds.size === 0 || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UserPlus className="mr-2 h-4 w-4" />
-                )}
-                Mark {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
-                {selectedMemberIds.size !== 1 ? "s" : ""}
+          {activeTab !== "backfill" && (
+            <div className="flex justify-end gap-2 pt-4 border-t">
+              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+                Cancel
               </Button>
-            )}
-            {activeTab === "remove" && (
-              <Button
-                variant="destructive"
-                onClick={handleRemove}
-                disabled={selectedMemberIds.size === 0 || isSubmitting}
-              >
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <UserMinus className="mr-2 h-4 w-4" />
-                )}
-                Remove {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
-                {selectedMemberIds.size !== 1 ? "s" : ""}
-                {isMultiDay && ` for Day ${selectedDay}`}
-              </Button>
-            )}
-            {activeTab === "copy" && (
-              <Button onClick={handleCopy} disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Copy className="mr-2 h-4 w-4" />
-                )}
-                Copy Attendance
-              </Button>
-            )}
-          </div>
+              {activeTab === "mark" && (
+                <Button
+                  onClick={() => (isMultiDay ? setDaySelectDialogOpen(true) : handleMark())}
+                  disabled={selectedMemberIds.size === 0 || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserPlus className="mr-2 h-4 w-4" />
+                  )}
+                  Mark {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
+                  {selectedMemberIds.size !== 1 ? "s" : ""}
+                </Button>
+              )}
+              {activeTab === "remove" && (
+                <Button
+                  variant="destructive"
+                  onClick={handleRemove}
+                  disabled={selectedMemberIds.size === 0 || isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <UserMinus className="mr-2 h-4 w-4" />
+                  )}
+                  Remove {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
+                  {selectedMemberIds.size !== 1 ? "s" : ""}
+                  {isMultiDay && ` for Day ${selectedDay}`}
+                </Button>
+              )}
+              {activeTab === "copy" && (
+                <Button onClick={handleCopy} disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Copy className="mr-2 h-4 w-4" />
+                  )}
+                  Copy Attendance
+                </Button>
+              )}
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 

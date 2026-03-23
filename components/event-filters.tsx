@@ -13,7 +13,9 @@ import {
   MultiSelectGroup,
   MultiSelectItem,
 } from "@/components/ui/multi-select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LocationType } from "@/lib/api-types";
+import { AVAILABLE_SEMESTERS } from "@/lib/constants";
 
 interface EventFiltersProps {
   searchQuery: string;
@@ -24,6 +26,8 @@ interface EventFiltersProps {
   selectedLocations: string[];
   onSelectedLocationsChange: (locations: string[]) => void;
   onClearFilters: () => void;
+  semester?: string;
+  onSemesterChange?: (semester: string) => void;
 }
 
 export function EventFilters({
@@ -35,11 +39,14 @@ export function EventFilters({
   selectedLocations,
   onSelectedLocationsChange,
   onClearFilters,
+  semester,
+  onSemesterChange,
 }: EventFiltersProps) {
   const hasActiveFilters =
     searchQuery ||
     locationTypes.length > 0 ||
-    selectedLocations.length > 0;
+    selectedLocations.length > 0 ||
+    (semester && semester !== "all");
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -53,6 +60,21 @@ export function EventFilters({
           className="pl-8 h-9 text-sm"
         />
       </div>
+
+      {/* Semester Filter */}
+      {onSemesterChange && (
+        <Select value={semester || "all"} onValueChange={onSemesterChange}>
+          <SelectTrigger className="h-9 w-36">
+            <SelectValue placeholder="Semester" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All</SelectItem>
+            {AVAILABLE_SEMESTERS.map((s) => (
+              <SelectItem key={s} value={s}>{s}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       {/* Event Type Filter */}
       <ToggleGroup

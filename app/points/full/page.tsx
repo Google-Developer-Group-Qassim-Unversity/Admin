@@ -15,12 +15,14 @@ export default function FullEventsPage() {
   const [fullEvents, setFullEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ message: string; isServerError?: boolean } | null>(null);
+  const [semester, setSemester] = useState<string>("all");
 
   useEffect(() => {
     async function fetchEvents() {
       setIsLoading(true);
       setError(null);
-      const response = await getEvents();
+      const filters = semester !== "all" ? { semester } : undefined;
+      const response = await getEvents(filters);
       if (response.success) {
         const full = response.data.filter(
           (e) => e.location_type !== "none" && e.location_type !== "hidden"
@@ -32,62 +34,108 @@ export default function FullEventsPage() {
       setIsLoading(false);
     }
     fetchEvents();
-  }, []);
+  }, [semester]);
 
   if (isLoading) {
     return (
-      <div className="flex justify-center py-12">
-        <div className="animate-pulse text-muted-foreground">Loading events...</div>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Full Events Points</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage points for full events
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center py-12">
+          <div className="animate-pulse text-muted-foreground">Loading events...</div>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex justify-center">
-        <Alert variant="destructive" className="max-w-2xl">
-          <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Failed to Load Events</AlertTitle>
-          <AlertDescription>
-            {error.message ||
-              "An error occurred while fetching events. Please try refreshing the page."}
-            {error.isServerError && (
-              <span className="block mt-1">
-                The server may be temporarily unavailable. Please try again
-                later.
-              </span>
-            )}
-          </AlertDescription>
-        </Alert>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Full Events Points</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage points for full events
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <Alert variant="destructive" className="max-w-2xl">
+            <AlertCircle className="h-4 w-4" />
+            <AlertTitle>Failed to Load Events</AlertTitle>
+            <AlertDescription>
+              {error.message ||
+                "An error occurred while fetching events. Please try refreshing the page."}
+              {error.isServerError && (
+                <span className="block mt-1">
+                  The server may be temporarily unavailable. Please try again
+                  later.
+                </span>
+              )}
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
 
   if (fullEvents.length === 0) {
     return (
-      <div className="flex justify-center">
-        <Alert className="max-w-2xl">
-          <Calendar className="h-4 w-4" />
-          <AlertTitle>No Full Events Yet</AlertTitle>
-          <AlertDescription>
-            Full events are created from the Events page. Create an event
-            there to manage its points here.
-            <div className="mt-4">
-              <Button asChild size="sm">
-                <Link
-                  href="/events/create"
-                  className="flex items-center gap-2"
-                >
-                  <CalendarPlus className="h-4 w-4" />
-                  Create Event
-                </Link>
-              </Button>
-            </div>
-          </AlertDescription>
-        </Alert>
+      <div className="space-y-8">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Full Events Points</h1>
+            <p className="text-muted-foreground mt-2">
+              Manage points for full events
+            </p>
+          </div>
+        </div>
+        <div className="flex justify-center">
+          <Alert className="max-w-2xl">
+            <Calendar className="h-4 w-4" />
+            <AlertTitle>No Full Events Found</AlertTitle>
+            <AlertDescription>
+              No full events match the selected semester filter.
+              <div className="mt-4">
+                <Button asChild size="sm">
+                  <Link
+                    href="/events/create"
+                    className="flex items-center gap-2"
+                  >
+                    <CalendarPlus className="h-4 w-4" />
+                    Create Event
+                  </Link>
+                </Button>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
 
-  return <FullEventsPointsList events={fullEvents} />;
+  return (
+    <div className="space-y-8">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Full Events Points</h1>
+          <p className="text-muted-foreground mt-2">
+            Manage points for full events
+          </p>
+        </div>
+      </div>
+
+      <FullEventsPointsList
+        events={fullEvents}
+        semester={semester}
+        onSemesterChange={setSemester}
+      />
+    </div>
+  );
 }

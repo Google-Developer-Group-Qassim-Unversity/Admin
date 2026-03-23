@@ -1,3 +1,4 @@
+import { format } from "date-fns";
 import type {
   ApiError,
   ApiResponse,
@@ -32,6 +33,8 @@ import type {
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
   CertificateJobResponse,
+  BackfillMember,
+  BackfillResponse,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -204,8 +207,25 @@ async function apiUpload<T>(
 // Events API
 // =============================================================================
 
-export async function getEvents(): Promise<ApiResponse<Event[]>> {
-  return apiFetch<Event[]>('/events/');
+export interface EventsFilters {
+  semester?: string;
+  startDate?: Date;
+  endDate?: Date;
+}
+
+export async function getEvents(filters?: EventsFilters): Promise<ApiResponse<Event[]>> {
+  const params = new URLSearchParams();
+  if (filters?.semester && filters.semester !== "all") {
+    params.append("semester", filters.semester);
+  }
+  if (filters?.startDate) {
+    params.append("start_date", format(filters.startDate, "yyyy-MM-dd"));
+  }
+  if (filters?.endDate) {
+    params.append("end_date", format(filters.endDate, "yyyy-MM-dd"));
+  }
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<Event[]>(`/events/${query}`);
 }
 
 export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
@@ -383,6 +403,22 @@ export async function copyAttendance(
     {
       method: "POST",
       body: JSON.stringify({ source_day: sourceDay, target_days: targetDays }),
+    },
+    getToken
+  );
+}
+
+export async function backfillAttendance(
+  eventId: number,
+  members: BackfillMember[],
+  day: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BackfillResponse>> {
+  return apiFetch<BackfillResponse>(
+    `/attendance/${eventId}/backfill`,
+    {
+      method: "POST",
+      body: JSON.stringify({ members, day }),
     },
     getToken
   );

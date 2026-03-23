@@ -20,10 +20,11 @@ export interface Event {
   status: EventStatus;
   image_url: string | null;
   is_official: boolean;
+  created_at: string;
 }
 
 export interface CreateEventPayload {
-  event: Omit<Event, 'id'> & { id: number | null };
+  event: Omit<EventApiPayload, 'created_at' | 'id'> & { id: number | null };
   form_type: FormType;
   department_action_id: number;
   member_action_id: number;
@@ -50,7 +51,8 @@ export interface EventApiPayload {
   end_datetime: string;
   status: EventStatus;
   image_url: string | null;
-  is_official: number; // 0 or 1
+  is_official: number;
+  created_at?: string;
 }
 
 export interface UpdateEventPayload {
@@ -375,4 +377,26 @@ export interface CertificateJobResponse {
   folder_name: string;
   status: CertificateJobStatus;
   message: string;
+}
+
+// =============================================================================
+// Backfill Attendance
+// =============================================================================
+
+export interface BackfillMember {
+  name: string;
+  email: string;
+  phone_number: string;
+  uni_id: string;
+  gender: Gender;
+  uni_level: number;
+  uni_college: string;
+}
+
+export interface BackfillResponse {
+  created_count: number;
+  existing_count: number;
+  already_attended_count: number;
+  marked_count: number;
+  attendance_date: string;
 }

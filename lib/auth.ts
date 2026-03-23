@@ -1,10 +1,15 @@
 import { auth, clerkClient } from "@clerk/nextjs/server";
 
-/**
- * Check if the current user is an admin based on their publicMetadata.
- * Returns the user ID if they are an admin, null otherwise.
- * Use this in API routes that require admin access.
- */
+type AdminMetadata = {
+  is_admin?: boolean;
+  is_super_admin?: boolean;
+  is_admin_points?: boolean;
+};
+
+function isAdminFromMetadata(metadata: AdminMetadata | undefined): boolean {
+  return metadata?.is_admin === true || metadata?.is_super_admin === true || metadata?.is_admin_points === true;
+}
+
 export async function requireAdmin(): Promise<{
   userId: string;
   isAdmin: true;
@@ -15,24 +20,17 @@ export async function requireAdmin(): Promise<{
     return null;
   }
 
-  // Fetch user to get publicMetadata (not included in session claims by default)
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as { is_admin?: boolean } | undefined;
-  const isAdmin = publicMetadata?.is_admin === true;
+  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
 
-  if (!isAdmin) {
+  if (!isAdminFromMetadata(publicMetadata)) {
     return null;
   }
 
   return { userId, isAdmin: true };
 }
 
-/**
- * Get the current authenticated user's info.
- * Returns null if not authenticated.
- * Use this in API routes that need to check auth status.
- */
 export async function getAuthUser(): Promise<{
   userId: string;
   isAdmin: boolean;
@@ -43,11 +41,9 @@ export async function getAuthUser(): Promise<{
     return null;
   }
 
-  // Fetch user to get publicMetadata (not included in session claims by default)
   const client = await clerkClient();
   const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as { is_admin?: boolean } | undefined;
-  const isAdmin = publicMetadata?.is_admin === true;
+  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
 
-  return { userId, isAdmin };
+  return { userId, isAdmin: isAdminFromMetadata(publicMetadata) };
 }
