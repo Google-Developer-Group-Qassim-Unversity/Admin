@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, ApiRequestError } from '@/lib/api';
-import type { Event, UpdateEventPayload } from '@/lib/api-types';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
+import type { Event, UpdateEventPayload, BackfillMember } from '@/lib/api-types';
 
 // Query keys
 export const eventKeys = {
@@ -360,6 +360,23 @@ export function useDeleteEvent(getToken: () => Promise<string | null>) {
       queryClient.removeQueries({ queryKey: eventKeys.detail(id) });
       queryClient.removeQueries({ queryKey: eventKeys.fullDetail(id) });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+export function useBackfillAttendance(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ eventId, members, day }: { eventId: number; members: BackfillMember[]; day: number }) => {
+      const result = await backfillAttendance(eventId, members, day, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (_, { eventId }) => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
     },
   });
 }

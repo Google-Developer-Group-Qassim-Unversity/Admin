@@ -1,6 +1,6 @@
 import type { Member } from "@/lib/api-types";
 
-export type Tab = "mark" | "remove" | "copy";
+export type Tab = "mark" | "remove" | "copy" | "backfill";
 
 export const DISPLAY_LIMIT = 50;
 
@@ -45,4 +45,11 @@ export interface ConfirmDialogState {
   description: string;
   items: string[];
   onConfirm: () => Promise<void>;
+}
+
+export interface BackfillSummary {
+  created_count: number;
+  existing_count: number;
+  already_attended_count: number;
+  attendance_date: string;
 }

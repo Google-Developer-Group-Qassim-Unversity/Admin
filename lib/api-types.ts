@@ -378,3 +378,24 @@ export interface CertificateJobResponse {
   status: CertificateJobStatus;
   message: string;
 }
+
+// =============================================================================
+// Backfill Attendance
+// =============================================================================
+
+export interface BackfillMember {
+  name: string;
+  email: string;
+  phone_number: string;
+  uni_id: string;
+  gender: Gender;
+  uni_level: number;
+  uni_college: string;
+}
+
+export interface BackfillResponse {
+  created_count: number;
+  existing_count: number;
+  already_attended_count: number;
+  attendance_date: string;
+}

@@ -32,6 +32,8 @@ import type {
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
   CertificateJobResponse,
+  BackfillMember,
+  BackfillResponse,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -383,6 +385,22 @@ export async function copyAttendance(
     {
       method: "POST",
       body: JSON.stringify({ source_day: sourceDay, target_days: targetDays }),
+    },
+    getToken
+  );
+}
+
+export async function backfillAttendance(
+  eventId: number,
+  members: BackfillMember[],
+  day: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BackfillResponse>> {
+  return apiFetch<BackfillResponse>(
+    `/attendance/${eventId}/backfill`,
+    {
+      method: "POST",
+      body: JSON.stringify({ members, day }),
     },
     getToken
   );
