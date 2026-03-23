@@ -397,5 +397,6 @@ export interface BackfillResponse {
   created_count: number;
   existing_count: number;
   already_attended_count: number;
+  marked_count: number;
   attendance_date: string;
 }

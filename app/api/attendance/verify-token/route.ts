@@ -129,7 +129,13 @@ export async function POST(request: NextRequest) {
     }
 
     if (!result.payload?.metadata?.valid) {
-      return NextResponse.json({ valid: false, error: 'Token data is not valid. Go back to Sheet Processor and make sure all rows are valid.' });
+      return NextResponse.json({
+        valid: false,
+        error: 'Token data is not valid. Go back to Sheet Processor and make sure all rows are valid.',
+        data: result.payload?.data ?? [],
+        metadata: result.payload?.metadata,
+        signature: result.signature ?? null,
+      });
     }
 
     return NextResponse.json({

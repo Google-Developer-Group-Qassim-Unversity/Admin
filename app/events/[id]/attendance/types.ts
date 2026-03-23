@@ -50,6 +50,7 @@ export interface ConfirmDialogState {
 export interface BackfillSummary {
   created_count: number;
   existing_count: number;
+  marked_count: number;
   already_attended_count: number;
   attendance_date: string;
 }
