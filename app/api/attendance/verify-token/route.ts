@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { requireAdmin } from '@/lib/auth';
 import * as crypto from 'crypto';
 
 const SHEET_PROCESSOR_EXPORT_SECRET = process.env.SHEET_PROCESSOR_EXPORT_SECRET;
@@ -90,16 +90,8 @@ function verifyExportToken(token: string, secret: string): { valid: boolean; pay
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
-  if (!userId) {
-    return NextResponse.json({ valid: false, error: 'Unauthorized' }, { status: 401 });
-  }
-
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as { is_admin?: boolean } | undefined;
-  const isAdmin = publicMetadata?.is_admin === true;
-  if (!isAdmin) {
+  const admin = await requireAdmin();
+  if (!admin) {
     return NextResponse.json({ valid: false, error: 'Unauthorized' }, { status: 401 });
   }
 
