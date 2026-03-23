@@ -24,7 +24,7 @@ export interface Event {
 }
 
 export interface CreateEventPayload {
-  event: Omit<Event, 'id'> & { id: number | null };
+  event: Omit<EventApiPayload, 'created_at' | 'id'> & { id: number | null };
   form_type: FormType;
   department_action_id: number;
   member_action_id: number;
@@ -51,8 +51,8 @@ export interface EventApiPayload {
   end_datetime: string;
   status: EventStatus;
   image_url: string | null;
-  is_official: number; // 0 or 1
-  created_at: string;
+  is_official: number;
+  created_at?: string;
 }
 
 export interface UpdateEventPayload {
