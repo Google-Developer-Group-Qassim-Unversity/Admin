@@ -278,6 +278,7 @@ export interface CustomEventDepartment {
 
 /** Payload for POST /custom/departments */
 export interface CreateCustomDepartmentPayload {
+  event_id?: number | null;
   start_datetime: string;
   end_datetime: string;
   event_name: string;
@@ -320,11 +321,17 @@ export interface CustomEventMember {
 }
 
 export interface CreateCustomMemberPayload {
+  event_id?: number | null;
   start_datetime: string;
   end_datetime: string;
   event_name: string;
   location_type?: LocationType;
   point_deatils: MemberPointDetail[];
+}
+
+export interface CreateCustomPointsResponse {
+  event_id: number;
+  message: string;
 }
 
 export interface UpdateCustomMemberPointDetailPayload {

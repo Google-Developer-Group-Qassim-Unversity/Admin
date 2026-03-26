@@ -25,6 +25,7 @@ import type {
   MemberRole,
   CustomEventDepartment,
   CreateCustomDepartmentPayload,
+  CreateCustomPointsResponse,
   UpdateCustomPointDetailPayload,
   CustomAction,
   AttendanceResponse,
@@ -710,8 +711,8 @@ export async function getCustomEventDepartment(
 export async function createCustomDepartmentPoints(
   payload: CreateCustomDepartmentPayload,
   getToken?: GetTokenFn
-): Promise<ApiResponse<CustomEventDepartment>> {
-  return apiFetch<CustomEventDepartment>(
+): Promise<ApiResponse<CreateCustomPointsResponse>> {
+  return apiFetch<CreateCustomPointsResponse>(
     "/custom/departments",
     {
       method: "POST",
@@ -751,8 +752,8 @@ export async function getCustomEventMember(
 export async function createCustomMemberPoints(
   payload: CreateCustomMemberPayload,
   getToken?: GetTokenFn
-): Promise<ApiResponse<CustomEventMember>> {
-  return apiFetch<CustomEventMember>(
+): Promise<ApiResponse<CreateCustomPointsResponse>> {
+  return apiFetch<CreateCustomPointsResponse>(
     "/custom/members",
     {
       method: "POST",
