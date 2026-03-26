@@ -31,7 +31,7 @@ import {
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
-import type { GroupedActions, LocationType } from "@/lib/api-types";
+import type { GroupedActions, LocationType, ApiError, CreateCustomPointsResponse } from "@/lib/api-types";
 
 export default function CreateCustomEventPage() {
   const router = useRouter();
@@ -102,7 +102,9 @@ export default function CreateCustomEventPage() {
       const departmentRows = data.point_details.filter((pd) => pd.row_type === "department");
       const memberRows = data.point_details.filter((pd) => pd.row_type === "member");
 
-      const results = [];
+      type CreateResult = { success: true; data: CreateCustomPointsResponse } | { success: false; error: ApiError };
+      const results: { type: string; result: CreateResult }[] = [];
+      let eventId: number | null = null;
 
       if (departmentRows.length > 0) {
         const deptPayload = {
@@ -121,11 +123,15 @@ export default function CreateCustomEventPage() {
 
         const deptResult = await createCustomDepartmentPoints(deptPayload, getToken);
         results.push({ type: "department", result: deptResult });
+
+        if (deptResult.success) {
+          eventId = deptResult.data.event_id;
+        }
       }
 
       if (memberRows.length > 0) {
         const memberPayload = {
-          event_id: null,
+          event_id: eventId,
           start_datetime: formatLocalDateTime(startDate),
           end_datetime: formatLocalDateTime(endDate),
           event_name: data.event_name,
