@@ -19,6 +19,13 @@ export default function EventAttendancePage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
 
+  const {
+    data: attendanceData,
+    isLoading: isLoadingAttendance,
+    isFetching: isFetchingAttendance,
+    refetch: refetchAttendance,
+  } = useEventAttendance(event?.id ?? 0, selectedDay, getToken, true);
+
   if (!event) {
     return null;
   }
@@ -28,13 +35,6 @@ export default function EventAttendancePage() {
   const eventEnd = parseLocalDateTime(event.end_datetime);
   const dayCount = getEventDayCount(eventStart, eventEnd);
   const isMultiDay = dayCount > 1;
-
-  const {
-    data: attendanceData,
-    isLoading: isLoadingAttendance,
-    isFetching: isFetchingAttendance,
-    refetch: refetchAttendance,
-  } = useEventAttendance(event.id, selectedDay, getToken, true);
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">

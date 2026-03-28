@@ -91,20 +91,6 @@ export default function EventResponsesPage() {
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
 
-  if (!event) {
-    return null;
-  }
-
-  const filteredSubmissions = useMemo(() => {
-    if (!submissions) return undefined;
-    return submissions.filter((s) => s.submission_type !== "partial");
-  }, [submissions]);
-
-  const needsFormSchema = !!formData?.googleFormId;
-  const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
-
-  const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
-
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
@@ -122,6 +108,16 @@ export default function EventResponsesPage() {
   });
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+
+  const filteredSubmissions = useMemo(() => {
+    if (!submissions) return undefined;
+    return submissions.filter((s) => s.submission_type !== "partial");
+  }, [submissions]);
+
+  const needsFormSchema = !!formData?.googleFormId;
+  const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
+
+  const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
 
   const total = filteredSubmissions?.length ?? 0;
   const accepted = filteredSubmissions?.filter((s) => s.is_accepted).length ?? 0;
@@ -311,7 +307,11 @@ export default function EventResponsesPage() {
   const allSelectedAccepted = useMemo(() => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
     return selectedRows.length > 0 && selectedRows.every((row) => row.is_accepted);
-  }, [table, rowSelection]);
+  }, [table]);
+
+  if (!event) {
+    return null;
+  }
 
   const handleCloseResponsesClick = () => {
     setCloseResponsesDialogOpen(true);
@@ -377,7 +377,7 @@ export default function EventResponsesPage() {
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
               >
-                <SelectTrigger className="w-[150px]" size="sm">
+                <SelectTrigger className="w-37.5" size="sm">
                   <SelectValue placeholder="Filter status" />
                 </SelectTrigger>
                 <SelectContent align="start">
@@ -420,7 +420,7 @@ export default function EventResponsesPage() {
                     Columns
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuContent align="end" className="w-50">
                   {table
                     .getAllColumns()
                     .filter((column) => column.getCanHide())
