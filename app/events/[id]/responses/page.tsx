@@ -8,6 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
+import { useSendAcceptance, useSendAcceptanceTest } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
 import { useCloseEventResponses } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
@@ -69,6 +70,8 @@ import {
   Pagination,
   SelectedRowsActions,
   SummaryStatistics,
+  SendAcceptanceDialog,
+  SendAcceptanceButton,
 } from "@/components/responses-tab-components";
 import {
   AlertDialog,
@@ -90,25 +93,14 @@ export default function EventResponsesPage() {
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
-
-  if (!event) {
-    return null;
-  }
-
-  const filteredSubmissions = useMemo(() => {
-    if (!submissions) return undefined;
-    return submissions.filter((s) => s.submission_type !== "partial");
-  }, [submissions]);
-
-  const needsFormSchema = !!formData?.googleFormId;
-  const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
-
-  const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
+  const sendAcceptanceMutation = useSendAcceptance(getToken);
+  const sendAcceptanceTestMutation = useSendAcceptanceTest(getToken);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
   const [closeResponsesDialogOpen, setCloseResponsesDialogOpen] = useState(false);
+  const [sendAcceptanceDialogOpen, setSendAcceptanceDialogOpen] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "submitted_at", desc: true },
@@ -123,9 +115,31 @@ export default function EventResponsesPage() {
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
+  const filteredSubmissions = useMemo(() => {
+    if (!submissions) return undefined;
+    return submissions.filter((s) => s.submission_type !== "partial");
+  }, [submissions]);
+
+  const needsFormSchema = !!formData?.googleFormId;
+  const isFormSchemaLoading = needsFormSchema && formSchemaLoading;
+
+  const isLoading = submissionsLoading || formDataLoading || isFormSchemaLoading;
+
   const total = filteredSubmissions?.length ?? 0;
   const accepted = filteredSubmissions?.filter((s) => s.is_accepted).length ?? 0;
+  const invited = filteredSubmissions?.filter((s) => s.is_invited).length ?? 0;
+  const acceptedNotInvited = filteredSubmissions?.filter((s) => s.is_accepted && !s.is_invited).length ?? 0;
   const pending = total - accepted;
+
+  const acceptanceRecipients = useMemo(() => {
+    if (!filteredSubmissions) return [];
+    return filteredSubmissions
+      .filter((s) => s.is_accepted && !s.is_invited)
+      .map((s) => ({
+        name: s.member.name,
+        email: s.member.email,
+      }));
+  }, [filteredSubmissions]);
 
   const parsedGoogleSubmissions = useMemo(() => {
     if (!filteredSubmissions || !formSchema) return [];
@@ -311,7 +325,11 @@ export default function EventResponsesPage() {
   const allSelectedAccepted = useMemo(() => {
     const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
     return selectedRows.length > 0 && selectedRows.every((row) => row.is_accepted);
-  }, [table, rowSelection]);
+  }, [table]);
+
+  if (!event) {
+    return null;
+  }
 
   const handleCloseResponsesClick = () => {
     setCloseResponsesDialogOpen(true);
@@ -325,6 +343,35 @@ export default function EventResponsesPage() {
       refetch?.();
     } catch {
       toast.error('Failed to close responses. Please try again.');
+    }
+  };
+
+  const handleSendAcceptance = async (subject: string, htmlContent: string) => {
+    try {
+      await sendAcceptanceMutation.mutateAsync({
+        eventId: event.id,
+        subject,
+        htmlContent,
+      });
+      toast.success(`Acceptance emails sent to ${acceptedNotInvited} recipient${acceptedNotInvited !== 1 ? "s" : ""}`);
+      setSendAcceptanceDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to send acceptance emails:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send acceptance emails");
+    }
+  };
+
+  const handleSendAcceptanceTest = async (subject: string, htmlContent: string, emails: string[]) => {
+    try {
+      await sendAcceptanceTestMutation.mutateAsync({
+        subject,
+        htmlContent,
+        emails,
+      });
+      toast.success(`Test emails sent to ${emails.length} recipient${emails.length !== 1 ? "s" : ""}`);
+    } catch (error) {
+      console.error("Failed to send test acceptance emails:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send test acceptance emails");
     }
   };
 
@@ -370,20 +417,22 @@ export default function EventResponsesPage() {
           </div>
         ) : (
           <>
-            <SummaryStatistics total={total} accepted={accepted} pending={pending} />
+            <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
               >
-                <SelectTrigger className="w-[150px]" size="sm">
+                <SelectTrigger className="w-37.5" size="sm">
                   <SelectValue placeholder="Filter status" />
                 </SelectTrigger>
                 <SelectContent align="start">
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="not_accepted">Not Accepted</SelectItem>
+                  <SelectItem value="accepted_invited">Accepted & Invited</SelectItem>
+                  <SelectItem value="accepted_not_invited">Accepted & Not Invited</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -420,7 +469,7 @@ export default function EventResponsesPage() {
                     Columns
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-[200px]">
+                <DropdownMenuContent align="end" className="w-50">
                   {table
                     .getAllColumns()
                     .filter((column) => column.getCanHide())
@@ -438,6 +487,12 @@ export default function EventResponsesPage() {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <SendAcceptanceButton
+                onClick={() => setSendAcceptanceDialogOpen(true)}
+                recipientCount={acceptedNotInvited}
+                isLoading={sendAcceptanceMutation.isPending}
+              />
 
               {event.status === 'open' && (
                 <Button
@@ -568,6 +623,17 @@ export default function EventResponsesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SendAcceptanceDialog
+        open={sendAcceptanceDialogOpen}
+        onOpenChange={setSendAcceptanceDialogOpen}
+        recipients={acceptanceRecipients}
+        onSubmit={handleSendAcceptance}
+        onTestSubmit={handleSendAcceptanceTest}
+        isLoading={sendAcceptanceMutation.isPending}
+        isTestLoading={sendAcceptanceTestMutation.isPending}
+        event={event ?? undefined}
+      />
     </Card>
   );
 }

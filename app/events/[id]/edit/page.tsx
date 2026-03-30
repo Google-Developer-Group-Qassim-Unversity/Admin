@@ -31,15 +31,11 @@ export default function EventEditPage() {
   const { getToken } = useAuth();
   const router = useRouter();
 
-  if (!event) {
-    return null;
-  }
-  
   const { 
     data: eventDetails, 
     isLoading: isLoadingDetails, 
     error: detailsError 
-  } = useEventDetails(event.id, getToken);
+  } = useEventDetails(event?.id ?? 0, getToken);
   
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
   
@@ -47,8 +43,6 @@ export default function EventEditPage() {
   
   const updateEventMutation = useUpdateEvent(getToken);
   const deleteEventMutation = useDeleteEvent(getToken);
-
-  const isDraft = event.status === "draft";
 
   const findCompositeAction = React.useCallback(
     (eventActions: [EventAction, EventAction]): Action[] | undefined => {
@@ -87,6 +81,12 @@ export default function EventEditPage() {
       composite_action: compositeAction,
     };
   }, [eventDetails, findCompositeAction]);
+
+  if (!event) {
+    return null;
+  }
+  
+  const isDraft = event.status === "draft";
 
   const handleSubmit = async (data: EventFormData) => {
     try {

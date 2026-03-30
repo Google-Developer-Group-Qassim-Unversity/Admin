@@ -117,7 +117,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
                   </EmptyMedia>
                   <EmptyTitle>Event not found</EmptyTitle>
                   <EmptyDescription>
-                    The event you're looking for doesn't exist or has been deleted.
+                    The event you&apos;re looking for doesn&apos;t exist or has been deleted.
                   </EmptyDescription>
                 </EmptyHeader>
                 <Button asChild>
@@ -148,7 +148,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
                 </EmptyMedia>
                 <EmptyTitle>Event not found</EmptyTitle>
                 <EmptyDescription>
-                  The event you're looking for doesn't exist or has been deleted.
+                  The event you&apos;re looking for doesn&apos;t exist or has been deleted.
                 </EmptyDescription>
               </EmptyHeader>
               <Button asChild>

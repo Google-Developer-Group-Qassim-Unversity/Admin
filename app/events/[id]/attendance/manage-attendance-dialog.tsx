@@ -64,11 +64,23 @@ export function ManageAttendanceDialog({
 
   const isSubmitting = markMutation.isPending || removeMutation.isPending || copyMutation.isPending;
 
+  const fetchAllMembers = React.useCallback(async () => {
+    setIsLoadingMembers(true);
+    const response = await getMembers(getToken);
+    if (response.success) {
+      const sorted = [...response.data].sort((a, b) => a.name.localeCompare(b.name));
+      setAllMembers(sorted);
+    } else {
+      toast.error("Failed to load members: " + response.error.message);
+    }
+    setIsLoadingMembers(false);
+  }, [getToken]);
+
   React.useEffect(() => {
     if (open && activeTab === "mark" && allMembers.length === 0) {
       fetchAllMembers();
     }
-  }, [open, activeTab]);
+  }, [open, activeTab, allMembers.length, fetchAllMembers]);
 
   React.useEffect(() => {
     if (!open) {
@@ -79,18 +91,6 @@ export function ManageAttendanceDialog({
       setBackfillDay("1");
     }
   }, [open]);
-
-  const fetchAllMembers = async () => {
-    setIsLoadingMembers(true);
-    const response = await getMembers(getToken);
-    if (response.success) {
-      const sorted = [...response.data].sort((a, b) => a.name.localeCompare(b.name));
-      setAllMembers(sorted);
-    } else {
-      toast.error("Failed to load members: " + response.error.message);
-    }
-    setIsLoadingMembers(false);
-  };
 
   const searchWords = React.useMemo(() => {
     return searchQuery

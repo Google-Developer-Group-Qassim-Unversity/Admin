@@ -167,6 +167,7 @@ export interface Submission {
   form_type: FormType;
   submission_type: SubmissionType;
   is_accepted: boolean;
+  is_invited: boolean;
   google_submission_value: string;
   event_id: number;
   form_id: number;
@@ -406,4 +407,18 @@ export interface BackfillResponse {
   already_attended_count: number;
   marked_count: number;
   attendance_date: string;
+}
+
+// =============================================================================
+// Acceptance Blasts
+// =============================================================================
+
+export interface AcceptanceBlastResponse {
+  sent_count: number;
+  emails: string[];
+}
+
+export interface TestAcceptanceBlastResponse {
+  sent_count: number;
+  emails: string[];
 }
