@@ -8,6 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
+import { useSendAcceptance } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
 import { useCloseEventResponses } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
@@ -69,6 +70,8 @@ import {
   Pagination,
   SelectedRowsActions,
   SummaryStatistics,
+  SendAcceptanceDialog,
+  SendAcceptanceButton,
 } from "@/components/responses-tab-components";
 import {
   AlertDialog,
@@ -90,11 +93,13 @@ export default function EventResponsesPage() {
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
+  const sendAcceptanceMutation = useSendAcceptance(getToken);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
   const [closeResponsesDialogOpen, setCloseResponsesDialogOpen] = useState(false);
+  const [sendAcceptanceDialogOpen, setSendAcceptanceDialogOpen] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
     { id: "submitted_at", desc: true },
@@ -121,7 +126,19 @@ export default function EventResponsesPage() {
 
   const total = filteredSubmissions?.length ?? 0;
   const accepted = filteredSubmissions?.filter((s) => s.is_accepted).length ?? 0;
+  const invited = filteredSubmissions?.filter((s) => s.is_invited).length ?? 0;
+  const acceptedNotInvited = filteredSubmissions?.filter((s) => s.is_accepted && !s.is_invited).length ?? 0;
   const pending = total - accepted;
+
+  const acceptanceRecipients = useMemo(() => {
+    if (!filteredSubmissions) return [];
+    return filteredSubmissions
+      .filter((s) => s.is_accepted && !s.is_invited)
+      .map((s) => ({
+        name: s.member.name,
+        email: s.member.email,
+      }));
+  }, [filteredSubmissions]);
 
   const parsedGoogleSubmissions = useMemo(() => {
     if (!filteredSubmissions || !formSchema) return [];
@@ -328,6 +345,21 @@ export default function EventResponsesPage() {
     }
   };
 
+  const handleSendAcceptance = async (subject: string, htmlContent: string) => {
+    try {
+      await sendAcceptanceMutation.mutateAsync({
+        eventId: event.id,
+        subject,
+        htmlContent,
+      });
+      toast.success(`Acceptance emails sent to ${acceptedNotInvited} recipient${acceptedNotInvited !== 1 ? "s" : ""}`);
+      setSendAcceptanceDialogOpen(false);
+    } catch (error) {
+      console.error("Failed to send acceptance emails:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send acceptance emails");
+    }
+  };
+
   if (!formDataLoading && formData?.formType === 'none') {
     return (
       <Card className="max-w-full mx-auto">
@@ -370,7 +402,7 @@ export default function EventResponsesPage() {
           </div>
         ) : (
           <>
-            <SummaryStatistics total={total} accepted={accepted} pending={pending} />
+            <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
               <Select
@@ -384,6 +416,8 @@ export default function EventResponsesPage() {
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="not_accepted">Not Accepted</SelectItem>
+                  <SelectItem value="accepted_invited">Accepted & Invited</SelectItem>
+                  <SelectItem value="accepted_not_invited">Accepted & Not Invited</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -438,6 +472,12 @@ export default function EventResponsesPage() {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <SendAcceptanceButton
+                onClick={() => setSendAcceptanceDialogOpen(true)}
+                recipientCount={acceptedNotInvited}
+                isLoading={sendAcceptanceMutation.isPending}
+              />
 
               {event.status === 'open' && (
                 <Button
@@ -568,6 +608,14 @@ export default function EventResponsesPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <SendAcceptanceDialog
+        open={sendAcceptanceDialogOpen}
+        onOpenChange={setSendAcceptanceDialogOpen}
+        recipients={acceptanceRecipients}
+        onSubmit={handleSendAcceptance}
+        isLoading={sendAcceptanceMutation.isPending}
+      />
     </Card>
   );
 }

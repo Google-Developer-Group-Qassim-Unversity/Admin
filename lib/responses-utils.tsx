@@ -24,6 +24,7 @@ export type TableRowData = Record<string, unknown> & {
   submission_id: number;
   submitted_at: string;
   is_accepted: boolean;
+  is_invited: boolean;
   submission_type: string;
   // Member data (flattened)
   member_id: number;
@@ -58,6 +59,7 @@ export function transformSubmissionsToRows(
       submission_id: submission.submission_id,
       submitted_at: submission.submitted_at,
       is_accepted: submission.is_accepted,
+      is_invited: submission.is_invited,
       submission_type: submission.submission_type,
       member_id: submission.member.id,
       name: submission.member.name,
@@ -410,10 +412,10 @@ export function generateTSV(
 // Status Filter Utilities
 // =============================================================================
 
-export type StatusFilter = "all" | "accepted" | "not_accepted";
+export type StatusFilter = "all" | "accepted" | "not_accepted" | "accepted_invited" | "accepted_not_invited";
 
 /**
- * Filter table data by acceptance status
+ * Filter table data by acceptance/invited status
  */
 export function filterTableDataByStatus(
   data: TableRowData[],
@@ -422,6 +424,8 @@ export function filterTableDataByStatus(
   if (filter === "all") return data;
   if (filter === "accepted") return data.filter((row) => row.is_accepted);
   if (filter === "not_accepted") return data.filter((row) => !row.is_accepted);
+  if (filter === "accepted_invited") return data.filter((row) => row.is_accepted && row.is_invited);
+  if (filter === "accepted_not_invited") return data.filter((row) => row.is_accepted && !row.is_invited);
   return data;
 }
 
