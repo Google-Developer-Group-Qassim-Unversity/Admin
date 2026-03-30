@@ -5,7 +5,6 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -306,11 +305,11 @@ export function SendAcceptanceDialog({
     .filter((email) => email.length > 0);
   const isTestDisabled = !subject.trim() || isTestLoading || emailList.length === 0;
 
-  return (
+return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         key={dialogKey}
-        className="max-w-5xl max-h-[90vh] overflow-y-auto"
+        className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
       >
         <DialogHeader>
           <DialogTitle>Send Acceptance Emails</DialogTitle>
@@ -320,70 +319,20 @@ export function SendAcceptanceDialog({
                 No recipients available. Accept some submissions first to send acceptance emails.
               </span>
             ) : (
-              `Send acceptance emails to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}. Edit the email template below before sending.`
+              `Send acceptance emails to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}. Edit the email template before sending.`
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
-          <Collapsible open={recipientsOpen} onOpenChange={setRecipientsOpen}>
-            <CollapsibleTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="w-full justify-between"
-              >
-                <span>Recipients ({recipientCount})</span>
-                {recipientsOpen ? (
-                  <ChevronUp className="h-4 w-4" />
-                ) : (
-                  <ChevronDown className="h-4 w-4" />
-                )}
-              </Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="mt-2">
-              <div className="rounded-lg border max-h-48 overflow-y-auto">
-                <table className="w-full text-sm">
-                  <thead className="bg-muted/50 sticky top-0">
-                    <tr>
-                      <th className="text-left py-2 px-3 font-medium">Name</th>
-                      <th className="text-left py-2 px-3 font-medium">Email</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {recipients.map((recipient, index) => (
-                      <tr key={index} className="border-t">
-                        <td className="py-2 px-3">{recipient.name}</td>
-                        <td className="py-2 px-3 text-muted-foreground">
-                          {recipient.email}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </CollapsibleContent>
-          </Collapsible>
-
-          <div className="space-y-2">
-            <Label htmlFor="subject">Subject</Label>
-            <Input
-              id="subject"
-              placeholder="Enter email subject..."
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              disabled={isLoading}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>Email Content</Label>
-            {templateError ? (
-              <div className="p-4 border rounded-md bg-destructive/10 text-destructive">
-                {templateError}
-              </div>
-            ) : (
-              <div className="flex justify-center">
+        <div className="flex gap-6 flex-1 min-h-0">
+          <div className="flex-shrink-0">
+            <div className="space-y-2">
+              <Label>Email Content</Label>
+              {templateError ? (
+                <div className="p-4 border rounded-md bg-destructive/10 text-destructive">
+                  {templateError}
+                </div>
+              ) : (
                 <iframe
                   ref={iframeRef}
                   srcDoc={`
@@ -406,105 +355,157 @@ export function SendAcceptanceDialog({
                     height: "667px",
                   }}
                 />
-              </div>
-            )}
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="whatsappUrl">WhatsApp Group Link</Label>
-            <div className="relative">
-              <div className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600">
-                <WhatsAppIcon className="h-5 w-5" />
-              </div>
-              <Input
-                id="whatsappUrl"
-                placeholder="https://chat.whatsapp.com/..."
-                value={whatsappUrl}
-                onChange={(e) => setWhatsappUrl(e.target.value)}
-                disabled={isLoading || isTestLoading}
-                className="pl-10"
-              />
+              )}
             </div>
           </div>
 
-          {onTestSubmit && (
-            <Collapsible open={testSectionOpen} onOpenChange={setTestSectionOpen}>
+          <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
+            <div className="space-y-2">
+              <Label htmlFor="subject">Subject</Label>
+              <Input
+                id="subject"
+                placeholder="Enter email subject..."
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                disabled={isLoading || isTestLoading}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="whatsappUrl">WhatsApp Group Link</Label>
+              <div className="relative">
+                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600">
+                  <WhatsAppIcon className="h-5 w-5" />
+                </div>
+                <Input
+                  id="whatsappUrl"
+                  placeholder="https://chat.whatsapp.com/..."
+                  value={whatsappUrl}
+                  onChange={(e) => setWhatsappUrl(e.target.value)}
+                  disabled={isLoading || isTestLoading}
+                  className="pl-10"
+                />
+              </div>
+            </div>
+
+            <Collapsible open={recipientsOpen} onOpenChange={setRecipientsOpen}>
               <CollapsibleTrigger asChild>
                 <Button
-                  type="button"
                   variant="outline"
                   size="sm"
                   className="w-full justify-between"
                 >
-                  <span>Test Mode</span>
-                  {testSectionOpen ? (
+                  <span>Recipients ({recipientCount})</span>
+                  {recipientsOpen ? (
                     <ChevronUp className="h-4 w-4" />
                   ) : (
                     <ChevronDown className="h-4 w-4" />
                   )}
                 </Button>
               </CollapsibleTrigger>
-              <CollapsibleContent className="mt-3 space-y-3">
-                <div className="space-y-2">
-                  <Label htmlFor="testEmails">Test Email Addresses</Label>
-                  <Textarea
-                    id="testEmails"
-                    placeholder="Enter comma-separated emails (e.g., test1@example.com, test2@example.com)"
-                    value={testEmails}
-                    onChange={(e) => setTestEmails(e.target.value)}
-                    disabled={isTestLoading}
-                    rows={3}
-                    className="resize-none"
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Emails will be sent to these addresses for testing. Submissions will NOT be marked as invited.
-                  </p>
+              <CollapsibleContent className="mt-2">
+                <div className="rounded-lg border max-h-48 overflow-y-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-muted/50 sticky top-0">
+                      <tr>
+                        <th className="text-left py-2 px-3 font-medium">Name</th>
+                        <th className="text-left py-2 px-3 font-medium">Email</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recipients.map((recipient, index) => (
+                        <tr key={index} className="border-t">
+                          <td className="py-2 px-3">{recipient.name}</td>
+                          <td className="py-2 px-3 text-muted-foreground">
+                            {recipient.email}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={handleTestSubmit}
-                  disabled={isTestDisabled}
-                  className="w-full"
-                >
-                  {isTestLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Sending Test...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-4 w-4" />
-                      Send Test ({emailList.length} email{emailList.length !== 1 ? "s" : ""})
-                    </>
-                  )}
-                </Button>
               </CollapsibleContent>
             </Collapsible>
-          )}
-        </div>
 
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => handleOpenChange(false)}
-            disabled={isLoading || isTestLoading}
-          >
-            Cancel
-          </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitDisabled || hasNoRecipients}>
-            {isLoading ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending...
-              </>
-            ) : hasNoRecipients ? (
-              "No Recipients"
-            ) : (
-              `Send to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}`
+            {onTestSubmit && (
+              <Collapsible open={testSectionOpen} onOpenChange={setTestSectionOpen}>
+                <CollapsibleTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full justify-between"
+                  >
+                    <span>Test Mode</span>
+                    {testSectionOpen ? (
+                      <ChevronUp className="h-4 w-4" />
+                    ) : (
+                      <ChevronDown className="h-4 w-4" />
+                    )}
+                  </Button>
+                </CollapsibleTrigger>
+                <CollapsibleContent className="mt-3 space-y-3">
+                  <div className="space-y-2">
+                    <Label htmlFor="testEmails">Test Email Addresses</Label>
+                    <Textarea
+                      id="testEmails"
+                      placeholder="Enter comma-separated emails (e.g., test1@example.com, test2@example.com)"
+                      value={testEmails}
+                      onChange={(e) => setTestEmails(e.target.value)}
+                      disabled={isTestLoading}
+                      rows={3}
+                      className="resize-none"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Emails will be sent to these addresses for testing. Submissions will NOT be marked as invited.
+                    </p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={handleTestSubmit}
+                    disabled={isTestDisabled}
+                    className="w-full"
+                  >
+                    {isTestLoading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Sending Test...
+                      </>
+                    ) : (
+                      <>
+                        <Mail className="mr-2 h-4 w-4" />
+                        Send Test ({emailList.length} email{emailList.length !== 1 ? "s" : ""})
+                      </>
+                    )}
+                  </Button>
+                </CollapsibleContent>
+              </Collapsible>
             )}
-          </Button>
-        </DialogFooter>
+
+            <div className="flex justify-end gap-2 mt-auto pt-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => handleOpenChange(false)}
+                disabled={isLoading || isTestLoading}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSubmit} disabled={isSubmitDisabled || hasNoRecipients}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : hasNoRecipients ? (
+                  "No Recipients"
+                ) : (
+                  `Send to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}`
+                )}
+              </Button>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
