@@ -35,12 +35,14 @@ interface SendAcceptanceDialogProps {
 function sanitizeHtml(html: string): string {
   const doc = new DOMParser().parseFromString(html, "text/html");
   doc.querySelectorAll("script").forEach((el) => el.remove());
-  doc.querySelectorAll("[onclick], [onerror], [onload], [onmouseover]").forEach((el) => {
-    el.removeAttribute("onclick");
-    el.removeAttribute("onerror");
-    el.removeAttribute("onload");
-    el.removeAttribute("onmouseover");
-  });
+  doc
+    .querySelectorAll("[onclick], [onerror], [onload], [onmouseover]")
+    .forEach((el) => {
+      el.removeAttribute("onclick");
+      el.removeAttribute("onerror");
+      el.removeAttribute("onload");
+      el.removeAttribute("onmouseover");
+    });
   return doc.body.innerHTML;
 }
 
@@ -52,29 +54,31 @@ export function SendAcceptanceDialog({
   isLoading = false,
 }: SendAcceptanceDialogProps) {
   const [subject, setSubject] = useState("");
+  const [templateHtml, setTemplateHtml] = useState("");
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [recipientsOpen, setRecipientsOpen] = useState(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
   const [dialogKey, setDialogKey] = useState(0);
 
   useEffect(() => {
+    async function loadTemplate() {
+      try {
+        const res = await fetch("/acceptance-template.html");
+        if (!res.ok) throw new Error("Failed to load template");
+        const html = await res.text();
+        setTemplateHtml(html);
+        setTemplateLoaded(true);
+        setTemplateError(null);
+      } catch (err) {
+        setTemplateError(
+          err instanceof Error ? err.message : "Failed to load template",
+        );
+      }
+    }
+
     if (open && !templateLoaded) {
-      fetch("/acceptance-template.html")
-        .then((res) => {
-          if (!res.ok) throw new Error("Failed to load template");
-          return res.text();
-        })
-        .then((html) => {
-          if (contentRef.current) {
-            contentRef.current.innerHTML = html;
-          }
-          setTemplateLoaded(true);
-          setTemplateError(null);
-        })
-        .catch((err) => {
-          setTemplateError(err.message);
-        });
+      loadTemplate();
     }
   }, [open, templateLoaded]);
 
@@ -83,20 +87,21 @@ export function SendAcceptanceDialog({
       if (isLoading && !newOpen) return;
       if (!newOpen) {
         setSubject("");
+        setTemplateHtml("");
         setTemplateLoaded(false);
         setRecipientsOpen(false);
         setDialogKey((prev) => prev + 1);
       }
       onOpenChange(newOpen);
     },
-    [isLoading, onOpenChange]
+    [isLoading, onOpenChange],
   );
 
   const handleSubmit = async () => {
     if (!subject.trim()) return;
-    if (!contentRef.current) return;
+    if (!iframeRef.current?.contentDocument?.body) return;
 
-    const rawHtml = contentRef.current.innerHTML;
+    const rawHtml = iframeRef.current.contentDocument.body.innerHTML;
     const cleanHtml = sanitizeHtml(rawHtml);
 
     await onSubmit(subject.trim(), cleanHtml);
@@ -107,19 +112,27 @@ export function SendAcceptanceDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent key={dialogKey} className="max-w-5xl max-h-[90vh] overflow-y-auto">
+      <DialogContent
+        key={dialogKey}
+        className="max-w-5xl max-h-[90vh] overflow-y-auto"
+      >
         <DialogHeader>
           <DialogTitle>Send Acceptance Emails</DialogTitle>
           <DialogDescription>
             Send acceptance emails to {recipientCount} recipient
-            {recipientCount !== 1 ? "s" : ""}. Edit the email template below before sending.
+            {recipientCount !== 1 ? "s" : ""}. Edit the email template below
+            before sending.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4">
           <Collapsible open={recipientsOpen} onOpenChange={setRecipientsOpen}>
             <CollapsibleTrigger asChild>
-              <Button variant="outline" size="sm" className="w-full justify-between">
+              <Button
+                variant="outline"
+                size="sm"
+                className="w-full justify-between"
+              >
                 <span>Recipients ({recipientCount})</span>
                 {recipientsOpen ? (
                   <ChevronUp className="h-4 w-4" />
@@ -141,7 +154,9 @@ export function SendAcceptanceDialog({
                     {recipients.map((recipient, index) => (
                       <tr key={index} className="border-t">
                         <td className="py-2 px-3">{recipient.name}</td>
-                        <td className="py-2 px-3 text-muted-foreground">{recipient.email}</td>
+                        <td className="py-2 px-3 text-muted-foreground">
+                          {recipient.email}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -168,23 +183,26 @@ export function SendAcceptanceDialog({
                 {templateError}
               </div>
             ) : (
-              <div
-                className="border rounded-md overflow-auto"
-                style={{
-                  width: "375px",
-                  height: "667px",
-                  maxWidth: "100%",
-                }}
-              >
-                <div
-                  ref={contentRef}
-                  contentEditable
-                  suppressContentEditableWarning
-                  className="outline-none"
+              <div className="flex justify-center">
+                <iframe
+                  ref={iframeRef}
+                  srcDoc={`
+                    <!DOCTYPE html>
+                    <html dir="rtl" lang="ar">
+                    <head>
+                      <meta charset="UTF-8">
+                      <link rel="preload" as="image" href="https://gdg-q.com/gdg.png" />
+                      <style>
+                        body { padding: 10px; min-height: 100%; direction: rtl; margin: 0; background-color: #f1f5f; }
+                      </style>
+                    </head>
+                    <body contenteditable="true" style="background-color:#f6f7f8;margin:0">${templateHtml}</body>
+                    </html>`
+                  }
+                  className="border rounded-md"
                   style={{
-                    padding: "40px",
-                    direction: "rtl",
-                    minHeight: "100%",
+                    width: "375px",
+                    height: "667px",
                   }}
                 />
               </div>
@@ -193,7 +211,11 @@ export function SendAcceptanceDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isLoading}>
+          <Button
+            variant="outline"
+            onClick={() => handleOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
