@@ -121,6 +121,30 @@ function formatArabicTime(start: Date, end: Date): string {
   return `${formatTime(start)} حتى ${formatTime(end)}`;
 }
 
+function extractTemplateParts(html: string): { styleContent: string; bodyContent: string } {
+  const styleMatch = html.match(/<style[^>]*>([\s\S]*?)<\/style>/i);
+  const styleContent = styleMatch ? styleMatch[1] : '';
+  
+  const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+  const bodyContent = bodyMatch ? bodyMatch[1] : html;
+  
+  return { styleContent, bodyContent };
+}
+
+function buildEmailHtml(styleContent: string, bodyContent: string): string {
+  return `<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>${styleContent}</style>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f1f5f9; font-family: Roboto, ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Arial, 'Noto Sans Arabic', sans-serif; color: #111827;" dir="rtl">
+${bodyContent}
+</body>
+</html>`;
+}
+
 function replacePlaceholders(html: string, event: EventData): string {
   const start = parseDatetime(event.start_datetime);
   const end = parseDatetime(event.end_datetime);
@@ -153,7 +177,7 @@ function sanitizeHtml(html: string): string {
       el.removeAttribute("onload");
       el.removeAttribute("onmouseover");
     });
-  return doc.body.innerHTML;
+  return doc.documentElement.outerHTML;
 }
 
 export function SendAcceptanceDialog({
@@ -166,7 +190,8 @@ export function SendAcceptanceDialog({
 }: SendAcceptanceDialogProps) {
   const [subject, setSubject] = useState("");
   const [whatsappUrl, setWhatsappUrl] = useState("");
-  const [templateHtml, setTemplateHtml] = useState("");
+  const [templateBody, setTemplateBody] = useState("");
+  const [templateStyles, setTemplateStyles] = useState("");
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [recipientsOpen, setRecipientsOpen] = useState(false);
@@ -183,7 +208,9 @@ export function SendAcceptanceDialog({
         if (event) {
           html = replacePlaceholders(html, event);
         }
-        setTemplateHtml(html);
+        const { styleContent, bodyContent } = extractTemplateParts(html);
+        setTemplateStyles(styleContent);
+        setTemplateBody(bodyContent);
         setTemplateLoaded(true);
         setTemplateError(null);
       } catch (err) {
@@ -213,7 +240,8 @@ export function SendAcceptanceDialog({
       if (!newOpen) {
         setSubject("");
         setWhatsappUrl("");
-        setTemplateHtml("");
+        setTemplateBody("");
+        setTemplateStyles("");
         setTemplateLoaded(false);
         setRecipientsOpen(false);
         setDialogKey((prev) => prev + 1);
@@ -227,11 +255,13 @@ export function SendAcceptanceDialog({
     if (!subject.trim()) return;
     if (!iframeRef.current?.contentDocument?.body) return;
 
-    let rawHtml = iframeRef.current.contentDocument.body.innerHTML;
+    let bodyContent = iframeRef.current.contentDocument.body.innerHTML;
     if (whatsappUrl.trim()) {
-      rawHtml = rawHtml.replace(/\{\{whatsappUrl\}\}/gi, whatsappUrl.trim());
+      bodyContent = bodyContent.replace(/\{\{whatsappUrl\}\}/gi, whatsappUrl.trim());
     }
-    const cleanHtml = sanitizeHtml(rawHtml);
+    
+    const emailHtml = buildEmailHtml(templateStyles, bodyContent);
+    const cleanHtml = sanitizeHtml(emailHtml);
 
     await onSubmit(subject.trim(), cleanHtml);
   };
@@ -321,11 +351,12 @@ export function SendAcceptanceDialog({
                     <head>
                       <meta charset="UTF-8">
                       <link rel="preload" as="image" href="https://gdg-q.com/gdg.png" />
+                      <style>${templateStyles}</style>
                       <style>
-                        body { padding: 10px; min-height: 100%; direction: rtl; margin: 0; background-color: #f1f5f; }
+                        body { padding: 10px; min-height: 100%; direction: rtl; margin: 0; background-color: #f1f5f9; }
                       </style>
                     </head>
-                    <body contenteditable="true" style="background-color:#f6f7f8;margin:0">${templateHtml}</body>
+                    <body contenteditable="true" style="background-color:#f1f5f9;margin:0">${templateBody}</body>
                     </html>`
                   }
                   className="border rounded-md"
