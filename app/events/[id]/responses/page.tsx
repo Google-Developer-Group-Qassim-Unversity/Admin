@@ -615,6 +615,7 @@ export default function EventResponsesPage() {
         recipients={acceptanceRecipients}
         onSubmit={handleSendAcceptance}
         isLoading={sendAcceptanceMutation.isPending}
+        event={event ?? undefined}
       />
     </Card>
   );
