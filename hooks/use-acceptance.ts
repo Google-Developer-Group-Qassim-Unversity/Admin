@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendAcceptanceBlasts } from "@/lib/api";
+import { sendAcceptanceBlasts, sendAcceptanceTestBlasts } from "@/lib/api";
 import { submissionKeys } from "./use-submissions";
 
 export function useSendAcceptance(getToken: () => Promise<string | null>) {
@@ -23,6 +23,26 @@ export function useSendAcceptance(getToken: () => Promise<string | null>) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: submissionKeys.all });
+    },
+  });
+}
+
+export function useSendAcceptanceTest(getToken: () => Promise<string | null>) {
+  return useMutation({
+    mutationFn: async ({
+      subject,
+      htmlContent,
+      emails,
+    }: {
+      subject: string;
+      htmlContent: string;
+      emails: string[];
+    }) => {
+      const result = await sendAcceptanceTestBlasts(subject, htmlContent, emails, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
     },
   });
 }

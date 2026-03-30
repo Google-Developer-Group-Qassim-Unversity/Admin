@@ -12,7 +12,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Loader2, ChevronDown, ChevronUp, Mail } from "lucide-react";
 import {
   Collapsible,
   CollapsibleContent,
@@ -49,7 +50,9 @@ interface SendAcceptanceDialogProps {
   onOpenChange: (open: boolean) => void;
   recipients: Recipient[];
   onSubmit: (subject: string, htmlContent: string) => Promise<void>;
+  onTestSubmit?: (subject: string, htmlContent: string, emails: string[]) => Promise<void>;
   isLoading?: boolean;
+  isTestLoading?: boolean;
   event?: EventData;
 }
 
@@ -185,7 +188,9 @@ export function SendAcceptanceDialog({
   onOpenChange,
   recipients,
   onSubmit,
+  onTestSubmit,
   isLoading = false,
+  isTestLoading = false,
   event,
 }: SendAcceptanceDialogProps) {
   const [subject, setSubject] = useState("");
@@ -195,6 +200,8 @@ export function SendAcceptanceDialog({
   const [templateLoaded, setTemplateLoaded] = useState(false);
   const [templateError, setTemplateError] = useState<string | null>(null);
   const [recipientsOpen, setRecipientsOpen] = useState(false);
+  const [testSectionOpen, setTestSectionOpen] = useState(false);
+  const [testEmails, setTestEmails] = useState("");
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const [dialogKey, setDialogKey] = useState(0);
   const prevEventRef = useRef<EventData | undefined>(undefined);
@@ -244,6 +251,8 @@ export function SendAcceptanceDialog({
         setTemplateStyles("");
         setTemplateLoaded(false);
         setRecipientsOpen(false);
+        setTestSectionOpen(false);
+        setTestEmails("");
         setDialogKey((prev) => prev + 1);
       }
       onOpenChange(newOpen);
@@ -266,8 +275,36 @@ export function SendAcceptanceDialog({
     await onSubmit(subject.trim(), cleanHtml);
   };
 
+  const handleTestSubmit = async () => {
+    if (!subject.trim() || !onTestSubmit) return;
+    if (!iframeRef.current?.contentDocument?.body) return;
+
+    const emailList = testEmails
+      .split(",")
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
+
+    if (emailList.length === 0) return;
+
+    let bodyContent = iframeRef.current.contentDocument.body.innerHTML;
+    if (whatsappUrl.trim()) {
+      bodyContent = bodyContent.replace(/\{\{whatsappUrl\}\}/gi, whatsappUrl.trim());
+    }
+    
+    const emailHtml = buildEmailHtml(templateStyles, bodyContent);
+    const cleanHtml = sanitizeHtml(emailHtml);
+
+    await onTestSubmit(subject.trim(), cleanHtml, emailList);
+  };
+
   const recipientCount = recipients.length;
-  const isSubmitDisabled = !subject.trim() || isLoading || recipientCount === 0;
+  const isSubmitDisabled = !subject.trim() || isLoading;
+  const hasNoRecipients = recipientCount === 0;
+  const emailList = testEmails
+    .split(",")
+    .map((email) => email.trim())
+    .filter((email) => email.length > 0);
+  const isTestDisabled = !subject.trim() || isTestLoading || emailList.length === 0;
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -278,9 +315,13 @@ export function SendAcceptanceDialog({
         <DialogHeader>
           <DialogTitle>Send Acceptance Emails</DialogTitle>
           <DialogDescription>
-            Send acceptance emails to {recipientCount} recipient
-            {recipientCount !== 1 ? "s" : ""}. Edit the email template below
-            before sending.
+            {hasNoRecipients ? (
+              <span className="text-destructive">
+                No recipients available. Accept some submissions first to send acceptance emails.
+              </span>
+            ) : (
+              `Send acceptance emails to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}. Edit the email template below before sending.`
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -380,27 +421,85 @@ export function SendAcceptanceDialog({
                 placeholder="https://chat.whatsapp.com/..."
                 value={whatsappUrl}
                 onChange={(e) => setWhatsappUrl(e.target.value)}
-                disabled={isLoading}
+                disabled={isLoading || isTestLoading}
                 className="pl-10"
               />
             </div>
           </div>
+
+          {onTestSubmit && (
+            <Collapsible open={testSectionOpen} onOpenChange={setTestSectionOpen}>
+              <CollapsibleTrigger asChild>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-full justify-between"
+                >
+                  <span>Test Mode</span>
+                  {testSectionOpen ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="testEmails">Test Email Addresses</Label>
+                  <Textarea
+                    id="testEmails"
+                    placeholder="Enter comma-separated emails (e.g., test1@example.com, test2@example.com)"
+                    value={testEmails}
+                    onChange={(e) => setTestEmails(e.target.value)}
+                    disabled={isTestLoading}
+                    rows={3}
+                    className="resize-none"
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Emails will be sent to these addresses for testing. Submissions will NOT be marked as invited.
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleTestSubmit}
+                  disabled={isTestDisabled}
+                  className="w-full"
+                >
+                  {isTestLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending Test...
+                    </>
+                  ) : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Send Test ({emailList.length} email{emailList.length !== 1 ? "s" : ""})
+                    </>
+                  )}
+                </Button>
+              </CollapsibleContent>
+            </Collapsible>
+          )}
         </div>
 
         <DialogFooter>
           <Button
             variant="outline"
             onClick={() => handleOpenChange(false)}
-            disabled={isLoading}
+            disabled={isLoading || isTestLoading}
           >
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
+          <Button onClick={handleSubmit} disabled={isSubmitDisabled || hasNoRecipients}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Sending...
               </>
+            ) : hasNoRecipients ? (
+              "No Recipients"
             ) : (
               `Send to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}`
             )}

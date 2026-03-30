@@ -8,7 +8,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
-import { useSendAcceptance } from "@/hooks/use-acceptance";
+import { useSendAcceptance, useSendAcceptanceTest } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
 import { useCloseEventResponses } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
@@ -94,6 +94,7 @@ export default function EventResponsesPage() {
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
   const sendAcceptanceMutation = useSendAcceptance(getToken);
+  const sendAcceptanceTestMutation = useSendAcceptanceTest(getToken);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
@@ -360,6 +361,20 @@ export default function EventResponsesPage() {
     }
   };
 
+  const handleSendAcceptanceTest = async (subject: string, htmlContent: string, emails: string[]) => {
+    try {
+      await sendAcceptanceTestMutation.mutateAsync({
+        subject,
+        htmlContent,
+        emails,
+      });
+      toast.success(`Test emails sent to ${emails.length} recipient${emails.length !== 1 ? "s" : ""}`);
+    } catch (error) {
+      console.error("Failed to send test acceptance emails:", error);
+      toast.error(error instanceof Error ? error.message : "Failed to send test acceptance emails");
+    }
+  };
+
   if (!formDataLoading && formData?.formType === 'none') {
     return (
       <Card className="max-w-full mx-auto">
@@ -614,7 +629,9 @@ export default function EventResponsesPage() {
         onOpenChange={setSendAcceptanceDialogOpen}
         recipients={acceptanceRecipients}
         onSubmit={handleSendAcceptance}
+        onTestSubmit={handleSendAcceptanceTest}
         isLoading={sendAcceptanceMutation.isPending}
+        isTestLoading={sendAcceptanceTestMutation.isPending}
         event={event ?? undefined}
       />
     </Card>

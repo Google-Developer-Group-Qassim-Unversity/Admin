@@ -417,3 +417,8 @@ export interface AcceptanceBlastResponse {
   sent_count: number;
   emails: string[];
 }
+
+export interface TestAcceptanceBlastResponse {
+  sent_count: number;
+  emails: string[];
+}

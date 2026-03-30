@@ -37,6 +37,7 @@ import type {
   BackfillMember,
   BackfillResponse,
   AcceptanceBlastResponse,
+  TestAcceptanceBlastResponse,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -577,6 +578,26 @@ export async function sendAcceptanceBlasts(
   const query = params.toString() ? `?${params.toString()}` : "";
   
   return apiFetch<AcceptanceBlastResponse>(`/acceptance/blasts/${eventId}${query}`, {
+    method: "POST",
+    body: htmlContent,
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+    },
+  }, getToken);
+}
+
+export async function sendAcceptanceTestBlasts(
+  subject: string,
+  htmlContent: string,
+  emails: string[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<TestAcceptanceBlastResponse>> {
+  const params = new URLSearchParams();
+  params.append("subject", subject);
+  emails.forEach((email) => params.append("emails", email));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  
+  return apiFetch<TestAcceptanceBlastResponse>(`/acceptance/test${query}`, {
     method: "POST",
     body: htmlContent,
     headers: {
