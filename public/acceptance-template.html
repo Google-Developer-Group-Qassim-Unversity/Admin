@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="supported-color-schemes" content="light dark" />
     <title>رسالة قبول - {{eventName}}</title>
     <style>
       body {
@@ -185,6 +187,19 @@
         font-size: 15px;
         text-align: center;
         gap: 8px;
+      }
+      a.whatsapp-button {
+        color: #ffffff;
+        text-decoration: none;
+      }
+      @media (prefers-color-scheme: dark) {
+        .whatsapp-button {
+          background-color: #334155 !important;
+          color: #ffffff !important;
+        }
+        a.whatsapp-button {
+          color: #ffffff !important;
+        }
       }
       .button-icon {
         display: inline;
