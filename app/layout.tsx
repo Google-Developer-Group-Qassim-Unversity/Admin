@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { QueryProvider } from "@/lib/query-provider";
 import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
+import { config } from "@/lib/config";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -35,7 +36,7 @@ export default function RootLayout({
 }>) {
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={config.clerkPublishableKey}
       dynamic
     >
       <html lang="en" className={figtree.variable} suppressHydrationWarning>

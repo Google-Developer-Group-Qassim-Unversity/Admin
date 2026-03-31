@@ -1,4 +1,5 @@
 import { format } from "date-fns";
+import { config } from "./config";
 import type {
   ApiError,
   ApiResponse,
@@ -56,9 +57,8 @@ export class ApiRequestError extends Error {
   }
 }
 
-// Base API URL - configure this based on your environment
-export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:7001";
-export const UPLOAD_BASE_URL = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE || API_BASE_URL;
+export const API_BASE_URL = config.backendApiUrl;
+export const UPLOAD_BASE_URL = config.uploadSource;
 
 // Type for getting auth token
 type GetTokenFn = () => Promise<string | null>;
@@ -614,9 +614,7 @@ export async function uploadFile(
   file: File,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<UploadResponse>> {
-  const uploadEndpoint = process.env.NEXT_PUBLIC_DEV_UPLOAD_SOURCE || process.env.NEXT_PUBLIC_UPLOAD_SOURCE
-    ? ""
-    : "/upload";
+  const uploadEndpoint = "/upload";
   return apiUpload<UploadResponse>(uploadEndpoint, file, getToken);
 }
 

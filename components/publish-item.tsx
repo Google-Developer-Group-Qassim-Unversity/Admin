@@ -19,6 +19,7 @@ import { useAuth } from '@clerk/nextjs';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
+import { config } from '@/lib/config';
 
 interface PublishItemProps {
   event: Event;
@@ -58,9 +59,8 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
   };
 
   const handleCopyLink = async () => {
-    const eventUrl = `${process.env.NEXT_PUBLIC_MEMBER_APP_URL}/events/${event.id}`;
     try {
-      await navigator.clipboard.writeText(eventUrl);
+      await navigator.clipboard.writeText(`${config.memberAppUrl}/events/${event.id}`);
       toast.success('Event link copied to clipboard!');
     } catch {
       toast.error('Failed to copy link. Please try again.');
@@ -123,7 +123,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <a 
-                  href={`${process.env.NEXT_PUBLIC_MEMBER_APP_URL}/events/${event.id}`}
+                  href={`${config.memberAppUrl}/events/${event.id}`}
                   target="_blank" 
                   rel="noopener noreferrer"
                 >

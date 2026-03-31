@@ -10,6 +10,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { AccessDenied } from "@/components/ui/access-denied";
+import { config } from "@/lib/config";
 
 export default function AccessDeniedPage() {
   const searchParams = useSearchParams();
@@ -28,8 +29,8 @@ export default function AccessDeniedPage() {
     }
   }, [isLoaded, user, router, reason]);
 
-  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const authUrl = config.authFrontendUrl;
+  const appUrl = config.thisAppUrl;
   const redirectParam = appUrl
     ? `?redirect_url=${encodeURIComponent(appUrl)}`
     : "";

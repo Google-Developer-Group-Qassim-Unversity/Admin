@@ -10,6 +10,7 @@ import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEnd
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
+import { config } from "@/lib/config";
 
 export default function EventInfoPage() {
   const { event } = useEventContext();
@@ -27,9 +28,7 @@ export default function EventInfoPage() {
     return null;
   }
 
-  const imageSource =
-    process.env.NEXT_PUBLIC_DEV_IMAGE_SOURCE ||
-    process.env.NEXT_PUBLIC_IMAGE_SOURCE;
+  const imageSource = config.imageSource;
   const imageUrl =
     event.image_url && imageSource ? `${imageSource}${event.image_url}` : null;
 

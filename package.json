@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "infisical run --env=dev --path=/admin-frontend -- ./node_modules/.bin/dotenv -e .env.local -o -- next dev",
     "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "infisical run --env=dev --path=/admin-frontend -- ./node_modules/.bin/dotenv -e .env.local -o -- next start",
+    "lint": "eslint",
+    "export-env": "infisical export --env=dev --path=/admin-frontend --format=dotenv --output-file=./.env.local"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
@@ -46,9 +47,13 @@
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
     "eslint": "^9",
     "eslint-config-next": "16.1.0",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "workspaces": [
+    "."
+  ]
 }

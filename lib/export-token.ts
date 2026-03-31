@@ -24,11 +24,3 @@ export interface VerifyResult {
   signature?: string;
   error?: string;
 }
-
-export function getSheetProcessorExportUrl(): string | null {
-  const baseUrl = process.env.NEXT_PUBLIC_SHEET_PROCESSOR;
-  if (!baseUrl) return null;
-
-  const normalized = baseUrl.endsWith("/") ? baseUrl.slice(0, -1) : baseUrl;
-  return `${normalized}`;
-}

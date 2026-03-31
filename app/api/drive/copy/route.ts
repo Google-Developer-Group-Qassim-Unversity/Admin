@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { copyDriveFile, deleteDriveFile, registerFormWatch, getOAuth2Client } from '@/lib/google-api';
 import { updateForm, getFormByEventId } from '@/lib/api';
+import { serverConfig } from '@/lib/config-server';
 
 export async function POST(request: NextRequest) {
   const { getToken } = await auth();
@@ -11,11 +12,7 @@ export async function POST(request: NextRequest) {
     const eventId = body.eventId ? parseInt(body.eventId, 10) : null;
     const refreshToken = body.refreshToken; // Optional: if provided, use this instead of cookies
     
-    const templateFileId = process.env.TEMPLATE_FROM_FILE_ID;
-    
-    if (!templateFileId) {
-      return NextResponse.json({ error: 'FILE_ID not configured' }, { status: 400 });
-    }
+    const templateFileId = serverConfig.templateFormFileId;
     
     if (!eventId) {
       return NextResponse.json({ error: 'eventId is required' }, { status: 400 });
