@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher, clerkClient } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 import { ROUTE_PERMISSIONS, getRoleFromMetadata, type Role } from '@/lib/role-based-access';
+import { config as envConfig } from '@/lib/config';
 
 const isPublicRoute = createRouteMatcher([
   '/access-denied(.*)',
@@ -21,15 +22,7 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   if (!userId) {
-    const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL;
-    
-    if (!authUrl || !appUrl) {
-      console.error('Missing NEXT_PUBLIC_AUTH_URL or NEXT_PUBLIC_APP_URL environment variables');
-      return NextResponse.redirect(new URL('/access-denied?reason=config', req.url));
-    }
-    
-    const signInUrl = `${authUrl}/sign-in?redirect_url=${encodeURIComponent(appUrl + req.nextUrl.pathname)}`;
+    const signInUrl = `${envConfig.authFrontendUrl}/sign-in?redirect_url=${encodeURIComponent(envConfig.thisAppUrl + req.nextUrl.pathname)}`;
     return NextResponse.redirect(signInUrl);
   }
 

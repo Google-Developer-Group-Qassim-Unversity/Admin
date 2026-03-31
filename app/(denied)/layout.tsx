@@ -5,6 +5,7 @@ import "../globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { config } from "@/lib/config";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -30,7 +31,7 @@ export default function DeniedLayout({
 }>) {
   return (
     <ClerkProvider
-      publishableKey={process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      publishableKey={config.clerkPublishableKey}
       dynamic
     >
       <html lang="en" className={figtree.variable} suppressHydrationWarning>

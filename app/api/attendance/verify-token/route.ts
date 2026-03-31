@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin } from '@/lib/auth';
+import { serverConfig } from '@/lib/config-server';
 import * as crypto from 'crypto';
-
-const SHEET_PROCESSOR_EXPORT_SECRET = process.env.SHEET_PROCESSOR_EXPORT_SECRET;
 
 interface ExportTokenRow {
   name: string;
@@ -95,14 +94,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ valid: false, error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!SHEET_PROCESSOR_EXPORT_SECRET) {
-    console.error('SHEET_PROCESSOR_EXPORT_SECRET environment variable is not set');
-    return NextResponse.json(
-      { valid: false, error: 'Server configuration error' },
-      { status: 500 }
-    );
-  }
-
   try {
     const body = await request.json();
     const { token } = body;
@@ -114,7 +105,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const result = verifyExportToken(token.trim(), SHEET_PROCESSOR_EXPORT_SECRET);
+    const result = verifyExportToken(token.trim(), serverConfig.sheetProcessorJwtSecret);
 
     if (!result.valid) {
       return NextResponse.json({ valid: false, error: result.error });

@@ -34,9 +34,9 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { config } from "@/lib/config";
 
 import {
-  getSheetProcessorExportUrl,
   type ExportTokenRow,
   type ExportTokenPayload,
 } from "@/lib/export-token";
@@ -76,13 +76,17 @@ export function BackfillTab({
   const [token, setToken] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [verifyError, setVerifyError] = React.useState<string | null>(null);
-  const [verifiedRows, setVerifiedRows] = React.useState<ExportTokenRow[] | null>(null);
-  const [metadata, setMetadata] = React.useState<ExportTokenPayload["metadata"] | null>(null);
+  const [verifiedRows, setVerifiedRows] = React.useState<
+    ExportTokenRow[] | null
+  >(null);
+  const [metadata, setMetadata] = React.useState<
+    ExportTokenPayload["metadata"] | null
+  >(null);
   const [signature, setSignature] = React.useState<string | null>(null);
-  const [summaryDialog, setSummaryDialog] = React.useState<BackfillSummary | null>(null);
+  const [summaryDialog, setSummaryDialog] =
+    React.useState<BackfillSummary | null>(null);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const exportUrl = getSheetProcessorExportUrl();
   const isValidData = metadata?.valid === true;
 
   const handleVerify = async () => {
@@ -125,7 +129,9 @@ export function BackfillTab({
         toast.success(`Verified ${result.data?.length || 0} members`);
       }
     } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+      setVerifyError(
+        err instanceof Error ? err.message : "Verification failed",
+      );
       setVerifiedRows(null);
       setMetadata(null);
       setSignature(null);
@@ -203,21 +209,19 @@ export function BackfillTab({
   return (
     <div className="space-y-4 px-1 pb-1">
       <p className="text-sm text-muted-foreground">
-        Import attendance data from Sheet Processor. Get your export token from the link below,
-        then paste it here to verify and submit.
+        Import attendance data from Sheet Processor. Get your export token from
+        the link below, then paste it here to verify and submit.
       </p>
 
-      {exportUrl && (
-        <a
-          href={exportUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
-        >
-          Get Export Token
-          <ExternalLink className="h-3.5 w-3.5" />
-        </a>
-      )}
+      <a
+        href={config.sheetProcessorUrl}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+      >
+        Get Export Token
+        <ExternalLink className="h-3.5 w-3.5" />
+      </a>
 
       <div className="space-y-2">
         <Label htmlFor="token">Export Token</Label>
@@ -265,18 +269,29 @@ export function BackfillTab({
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Row Count</span>
-                  <span className="font-medium">{metadata?.row_count ?? "-"}</span>
+                  <span className="font-medium">
+                    {metadata?.row_count ?? "-"}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Valid</span>
-                  <Badge className={isValidData ? "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400" : ""} variant={isValidData ? "outline" : "destructive"}>
+                  <Badge
+                    className={
+                      isValidData
+                        ? "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                        : ""
+                    }
+                    variant={isValidData ? "outline" : "destructive"}
+                  >
                     {isValidData ? "Yes" : "No"}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">Validated At</span>
                   <span className="font-medium">
-                    {metadata?.validated_at ? new Date(metadata.validated_at).toLocaleString() : "-"}
+                    {metadata?.validated_at
+                      ? new Date(metadata.validated_at).toLocaleString()
+                      : "-"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
@@ -286,7 +301,9 @@ export function BackfillTab({
               </div>
               {signature && (
                 <div className="pt-2 border-t">
-                  <div className="text-muted-foreground text-sm mb-1">Signature</div>
+                  <div className="text-muted-foreground text-sm mb-1">
+                    Signature
+                  </div>
                   <div className="font-mono text-xs text-muted-foreground break-all">
                     {signature}
                   </div>
@@ -299,7 +316,8 @@ export function BackfillTab({
             <Alert variant="destructive">
               <AlertTitle>Invalid Data</AlertTitle>
               <AlertDescription>
-                Token data is not valid. Go back to Sheet Processor and make sure all rows are valid.
+                Token data is not valid. Go back to Sheet Processor and make
+                sure all rows are valid.
               </AlertDescription>
             </Alert>
           )}
@@ -308,7 +326,10 @@ export function BackfillTab({
             <>
               <Separator />
               <div className="space-y-2">
-                <Label>Preview ({verifiedRows.length} member{verifiedRows.length !== 1 ? "s" : ""})</Label>
+                <Label>
+                  Preview ({verifiedRows.length} member
+                  {verifiedRows.length !== 1 ? "s" : ""})
+                </Label>
                 <Card className="p-0 overflow-hidden">
                   <ScrollArea className="h-48">
                     <Table>
@@ -323,7 +344,9 @@ export function BackfillTab({
                       <TableBody>
                         {verifiedRows.slice(0, 50).map((row, idx) => (
                           <TableRow key={idx}>
-                            <TableCell className="font-medium">{row.name}</TableCell>
+                            <TableCell className="font-medium">
+                              {row.name}
+                            </TableCell>
                             <TableCell>{row["university id"]}</TableCell>
                             <TableCell>{row.email}</TableCell>
                             <TableCell>{row.gender}</TableCell>
@@ -331,7 +354,10 @@ export function BackfillTab({
                         ))}
                         {verifiedRows.length > 50 && (
                           <TableRow>
-                            <TableCell colSpan={4} className="text-center text-muted-foreground">
+                            <TableCell
+                              colSpan={4}
+                              className="text-center text-muted-foreground"
+                            >
                               ... and {verifiedRows.length - 50} more
                             </TableCell>
                           </TableRow>
@@ -353,18 +379,24 @@ export function BackfillTab({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {Array.from({ length: dayCount }, (_, i) => i + 1).map((day) => (
-                    <SelectItem key={day} value={String(day)}>
-                      Day {day}
-                    </SelectItem>
-                  ))}
+                  {Array.from({ length: dayCount }, (_, i) => i + 1).map(
+                    (day) => (
+                      <SelectItem key={day} value={String(day)}>
+                        Day {day}
+                      </SelectItem>
+                    ),
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             <div className="flex-1" />
 
-            <Button variant="outline" onClick={handleReset} disabled={isSubmitting}>
+            <Button
+              variant="outline"
+              onClick={handleReset}
+              disabled={isSubmitting}
+            >
               Reset
             </Button>
 
@@ -378,7 +410,9 @@ export function BackfillTab({
                 ) : (
                   <>
                     <Upload className="mr-2 h-4 w-4" />
-                    Backfill {verifiedRows?.length ?? 0} Member{verifiedRows?.length !== 1 ? "s" : ""} for Day {selectedDay}
+                    Backfill {verifiedRows?.length ?? 0} Member
+                    {verifiedRows?.length !== 1 ? "s" : ""} for Day{" "}
+                    {selectedDay}
                   </>
                 )}
               </Button>
@@ -387,7 +421,10 @@ export function BackfillTab({
         </>
       )}
 
-      <Dialog open={!!summaryDialog} onOpenChange={() => summaryDialog && handleCloseSummary()}>
+      <Dialog
+        open={!!summaryDialog}
+        onOpenChange={() => summaryDialog && handleCloseSummary()}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Backfill Complete</DialogTitle>
@@ -403,14 +440,18 @@ export function BackfillTab({
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Created</span>
+                    <span className="text-sm text-muted-foreground">
+                      Created
+                    </span>
                     <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">Found</span>
-                    <span className="font-medium">{summaryDialog?.existing_count ?? 0}</span>
+                    <span className="font-medium">
+                      {summaryDialog?.existing_count ?? 0}
+                    </span>
                   </div>
                 </div>
               </CardContent>
@@ -422,13 +463,17 @@ export function BackfillTab({
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Marked</span>
+                    <span className="text-sm text-muted-foreground">
+                      Marked
+                    </span>
                     <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
                       {summaryDialog?.marked_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Skipped (already marked)</span>
+                    <span className="text-sm text-muted-foreground">
+                      Skipped (already marked)
+                    </span>
                     <Badge className="bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
                       {summaryDialog?.already_attended_count ?? 0}
                     </Badge>
@@ -439,7 +484,9 @@ export function BackfillTab({
             <div className="flex justify-between items-center p-3 bg-muted rounded-md">
               <span className="text-sm text-muted-foreground">Date</span>
               <span className="font-medium text-sm">
-                {summaryDialog ? formatDate(summaryDialog.attendance_date) : "-"}
+                {summaryDialog
+                  ? formatDate(summaryDialog.attendance_date)
+                  : "-"}
               </span>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LogIn, UserPlus } from "lucide-react";
+import { config } from "@/lib/config";
 
 export function AuthButton() {
   const { isLoaded, isSignedIn } = useUser();
@@ -27,8 +28,8 @@ export function AuthButton() {
   }
 
   // Not signed in - show sign up and log in buttons
-  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL;
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const authUrl = config.authFrontendUrl;
+  const appUrl = config.thisAppUrl;
   const redirectParam = appUrl
     ? `?redirect_url=${encodeURIComponent(appUrl)}`
     : "";

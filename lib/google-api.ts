@@ -1,14 +1,15 @@
 import { google, Auth } from 'googleapis';
 import { cookies } from 'next/headers';
 import { getFormByEventId } from '@/lib/api';
+import { serverConfig } from '@/lib/config-server';
 
 type Credentials = Auth.Credentials;
 
 export function getOAuth2Client() {
   return new google.auth.OAuth2(
-    process.env.GOOGLE_CLIENT_ID,
-    process.env.GOOGLE_CLIENT_SECRET,
-    process.env.GOOGLE_REDIRECT_DEV_URL || process.env.GOOGLE_REDIRECT_URL
+    serverConfig.googleClientId,
+    serverConfig.googleClientSecret,
+    serverConfig.googleRedirectUrl
   );
 }
 
@@ -165,11 +166,7 @@ export async function registerFormWatch(formId: string, eventId?: number, provid
     throw new Error('Not authenticated');
   }
 
-  const topicName = process.env.GOOGLE_FORMS_TOPIC_NAME;
-  
-  if (!topicName) {
-    throw new Error('GOOGLE_FORMS_TOPIC_NAME not configured');
-  }
+  const topicName = serverConfig.googleFormsTopicName;
 
   const forms = google.forms({ version: 'v1', auth: oauth2Client });
   

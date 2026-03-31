@@ -17,6 +17,7 @@ import {
   FileUploadList,
 } from "@/components/ui/file-upload";
 import { uploadFile, shouldContactSupport } from "@/lib/api";
+import { config } from "@/lib/config";
 
 interface EventImageUploadProps {
   onChange: (url: string | null) => void;
@@ -32,9 +33,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
   const [isUploading, setIsUploading] = React.useState(false);
 
   // Construct full image URL for display
-  const imageSource =
-    process.env.NEXT_PUBLIC_DEV_IMAGE_SOURCE ||
-    process.env.NEXT_PUBLIC_IMAGE_SOURCE;
+  const imageSource = config.imageSource;
   const displayImageUrl = existingImageUrl && imageSource ? `${imageSource}${existingImageUrl}` : null;
 
   const handleFileUpload = async (files: File[]) => {

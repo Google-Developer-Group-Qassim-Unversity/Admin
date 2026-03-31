@@ -3,6 +3,7 @@ import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { getOAuth2Client, setTokensInCookies, copyDriveFile, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
 import { createForm, getFormByEventId, updateForm } from '@/lib/api';
+import { serverConfig } from '@/lib/config-server';
 
 export async function GET(request: NextRequest) {
   const { getToken } = await auth();
@@ -29,12 +30,7 @@ export async function GET(request: NextRequest) {
     const eventId = state ? parseInt(state, 10) : null;
     
     if (eventId && tokens.refresh_token) {
-      const templateFileId = process.env.TEMPLATE_FROM_FILE_ID;
-      
-      if (!templateFileId) {
-        console.error('TEMPLATE_FROM_FILE_ID not configured');
-        return NextResponse.redirect(new URL(`/events/${eventId}?error=config_error`, request.url));
-      }
+      const templateFileId = serverConfig.templateFormFileId;
       
       try {
         // Step 1: Check if form already exists for this event
