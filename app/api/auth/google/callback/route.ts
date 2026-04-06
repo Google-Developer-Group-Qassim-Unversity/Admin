@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { getOAuth2Client, setTokensInCookies, copyDriveFile, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
-import { createForm, getFormByEventId, updateForm } from '@/lib/api';
+import { getFormByEventId, updateForm } from '@/lib/api';
 import { serverConfig } from '@/lib/config-server';
 
 export async function GET(request: NextRequest) {
@@ -33,26 +33,14 @@ export async function GET(request: NextRequest) {
       const templateFileId = serverConfig.templateFormFileId;
       
       try {
-        // Step 1: Check if form already exists for this event
-        const existingForm = await getFormByEventId(eventId);
-        let formId: number;
+        // Step 1: Get the existing form for this event (it always exists since events auto-create forms)
+        const formResult = await getFormByEventId(eventId);
         
-        if (existingForm.success) {
-          formId = existingForm.data.id;
-        } else {
-          // Create new form with form_type: 'none' as initial state
-          const createResult = await createForm({
-            event_id: eventId,
-            form_type: 'registration',
-            google_form_id: null,
-            google_refresh_token: null,
-          }, getToken);
-          
-          if (!createResult.success) {
-            throw new Error('Failed to create form in backend');
-          }
-          formId = createResult.data.id;
+        if (!formResult.success) {
+          throw new Error('Failed to get form for event');
         }
+        
+        const formId = formResult.data.id;
         
         // Step 2: Copy the form template
         const copyResult = await copyDriveFile(templateFileId, eventId);
