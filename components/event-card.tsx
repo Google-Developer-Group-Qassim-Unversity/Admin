@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import { MapPin, Globe } from "lucide-react";
-import { config } from "@/lib/config";
 
 interface EventCardProps {
   event: Event;
@@ -30,11 +29,7 @@ export function EventCard({ event }: EventCardProps) {
   // Get location icon based on location type
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
 
-  // Construct full image URL from environment variable and filename
-  const imageSource = config.imageSource;
-  const imageUrl = event.image_url && imageSource
-    ? `${imageSource}${event.image_url}`
-    : null;
+  const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
 
   // Get status badge variant
   const getStatusVariant = (status: Event["status"]) => {

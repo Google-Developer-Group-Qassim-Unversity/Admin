@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import { MapPin, Globe, Trophy } from "lucide-react";
-import { config } from "@/lib/config";
 
 interface FullEventPointsCardProps {
   event: Event;
@@ -29,10 +28,7 @@ export function FullEventPointsCard({ event }: FullEventPointsCardProps) {
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
 
-  const imageSource = config.imageSource;
-  const imageUrl = event.image_url && imageSource
-    ? `${imageSource}${event.image_url}`
-    : null;
+  const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
 
   const getStatusVariant = (status: Event["status"]) => {
     switch (status) {

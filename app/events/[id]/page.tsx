@@ -10,7 +10,6 @@ import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEnd
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
-import { config } from "@/lib/config";
 
 export default function EventInfoPage() {
   const { event } = useEventContext();
@@ -28,9 +27,7 @@ export default function EventInfoPage() {
     return null;
   }
 
-  const imageSource = config.imageSource;
-  const imageUrl =
-    event.image_url && imageSource ? `${imageSource}${event.image_url}` : null;
+  const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
 

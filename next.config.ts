@@ -18,6 +18,10 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '*.albrrak773.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pub-f5984f635d2f4f58ac4cef365a6e4ada.r2.dev'
       }
     ],
     dangerouslyAllowLocalIP: true,
