@@ -46,7 +46,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
     if (result.success) {
       setUploadedFile(file);
       setExistingImageUrl(null); // Clear existing image when new one is uploaded
-      onChange(result.data.file);
+      onChange(result.data.url);
       toast.success("Image uploaded successfully");
     } else {
       onChange(null);

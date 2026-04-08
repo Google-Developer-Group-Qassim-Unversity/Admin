@@ -68,7 +68,7 @@ export interface EventDetails {
 
 // Upload types
 export interface UploadResponse {
-  file: string;
+  url: string;
 }
 
 // API Error types
