@@ -10,7 +10,6 @@ import type {
   EventDetails,
   UploadResponse,
   Form,
-  CreateFormPayload,
   UpdateFormPayload,
   Submission,
   AcceptSubmissionPayload,
@@ -510,16 +509,6 @@ export async function getDepartments(): Promise<ApiResponse<Department[]>> {
 // Forms API
 // =============================================================================
 
-export async function createForm(
-  payload: CreateFormPayload,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Form>> {
-  return apiFetch<Form>("/forms/", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
 export async function getFormByEventId(
   eventId: number
 ): Promise<ApiResponse<Form>> {
@@ -534,15 +523,6 @@ export async function updateForm(
   return apiFetch<Form>(`/forms/${formId}/`, {
     method: "PUT",
     body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function deleteForm(
-  formId: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Form>> {
-  return apiFetch<Form>(`/forms/${formId}/`, {
-    method: "DELETE",
   }, getToken);
 }
 
