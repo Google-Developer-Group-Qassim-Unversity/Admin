@@ -10,7 +10,6 @@ export const config = {
   authFrontendUrl: assertEnv('NEXT_PUBLIC_AUTH_FRONTEND_URL', process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL),
   thisAppUrl: assertEnv('NEXT_PUBLIC_THIS_APP_URL', process.env.NEXT_PUBLIC_THIS_APP_URL),
   memberAppUrl: assertEnv('NEXT_PUBLIC_MEMBER_APP_URL', process.env.NEXT_PUBLIC_MEMBER_APP_URL),
-  imageSource: assertEnv('NEXT_PUBLIC_IMAGE_SOURCE', process.env.NEXT_PUBLIC_IMAGE_SOURCE),
   uploadSource: assertEnv('NEXT_PUBLIC_UPLOAD_SOURCE', process.env.NEXT_PUBLIC_UPLOAD_SOURCE),
   clerkPublishableKey: assertEnv('NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY', process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY),
   sheetProcessorUrl: assertEnv('NEXT_PUBLIC_SHEET_PROCESSOR_FRONTEND_URL', process.env.NEXT_PUBLIC_SHEET_PROCESSOR_FRONTEND_URL),
