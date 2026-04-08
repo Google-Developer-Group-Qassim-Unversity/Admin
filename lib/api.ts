@@ -57,7 +57,6 @@ export class ApiRequestError extends Error {
 }
 
 export const API_BASE_URL = config.backendApiUrl;
-export const UPLOAD_BASE_URL = config.uploadSource;
 
 // Type for getting auth token
 type GetTokenFn = () => Promise<string | null>;
@@ -148,7 +147,7 @@ async function apiUpload<T>(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<T>> {
   try {
-    const url = `${UPLOAD_BASE_URL}${endpoint}`;
+    const url = `${config.uploadSource}`;
     const formData = new FormData();
     formData.append("file", file);
 
