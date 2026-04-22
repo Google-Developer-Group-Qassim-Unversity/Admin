@@ -349,7 +349,7 @@ export interface UpdateCustomMemberPointDetailPayload {
 
 /** A single member's attendance record returned by GET /events/{id}/attendance */
 export interface AttendanceRecord {
-  Members: {
+  Member: {
     id: number;
     gender: Gender;
     uni_college: string;

@@ -113,7 +113,7 @@ export function ManageAttendanceDialog({
       });
 
       if (hasAttendanceOnDay) {
-        membersForDay.push(record.Members);
+        membersForDay.push(record.Member);
       }
     }
 
