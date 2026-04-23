@@ -141,6 +141,16 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   const eligibleCount = data?.eligible_count ?? 0;
   const sentCount = data?.sent_count ?? 0;
 
+  const sentEmails = React.useMemo(
+    () => new Set(logs.map((l) => l.member_email)),
+    [logs],
+  );
+  const notSentMembers = React.useMemo(
+    () => eligibleMembers.filter((m) => !sentEmails.has(m.email)),
+    [eligibleMembers, sentEmails],
+  );
+  const notSentCount = notSentMembers.length;
+
   return (
     <div className="space-y-3 px-1 pb-1">
       <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -164,7 +174,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           }`}
         >
           <Users className="h-3.5 w-3.5" />
-          Not Sent {eligibleCount > 0 ? `(${eligibleCount})` : ""}
+          Not Sent ({notSentCount})
         </button>
       </div>
 
@@ -227,7 +237,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
             <span className="text-sm text-muted-foreground">
               {isLoading
                 ? "Loading..."
-                : `${eligibleCount} eligible recipient${eligibleCount !== 1 ? "s" : ""}`}
+                : `${notSentCount} eligible recipient${notSentCount !== 1 ? "s" : ""}`}
             </span>
             <Button
               onClick={handleSend}
@@ -246,7 +256,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
               ) : (
                 <>
                   <Mail className="mr-2 h-4 w-4" />
-                  Send Certificates ({eligibleCount})
+                  Send Certificates ({notSentCount})
                 </>
               )}
             </Button>
@@ -258,13 +268,13 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
-              ) : eligibleMembers.length === 0 ? (
+              ) : notSentMembers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground">
                   All attendees have received certificates.
                 </div>
               ) : (
                 <div className="divide-y">
-                  {eligibleMembers.map((member) => (
+                  {notSentMembers.map((member) => (
                     <div key={member.id} className="flex items-start gap-3 px-3 py-2.5">
                       <Users className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div className="min-w-0">

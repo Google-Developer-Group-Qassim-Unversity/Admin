@@ -51,7 +51,7 @@ export function CloseEventModal({
         <DialogHeader>
           <DialogTitle>Close Event</DialogTitle>
           <DialogDescription>
-            Are you sure you want to close this event? This action cannot be undone.
+            Are you sure you want to close this event? You can re-open it later.
           </DialogDescription>
         </DialogHeader>
 

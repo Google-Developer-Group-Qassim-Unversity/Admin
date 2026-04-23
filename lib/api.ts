@@ -567,7 +567,7 @@ export async function sendAcceptanceBlasts(
   params.append("subject", subject);
   const query = params.toString() ? `?${params.toString()}` : "";
   
-  return apiFetch<AcceptanceBlastResponse>(`/acceptance/blasts/${eventId}${query}`, {
+  return apiFetch<AcceptanceBlastResponse>(`/emails/acceptance/blasts/${eventId}${query}`, {
     method: "POST",
     body: htmlContent,
     headers: {
@@ -587,7 +587,7 @@ export async function sendAcceptanceTestBlasts(
   emails.forEach((email) => params.append("emails", email));
   const query = params.toString() ? `?${params.toString()}` : "";
   
-  return apiFetch<TestAcceptanceBlastResponse>(`/acceptance/test${query}`, {
+  return apiFetch<TestAcceptanceBlastResponse>(`/emails/acceptance/test${query}`, {
     method: "POST",
     body: htmlContent,
     headers: {
