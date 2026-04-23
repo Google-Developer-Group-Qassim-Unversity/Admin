@@ -1,6 +1,6 @@
 import type { Member } from "@/lib/api-types";
 
-export type Tab = "mark" | "remove" | "copy" | "backfill";
+export type Tab = "mark" | "remove" | "copy" | "backfill" | "emails";
 
 export const DISPLAY_LIMIT = 50;
 
@@ -53,4 +53,24 @@ export interface BackfillSummary {
   marked_count: number;
   already_attended_count: number;
   attendance_date: string;
+}
+
+export interface CertificateEmailLog {
+  id: number;
+  member_name: string;
+  member_email: string;
+  sent_at: string;
+  from_address: string;
+}
+
+export interface EligibleMember {
+  id: number;
+  name: string;
+  email: string;
+}
+
+export interface CertificateEligibility {
+  eligible_count: number;
+  eligible_members: EligibleMember[];
+  sent_count: number;
 }

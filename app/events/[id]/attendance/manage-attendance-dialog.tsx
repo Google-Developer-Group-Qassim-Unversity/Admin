@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { UserPlus, UserMinus, Copy, Upload, Loader2 } from "lucide-react";
+import { UserPlus, UserMinus, Copy, Upload, Loader2, Mail } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
@@ -26,6 +26,7 @@ import { CopyTab } from "./copy-tab";
 import { BackfillTab } from "./backfill-tab";
 import { DaySelectDialog } from "./day-select-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
+import { CertificateTab } from "./certificate-tab";
 
 interface ManageAttendanceDialogProps {
   open: boolean;
@@ -171,7 +172,7 @@ export function ManageAttendanceDialog({
     const result = await markMutation.mutateAsync({
       eventId,
       memberIds: ids,
-      days: isMultiDay ? days : undefined,
+      days: isMultiDay ? days : [1],
     });
     toast.success(
       `Marked attendance for ${result.success} member${result.success !== 1 ? "s" : ""}`
@@ -197,7 +198,7 @@ export function ManageAttendanceDialog({
         const result = await removeMutation.mutateAsync({
           eventId,
           memberIds: ids,
-          day: isMultiDay ? dayInt : undefined,
+          day: isMultiDay ? dayInt : 1,
         });
         toast.success(
           `Removed attendance for ${result.success} member${result.success !== 1 ? "s" : ""}`
@@ -264,12 +265,13 @@ export function ManageAttendanceDialog({
     { id: "remove", label: "Remove", icon: <UserMinus className="h-4 w-4" /> },
     { id: "copy", label: "Copy", icon: <Copy className="h-4 w-4" /> },
     { id: "backfill", label: "Backfill", icon: <Upload className="h-4 w-4" /> },
+    { id: "emails", label: "Emails", icon: <Mail className="h-4 w-4" /> },
   ];
 
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl! max-h-[90vh] flex flex-col">
+        <DialogContent className="max-w-3xl! h-[80vh] flex flex-col">
           <DialogHeader>
             <DialogTitle>Manage Attendance</DialogTitle>
             <DialogDescription>
@@ -357,9 +359,16 @@ export function ManageAttendanceDialog({
                 getToken={getToken}
               />
             )}
+
+            {activeTab === "emails" && (
+              <CertificateTab
+                eventId={eventId}
+                getToken={getToken}
+              />
+            )}
           </div>
 
-          {activeTab !== "backfill" && (
+          {activeTab !== "backfill" && activeTab !== "emails" && (
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                 Cancel

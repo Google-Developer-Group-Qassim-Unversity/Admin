@@ -316,9 +316,20 @@ export async function sendEventCertificates(
   event_id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/certificates/${event_id}`, {
+  return apiFetch<void>(`/emails/${event_id}`, {
     method: "POST",
   }, getToken);
+}
+
+export async function getCertificateEligibleCount(
+  eventId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>> {
+  return apiFetch<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>(
+    `/emails/certificate-event/eligible-count/${eventId}`,
+    {},
+    getToken
+  );
 }
 
 export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiResponse<Event[]>> {
@@ -337,7 +348,7 @@ export async function sendManualCertificates(
   members: CertificateMember[],
   getToken?: GetTokenFn
 ): Promise<ApiResponse<CertificateJobResponse>> {
-  return apiFetch<CertificateJobResponse>(`/certificates/manual/${eventId}`, {
+  return apiFetch<CertificateJobResponse>(`/emails/manual/${eventId}`, {
     method: "POST",
     body: JSON.stringify({ members }),
   }, getToken);
