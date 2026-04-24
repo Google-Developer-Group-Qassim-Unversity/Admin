@@ -38,6 +38,9 @@ import type {
   BackfillResponse,
   AcceptanceBlastResponse,
   TestAcceptanceBlastResponse,
+  EnrichedEmailLog,
+  EmailDashboardStats,
+  EmailLogFilters,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -838,6 +841,46 @@ export async function deleteCustomMemberPointDetail(
     },
     getToken
   );
+}
+
+// =============================================================================
+// Email Logs & Dashboard API
+// =============================================================================
+
+export async function getEmailLogsEnriched(
+  filters: EmailLogFilters,
+  offset: number = 0,
+  limit: number = 100,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EnrichedEmailLog[]>> {
+  const params = new URLSearchParams();
+  if (filters.email_type) params.append("email_type", filters.email_type);
+  if (filters.event_id) params.append("event_id", String(filters.event_id));
+  if (filters.member_id) params.append("member_id", String(filters.member_id));
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
+  params.append("offset", String(offset));
+  params.append("limit", String(limit));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<EnrichedEmailLog[]>(`/emails/logs/enriched${query}`, {}, getToken);
+}
+
+export function buildEnrichedStreamUrl(filters: EmailLogFilters): string {
+  const params = new URLSearchParams();
+  if (filters.email_type) params.append("email_type", filters.email_type);
+  if (filters.event_id) params.append("event_id", String(filters.event_id));
+  if (filters.member_id) params.append("member_id", String(filters.member_id));
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return `${API_BASE_URL}/emails/logs/enriched/stream${query}`;
+}
+
+export async function getEmailDashboardStats(
+  period: number = 1,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailDashboardStats>> {
+  return apiFetch<EmailDashboardStats>(`/emails/stats/dashboard?period=${period}`, {}, getToken);
 }
 
 

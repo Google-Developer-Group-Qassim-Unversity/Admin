@@ -422,3 +422,41 @@ export interface TestAcceptanceBlastResponse {
   sent_count: number;
   emails: string[];
 }
+
+// =============================================================================
+// Email Logs & Dashboard
+// =============================================================================
+
+export type EmailType = "event-certificate" | "manual-certificate" | "event_announcement" | "acceptance";
+export type EmailFromAddress = "info@kerneltics.com" | "gdg.qu1@gmail.com";
+
+export interface EnrichedEmailLog {
+  id: number;
+  email_type: EmailType;
+  from_address: EmailFromAddress;
+  sent_at: string;
+  sent_by: number;
+  recipient_count: number;
+  data: Record<string, unknown> | null;
+  member_id: number | null;
+  event_id: number | null;
+  member_name: string | null;
+  member_email: string | null;
+  event_name: string | null;
+  event_is_official: number | null;
+  sender_name: string | null;
+}
+
+export interface EmailDashboardStats {
+  addresses: Record<string, { usage: number; threshold: number }>;
+  by_type: Record<string, number>;
+  total_24h: number;
+}
+
+export interface EmailLogFilters {
+  email_type?: EmailType;
+  event_id?: number;
+  member_id?: number;
+  start_date?: string;
+  end_date?: string;
+}
