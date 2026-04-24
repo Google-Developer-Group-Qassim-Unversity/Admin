@@ -10,7 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE_URL, getCertificateEligibleCount, sendEventCertificates } from "@/lib/api";
 import { parseSSEStream } from "@/lib/sse";
 
-import type { CertificateEmailLog, CertificateEligibility, EligibleMember } from "./types";
+import type { CertificateEmailLog, CertificateEligibility } from "./types";
 
 type SubTab = "sent" | "not-sent";
 
@@ -24,37 +24,26 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   const [data, setData] = React.useState<CertificateEligibility | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [isSending, setIsSending] = React.useState(false);
-  const [hasSent, setHasSent] = React.useState(false);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [logs, setLogs] = React.useState<CertificateEmailLog[]>([]);
   const abortRef = React.useRef<AbortController | null>(null);
 
+  const loadData = React.useCallback(async () => {
+    setIsLoading(true);
+    const result = await getCertificateEligibleCount(eventId, getToken);
+    if (result.success) {
+      setData(result.data);
+    }
+    setIsLoading(false);
+  }, [eventId, getToken]);
+
   React.useEffect(() => {
     let cancelled = false;
-
-    async function load() {
-      setIsLoading(true);
-      const result = await getCertificateEligibleCount(eventId, getToken);
-      if (!cancelled && result.success) {
-        setData(result.data);
-      }
-      setIsLoading(false);
-    }
-
-    load();
+    (async () => {
+      if (!cancelled) await loadData();
+    })();
     return () => { cancelled = true; };
-  }, [eventId]);
-
-  React.useEffect(() => {
-    if (data && data.sent_count > 0) {
-      startStream();
-    }
-    return () => {
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
-    };
-  }, [data?.sent_count]);
+  }, [loadData]);
 
   const startStream = React.useCallback(async () => {
     if (abortRef.current) {
@@ -91,28 +80,36 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           if (event === "log") {
             try {
               const log: CertificateEmailLog = JSON.parse(eventData);
-              setLogs((prev) => [log, ...prev]);
+              setLogs((prev) => {
+                if (prev.some((l) => l.id === log.id)) return prev;
+                return [log, ...prev];
+              });
             } catch {}
           }
         },
         () => {
-          if (!ac.signal.aborted) {
-            setIsStreaming(false);
-          }
+          if (!ac.signal.aborted) setIsStreaming(false);
         },
         () => {
-          if (!ac.signal.aborted) {
-            setIsStreaming(false);
-          }
+          if (!ac.signal.aborted) setIsStreaming(false);
         },
         ac.signal,
       );
     } catch {
-      if (!ac.signal.aborted) {
-        setIsStreaming(false);
-      }
+      if (!ac.signal.aborted) setIsStreaming(false);
     }
   }, [eventId, getToken]);
+
+  React.useEffect(() => {
+    if (data && data.sent_count > 0) {
+      startStream();
+    }
+    return () => {
+      if (abortRef.current) {
+        abortRef.current.abort();
+      }
+    };
+  }, [data, startStream]);
 
   const handleSend = async () => {
     setIsSending(true);
@@ -122,9 +119,9 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
         throw new Error(result.error.message);
       }
       toast.success("Certificate generation initiated");
-      setHasSent(true);
       setSubTab("sent");
       startStream();
+      setTimeout(() => loadData(), 3000);
     } catch (error) {
       toast.error("Failed to send certificates", {
         description: error instanceof Error ? error.message : "Unknown error",
@@ -142,17 +139,11 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
     }
   };
 
-  const eligibleMembers = data?.eligible_members ?? [];
-  const eligibleCount = data?.eligible_count ?? 0;
   const sentCount = data?.sent_count ?? 0;
 
-  const sentEmails = React.useMemo(
-    () => new Set(logs.map((l) => l.member_email)),
-    [logs],
-  );
   const notSentMembers = React.useMemo(
-    () => eligibleMembers.filter((m) => !sentEmails.has(m.email)),
-    [eligibleMembers, sentEmails],
+    () => data?.eligible_members ?? [],
+    [data?.eligible_members],
   );
   const notSentCount = notSentMembers.length;
 
@@ -217,7 +208,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                 {logs.map((log) => (
                   <div
                     key={log.id}
-                    className="flex items-start gap-3 px-3 py-2.5 animate-in fade-in slide-in-from-top-2 duration-300"
+                    className="flex items-start gap-3 px-3 py-2.5"
                   >
                     <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
                     <div className="flex-1 min-w-0">
@@ -246,14 +237,14 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
             </span>
             <Button
               onClick={handleSend}
-              disabled={isSending || hasSent || eligibleCount === 0}
+              disabled={isSending || notSentCount === 0}
             >
               {isSending ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   Sending...
                 </>
-              ) : hasSent ? (
+              ) : notSentCount === 0 ? (
                 <>
                   <CheckCircle className="mr-2 h-4 w-4" />
                   Certificates Sent

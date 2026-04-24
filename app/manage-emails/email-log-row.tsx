@@ -23,6 +23,7 @@ import type { AcceptanceData, CertificateData } from "./types";
 interface EmailLogRowProps {
   log: EnrichedEmailLog;
   onViewHtml: (html: string, subject: string) => void;
+  isNew?: boolean;
 }
 
 function getSnapshotData(log: EnrichedEmailLog): CertificateData | null {
@@ -435,15 +436,27 @@ function DefaultRow({ log }: EmailLogRowProps) {
   );
 }
 
-export function EmailLogRow({ log, onViewHtml }: EmailLogRowProps) {
-  switch (log.email_type) {
-    case "event-certificate":
-      return <CertificateRow log={log} onViewHtml={onViewHtml} />;
-    case "acceptance":
-      return <AcceptanceRow log={log} onViewHtml={onViewHtml} />;
-    case "manual-certificate":
-      return <ManualCertificateRow log={log} onViewHtml={onViewHtml} />;
-    default:
-      return <DefaultRow log={log} onViewHtml={onViewHtml} />;
-  }
+export function EmailLogRow({ log, onViewHtml, isNew }: EmailLogRowProps) {
+  const inner = (() => {
+    switch (log.email_type) {
+      case "event-certificate":
+        return <CertificateRow log={log} onViewHtml={onViewHtml} />;
+      case "acceptance":
+        return <AcceptanceRow log={log} onViewHtml={onViewHtml} />;
+      case "manual-certificate":
+        return <ManualCertificateRow log={log} onViewHtml={onViewHtml} />;
+      default:
+        return <DefaultRow log={log} onViewHtml={onViewHtml} />;
+    }
+  })();
+
+  return (
+    <div
+      className={`transition-colors duration-700 ${
+        isNew ? "animate-in slide-in-from-top-2 fade-in duration-500 bg-emerald-500/8" : ""
+      }`}
+    >
+      {inner}
+    </div>
+  );
 }

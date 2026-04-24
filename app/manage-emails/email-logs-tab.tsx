@@ -33,6 +33,20 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
     subject: "",
   });
   const abortRef = React.useRef<AbortController | null>(null);
+  const animateReadyRef = React.useRef(false);
+  const [newIds, setNewIds] = React.useState<Set<number>>(new Set());
+
+  const markNew = React.useCallback((id: number) => {
+    if (!animateReadyRef.current) return;
+    setNewIds((prev) => new Set(prev).add(id));
+    setTimeout(() => {
+      setNewIds((prev) => {
+        const next = new Set(prev);
+        next.delete(id);
+        return next;
+      });
+    }, 1500);
+  }, []);
 
   const handleFiltersChange = React.useCallback((newFilters: EmailLogFilters) => {
     setFilters(newFilters);
@@ -64,9 +78,13 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
       const token = await getToken();
       if (!token) return;
 
+      animateReadyRef.current = false;
       const ac = new AbortController();
       abortRef.current = ac;
       setIsStreaming(true);
+      const readyTimer = setTimeout(() => {
+        animateReadyRef.current = true;
+      }, 1500);
 
       try {
         const url = buildEnrichedStreamUrl(filters);
@@ -93,6 +111,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
                   if (prev.some((l) => l.id === log.id)) return prev;
                   return [log, ...prev];
                 });
+                markNew(log.id);
               } catch {}
             }
           },
@@ -106,6 +125,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         );
       } catch {
         if (!ac.signal.aborted) setIsStreaming(false);
+        clearTimeout(readyTimer);
       }
     }
 
@@ -117,11 +137,12 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
 
     return () => {
       cancelled = true;
+      animateReadyRef.current = false;
       if (abortRef.current) {
         abortRef.current.abort();
       }
     };
-  }, [filters, isLive, getToken, onLogsLoaded]);
+  }, [filters, isLive, getToken, onLogsLoaded, markNew]);
 
   const handleViewHtml = (html: string, subject: string) => {
     setHtmlPreview({ open: true, html, subject });
@@ -193,7 +214,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
           ) : (
             <div className="divide-y">
               {logs.map((log) => (
-                <EmailLogRow key={log.id} log={log} onViewHtml={handleViewHtml} />
+                <EmailLogRow key={log.id} log={log} onViewHtml={handleViewHtml} isNew={newIds.has(log.id)} />
               ))}
             </div>
           )}
