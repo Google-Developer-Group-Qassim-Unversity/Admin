@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { EmailLogsTab } from "./email-logs-tab";
 import { UsagePanel } from "./usage-panel";
 import { AssetsPanel } from "./assets-panel";
+import { SendCertificatesTab } from "./send-certificates-tab";
 
 export default function ManageEmailsPage() {
   return (
@@ -29,7 +30,7 @@ export default function ManageEmailsPage() {
                 <Mail className="h-4 w-4" />
                 Email Logs
               </TabsTrigger>
-              <TabsTrigger value="certificates" disabled>
+              <TabsTrigger value="certificates">
                 <Send className="h-4 w-4" />
                 Send Certificates
               </TabsTrigger>
@@ -42,9 +43,7 @@ export default function ManageEmailsPage() {
               <EmailLogsTab />
             </TabsContent>
             <TabsContent value="certificates" className="mt-4">
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                Coming soon
-              </div>
+              <SendCertificatesTab />
             </TabsContent>
             <TabsContent value="playground" className="mt-4">
               <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">

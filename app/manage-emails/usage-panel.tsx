@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { RefreshCw } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
@@ -61,14 +62,14 @@ function TypeBar({ label, count, max }: { label: string; count: number; max: num
 export function UsagePanel() {
   const { getToken } = useAuth();
   const [stats, setStats] = React.useState<EmailDashboardStats | null>(null);
-  const [period, setPeriod] = React.useState("1");
   const [isLoading, setIsLoading] = React.useState(true);
+  const [refreshKey, setRefreshKey] = React.useState(0);
 
   React.useEffect(() => {
     let cancelled = false;
     async function load() {
       setIsLoading(true);
-      const result = await getEmailDashboardStats(Number(period), getToken);
+      const result = await getEmailDashboardStats(1, getToken);
       if (!cancelled && result.success) {
         setStats(result.data);
       }
@@ -76,7 +77,7 @@ export function UsagePanel() {
     }
     load();
     return () => { cancelled = true; };
-  }, [period, getToken]);
+  }, [getToken, refreshKey]);
 
   const typeLabels: Record<string, string> = {
     "event-certificate": "Event Certificates",
@@ -91,17 +92,10 @@ export function UsagePanel() {
     <Card size="sm">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Usage</CardTitle>
-          <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger size="sm" className="w-[110px] h-7 text-xs">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="1">Last 24h</SelectItem>
-              <SelectItem value="7">Last 7 days</SelectItem>
-              <SelectItem value="30">Last 30 days</SelectItem>
-            </SelectContent>
-          </Select>
+          <CardTitle>Usage <span className="text-xs text-muted-foreground/50">·</span> <span className="text-muted-foreground font-normal text-xs">Last 24h</span></CardTitle>
+          <Button variant="ghost" size="icon-sm" onClick={() => setRefreshKey((k) => k + 1)} disabled={isLoading}>
+            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
+          </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -120,7 +114,7 @@ export function UsagePanel() {
         ) : stats ? (
           <>
             <div className="flex justify-center gap-6">
-              {Object.entries(stats.addresses).map(([addr, data]) => (
+              {Object.entries(stats.addresses).reverse().map(([addr, data]) => (
                 <CircularProgress key={addr} value={data.usage} max={data.threshold} label={addr} />
               ))}
             </div>

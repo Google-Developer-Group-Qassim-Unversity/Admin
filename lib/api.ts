@@ -34,6 +34,8 @@ import type {
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
   CertificateJobResponse,
+  ManualCertificateRequest,
+  ManualCertificateResponse,
   BackfillMember,
   BackfillResponse,
   AcceptanceBlastResponse,
@@ -346,14 +348,13 @@ export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiRe
   return result;
 }
 
-export async function sendManualCertificates(
-  eventId: number,
-  members: CertificateMember[],
+export async function sendManualCertificate(
+  payload: ManualCertificateRequest,
   getToken?: GetTokenFn
-): Promise<ApiResponse<CertificateJobResponse>> {
-  return apiFetch<CertificateJobResponse>(`/emails/manual/${eventId}`, {
+): Promise<ApiResponse<ManualCertificateResponse>> {
+  return apiFetch<ManualCertificateResponse>(`/emails/manual-certificate`, {
     method: "POST",
-    body: JSON.stringify({ members }),
+    body: JSON.stringify(payload),
   }, getToken);
 }
 

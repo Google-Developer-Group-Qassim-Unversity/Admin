@@ -372,11 +372,31 @@ export interface AttendanceResponse {
 }
 
 export type CertificateJobStatus = "pending" | "processing" | "completed" | "failed";
+export type CertificateLanguage = "ar" | "en";
 
 export interface CertificateMember {
   name: string;
   email: string;
   gender: Gender;
+}
+
+export interface CertificateSimpleEvent {
+  name: string;
+  date: string;
+  official: boolean;
+}
+
+export interface ManualCertificateRequest {
+  event_id?: number;
+  event?: CertificateSimpleEvent;
+  member_id?: number;
+  member?: CertificateMember;
+  language: CertificateLanguage;
+}
+
+export interface ManualCertificateResponse {
+  message: string;
+  job_id: string;
 }
 
 export interface CertificateJobResponse {
