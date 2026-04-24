@@ -15,7 +15,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, X } from "lucide-react";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -196,6 +196,42 @@ export function createColumns(
     enableHiding: false,
   };
 
+  // Status columns
+  const statusColumns: ColumnDef<TableRowData>[] = [
+    {
+      accessorKey: "is_accepted",
+      header: "Accepted",
+      enableSorting: false,
+      size: 70,
+      minSize: 70,
+      maxSize: 70,
+      cell: ({ row }) => {
+        const isAccepted = row.original.is_accepted;
+        return isAccepted ? (
+          <Check className="h-4 w-4 text-green-600" />
+        ) : (
+          <X className="h-4 w-4 text-muted-foreground" />
+        );
+      },
+    },
+    {
+      accessorKey: "is_invited",
+      header: "Emailed",
+      enableSorting: false,
+      size: 70,
+      minSize: 70,
+      maxSize: 70,
+      cell: ({ row }) => {
+        const isInvited = row.original.is_invited;
+        return isInvited ? (
+          <Check className="h-4 w-4 text-blue-600" />
+        ) : (
+          <X className="h-4 w-4 text-muted-foreground" />
+        );
+      },
+    },
+  ];
+
   // Base member columns
   const baseColumns: ColumnDef<TableRowData>[] = [
     {
@@ -330,7 +366,7 @@ export function createColumns(
     })
   );
 
-  return [selectColumn, ...baseColumns, ...questionColumns];
+  return [selectColumn, ...statusColumns, ...baseColumns, ...questionColumns];
 }
 
 // Helper to get column ID from column definition

@@ -65,15 +65,35 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
       onFiltersChange({ ...filters, start_date: undefined, end_date: undefined });
       return;
     }
+    let start = range.from;
+    let end = range.to;
+    if (start) {
+      start = new Date(start.getFullYear(), start.getMonth(), start.getDate(), 0, 0, 0, 0);
+    }
+    if (end) {
+      end = new Date(end.getFullYear(), end.getMonth(), end.getDate(), 23, 59, 59, 999);
+    }
     onFiltersChange({
       ...filters,
-      start_date: range.from?.toISOString(),
-      end_date: range.to?.toISOString(),
+      start_date: start?.toISOString(),
+      end_date: end?.toISOString(),
     });
     if (range.from || range.to) {
       onLiveToggle(false);
     }
   };
+
+  const dateRangeLabel = React.useMemo(() => {
+    if (!filters.start_date && !filters.end_date) return "Period";
+    const fmt = (iso: string) =>
+      new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    if (filters.start_date && filters.end_date) {
+      return `${fmt(filters.start_date)} – ${fmt(filters.end_date)}`;
+    }
+    if (filters.start_date) return `From ${fmt(filters.start_date)}`;
+    if (filters.end_date) return `Until ${fmt(filters.end_date)}`;
+    return "Period";
+  }, [filters.start_date, filters.end_date]);
 
   const dateRange = filters.start_date && filters.end_date
     ? { from: new Date(filters.start_date), to: new Date(filters.end_date) }
@@ -102,7 +122,7 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
               }`}
             >
               <CalendarIcon className="h-3 w-3" />
-              {filters.start_date ? "Custom" : "Period"}
+              {dateRangeLabel}
             </button>
           </PopoverTrigger>
           <PopoverContent className="w-auto p-0" align="start">
