@@ -100,6 +100,11 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
             setIsStreaming(false);
           }
         },
+        () => {
+          if (!ac.signal.aborted) {
+            setIsStreaming(false);
+          }
+        },
         ac.signal,
       );
     } catch {

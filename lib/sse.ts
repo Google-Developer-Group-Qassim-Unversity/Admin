@@ -1,6 +1,7 @@
 export function parseSSEStream(
   reader: ReadableStreamDefaultReader<Uint8Array>,
   onEvent: (event: string, data: string) => void,
+  onComplete: () => void,
   onError: () => void,
   abortSignal: AbortSignal,
 ) {
@@ -33,9 +34,12 @@ export function parseSSEStream(
   const pump = async () => {
     try {
       while (true) {
-        if (abortSignal.aborted) break;
+        if (abortSignal.aborted) return;
         const { done, value } = await reader.read();
-        if (done) break;
+        if (done) {
+          onComplete();
+          return;
+        }
         buffer += decoder.decode(value, { stream: true });
         processBuffer();
       }
@@ -43,8 +47,6 @@ export function parseSSEStream(
       if (!abortSignal.aborted) {
         onError();
       }
-    } finally {
-      onError();
     }
   };
 
