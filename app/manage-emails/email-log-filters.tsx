@@ -1,10 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Activity, CalendarIcon, Filter, User, X } from "lucide-react";
+import { Activity, CalendarIcon, Filter, Search, User, X } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -22,11 +32,11 @@ interface EmailLogFiltersBarProps {
   onLiveToggle: (live: boolean) => void;
 }
 
+const MAX_DISPLAY = 50;
+
 export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveToggle }: EmailLogFiltersBarProps) {
+  const { getToken } = useAuth();
   const [events, setEvents] = React.useState<Event[]>([]);
-  const [members, setMembers] = React.useState<Member[]>([]);
-  const [memberSearch, setMemberSearch] = React.useState("");
-  const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
   const [selectedMember, setSelectedMember] = React.useState<{ id: number; name: string } | null>(null);
 
@@ -35,14 +45,6 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
       if (res.success) setEvents(res.data);
     });
   }, []);
-
-  React.useEffect(() => {
-    if (memberDialogOpen) {
-      getMembers().then((res) => {
-        if (res.success) setMembers(res.data);
-      });
-    }
-  }, [memberDialogOpen]);
 
   const activeFilterCount = [
     filters.email_type,
@@ -78,14 +80,6 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
     : filters.start_date
       ? { from: new Date(filters.start_date) }
       : undefined;
-
-  const filteredMembers = React.useMemo(() => {
-    if (!memberSearch.trim()) return members.slice(0, 50);
-    const q = memberSearch.toLowerCase();
-    return members
-      .filter((m) => m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q) || m.uni_id.toLowerCase().includes(q))
-      .slice(0, 50);
-  }, [members, memberSearch]);
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -186,55 +180,14 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
         </PopoverContent>
       </Popover>
 
-      <Popover open={memberDialogOpen} onOpenChange={setMemberDialogOpen}>
-        <PopoverTrigger asChild>
-          <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
-            <User className="h-3 w-3" />
-            {selectedMember ? selectedMember.name : "Member"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-[300px] p-0" align="start">
-          <Command>
-            <CommandInput
-              placeholder="Search members..."
-              value={memberSearch}
-              onValueChange={setMemberSearch}
-              className="h-8"
-            />
-            <CommandList>
-              <CommandEmpty>No members found.</CommandEmpty>
-              <CommandGroup>
-                <CommandItem
-                  value="all-members"
-                  onSelect={() => {
-                    onFiltersChange({ ...filters, member_id: undefined });
-                    setSelectedMember(null);
-                    setMemberDialogOpen(false);
-                  }}
-                >
-                  All members
-                </CommandItem>
-                {filteredMembers.map((member) => (
-                  <CommandItem
-                    key={member.id}
-                    value={member.name}
-                    onSelect={() => {
-                      onFiltersChange({ ...filters, member_id: member.id });
-                      setSelectedMember({ id: member.id, name: member.name });
-                      setMemberDialogOpen(false);
-                    }}
-                  >
-                    <div className="flex flex-col">
-                      <span className="text-sm">{member.name}</span>
-                      <span className="text-[10px] text-muted-foreground">{member.email}</span>
-                    </div>
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
+      <MemberFilterButton
+        selectedMember={selectedMember}
+        onSelect={(member) => {
+          setSelectedMember(member);
+          onFiltersChange({ ...filters, member_id: member?.id });
+        }}
+        getToken={getToken}
+      />
 
       {activeFilterCount > 0 && (
         <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={clearFilters}>
@@ -243,5 +196,141 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
         </Button>
       )}
     </div>
+  );
+}
+
+function MemberFilterButton({
+  selectedMember,
+  onSelect,
+  getToken,
+}: {
+  selectedMember: { id: number; name: string } | null;
+  onSelect: (member: { id: number; name: string } | null) => void;
+  getToken: () => Promise<string | null>;
+}) {
+  const [open, setOpen] = React.useState(false);
+  const [members, setMembers] = React.useState<Member[]>([]);
+  const [isLoading, setIsLoading] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
+
+  React.useEffect(() => {
+    if (!open) {
+      setSearchQuery("");
+      return;
+    }
+    if (members.length > 0) return;
+
+    setIsLoading(true);
+    getMembers(getToken).then((res) => {
+      if (res.success) {
+        setMembers([...res.data].sort((a, b) => a.name.localeCompare(b.name)));
+      }
+      setIsLoading(false);
+    });
+  }, [open, getToken, members.length]);
+
+  const displayMembers = React.useMemo(() => {
+    let result = members;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = members.filter(
+        (m) =>
+          m.name.toLowerCase().includes(q) ||
+          m.uni_id.toLowerCase().includes(q) ||
+          m.email.toLowerCase().includes(q)
+      );
+    }
+    if (selectedMember) {
+      result = result.filter((m) => m.id !== selectedMember.id);
+    }
+    return result.slice(0, MAX_DISPLAY);
+  }, [members, searchQuery, selectedMember]);
+
+  const showLimitHint = !searchQuery.trim() && members.length > MAX_DISPLAY;
+
+  return (
+    <>
+      <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setOpen(true)}>
+        <User className="h-3 w-3" />
+        {selectedMember ? selectedMember.name : "Member"}
+      </Button>
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent className="max-w-lg! max-h-[80vh] flex flex-col p-0 overflow-hidden">
+          <DialogHeader className="px-6 pt-6 pb-2">
+            <DialogTitle>Filter by Member</DialogTitle>
+            <DialogDescription>Search by name, university ID, or email</DialogDescription>
+          </DialogHeader>
+          <div className="px-6 pb-2">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9"
+                disabled={isLoading}
+              />
+            </div>
+            {showLimitHint && (
+              <p className="text-xs text-muted-foreground mt-1.5">
+                Showing {MAX_DISPLAY} of {members.length}. Use search to find more.
+              </p>
+            )}
+          </div>
+          {selectedMember && (
+            <div className="mx-6 border rounded-lg">
+              <div className="flex items-center gap-2 px-3 py-2 bg-primary/5">
+                <span className="text-xs text-muted-foreground">Selected:</span>
+                <span className="text-sm font-medium flex-1">{selectedMember.name}</span>
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={() => {
+                    onSelect(null);
+                    setOpen(false);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          )}
+          <div className="flex-1 overflow-y-auto min-h-0 border-t">
+            {isLoading ? (
+              <div className="space-y-2 p-4">
+                {[...Array(6)].map((_, i) => (
+                  <div key={i} className="space-y-1.5">
+                    <Skeleton className="h-4 w-[180px]" />
+                    <Skeleton className="h-3 w-[120px]" />
+                  </div>
+                ))}
+              </div>
+            ) : displayMembers.length === 0 ? (
+              <div className="p-8 text-center text-sm text-muted-foreground">
+                {searchQuery.trim() ? "No members found" : "No members available"}
+              </div>
+            ) : (
+              <div className="divide-y">
+                {displayMembers.map((member) => (
+                  <button
+                    key={member.id}
+                    className="w-full flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50 transition-colors text-left"
+                    onClick={() => {
+                      onSelect({ id: member.id, name: member.name });
+                      setOpen(false);
+                    }}
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm truncate">{member.name}</p>
+                      <p className="text-xs text-muted-foreground">{member.uni_id} &middot; {member.email}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

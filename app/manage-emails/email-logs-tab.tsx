@@ -1,10 +1,11 @@
 "use client";
 
 import * as React from "react";
-import { Activity, Loader2 } from "lucide-react";
+import { Activity, Loader2, Radio } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { buildEnrichedStreamUrl, getEmailLogsEnriched } from "@/lib/api";
 import { parseSSEStream } from "@/lib/sse";
@@ -126,6 +127,13 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
     setHtmlPreview({ open: true, html, subject });
   };
 
+  const hasActiveFilters = !!(filters.email_type || filters.event_id || filters.member_id);
+
+  const clearAllFilters = () => {
+    setFilters({});
+    setIsLive(true);
+  };
+
   return (
     <div className="space-y-3">
       <EmailLogFiltersBar
@@ -152,18 +160,34 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         </div>
         <ScrollArea className="h-[520px]">
           {isLoading && !isLive ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Loading logs...
             </div>
           ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+            <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-3">
               {isLive && isStreaming ? (
+                hasActiveFilters ? (
+                  <>
+                    <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
+                    <span>Listening for logs matching filters...</span>
+                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={clearAllFilters}>
+                      Clear filters
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
+                    <span>Listening for new logs...</span>
+                  </>
+                )
+              ) : isLive && !isStreaming ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin opacity-50" />
-                  Waiting for logs...
+                  <Activity className="h-4 w-4 opacity-50" />
+                  <span>Stream disconnected</span>
                 </>
               ) : (
-                "No email logs found."
+                <span>No email logs found for this period.</span>
               )}
             </div>
           ) : (

@@ -170,7 +170,7 @@ function MetaColumn({ log }: { log: EnrichedEmailLog }) {
             {formatDistanceToNow(sentAt, { addSuffix: true })}
           </p>
         </TooltipTrigger>
-        <TooltipContent side="left">
+        <TooltipContent side="bottom" align="end">
           <p className="text-xs">{format(sentAt, "MMM d, yyyy HH:mm:ss")}</p>
         </TooltipContent>
       </Tooltip>
