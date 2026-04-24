@@ -419,45 +419,6 @@ export default function EventResponsesPage() {
             <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
             <div className="flex flex-wrap items-center gap-4 mb-4">
-              <SendAcceptanceButton
-                onClick={() => setSendAcceptanceDialogOpen(true)}
-                recipientCount={acceptedNotInvited}
-                isLoading={sendAcceptanceMutation.isPending}
-              />
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => refetchSubmissions()}
-                disabled={submissionsLoading}
-              >
-                <RefreshCw className={`mr-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-
-              {event.status === 'open' && (
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleCloseResponsesClick}
-                  disabled={closeResponsesMutation.isPending}
-                >
-                  {closeResponsesMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Closing...
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Close Responses
-                    </>
-                  )}
-                </Button>
-              )}
-
-              <div className="flex-1" />
-
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
@@ -525,6 +486,45 @@ export default function EventResponsesPage() {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <div className="flex-1" />
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchSubmissions()}
+                disabled={submissionsLoading}
+              >
+                <RefreshCw className={`mr-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
+
+              <SendAcceptanceButton
+                onClick={() => setSendAcceptanceDialogOpen(true)}
+                recipientCount={acceptedNotInvited}
+                isLoading={sendAcceptanceMutation.isPending}
+              />
+
+              {event.status === 'open' && (
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleCloseResponsesClick}
+                  disabled={closeResponsesMutation.isPending}
+                >
+                  {closeResponsesMutation.isPending ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Closing...
+                    </>
+                  ) : (
+                    <>
+                      <Lock className="mr-2 h-4 w-4" />
+                      Close Responses
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
 
             <div className="rounded-lg border">
