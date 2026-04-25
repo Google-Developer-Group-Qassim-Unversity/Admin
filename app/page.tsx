@@ -30,14 +30,7 @@ const modules = [
     description: "Add, view, and manage administrator roles and permissions",
     href: "/manage-admins",
     buttonText: "Manage Admins",
-  },
-  {
-    icon: Award,
-    title: "Send Certificates",
-    description: "Send certificates to custom recipients for events",
-    href: "/certificates",
-    buttonText: "Send Certificates",
-  },
+  }
 ];
 
 export default function Page() {
