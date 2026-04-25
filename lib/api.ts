@@ -34,10 +34,15 @@ import type {
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
   CertificateJobResponse,
+  ManualCertificateRequest,
+  ManualCertificateResponse,
   BackfillMember,
   BackfillResponse,
   AcceptanceBlastResponse,
   TestAcceptanceBlastResponse,
+  EnrichedEmailLog,
+  EmailDashboardStats,
+  EmailLogFilters,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -316,9 +321,20 @@ export async function sendEventCertificates(
   event_id: number,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/certificates/${event_id}`, {
+  return apiFetch<void>(`/emails/${event_id}`, {
     method: "POST",
   }, getToken);
+}
+
+export async function getCertificateEligibleCount(
+  eventId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>> {
+  return apiFetch<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>(
+    `/emails/certificate-event/eligible-count/${eventId}`,
+    {},
+    getToken
+  );
 }
 
 export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiResponse<Event[]>> {
@@ -332,14 +348,13 @@ export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiRe
   return result;
 }
 
-export async function sendManualCertificates(
-  eventId: number,
-  members: CertificateMember[],
+export async function sendManualCertificate(
+  payload: ManualCertificateRequest,
   getToken?: GetTokenFn
-): Promise<ApiResponse<CertificateJobResponse>> {
-  return apiFetch<CertificateJobResponse>(`/certificates/manual/${eventId}`, {
+): Promise<ApiResponse<ManualCertificateResponse>> {
+  return apiFetch<ManualCertificateResponse>(`/emails/manual-certificate`, {
     method: "POST",
-    body: JSON.stringify({ members }),
+    body: JSON.stringify(payload),
   }, getToken);
 }
 
@@ -556,7 +571,7 @@ export async function sendAcceptanceBlasts(
   params.append("subject", subject);
   const query = params.toString() ? `?${params.toString()}` : "";
   
-  return apiFetch<AcceptanceBlastResponse>(`/acceptance/blasts/${eventId}${query}`, {
+  return apiFetch<AcceptanceBlastResponse>(`/emails/acceptance/blasts/${eventId}${query}`, {
     method: "POST",
     body: htmlContent,
     headers: {
@@ -576,7 +591,7 @@ export async function sendAcceptanceTestBlasts(
   emails.forEach((email) => params.append("emails", email));
   const query = params.toString() ? `?${params.toString()}` : "";
   
-  return apiFetch<TestAcceptanceBlastResponse>(`/acceptance/test${query}`, {
+  return apiFetch<TestAcceptanceBlastResponse>(`/emails/acceptance/test${query}`, {
     method: "POST",
     body: htmlContent,
     headers: {
@@ -827,6 +842,46 @@ export async function deleteCustomMemberPointDetail(
     },
     getToken
   );
+}
+
+// =============================================================================
+// Email Logs & Dashboard API
+// =============================================================================
+
+export async function getEmailLogsEnriched(
+  filters: EmailLogFilters,
+  offset: number = 0,
+  limit: number = 100,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EnrichedEmailLog[]>> {
+  const params = new URLSearchParams();
+  if (filters.email_type) params.append("email_type", filters.email_type);
+  if (filters.event_id) params.append("event_id", String(filters.event_id));
+  if (filters.member_id) params.append("member_id", String(filters.member_id));
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
+  params.append("offset", String(offset));
+  params.append("limit", String(limit));
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return apiFetch<EnrichedEmailLog[]>(`/emails/logs/enriched${query}`, {}, getToken);
+}
+
+export function buildEnrichedStreamUrl(filters: EmailLogFilters): string {
+  const params = new URLSearchParams();
+  if (filters.email_type) params.append("email_type", filters.email_type);
+  if (filters.event_id) params.append("event_id", String(filters.event_id));
+  if (filters.member_id) params.append("member_id", String(filters.member_id));
+  if (filters.start_date) params.append("start_date", filters.start_date);
+  if (filters.end_date) params.append("end_date", filters.end_date);
+  const query = params.toString() ? `?${params.toString()}` : "";
+  return `${API_BASE_URL}/emails/logs/enriched/stream${query}`;
+}
+
+export async function getEmailDashboardStats(
+  period: number = 1,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailDashboardStats>> {
+  return apiFetch<EmailDashboardStats>(`/emails/stats/dashboard?period=${period}`, {}, getToken);
 }
 
 

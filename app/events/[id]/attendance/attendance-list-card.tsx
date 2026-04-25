@@ -77,7 +77,7 @@ export function AttendanceListCard({
 
     const queryWords = searchQuery.trim().toLowerCase().split(/\s+/);
     return attendanceData.filter((record) => {
-      const name = record.Members.name.toLowerCase();
+      const name = record.Member.name.toLowerCase();
       return queryWords.every((word) => name.includes(word));
     });
   }, [attendanceData, searchQuery]);
@@ -170,7 +170,7 @@ export function AttendanceListCard({
 
             <ItemGroup>
               {filteredAttendance.map((record) => {
-                const member = record.Members;
+                const member = record.Member;
                 const dayNumbers = record.dates
                   .map((d) => getDayNumberFromEffectiveDate(d, eventStart))
                   .sort((a, b) => a - b);

@@ -47,7 +47,7 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken
           <ItemDescription>
             {isEventClosed
               ? 'Re-open the event to resume accepting attendance.'
-              : 'When attendance is complete, close the event to finalize and optionally send certificates.'}
+              : 'When attendance is complete, close the event to finalize attendance records.'}
           </ItemDescription>
         </ItemContent>
         <ItemActions>
@@ -83,6 +83,7 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken
         open={isCloseModalOpen}
         onOpenChange={setIsCloseModalOpen}
         onSuccess={onStatusChange}
+        getToken={getToken}
       />
     </>
   );

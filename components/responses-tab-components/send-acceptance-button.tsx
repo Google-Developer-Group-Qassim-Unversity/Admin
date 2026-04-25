@@ -24,7 +24,7 @@ export function SendAcceptanceButton({
       disabled={disabled || isLoading}
     >
       <Mail className="mr-2 h-4 w-4" />
-      Send Acceptance{recipientCount > 0 ? ` (${recipientCount})` : ""}
+      Send Acceptance Email{recipientCount > 0 ? ` (${recipientCount})` : ""}
     </Button>
   );
 }

@@ -46,7 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Columns3, Search, FileX, Loader2, Lock } from "lucide-react";
+import { Columns3, Search, FileX, Loader2, Lock, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -82,13 +82,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { cn } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 
 export default function EventResponsesPage() {
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
-  const { data: submissions, isLoading: submissionsLoading, error } = useSubmissions(event?.id ?? 0, getToken);
+  const { data: submissions, isLoading: submissionsLoading, error, refetch: refetchSubmissions } = useSubmissions(event?.id ?? 0, getToken);
   const { data: formData, isLoading: formDataLoading } = useFormData(event?.id ?? 0);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
@@ -419,7 +418,7 @@ export default function EventResponsesPage() {
           <>
             <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 mb-4">
+            <div className="flex flex-wrap items-center gap-4 mb-4">
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
@@ -431,12 +430,12 @@ export default function EventResponsesPage() {
                   <SelectItem value="all">All</SelectItem>
                   <SelectItem value="accepted">Accepted</SelectItem>
                   <SelectItem value="not_accepted">Not Accepted</SelectItem>
-                  <SelectItem value="accepted_invited">Accepted & Invited</SelectItem>
-                  <SelectItem value="accepted_not_invited">Accepted & Not Invited</SelectItem>
+                  <SelectItem value="accepted_invited">Accepted & Emailed</SelectItem>
+                  <SelectItem value="accepted_not_invited">Accepted & Not Emailed</SelectItem>
                 </SelectContent>
               </Select>
 
-              <div className="relative flex-1 max-w-sm">
+              <div className="relative max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search by name..."
@@ -487,6 +486,18 @@ export default function EventResponsesPage() {
                     ))}
                 </DropdownMenuContent>
               </DropdownMenu>
+
+              <div className="flex-1" />
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => refetchSubmissions()}
+                disabled={submissionsLoading}
+              >
+                <RefreshCw className={`mr-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
+                Refresh
+              </Button>
 
               <SendAcceptanceButton
                 onClick={() => setSendAcceptanceDialogOpen(true)}
@@ -540,10 +551,6 @@ export default function EventResponsesPage() {
                       <TableRow
                         key={row.id}
                         data-state={row.getIsSelected() && "selected"}
-                        className={cn(
-                          row.original.is_accepted &&
-                            "bg-green-50 dark:bg-green-900/30 hover:bg-green-100 dark:hover:bg-green-900/50"
-                        )}
                       >
                         {row.getVisibleCells().map((cell) => (
                           <TableCell key={cell.id}>

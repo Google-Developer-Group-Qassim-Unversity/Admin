@@ -26,11 +26,11 @@ export function SummaryStatistics({
           <span className="font-medium text-green-600">{accepted}</span>
         </div>
         <div className="p-2 rounded bg-blue-500/10">
-          <span className="text-muted-foreground">Invited:</span>{" "}
+          <span className="text-muted-foreground">Emailed:</span>{" "}
           <span className="font-medium text-blue-600">{invited}</span>
         </div>
 <div className="p-2 rounded bg-purple-500/10">
-          <span className="text-muted-foreground">Ready to Invite:</span>{" "}
+          <span className="text-muted-foreground">Not Emailed:</span>{" "}
           <span className="font-medium text-purple-600">{acceptedNotInvited}</span>
         </div>
         <div className="p-2 rounded bg-yellow-500/10">

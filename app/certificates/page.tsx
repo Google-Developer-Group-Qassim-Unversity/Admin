@@ -22,7 +22,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 
-import { getCertificateEvents, sendManualCertificates, getMemberByUniId, getSubmissions } from "@/lib/api";
+import { getCertificateEvents, sendManualCertificate, getMemberByUniId, getSubmissions } from "@/lib/api";
 import type { Event, CertificateMember, CertificateJobResponse, Submission } from "@/lib/api-types";
 
 function formatEventDate(event: Event): string {
@@ -382,7 +382,7 @@ export default function CertificatesPage() {
     setIsSubmitting(true);
     setJobResults([]);
 
-    const response = await sendManualCertificates(
+    const response = await sendManualCertificate(
       selectedEventId,
       validMembers.map(({ name, email, gender }) => ({ name, email, gender })),
       getToken
@@ -438,7 +438,7 @@ export default function CertificatesPage() {
 
     for (const [eventIdStr, members] of Object.entries(groups)) {
       const eventId = parseInt(eventIdStr);
-      const response = await sendManualCertificates(eventId, members, getToken);
+      const response = await sendManualCertificate(eventId, members, getToken);
       if (response.success) {
         results.push(response.data);
       } else {
