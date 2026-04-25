@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import { Mail, Send, Terminal } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -10,6 +11,8 @@ import { AssetsPanel } from "./assets-panel";
 import { SendCertificatesTab } from "./send-certificates-tab";
 
 export default function ManageEmailsPage() {
+  const [activeTab, setActiveTab] = React.useState("logs");
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
@@ -24,7 +27,7 @@ export default function ManageEmailsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>
-          <Tabs defaultValue="logs">
+          <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList>
               <TabsTrigger value="logs">
                 <Mail className="h-4 w-4" />
@@ -43,7 +46,7 @@ export default function ManageEmailsPage() {
               <EmailLogsTab />
             </TabsContent>
             <TabsContent value="certificates" className="mt-4">
-              <SendCertificatesTab />
+              <SendCertificatesTab onGoToLogs={() => setActiveTab("logs")} />
             </TabsContent>
             <TabsContent value="playground" className="mt-4">
               <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">

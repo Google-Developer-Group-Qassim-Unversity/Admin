@@ -386,17 +386,21 @@ export interface CertificateSimpleEvent {
   official: boolean;
 }
 
+export interface ManualCertificateMember {
+  member_id?: number;
+  member?: CertificateMember;
+}
+
 export interface ManualCertificateRequest {
   event_id?: number;
   event?: CertificateSimpleEvent;
-  member_id?: number;
-  member?: CertificateMember;
+  members: ManualCertificateMember[];
   language: CertificateLanguage;
 }
 
 export interface ManualCertificateResponse {
   message: string;
-  job_id: string;
+  recipient_count: number;
 }
 
 export interface CertificateJobResponse {

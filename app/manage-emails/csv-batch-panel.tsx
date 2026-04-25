@@ -14,6 +14,7 @@ import {
   Check,
   ChevronsUpDown,
   Globe,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
@@ -45,6 +46,7 @@ import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
 
 interface CsvBatchPanelProps {
   events: Event[];
+  onGoToLogs?: () => void;
 }
 
 function formatEventDate(event: Event): string {
@@ -56,7 +58,7 @@ function formatEventDate(event: Event): string {
   return `${startStr} - ${endStr}`;
 }
 
-export function CsvBatchPanel({ events }: CsvBatchPanelProps) {
+export function CsvBatchPanel({ events, onGoToLogs }: CsvBatchPanelProps) {
   const { getToken } = useAuth();
 
   const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
@@ -339,27 +341,26 @@ export function CsvBatchPanel({ events }: CsvBatchPanelProps) {
     let ok = 0;
     let fail = 0;
 
+    const groups = new Map<number, typeof includedRows>();
     for (const row of includedRows) {
-      const payload: Parameters<typeof sendManualCertificate>[0] = { language: "en" };
+      const eid = hasEventColumn && row.matchedEvent ? row.matchedEvent.id : batchSelectedEventId!;
+      if (!groups.has(eid)) groups.set(eid, []);
+      groups.get(eid)!.push(row);
+    }
 
-      if (hasEventColumn && row.matchedEvent) {
-        payload.event_id = row.matchedEvent.id;
-      } else if (batchSelectedEventId) {
-        payload.event_id = batchSelectedEventId;
-      }
-
-      payload.member = {
-        name: row.name,
-        email: row.email,
-        gender: row.gender,
+    for (const [eventId, rows] of groups) {
+      const payload: Parameters<typeof sendManualCertificate>[0] = {
+        language: "en",
+        event_id: eventId,
+        members: rows.map((r) => ({ member: { name: r.name, email: r.email, gender: r.gender } })),
       };
 
       const response = await sendManualCertificate(payload, getToken);
       if (response.success) {
-        ok++;
+        ok += rows.length;
       } else {
-        fail++;
-        toast.error(`Failed for ${row.name}: ${response.error.message}`);
+        fail += rows.length;
+        toast.error(response.error.message);
       }
     }
 
@@ -728,9 +729,26 @@ export function CsvBatchPanel({ events }: CsvBatchPanelProps) {
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
                     <Check className="h-4 w-4" />
-                    {sentCount} Certificate{sentCount !== 1 ? "s" : ""} Sent
+                    Job started — {sentCount} certificate{sentCount !== 1 ? "s" : ""} queued
                   </CardTitle>
                 </CardHeader>
+                <CardContent className="px-4 pb-4 pt-0">
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Certificates are being sent in the background. You can track progress in Email Logs.
+                  </p>
+                  {onGoToLogs && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1.5"
+                      onClick={onGoToLogs}
+                    >
+                      <Mail className="h-3.5 w-3.5" />
+                      View Email Logs
+                    </Button>
+                  )}
+                </CardContent>
               </Card>
             )}
             {failedCount > 0 && (
