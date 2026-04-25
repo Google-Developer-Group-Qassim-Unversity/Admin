@@ -67,7 +67,8 @@ export function ActionReasonSelect({
     ? allActions.find((a) => a.id === selectedActionId)
     : null;
 
-  const isCompositeAction = !!(selectedActionId !== null && !selectedAction && customActionName);
+  const isDiscountAction = customActionName?.toLowerCase() === "discount";
+  const isCompositeAction = !isDiscountAction && !!(selectedActionId !== null && !selectedAction && customActionName);
 
   // Determine display value
   const displayValue = React.useMemo(() => {

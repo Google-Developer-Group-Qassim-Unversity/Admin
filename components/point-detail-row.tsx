@@ -68,7 +68,8 @@ export function PointDetailRow({
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
   const allActions = [...actionOptions.department, ...actionOptions.member, ...actionOptions.bonus];
-  const isCompositeAction = !!(data.action_id !== null && !allActions.find((a) => a.id === data.action_id) && data.action_name);
+  const isDiscountRow = data.action_name?.toLowerCase() === "discount";
+  const isCompositeAction = !isDiscountRow && !!(data.action_id !== null && !allActions.find((a) => a.id === data.action_id) && data.action_name);
 
   const isRestrictedMode = userRole === "admin_points";
 
