@@ -23,7 +23,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { cn } from "@/lib/utils";
 
 import { getCertificateEvents, sendManualCertificate, getMemberByUniId, getSubmissions } from "@/lib/api";
-import type { Event, CertificateMember, CertificateJobResponse, Submission } from "@/lib/api-types";
+import type { Event, CertificateMember, ManualCertificateResponse, Submission } from "@/lib/api-types";
 
 function formatEventDate(event: Event): string {
   const start = new Date(event.start_datetime);
@@ -79,7 +79,7 @@ export default function CertificatesPage() {
   const batchSelectedEvent = events.find((e) => e.id === batchSelectedEventId);
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [jobResults, setJobResults] = React.useState<CertificateJobResponse[]>([]);
+  const [jobResults, setJobResults] = React.useState<ManualCertificateResponse[]>([]);
 
   // Attendance Verification state
   const [unverifiedRows, setUnverifiedRows] = React.useState<CsvRow[]>([]);
@@ -381,20 +381,27 @@ export default function CertificatesPage() {
 
     setIsSubmitting(true);
     setJobResults([]);
+    const results: ManualCertificateResponse[] = [];
+    let hasError = false;
 
-    const response = await sendManualCertificate(
-      selectedEventId,
-      validMembers.map(({ name, email, gender }) => ({ name, email, gender })),
-      getToken
-    );
-
-    if (response.success) {
-      toast.success("Certificate generation job started!");
-      setJobResults([response.data]);
-      setManualMembers([{ name: "", email: "", gender: "Male", uniId: "" }]);
-    } else {
-      toast.error(response.error.message);
+    for (const { name, email, gender } of validMembers) {
+      const response = await sendManualCertificate(
+        { event_id: selectedEventId, member: { name, email, gender }, language: "ar" },
+        getToken
+      );
+      if (response.success) {
+        results.push(response.data);
+      } else {
+        hasError = true;
+        toast.error(`Failed for ${name}: ${response.error.message}`);
+      }
     }
+
+    if (!hasError) {
+      toast.success("Certificate generation job started!");
+      setManualMembers([{ name: "", email: "", gender: "Male", uniId: "" }]);
+    }
+    setJobResults(results);
 
     setIsSubmitting(false);
   };
@@ -433,17 +440,22 @@ export default function CertificatesPage() {
 
     setIsSubmitting(true);
     setJobResults([]);
-    const results: CertificateJobResponse[] = [];
+    const results: ManualCertificateResponse[] = [];
     let hasError = false;
 
     for (const [eventIdStr, members] of Object.entries(groups)) {
       const eventId = parseInt(eventIdStr);
-      const response = await sendManualCertificate(eventId, members, getToken);
-      if (response.success) {
-        results.push(response.data);
-      } else {
-        toast.error(`Error sending for event ${eventId}: ${response.error.message}`);
-        hasError = true;
+      for (const member of members) {
+        const response = await sendManualCertificate(
+          { event_id: eventId, member, language: "ar" },
+          getToken
+        );
+        if (response.success) {
+          results.push(response.data);
+        } else {
+          toast.error(`Error sending for ${member.name}: ${response.error.message}`);
+          hasError = true;
+        }
       }
     }
 
@@ -940,7 +952,7 @@ export default function CertificatesPage() {
                 <Card key={result.job_id} className="relative overflow-hidden bg-muted/20 border-border animate-in fade-in slide-in-from-bottom-2 duration-500">
                   <div className="absolute top-0 right-0 p-2">
                     <Badge className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20 hover:bg-emerald-500/10 h-5 text-[10px] uppercase font-bold tracking-tight">
-                      {result.status}
+                      Queued
                     </Badge>
                   </div>
                   <CardHeader className="p-4">
@@ -948,16 +960,12 @@ export default function CertificatesPage() {
                       <Check className="h-4 w-4 text-emerald-500" />
                       Job Registered
                     </CardTitle>
-                    <CardDescription className="text-[11px] truncate">{result.event_name}</CardDescription>
+                    <CardDescription className="text-[11px] truncate">{result.message}</CardDescription>
                   </CardHeader>
                   <CardContent className="p-4 pt-0 space-y-2">
                     <div className="space-y-1">
                       <Label className="text-[9px] uppercase font-bold text-muted-foreground">Reference ID</Label>
                       <p className="font-mono text-[11px] bg-background border border-border rounded px-1.5 py-0.5">{result.job_id}</p>
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[9px] uppercase font-bold text-muted-foreground">Storage</Label>
-                      <p className="text-[11px] text-foreground font-medium truncate">{result.folder_name}</p>
                     </div>
                   </CardContent>
                 </Card>
