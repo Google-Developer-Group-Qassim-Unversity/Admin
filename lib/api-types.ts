@@ -151,6 +151,9 @@ export interface Member {
   gender: Gender;
   uni_level: number;
   uni_college: string;
+  is_authenticated: number;
+  created_at?: string;
+  updated_at?: string;
 }
 
 /**
@@ -253,6 +256,44 @@ export type MemberRole = 'admin' | 'admin_points' | 'super_admin' | 'none';
 
 export interface MemberWithRole extends Member {
   role: MemberRole;
+}
+
+// =============================================================================
+// Member Management (Manual & Batch Create)
+// =============================================================================
+
+export interface ManualMemberCreateRequest {
+  name: string;
+  email: string;
+  phone_number?: string;
+  uni_id: string;
+  gender: Gender;
+}
+
+export interface CreatedMemberResponse {
+  member: Member;
+  already_exists: boolean;
+}
+
+export interface BatchCreateMemberItem {
+  name: string;
+  email: string;
+  phone_number?: string;
+  uni_id: string;
+  gender: Gender;
+  uni_level?: number;
+  uni_college?: string;
+}
+
+export interface BatchCreateMembersRequest {
+  members: BatchCreateMemberItem[];
+}
+
+export interface BatchCreateMembersResponse {
+  created_count: number;
+  existing_count: number;
+  failed_count: number;
+  members: Member[];
 }
 
 // =============================================================================

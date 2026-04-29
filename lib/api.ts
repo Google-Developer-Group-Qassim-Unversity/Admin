@@ -23,6 +23,10 @@ import type {
   Member,
   MemberWithRole,
   MemberRole,
+  ManualMemberCreateRequest,
+  CreatedMemberResponse,
+  BatchCreateMemberItem,
+  BatchCreateMembersResponse,
   CustomEventDepartment,
   CreateCustomDepartmentPayload,
   CreateCustomPointsResponse,
@@ -816,6 +820,26 @@ export async function getMemberByUniId(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Member>> {
   return apiFetch<Member>(`/members/uni-id/${uniId}`, {}, getToken);
+}
+
+export async function createMemberManual(
+  data: ManualMemberCreateRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CreatedMemberResponse>> {
+  return apiFetch<CreatedMemberResponse>("/members/manual", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }, getToken);
+}
+
+export async function batchCreateMembers(
+  members: BatchCreateMemberItem[],
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BatchCreateMembersResponse>> {
+  return apiFetch<BatchCreateMembersResponse>("/members/batch", {
+    method: "POST",
+    body: JSON.stringify({ members }),
+  }, getToken);
 }
 
 export async function deleteCustomPointDetail(
