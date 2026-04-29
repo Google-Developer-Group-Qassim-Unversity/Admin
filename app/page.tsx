@@ -1,4 +1,4 @@
-import { CalendarPlus, Trophy, ShieldCheck, Award, Mail } from "lucide-react";
+import { CalendarPlus, Trophy, ShieldCheck, Mail, Users } from "lucide-react";
 
 import { ModuleCard } from "@/components/module-card";
 
@@ -16,6 +16,13 @@ const modules = [
     description: "Create and manage custom point events for departments",
     href: "/points",
     buttonText: "Manage Points",
+  },
+  {
+    icon: Users,
+    title: "Manage Members",
+    description: "View, search, and create members manually or via batch import",
+    href: "/manage-members",
+    buttonText: "Manage Members",
   },
   {
     icon: Mail,

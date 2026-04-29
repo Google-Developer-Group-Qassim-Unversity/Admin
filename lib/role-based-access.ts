@@ -33,6 +33,7 @@ export const ROLE_HIERARCHY: Role[] = ["super_admin", "admin_points", "admin"];
 
 export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/manage-admins": ["super_admin"],
+  "/manage-members": ["super_admin"],
   "/certificates": ["super_admin"],
   "/points": ["admin_points", "super_admin"],
 };
