@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, openEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
 import type { Event, UpdateEventPayload, BackfillMember } from '@/lib/api-types';
 
 // Query keys
@@ -195,6 +195,29 @@ export function useCloseEventResponses(getToken: () => Promise<string | null>) {
       // Update the cache with the new data
       queryClient.setQueryData(eventKeys.detail(id), data);
       // Invalidate details and list to refetch
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook for re-opening event responses via PUT /events/[id]/status.
+ * Changes event status from "active" back to "open".
+ */
+export function useOpenEventResponses(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (id: number) => {
+      const result = await openEventResponses(id, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, id) => {
+      queryClient.setQueryData(eventKeys.detail(id), data);
       queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },

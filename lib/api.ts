@@ -314,6 +314,13 @@ export async function closeEventResponses(
   return updateEventStatus(id, "active", getToken);
 }
 
+export async function openEventResponses(
+  id: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return updateEventStatus(id, "open", getToken);
+}
+
 export async function closeEvent(
   id: number,
   getToken?: GetTokenFn

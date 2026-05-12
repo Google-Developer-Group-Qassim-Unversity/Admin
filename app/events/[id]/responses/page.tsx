@@ -10,7 +10,7 @@ import {
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useSendAcceptance, useSendAcceptanceTest } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
-import { useCloseEventResponses } from "@/hooks/use-event";
+import { useCloseEventResponses, useOpenEventResponses } from "@/hooks/use-event";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
@@ -46,7 +46,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
-import { Columns3, Search, FileX, Loader2, Lock, RefreshCw } from "lucide-react";
+import { Columns3, Search, FileX, Loader2, Lock, Unlock, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   DropdownMenu,
@@ -92,13 +92,14 @@ export default function EventResponsesPage() {
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
   const closeResponsesMutation = useCloseEventResponses(getToken);
+  const openResponsesMutation = useOpenEventResponses(getToken);
   const sendAcceptanceMutation = useSendAcceptance(getToken);
   const sendAcceptanceTestMutation = useSendAcceptanceTest(getToken);
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [bulkAcceptDialogOpen, setBulkAcceptDialogOpen] = useState(false);
   const [acceptAllDialogOpen, setAcceptAllDialogOpen] = useState(false);
-  const [closeResponsesDialogOpen, setCloseResponsesDialogOpen] = useState(false);
+  const [toggleResponsesDialogOpen, setToggleResponsesDialogOpen] = useState(false);
   const [sendAcceptanceDialogOpen, setSendAcceptanceDialogOpen] = useState(false);
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -330,18 +331,29 @@ export default function EventResponsesPage() {
     return null;
   }
 
-  const handleCloseResponsesClick = () => {
-    setCloseResponsesDialogOpen(true);
+  const handleToggleResponsesClick = () => {
+    setToggleResponsesDialogOpen(true);
   };
 
   const handleCloseResponses = async () => {
     try {
       await closeResponsesMutation.mutateAsync(event.id);
       toast.success('Responses have been closed. Event is now active.');
-      setCloseResponsesDialogOpen(false);
+      setToggleResponsesDialogOpen(false);
       refetch?.();
     } catch {
       toast.error('Failed to close responses. Please try again.');
+    }
+  };
+
+  const handleOpenResponses = async () => {
+    try {
+      await openResponsesMutation.mutateAsync(event.id);
+      toast.success('Responses have been opened. Event is now accepting responses.');
+      setToggleResponsesDialogOpen(false);
+      refetch?.();
+    } catch {
+      toast.error('Failed to open responses. Please try again.');
     }
   };
 
@@ -505,23 +517,37 @@ export default function EventResponsesPage() {
                 isLoading={sendAcceptanceMutation.isPending}
               />
 
-              {event.status === 'open' && (
+              {(event.status === 'open' || event.status === 'active') && (
                 <Button
-                  variant="default"
+                  variant={event.status === 'open' ? 'default' : 'outline'}
                   size="sm"
-                  onClick={handleCloseResponsesClick}
-                  disabled={closeResponsesMutation.isPending}
+                  onClick={handleToggleResponsesClick}
+                  disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
                 >
-                  {closeResponsesMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Closing...
-                    </>
+                  {event.status === 'open' ? (
+                    closeResponsesMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Closing...
+                      </>
+                    ) : (
+                      <>
+                        <Lock className="mr-2 h-4 w-4" />
+                        Close Responses
+                      </>
+                    )
                   ) : (
-                    <>
-                      <Lock className="mr-2 h-4 w-4" />
-                      Close Responses
-                    </>
+                    openResponsesMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Opening...
+                      </>
+                    ) : (
+                      <>
+                        <Unlock className="mr-2 h-4 w-4" />
+                        Open Responses
+                      </>
+                    )
                   )}
                 </Button>
               )}
@@ -595,36 +621,54 @@ export default function EventResponsesPage() {
         isLoading={acceptSubmissionsMutation.isPending}
       />
       
-      <AlertDialog open={closeResponsesDialogOpen} onOpenChange={(open) => {
-        if (!closeResponsesMutation.isPending) {
-          setCloseResponsesDialogOpen(open);
+      <AlertDialog open={toggleResponsesDialogOpen} onOpenChange={(open) => {
+        if (!(closeResponsesMutation.isPending || openResponsesMutation.isPending)) {
+          setToggleResponsesDialogOpen(open);
         }
       }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Close Responses?</AlertDialogTitle>
+            <AlertDialogTitle>
+              {event.status === 'open' ? 'Close Responses?' : 'Open Responses?'}
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to close responses for this event? Once closed, the event status will change from &quot;open&quot; to &quot;active&quot; and no new responses will be accepted.
+              {event.status === 'open'
+                ? 'Are you sure you want to close responses for this event? The event status will change from "open" to "active" and no new responses will be accepted.'
+                : 'Are you sure you want to open responses for this event? The event status will change from "active" to "open" and new responses will be accepted.'}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={closeResponsesMutation.isPending}>
+            <AlertDialogCancel disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}>
               Cancel
             </AlertDialogCancel>
             <Button
-              onClick={handleCloseResponses}
-              disabled={closeResponsesMutation.isPending}
+              onClick={event.status === 'open' ? handleCloseResponses : handleOpenResponses}
+              disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
             >
-              {closeResponsesMutation.isPending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Closing...
-                </>
+              {event.status === 'open' ? (
+                closeResponsesMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Closing...
+                  </>
+                ) : (
+                  <>
+                    <Lock className="mr-2 h-4 w-4" />
+                    Close Responses
+                  </>
+                )
               ) : (
-                <>
-                  <Lock className="mr-2 h-4 w-4" />
-                  Close Responses
-                </>
+                openResponsesMutation.isPending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Opening...
+                  </>
+                ) : (
+                  <>
+                    <Unlock className="mr-2 h-4 w-4" />
+                    Open Responses
+                  </>
+                )
               )}
             </Button>
           </AlertDialogFooter>
