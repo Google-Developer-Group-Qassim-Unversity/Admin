@@ -25,6 +25,7 @@ import {
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
 import { useMemo, useState } from "react";
+import { normalizeArabic } from "@/lib/search-utils";
 import {
   useReactTable,
   getCoreRowModel,
@@ -209,6 +210,15 @@ export default function EventResponsesPage() {
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const search = normalizeArabic(String(filterValue));
+      if (!search) return true;
+      return row.getVisibleCells().some((cell) => {
+        const value = cell.getValue();
+        if (value == null) return false;
+        return normalizeArabic(String(value)).includes(search);
+      });
+    },
     initialState: {
       pagination: {
         pageSize: 10,

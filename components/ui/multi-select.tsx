@@ -28,6 +28,7 @@ import {
   type ReactNode,
 } from "react"
 import { Badge } from "@/components/ui/badge"
+import { normalizeArabic } from "@/lib/search-utils"
 
 type MultiSelectContextType = {
   open: boolean
@@ -280,6 +281,18 @@ export function MultiSelectContent({
 } & Omit<ComponentPropsWithoutRef<typeof Command>, "children">) {
   const canSearch = typeof search === "object" ? true : search
 
+  const arabicFilter = useCallback(
+    (value: string, search: string): number => {
+      const normValue = normalizeArabic(value)
+      const normSearch = normalizeArabic(search)
+      if (!normSearch) return 1
+      return normValue.includes(normSearch) ? 1 : 0
+    },
+    [],
+  )
+
+  const filterFn = canSearch ? arabicFilter : undefined
+
   return (
     <>
       <div style={{ display: "none" }}>
@@ -288,7 +301,7 @@ export function MultiSelectContent({
         </Command>
       </div>
       <PopoverContent className="min-w-(--radix-popover-trigger-width) p-0">
-        <Command {...props}>
+        <Command {...props} filter={filterFn}>
           {canSearch ? (
             <CommandInput
               placeholder={

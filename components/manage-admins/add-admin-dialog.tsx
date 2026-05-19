@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getMembers, updateMemberRole } from "@/lib/api";
 import type { Member, MemberRole } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface AddAdminDialogProps {
   open: boolean;
@@ -66,27 +67,18 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
   }, [open, getToken, members.length]);
 
   // Filter and limit members for display
-  const displayMembers = React.useMemo(() => {
-    let result = members;
-
-    // Filter if search query exists
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = members.filter(
-        (m) =>
-          m.name.toLowerCase().includes(query) ||
-          m.uni_id.toLowerCase().includes(query) ||
-          m.email.toLowerCase().includes(query)
-      );
-    }
-
-    // Exclude already selected members
+  const unselectedMembers = React.useMemo(() => {
     const selectedIds = new Set(selectedMembers.map((sm) => sm.member.id));
-    result = result.filter((m) => !selectedIds.has(m.id));
+    return members.filter((m) => !selectedIds.has(m.id));
+  }, [members, selectedMembers]);
 
-    // Limit to MAX_DISPLAY
-    return result.slice(0, MAX_DISPLAY);
-  }, [members, searchQuery, selectedMembers]);
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id", "email"], {
+    limit: MAX_DISPLAY,
+  });
+
+  const displayMembers = searchQuery.trim()
+    ? fuzzyResults
+    : unselectedMembers.slice(0, MAX_DISPLAY);
 
   // Reset form state when dialog closes
   React.useEffect(() => {

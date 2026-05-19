@@ -8,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { FullEventPointsCard } from "@/components/full-event-points-card";
 import type { Event } from "@/lib/api-types";
 import { AVAILABLE_SEMESTERS } from "@/lib/constants";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface FullEventsPointsListProps {
   events: Event[];
@@ -22,19 +23,13 @@ export function FullEventsPointsList({
 }: FullEventsPointsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
+
   const filteredEvents = React.useMemo(() => {
-    const filtered = events.filter((event) => {
+    const filtered = searchResults.filter((event) => {
       if (event.location_type === "none" || event.location_type === "hidden") {
         return false;
       }
-
-      if (
-        searchQuery &&
-        !event.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
-        return false;
-      }
-
       return true;
     });
 
@@ -45,7 +40,7 @@ export function FullEventsPointsList({
     );
 
     return sorted.slice(0, 50);
-  }, [events, searchQuery]);
+  }, [searchResults]);
 
   const handleClearFilters = () => {
     setSearchQuery("");

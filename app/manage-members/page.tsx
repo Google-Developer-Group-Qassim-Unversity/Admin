@@ -57,6 +57,7 @@ import { BatchImportDialog } from "@/components/manage-members/batch-import-dial
 
 import { useMembers } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -131,39 +132,6 @@ const columns: ColumnDef<Member>[] = [
   },
 ];
 
-function getMatchScore(member: Member, searchWords: string[]): number {
-  if (searchWords.length === 0) return 0;
-  const nameParts = member.name.toLowerCase().split(/\s+/);
-  const uniIdLower = member.uni_id.toLowerCase();
-  const emailLower = member.email.toLowerCase();
-  const phoneLower = (member.phone_number ?? "").toLowerCase();
-
-  let score = 0;
-  for (const word of searchWords) {
-    let wordScore = 0;
-    for (const part of nameParts) {
-      if (part.startsWith(word)) {
-        wordScore = 2;
-        break;
-      } else if (part.includes(word) && wordScore < 2) {
-        wordScore = 1;
-      }
-    }
-    if (wordScore < 2 && uniIdLower.includes(word)) {
-      wordScore = Math.max(wordScore, 1);
-    }
-    if (wordScore < 2 && emailLower.includes(word)) {
-      wordScore = Math.max(wordScore, 1);
-    }
-    if (wordScore < 1 && phoneLower.includes(word)) {
-      wordScore = 1;
-    }
-    if (wordScore === 0) return -1;
-    score += wordScore;
-  }
-  return score;
-}
-
 export default function ManageMembersPage() {
   const { getToken } = useAuth();
 
@@ -177,25 +145,7 @@ export default function ManageMembersPage() {
 
   const { data: members, isLoading, error, refetch } = useMembers(getToken);
 
-  const searchWords = React.useMemo(() => {
-    return searchQuery
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 0)
-      .map((w) => w.toLowerCase());
-  }, [searchQuery]);
-
-  const filteredMembers = React.useMemo(() => {
-    if (!members) return [];
-    if (searchWords.length === 0) return members;
-
-    const scored = members
-      .map((member) => ({ member, score: getMatchScore(member, searchWords) }))
-      .filter(({ score }) => score > 0)
-      .sort((a, b) => b.score - a.score);
-
-    return scored.map(({ member }) => member);
-  }, [members, searchWords]);
+  const filteredMembers = useFuzzySearch(members ?? [], searchQuery, ["name", "email", "uni_id", "phone_number"]);
 
   const table = useReactTable({
     data: filteredMembers,
@@ -351,7 +301,7 @@ export default function ManageMembersPage() {
 
             <div className="text-sm text-muted-foreground">
               {totalRows} member{totalRows !== 1 ? "s" : ""}
-              {searchWords.length > 0 && ` (filtered from ${totalCount} total)`}
+              {searchQuery.trim().length > 0 && ` (filtered from ${totalCount} total)`}
             </div>
 
             
@@ -386,7 +336,7 @@ export default function ManageMembersPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                      {searchWords.length > 0 ? "No members match your search" : "No members found"}
+                      {searchQuery.trim().length > 0 ? "No members match your search" : "No members found"}
                     </TableCell>
                   </TableRow>
                 )}

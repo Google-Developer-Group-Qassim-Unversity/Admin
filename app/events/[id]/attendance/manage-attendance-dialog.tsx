@@ -20,7 +20,8 @@ import type { Member, AttendanceRecord } from "@/lib/api-types";
 
 import type { Tab, ConfirmDialogState } from "./types";
 import { DISPLAY_LIMIT } from "./types";
-import { getDayNumberFromEffectiveDate, getMatchScore } from "./utils";
+import { getDayNumberFromEffectiveDate } from "./utils";
+import { useFuzzySearch } from "@/lib/search-utils";
 import { MemberSelectionTab } from "./member-selection-tab";
 import { CopyTab } from "./copy-tab";
 import { BackfillTab } from "./backfill-tab";
@@ -93,14 +94,6 @@ export function ManageAttendanceDialog({
     }
   }, [open]);
 
-  const searchWords = React.useMemo(() => {
-    return searchQuery
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 0)
-      .map((w) => w.toLowerCase());
-  }, [searchQuery]);
-
   const dayInt = parseInt(selectedDay, 10);
 
   const attendedMembers = React.useMemo(() => {
@@ -121,23 +114,23 @@ export function ManageAttendanceDialog({
     return membersForDay;
   }, [attendanceData, activeTab, dayInt, eventStart]);
 
-  const availableMembers = React.useMemo(() => {
-    const source = activeTab === "remove" ? attendedMembers : allMembers;
-    let result = source.filter((m) => !selectedMemberIds.has(m.id));
+  const sourceMembers = React.useMemo(() => {
+    return activeTab === "remove" ? attendedMembers : allMembers;
+  }, [activeTab, attendedMembers, allMembers]);
 
-    if (searchWords.length > 0) {
-      result = result
-        .map((m) => ({ member: m, score: getMatchScore(m, searchWords) }))
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(({ member }) => member);
-    }
+  const unselectedMembers = React.useMemo(() => {
+    return sourceMembers.filter((m) => !selectedMemberIds.has(m.id));
+  }, [sourceMembers, selectedMemberIds]);
 
-    if (activeTab === "remove") {
-      return result;
-    }
-    return result.slice(0, DISPLAY_LIMIT);
-  }, [allMembers, attendedMembers, selectedMemberIds, searchWords, activeTab]);
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id"], {
+    limit: activeTab === "remove" ? undefined : DISPLAY_LIMIT,
+  });
+
+  const availableMembers = searchQuery.trim()
+    ? fuzzyResults
+    : activeTab === "remove"
+      ? unselectedMembers
+      : unselectedMembers.slice(0, DISPLAY_LIMIT);
 
   const totalAvailable = React.useMemo(() => {
     if (activeTab === "remove") {

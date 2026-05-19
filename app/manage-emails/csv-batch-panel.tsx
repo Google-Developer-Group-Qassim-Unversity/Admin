@@ -26,6 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { normalizeArabic } from "@/lib/search-utils";
 import {
   Command,
   CommandEmpty,
@@ -467,7 +468,12 @@ export function CsvBatchPanel({ events, onGoToLogs }: CsvBatchPanelProps) {
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0 shadow-lg" align="start">
-                <Command>
+                <Command filter={(value, search) => {
+                  const normValue = normalizeArabic(value);
+                  const normSearch = normalizeArabic(search);
+                  if (!normSearch) return 1;
+                  return normValue.includes(normSearch) ? 1 : 0;
+                }}>
                   <CommandInput placeholder="Search events..." className="h-9" />
                   <CommandList>
                     <CommandEmpty>No events found.</CommandEmpty>

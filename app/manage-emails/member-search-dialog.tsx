@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import { getMembers } from "@/lib/api";
 import type { Member } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface MemberSearchDialogProps {
   open: boolean;
@@ -27,27 +28,6 @@ interface MemberSearchDialogProps {
 }
 
 const MAX_DISPLAY = 50;
-
-function getMatchScore(member: Member, searchWords: string[]): number {
-  if (searchWords.length === 0) return 0;
-  const nameParts = member.name.toLowerCase().split(/\s+/);
-  const uniIdLower = member.uni_id.toLowerCase();
-  const emailLower = member.email.toLowerCase();
-
-  let score = 0;
-  for (const word of searchWords) {
-    let wordScore = 0;
-    for (const part of nameParts) {
-      if (part.startsWith(word)) wordScore = 2;
-      else if (part.includes(word) && wordScore < 2) wordScore = 1;
-    }
-    if (wordScore === 0 && uniIdLower.includes(word)) wordScore = 1;
-    if (wordScore === 0 && emailLower.includes(word)) wordScore = 1;
-    if (wordScore === 0) return -1;
-    score += wordScore;
-  }
-  return score;
-}
 
 export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSearchDialogProps) {
   const { getToken } = useAuth();
@@ -81,24 +61,16 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
     }
   }, [open]);
 
-  const searchWords = React.useMemo(
-    () => searchQuery.trim().split(/\s+/).filter((w) => w.length > 0).map((w) => w.toLowerCase()),
-    [searchQuery],
+  const unselectedMembers = React.useMemo(
+    () => members.filter((m) => !stagedIds.has(m.id)),
+    [members, stagedIds],
   );
 
-  const displayMembers = React.useMemo(() => {
-    let result = members.filter((m) => !stagedIds.has(m.id));
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id", "email"], {
+    limit: MAX_DISPLAY,
+  });
 
-    if (searchWords.length > 0) {
-      result = result
-        .map((m) => ({ member: m, score: getMatchScore(m, searchWords) }))
-        .filter(({ score }) => score >= 0)
-        .sort((a, b) => b.score - a.score)
-        .map(({ member }) => member);
-    }
-
-    return result.slice(0, MAX_DISPLAY);
-  }, [members, searchWords, stagedIds]);
+  const displayMembers = searchQuery.trim() ? fuzzyResults : unselectedMembers.slice(0, MAX_DISPLAY);
 
   const stagedMembers = React.useMemo(
     () => members.filter((m) => stagedIds.has(m.id)),

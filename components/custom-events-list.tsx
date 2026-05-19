@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { CustomEventCard } from "@/components/custom-event-card";
 import type { Event } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface CustomEventsListProps {
   events: Event[];
@@ -14,26 +15,17 @@ interface CustomEventsListProps {
 export function CustomEventsList({ events }: CustomEventsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
 
+  const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
+
   const filteredEvents = React.useMemo(() => {
-    let filtered = events;
-
-    // Search filter
-    if (searchQuery) {
-      filtered = filtered.filter((event) =>
-        event.name.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
-    // Sort by start_datetime DESC
-    const sorted = filtered.sort(
+    const sorted = searchResults.sort(
       (a, b) =>
         new Date(b.start_datetime).getTime() -
         new Date(a.start_datetime).getTime()
     );
 
-    // Limit to 50
     return sorted.slice(0, 50);
-  }, [events, searchQuery]);
+  }, [searchResults]);
 
   const handleClearFilters = () => {
     setSearchQuery("");

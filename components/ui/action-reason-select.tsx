@@ -20,6 +20,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import type { Action, GroupedActions } from "@/lib/api-types";
+import { normalizeArabic } from "@/lib/search-utils";
 
 interface ActionReasonSelectProps {
   /** Grouped actions: department and bonus types */
@@ -84,13 +85,13 @@ export function ActionReasonSelect({
   }, [selectedAction, customActionName]);
 
   // Filter actions by search
-  const normalizedSearch = searchValue.trim().toLowerCase();
+  const normalizedSearch = normalizeArabic(searchValue);
 
   const filterActions = (actions: Action[]) =>
     actions.filter(
       (action) =>
-        action.action_name.toLowerCase().includes(normalizedSearch) ||
-        action.ar_action_name.toLowerCase().includes(normalizedSearch)
+        normalizeArabic(action.action_name).includes(normalizedSearch) ||
+        normalizeArabic(action.ar_action_name).includes(normalizedSearch)
     );
 
   const filteredDepartment = filterActions(actionOptions.department);

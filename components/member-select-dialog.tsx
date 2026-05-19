@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 import type { MemberOption } from "./point-detail-row";
 
@@ -51,64 +52,17 @@ export function MemberSelectDialog({
     return sortedMembers.filter((m) => pendingSelectedIds.has(m.id));
   }, [sortedMembers, pendingSelectedIds]);
 
-  const getMatchScore = (member: MemberOption, searchWords: string[]) => {
-    if (searchWords.length === 0) return 0;
-    const nameParts = member.label.toLowerCase().split(/\s+/);
-    const uniIdLower = member.uni_id.toLowerCase();
-    
-    let score = 0;
-    for (const word of searchWords) {
-      let wordScore = 0;
-      for (const part of nameParts) {
-        if (part.startsWith(word)) {
-          wordScore = 2;
-        } else if (part.includes(word) && wordScore < 2) {
-          wordScore = 1;
-        }
-      }
-      if (wordScore === 0 && uniIdLower.includes(word)) {
-        wordScore = 1;
-      }
-      if (wordScore === 0) return -1;
-      score += wordScore;
-    }
-    return score;
-  };
+  const unselectedMembers = React.useMemo(() => {
+    return sortedMembers.filter((m) => !pendingSelectedIds.has(m.id));
+  }, [sortedMembers, pendingSelectedIds]);
 
-  const matchesSearch = (member: MemberOption, searchWords: string[]) => {
-    return getMatchScore(member, searchWords) >= 0;
-  };
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["label", "uni_id"], {
+    limit: DISPLAY_LIMIT,
+  });
 
-  const searchWords = React.useMemo(() => {
-    return searchQuery
-      .trim()
-      .split(/\s+/)
-      .filter((w) => w.length > 0)
-      .map((w) => w.toLowerCase());
-  }, [searchQuery]);
+  const availableMembers = searchQuery.trim() ? fuzzyResults : unselectedMembers.slice(0, DISPLAY_LIMIT);
 
-  const availableMembers = React.useMemo(() => {
-    let result = sortedMembers.filter((m) => !pendingSelectedIds.has(m.id));
-
-    if (searchWords.length > 0) {
-      result = result
-        .map((m) => ({ member: m, score: getMatchScore(m, searchWords) }))
-        .filter(({ score }) => score > 0)
-        .sort((a, b) => b.score - a.score)
-        .map(({ member }) => member);
-    }
-
-    return result.slice(0, DISPLAY_LIMIT);
-  }, [sortedMembers, pendingSelectedIds, searchWords]);
-
-  const totalAvailable = React.useMemo(() => {
-    if (searchWords.length === 0) {
-      return sortedMembers.filter((m) => !pendingSelectedIds.has(m.id)).length;
-    }
-    return sortedMembers.filter(
-      (m) => !pendingSelectedIds.has(m.id) && matchesSearch(m, searchWords)
-    ).length;
-  }, [sortedMembers, pendingSelectedIds, searchWords]);
+  const totalAvailable = unselectedMembers.length;
 
   const handleAddMember = (id: number) => {
     setPendingSelectedIds((prev) => new Set(prev).add(id));
@@ -131,8 +85,8 @@ export function MemberSelectDialog({
     onOpenChange(false);
   };
 
-  const showLimitHint = searchWords.length === 0 && totalAvailable > DISPLAY_LIMIT;
-  const showSearchLimitHint = searchWords.length > 0 && totalAvailable > DISPLAY_LIMIT;
+  const showLimitHint = !searchQuery.trim() && totalAvailable > DISPLAY_LIMIT;
+  const showSearchLimitHint = searchQuery.trim().length > 0 && totalAvailable > DISPLAY_LIMIT;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

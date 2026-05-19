@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { normalizeArabic } from "@/lib/search-utils";
 
 export interface ComboboxOption {
   id: number;
@@ -50,10 +51,10 @@ export function DepartmentCombobox({
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
-  const normalizedSearch = searchValue.trim().toLowerCase();
+  const normalizedSearch = normalizeArabic(searchValue);
 
   const matchingOptions = options.filter((option) =>
-    option.label.toLowerCase().includes(normalizedSearch)
+    normalizeArabic(option.label).includes(normalizedSearch)
   );
 
   const selectedOption = options.find((o) => o.id === value);

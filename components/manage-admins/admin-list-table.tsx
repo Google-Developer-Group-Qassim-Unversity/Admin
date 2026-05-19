@@ -17,6 +17,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 import type { MemberWithRole } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface AdminListTableProps {
   admins: MemberWithRole[];
@@ -62,17 +63,7 @@ export function AdminListTable({
 
   const activeAdmins = admins.filter((admin) => admin.role !== "none");
 
-  const filteredAdmins = React.useMemo(() => {
-    if (!searchQuery.trim()) return activeAdmins;
-
-    const query = searchQuery.toLowerCase().trim();
-    return activeAdmins.filter(
-      (admin) =>
-        admin.name.toLowerCase().includes(query) ||
-        admin.email.toLowerCase().includes(query) ||
-        admin.uni_id.toLowerCase().includes(query)
-    );
-  }, [activeAdmins, searchQuery]);
+  const filteredAdmins = useFuzzySearch(activeAdmins, searchQuery, ["name", "email", "uni_id"]);
 
   const isCurrentUser = (admin: MemberWithRole) => 
     currentUserId && admin.uni_id === currentUserId;

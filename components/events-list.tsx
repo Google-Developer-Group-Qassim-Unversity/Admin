@@ -4,6 +4,7 @@ import * as React from "react";
 import { EventCard } from "@/components/event-card";
 import { EventFilters } from "@/components/event-filters";
 import type { Event, LocationType } from "@/lib/api-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 
 interface EventsListProps {
   events: Event[];
@@ -30,16 +31,12 @@ export function EventsList({
     return Array.from(locations).sort();
   }, [events]);
 
-  const filteredEvents = React.useMemo(() => {
-    const filtered = events.filter((event) => {
-      if (event.location_type === "none" || event.location_type === "hidden") {
-        return false;
-      }
+  const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
 
-      if (
-        searchQuery &&
-        !event.name.toLowerCase().includes(searchQuery.toLowerCase())
-      ) {
+  const filteredEvents = React.useMemo(() => {
+    const source = searchQuery.trim() ? searchResults : events;
+    const filtered = source.filter((event) => {
+      if (event.location_type === "none" || event.location_type === "hidden") {
         return false;
       }
 
@@ -54,12 +51,12 @@ export function EventsList({
       return true;
     });
 
-    const sorted = filtered.sort((a, b) => 
+    const sorted = filtered.sort((a, b) =>
       new Date(b.start_datetime).getTime() - new Date(a.start_datetime).getTime()
     );
 
     return sorted.slice(0, 50);
-  }, [events, searchQuery, locationTypes, selectedLocations]);
+  }, [searchResults, searchQuery, events, locationTypes, selectedLocations]);
 
   const handleClearFilters = () => {
     setSearchQuery("");

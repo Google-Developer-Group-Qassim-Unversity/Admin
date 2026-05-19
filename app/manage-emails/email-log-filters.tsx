@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Event, Member } from "@/lib/api-types";
 import { getEvents, getMembers } from "@/lib/api";
+import { useFuzzySearch, normalizeArabic } from "@/lib/search-utils";
 import type { DateRange } from "react-day-picker";
 
 import type { EmailLogFilters, EmailType } from "./types";
@@ -171,7 +172,12 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[280px] p-0" align="start">
-          <Command>
+          <Command filter={(value, search) => {
+            const normValue = normalizeArabic(value);
+            const normSearch = normalizeArabic(search);
+            if (!normSearch) return 1;
+            return normValue.includes(normSearch) ? 1 : 0;
+          }}>
             <CommandInput placeholder="Search events..." className="h-8" />
             <CommandList>
               <CommandEmpty>No events found.</CommandEmpty>
@@ -249,24 +255,21 @@ function MemberFilterButton({
     });
   }, [open, getToken, members.length]);
 
-  const displayMembers = React.useMemo(() => {
+  const unselectedMembers = React.useMemo(() => {
     let result = members;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = members.filter(
-        (m) =>
-          m.name.toLowerCase().includes(q) ||
-          m.uni_id.toLowerCase().includes(q) ||
-          m.email.toLowerCase().includes(q)
-      );
-    }
     if (selectedMember) {
       result = result.filter((m) => m.id !== selectedMember.id);
     }
-    return result.slice(0, MAX_DISPLAY);
-  }, [members, searchQuery, selectedMember]);
+    return result;
+  }, [members, selectedMember]);
 
-  const showLimitHint = !searchQuery.trim() && members.length > MAX_DISPLAY;
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id", "email"], {
+    limit: MAX_DISPLAY,
+  });
+
+  const displayMembers = searchQuery.trim() ? fuzzyResults : unselectedMembers.slice(0, MAX_DISPLAY);
+
+  const showLimitHint = !searchQuery.trim() && unselectedMembers.length > MAX_DISPLAY;
 
   return (
     <>
