@@ -18,14 +18,15 @@ export function CustomEventsList({ events }: CustomEventsListProps) {
   const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
 
   const filteredEvents = React.useMemo(() => {
-    const sorted = searchResults.sort(
+    const source = searchQuery.trim() ? searchResults : events;
+    const sorted = source.sort(
       (a, b) =>
         new Date(b.start_datetime).getTime() -
         new Date(a.start_datetime).getTime()
     );
 
     return sorted.slice(0, 50);
-  }, [searchResults]);
+  }, [searchResults, searchQuery, events]);
 
   const handleClearFilters = () => {
     setSearchQuery("");

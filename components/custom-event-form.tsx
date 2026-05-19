@@ -405,19 +405,19 @@ export function CustomEventForm({
           ))}
 
         <div className="space-y-3">
-          {rows.map((row, index) => (
-<PointDetailRow
-               key={index}
-               data={row}
-               index={index}
-               departmentOptions={departmentOptions}
-               memberOptions={memberOptions}
-               actionOptions={actionOptions}
-               onChange={handleRowChange}
-               onRemove={handleRowRemove}
-               canRemove={rows.length > 1}
-               onMemberCreated={onMemberCreated}
-             />
+{rows.map((row, index) => (
+            <PointDetailRow
+              key={index}
+              data={row}
+              index={index}
+              departmentOptions={departmentOptions}
+              memberOptions={memberOptions}
+              actionOptions={actionOptions}
+              onChange={handleRowChange}
+              onRemove={handleRowRemove}
+              canRemove={rows.length > 1}
+              onMemberCreated={onMemberCreated}
+            />
           ))}
         </div>
       </div>

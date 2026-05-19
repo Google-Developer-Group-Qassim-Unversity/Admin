@@ -69,7 +69,7 @@ export function MemberSelectDialog({
 
   const availableMembers = searchQuery.trim() ? fuzzyResults : unselectedMembers.slice(0, DISPLAY_LIMIT);
 
-  const totalAvailable = unselectedMembers.length;
+  const totalAvailable = searchQuery.trim() ? fuzzyResults.length : unselectedMembers.length;
 
   const handleAddMember = (id: number) => {
     setPendingSelectedIds((prev) => new Set(prev).add(id));

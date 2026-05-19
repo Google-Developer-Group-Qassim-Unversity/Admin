@@ -26,7 +26,8 @@ export function FullEventsPointsList({
   const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
 
   const filteredEvents = React.useMemo(() => {
-    const filtered = searchResults.filter((event) => {
+    const source = searchQuery.trim() ? searchResults : events;
+    const filtered = source.filter((event) => {
       if (event.location_type === "none" || event.location_type === "hidden") {
         return false;
       }
@@ -40,7 +41,7 @@ export function FullEventsPointsList({
     );
 
     return sorted.slice(0, 50);
-  }, [searchResults]);
+  }, [searchResults, searchQuery, events]);
 
   const handleClearFilters = () => {
     setSearchQuery("");
