@@ -31,7 +31,7 @@ import {
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
-import type { GroupedActions, LocationType, ApiError, CreateCustomPointsResponse } from "@/lib/api-types";
+import type { GroupedActions, LocationType, ApiError, CreateCustomPointsResponse, Member } from "@/lib/api-types";
 
 export default function CreateCustomEventPage() {
   const router = useRouter();
@@ -48,6 +48,13 @@ export default function CreateCustomEventPage() {
     bonus: [],
   });
   const [isLoadingData, setIsLoadingData] = React.useState(true);
+
+  const handleMemberCreated = React.useCallback((member: Member) => {
+    setMemberOptions((prev) => [
+      ...prev,
+      { id: member.id, label: member.name, uni_id: member.uni_id },
+    ]);
+  }, []);
 
   React.useEffect(() => {
     async function fetchData() {
@@ -223,6 +230,7 @@ export default function CreateCustomEventPage() {
               onSubmit={handleSubmit}
               isSubmitting={isSubmitting}
               useSimpleInput={true}
+              onMemberCreated={handleMemberCreated}
             />
           )}
         </CardContent>

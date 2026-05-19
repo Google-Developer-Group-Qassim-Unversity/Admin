@@ -19,6 +19,7 @@ export interface MemberSelectionTabProps {
   onDayChange: (day: string) => void;
   dayCount: number;
   isRemoveMode?: boolean;
+  onCreateMember?: () => void;
 }
 
 export interface CopyTabProps {

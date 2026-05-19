@@ -22,7 +22,7 @@ import {
 } from "@/components/custom-event-form";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { MemberOption } from "@/components/point-detail-row";
-import type { CustomEventDepartment, CustomEventMember, GroupedActions, EventDetails } from "@/lib/api-types";
+import type { CustomEventDepartment, CustomEventMember, GroupedActions, EventDetails, Member } from "@/lib/api-types";
 import {
   getCustomEvents,
   getCustomEventDepartment,
@@ -71,6 +71,13 @@ export default function EditCustomEventPage() {
     member: [],
     bonus: [],
   });
+
+  const handleMemberCreated = React.useCallback((member: Member) => {
+    setMemberOptions((prev) => [
+      ...prev,
+      { id: member.id, label: member.name, uni_id: member.uni_id },
+    ]);
+  }, []);
 
   const isFullEvent = React.useMemo(() => {
     if (!eventDetails?.event) return false;
@@ -519,6 +526,7 @@ if (actionsRes.success) {
             onSubmit={handleSubmit}
             isSubmitting={isSubmitting}
             isFullEvent={isFullEvent}
+            onMemberCreated={handleMemberCreated}
           />
         </CardContent>
       </Card>

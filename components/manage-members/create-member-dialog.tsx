@@ -24,12 +24,13 @@ import {
 } from "@/components/ui/select";
 
 import { useCreateMemberManual } from "@/hooks/use-members";
-import type { Gender, ManualMemberCreateRequest } from "@/lib/api-types";
+import type { Gender, Member, ManualMemberCreateRequest } from "@/lib/api-types";
 
 interface CreateMemberDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
+  onSuccess?: () => void;
+  onCreatedMember?: (member: Member) => void;
   getToken: () => Promise<string | null>;
 }
 
@@ -42,6 +43,7 @@ export function CreateMemberDialog({
   open,
   onOpenChange,
   onSuccess,
+  onCreatedMember,
   getToken,
 }: CreateMemberDialogProps) {
   const createMutation = useCreateMemberManual(getToken);
@@ -98,7 +100,8 @@ export function CreateMemberDialog({
           }
           resetForm();
           onOpenChange(false);
-          onSuccess();
+          onCreatedMember?.(result.member);
+          onSuccess?.();
         },
         onError: (error) => {
           toast.error("Failed to create member", {

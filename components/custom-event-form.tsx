@@ -21,7 +21,7 @@ import {
   type MemberOption,
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, PointRowType } from "@/lib/api-types";
+import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, Member, PointRowType } from "@/lib/api-types";
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 import { useUserRole } from "@/hooks/use-rbac";
@@ -39,6 +39,7 @@ export interface CustomEventFormProps {
   isSubmitting: boolean;
   useSimpleInput?: boolean;
   isFullEvent?: boolean;
+  onMemberCreated?: (member: Member) => void;
 }
 
 export interface CustomEventFormData {
@@ -72,6 +73,7 @@ export function CustomEventForm({
   isSubmitting,
   useSimpleInput = false,
   isFullEvent = false,
+  onMemberCreated,
 }: CustomEventFormProps) {
   const userRole = useUserRole();
   const isRestrictedMode = userRole === "admin_points";
@@ -404,17 +406,18 @@ export function CustomEventForm({
 
         <div className="space-y-3">
           {rows.map((row, index) => (
-            <PointDetailRow
-              key={index}
-              data={row}
-              index={index}
-              departmentOptions={departmentOptions}
-              memberOptions={memberOptions}
-              actionOptions={actionOptions}
-              onChange={handleRowChange}
-              onRemove={handleRowRemove}
-              canRemove={rows.length > 1}
-            />
+<PointDetailRow
+               key={index}
+               data={row}
+               index={index}
+               departmentOptions={departmentOptions}
+               memberOptions={memberOptions}
+               actionOptions={actionOptions}
+               onChange={handleRowChange}
+               onRemove={handleRowRemove}
+               canRemove={rows.length > 1}
+               onMemberCreated={onMemberCreated}
+             />
           ))}
         </div>
       </div>

@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/multi-select";
 import { ActionReasonSelect } from "@/components/ui/action-reason-select";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { GroupedActions, PointRowType } from "@/lib/api-types";
+import type { GroupedActions, Member, PointRowType } from "@/lib/api-types";
 import {
   Tooltip,
   TooltipContent,
@@ -51,6 +51,7 @@ interface PointDetailRowProps {
   onChange: (index: number, data: PointDetailRowData) => void;
   onRemove: (index: number) => void;
   canRemove: boolean;
+  onMemberCreated?: (member: Member) => void;
 }
 
 export function PointDetailRow({
@@ -62,6 +63,7 @@ export function PointDetailRow({
   onChange,
   onRemove,
   canRemove,
+  onMemberCreated,
 }: PointDetailRowProps) {
   const userRole = useUserRole();
   const isPointsLocked = data.action_id !== null;
@@ -195,6 +197,7 @@ export function PointDetailRow({
                 memberOptions={memberOptions}
                 selectedIds={data.member_ids}
                 onSelectionChange={(ids) => updateField("member_ids", ids)}
+                onMemberCreated={onMemberCreated}
               />
             </>
           )}

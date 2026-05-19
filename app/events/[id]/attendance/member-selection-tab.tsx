@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X, Check, ChevronRight } from "lucide-react";
+import { Search, X, Check, ChevronRight, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +31,7 @@ export function MemberSelectionTab({
   onDayChange,
   dayCount,
   isRemoveMode = false,
+  onCreateMember,
 }: MemberSelectionTabProps) {
   const showLimitHint =
     !isRemoveMode && totalAvailable > DISPLAY_LIMIT && searchQuery.trim() === "";
@@ -58,6 +59,12 @@ export function MemberSelectionTab({
             <span className="text-sm font-medium">
               {isRemoveMode ? "Attended" : "Available"} ({totalAvailable})
             </span>
+            {!isRemoveMode && onCreateMember && (
+              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onCreateMember}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Create
+              </Button>
+            )}
           </div>
           <div className="px-3 py-2 border-b">
             <div className="relative">

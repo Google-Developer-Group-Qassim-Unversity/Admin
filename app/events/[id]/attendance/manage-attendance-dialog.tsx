@@ -17,6 +17,7 @@ import {
 import { getMembers } from "@/lib/api";
 import { useMarkAttendanceManual, useRemoveAttendanceManual, useCopyAttendance } from "@/hooks/use-event";
 import type { Member, AttendanceRecord } from "@/lib/api-types";
+import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 
 import type { Tab, ConfirmDialogState } from "./types";
 import { DISPLAY_LIMIT } from "./types";
@@ -59,6 +60,7 @@ export function ManageAttendanceDialog({
   const [backfillDay, setBackfillDay] = React.useState<string>("1");
   const [daySelectDialogOpen, setDaySelectDialogOpen] = React.useState(false);
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmDialogState | null>(null);
+  const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
 
   const markMutation = useMarkAttendanceManual(getToken);
   const removeMutation = useRemoveAttendanceManual(getToken);
@@ -159,6 +161,11 @@ export function ManageAttendanceDialog({
   const handleClearAll = () => {
     setSelectedMemberIds(new Set());
   };
+
+  const handleCreatedMember = React.useCallback((member: Member) => {
+    setAllMembers((prev) => [...prev, member].sort((a, b) => a.name.localeCompare(b.name)));
+    setSelectedMemberIds((prev) => new Set(prev).add(member.id));
+  }, []);
 
   const handleMark = async (days?: number[]) => {
     const ids = [...selectedMemberIds];
@@ -309,6 +316,7 @@ export function ManageAttendanceDialog({
                 selectedDay={selectedDay}
                 onDayChange={setSelectedDay}
                 dayCount={dayCount}
+                onCreateMember={() => setIsCreateDialogOpen(true)}
               />
             )}
 
@@ -424,6 +432,13 @@ export function ManageAttendanceDialog({
         onConfirm={handleMark}
         memberCount={selectedMemberIds.size}
         isSubmitting={isSubmitting}
+      />
+
+      <CreateMemberDialog
+        open={isCreateDialogOpen}
+        onOpenChange={setIsCreateDialogOpen}
+        onCreatedMember={handleCreatedMember}
+        getToken={getToken}
       />
     </>
   );
