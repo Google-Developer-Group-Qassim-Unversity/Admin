@@ -1,4 +1,4 @@
-import { CalendarPlus, Trophy, ShieldCheck, Mail, Users } from "lucide-react";
+import { CalendarPlus, Trophy, ShieldCheck, Mail, Users, Settings } from "lucide-react";
 
 import { ModuleCard } from "@/components/module-card";
 
@@ -37,6 +37,13 @@ const modules = [
     description: "Add, view, and manage administrator roles and permissions",
     href: "/manage-admins",
     buttonText: "Manage Admins",
+  },
+  {
+    icon: Settings,
+    title: "Settings",
+    description: "Manage application settings and reset the leaderboard cache",
+    href: "/settings",
+    buttonText: "Open Settings",
   }
 ];
 

@@ -915,4 +915,18 @@ export async function getEmailDashboardStats(
   return apiFetch<EmailDashboardStats>(`/emails/stats/dashboard?period=${period}`, {}, getToken);
 }
 
+// =============================================================================
+// Cache Management API
+// =============================================================================
+
+export type CacheResetResponse = {
+  success: boolean;
+  message: string;
+  result?: { ok?: boolean; revalidated?: boolean; at?: number };
+};
+
+export async function resetLeaderboardCache(getToken?: GetTokenFn): Promise<ApiResponse<CacheResetResponse>> {
+  return apiFetch<CacheResetResponse>("/cache/reset", { method: "POST" }, getToken);
+}
+
 

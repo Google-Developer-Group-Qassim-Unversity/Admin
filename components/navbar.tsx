@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Home, CalendarPlus, ShieldCheck, Trophy, Users, Menu } from "lucide-react";
+import { Home, CalendarPlus, ShieldCheck, Trophy, Users, Menu, Settings } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { AuthButton } from "@/components/auth-button";
@@ -22,6 +22,7 @@ const navLinks = [
   { href: "/points", label: "Points", icon: Trophy },
   { href: "/manage-members", label: "Members", icon: Users },
   { href: "/manage-admins", label: "Admins", icon: ShieldCheck },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 export function Navbar() {
