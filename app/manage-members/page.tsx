@@ -105,6 +105,7 @@ const columns: ColumnDef<Member>[] = [
         <ArrowUpDown className="ml-2 h-4 w-4" />
       </Button>
     ),
+    cell: ({ row }) => row.getValue("uni_id") ?? "—",
   },
   {
     accessorKey: "gender",

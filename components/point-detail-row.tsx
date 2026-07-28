@@ -29,7 +29,7 @@ import { useUserRole } from "@/hooks/use-rbac";
 export interface MemberOption {
   id: number;
   label: string;
-  uni_id: string;
+  uni_id: string | null;
 }
 
 export interface PointDetailRowData {

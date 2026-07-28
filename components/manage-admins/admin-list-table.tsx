@@ -65,8 +65,8 @@ export function AdminListTable({
 
   const filteredAdmins = useFuzzySearch(activeAdmins, searchQuery, ["name", "email", "uni_id"]);
 
-  const isCurrentUser = (admin: MemberWithRole) => 
-    currentUserId && admin.uni_id === currentUserId;
+  const isCurrentUser = (admin: MemberWithRole) =>
+    !!currentUserId && admin.clerk_user_id === currentUserId;
 
   return (
     <Card>
@@ -119,7 +119,7 @@ export function AdminListTable({
                         )}
                       </TableCell>
                       <TableCell>{admin.email}</TableCell>
-                      <TableCell>{admin.uni_id}</TableCell>
+                      <TableCell>{admin.uni_id ?? "—"}</TableCell>
                       <TableCell>{getRoleBadge(admin.role)}</TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">

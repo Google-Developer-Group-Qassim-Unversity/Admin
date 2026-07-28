@@ -147,7 +147,8 @@ export interface Member {
   name: string;
   email: string;
   phone_number: string;
-  uni_id: string;
+  uni_id: string | null;
+  clerk_user_id?: string | null;
   gender: Gender;
   uni_level: number;
   uni_college: string;
@@ -266,7 +267,7 @@ export interface ManualMemberCreateRequest {
   name: string;
   email: string;
   phone_number?: string;
-  uni_id: string;
+  uni_id?: string | null;
   gender: Gender;
 }
 
@@ -279,7 +280,7 @@ export interface BatchCreateMemberItem {
   name: string;
   email: string;
   phone_number?: string;
-  uni_id: string;
+  uni_id?: string | null;
   gender: Gender;
   uni_level?: number;
   uni_college?: string;
@@ -397,7 +398,7 @@ export interface AttendanceRecord {
     updated_at: string;
     email: string;
     name: string;
-    uni_id: string;
+    uni_id: string | null;
     uni_level: number;
     created_at: string;
     is_authenticated: number;
@@ -460,7 +461,7 @@ export interface BackfillMember {
   name: string;
   email: string;
   phone_number: string;
-  uni_id: string;
+  uni_id?: string | null;
   gender: Gender;
   uni_level: number;
   uni_college: string;

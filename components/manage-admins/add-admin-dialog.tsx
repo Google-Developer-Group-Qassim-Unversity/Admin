@@ -127,6 +127,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
+            clerkUserId: member.clerk_user_id,
             uni_id: member.uni_id,
             role: role,
           }),
@@ -239,7 +240,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{member.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {member.uni_id} • {member.email}
+                          {member.uni_id ?? "—"} • {member.email}
                         </p>
                       </div>
                        <div className="flex gap-2 shrink-0 pt-0.5">
@@ -296,7 +297,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{member.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {member.uni_id}
+                          {member.uni_id ?? "—"}
                         </p>
                       </div>
                        <div className="flex items-center gap-2 shrink-0">

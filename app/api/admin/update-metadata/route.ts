@@ -25,22 +25,33 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { uni_id, role } = body;
+    const { clerkUserId, uni_id, role } = body;
 
-    if (!uni_id || !role) {
+    if ((!clerkUserId && !uni_id) || !role) {
       return NextResponse.json(
-        { error: "uni_id and role are required" },
+        { error: "clerkUserId (or legacy uni_id) and role are required" },
         { status: 400 }
       );
     }
 
-    // Find user by email
-    const email = `${uni_id}@qu.edu.sa`;
-    const users = await client.users.getUserList({
-      emailAddress: [email],
-    });
+    // Preferred path: look the Clerk user up directly by id. Works for every
+    // member regardless of sign-in method (uni_id/password or Google).
+    let targetUser = clerkUserId
+      ? await client.users.getUser(clerkUserId).catch(() => null)
+      : null;
 
-    if (!users.data || users.data.length === 0) {
+    // Legacy fallback: members created before clerk_user_id existed (and who
+    // haven't re-authenticated since) only have their uni_id-derived email to
+    // go on.
+    if (!targetUser && uni_id) {
+      const email = `${uni_id}@qu.edu.sa`;
+      const users = await client.users.getUserList({
+        emailAddress: [email],
+      });
+      targetUser = users.data?.[0] ?? null;
+    }
+
+    if (!targetUser) {
       return NextResponse.json(
         {
           error: "User not found in authentication system",
@@ -49,8 +60,6 @@ export async function POST(request: NextRequest) {
         { status: 404 }
       );
     }
-
-    const targetUser = users.data[0];
     const existingMetadata = { ...(targetUser.publicMetadata || {}) };
 
     // Update metadata based on role

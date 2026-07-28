@@ -79,6 +79,7 @@ export default function ManageAdminsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          clerkUserId: revokeAdmin.clerk_user_id,
           uni_id: revokeAdmin.uni_id,
           role: "none",
         }),
@@ -138,6 +139,7 @@ export default function ManageAdminsPage() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          clerkUserId: editAdmin.clerk_user_id,
           uni_id: editAdmin.uni_id,
           role: newRole,
         }),
@@ -168,8 +170,9 @@ export default function ManageAdminsPage() {
     }
   };
 
-  // Get current user's uni_id for self-revoke prevention
-  const currentUserUniId = user?.publicMetadata?.uni_id as string | undefined;
+  // Current user's Clerk id, used for self-revoke prevention (provider-agnostic,
+  // unlike uni_id which Google-only admins don't have).
+  const currentUserId = user?.id;
 
   return (
     <div className="space-y-8">
@@ -214,7 +217,7 @@ export default function ManageAdminsPage() {
       {!isLoading && !error && (
         <AdminListTable
           admins={admins}
-          currentUserId={currentUserUniId}
+          currentUserId={currentUserId}
           onRevoke={setRevokeAdmin}
           onEditRole={setEditAdmin}
         />

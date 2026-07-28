@@ -31,7 +31,7 @@ export type TableRowData = Record<string, unknown> & {
   name: string;
   email: string;
   phone_number: string;
-  uni_id: string;
+  uni_id: string | null;
   gender: string;
   uni_level: number;
   uni_college: string;

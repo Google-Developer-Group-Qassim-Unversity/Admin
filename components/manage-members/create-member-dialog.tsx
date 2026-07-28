@@ -69,8 +69,7 @@ export function CreateMemberDialog({
     if (!name.trim()) newErrors.name = "Name is required";
     if (!email.trim()) newErrors.email = "Email is required";
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email format";
-    if (!uniId.trim()) newErrors.uniId = "University ID is required";
-    else if (!/^\d{9}$/.test(uniId)) newErrors.uniId = "University ID must be 9 digits";
+    if (uniId.trim() && !/^\d{9}$/.test(uniId.trim())) newErrors.uniId = "University ID must be 9 digits";
     return newErrors;
   }, [name, email, uniId]);
 
@@ -85,7 +84,7 @@ export function CreateMemberDialog({
         name: name.trim(),
         email: email.trim(),
         phone_number: phoneNumber.trim() || undefined,
-        uni_id: uniId.trim(),
+        uni_id: uniId.trim() || undefined,
         gender,
       };
 
@@ -170,7 +169,7 @@ export function CreateMemberDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="uniId">University ID *</Label>
+            <Label htmlFor="uniId">University ID</Label>
             <Input
               id="uniId"
               value={uniId}
@@ -178,7 +177,7 @@ export function CreateMemberDialog({
                 setUniId(e.target.value);
                 if (errors.uniId) setErrors((prev) => ({ ...prev, uniId: "" }));
               }}
-              placeholder="9-digit university ID"
+              placeholder="9-digit university ID (optional)"
             />
             {errors.uniId && <p className="text-sm text-destructive">{errors.uniId}</p>}
           </div>
