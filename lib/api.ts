@@ -113,6 +113,9 @@ async function apiFetch<T>(
           message = Array.isArray(errorData.detail)
             ? errorData.detail.map((d: { msg: string }) => d.msg).join(", ")
             : errorData.detail;
+        } else if (errorData.detail) {
+          // FastAPI's HTTPException always serializes to `detail`, not `message`
+          message = errorData.detail;
         } else if (errorData.message) {
           message = errorData.message;
         }
