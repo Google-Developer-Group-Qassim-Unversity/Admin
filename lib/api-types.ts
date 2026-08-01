@@ -489,6 +489,43 @@ export interface TestAcceptanceBlastResponse {
 }
 
 // =============================================================================
+// Custom Email
+// =============================================================================
+
+export interface EmailAttachmentInfo {
+  url: string;
+  filename: string;
+  content_type: string;
+  size?: number;
+}
+
+export interface CustomEmailRequest {
+  subject: string;
+  html_content: string;
+  members: ManualCertificateMember[];
+  attachments: EmailAttachmentInfo[];
+  language: CertificateLanguage;
+}
+
+export interface CustomEmailTestRequest {
+  subject: string;
+  html_content: string;
+  test_recipients: ManualCertificateMember[];
+  attachments: EmailAttachmentInfo[];
+  language: CertificateLanguage;
+}
+
+export interface CustomEmailResponse {
+  message: string;
+  recipient_count: number;
+}
+
+export interface CustomEmailTestResponse {
+  sent_count: number;
+  emails: string[];
+}
+
+// =============================================================================
 // Email Logs & Dashboard
 // =============================================================================
 

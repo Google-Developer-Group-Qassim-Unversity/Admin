@@ -1,4 +1,4 @@
-import type { Member } from "@/lib/api-types";
+import type { Member, Gender } from "@/lib/api-types";
 
 export type Tab = "mark" | "remove" | "copy" | "backfill" | "emails";
 
@@ -68,6 +68,7 @@ export interface EligibleMember {
   id: number;
   name: string;
   email: string;
+  gender: Gender;
 }
 
 export interface CertificateEligibility {
