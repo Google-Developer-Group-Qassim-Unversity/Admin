@@ -150,8 +150,8 @@ export interface Member {
   uni_id: string | null;
   clerk_user_id?: string | null;
   gender: Gender;
-  uni_level: number;
-  uni_college: string;
+  uni_level: number | null;
+  uni_college: string | null;
   is_authenticated: number;
   created_at?: string;
   updated_at?: string;
@@ -394,12 +394,12 @@ export interface AttendanceRecord {
   Member: {
     id: number;
     gender: Gender;
-    uni_college: string;
+    uni_college: string | null;
     updated_at: string;
     email: string;
     name: string;
     uni_id: string | null;
-    uni_level: number;
+    uni_level: number | null;
     created_at: string;
     is_authenticated: number;
     phone_number: string;

@@ -33,8 +33,8 @@ export type TableRowData = Record<string, unknown> & {
   phone_number: string;
   uni_id: string | null;
   gender: string;
-  uni_level: number;
-  uni_college: string;
+  uni_level: number | null;
+  uni_college: string | null;
 };
 
 // Transform submissions to table rows
@@ -301,7 +301,8 @@ export function createColumns(
       header: createHeaderWithDropdown("College", false),
       enableSorting: false,
       cell: ({ row }) => {
-        const college = String(row.getValue("uni_college"));
+        const value = row.getValue("uni_college");
+        const college = value ? String(value) : "—";
         if (college.length > 25) {
           return (
             <Tooltip>
