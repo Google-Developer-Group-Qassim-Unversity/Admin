@@ -50,6 +50,13 @@ import type {
   CustomEmailTestRequest,
   CustomEmailResponse,
   CustomEmailTestResponse,
+  BlastSendRequest,
+  BlastSendResponse,
+  BlastTestRequest,
+  BlastTestResponse,
+  BlastEligibleCountResponse,
+  EmailTemplate,
+  EmailTemplateInput,
   EnrichedEmailLog,
   EmailDashboardStats,
   EmailLogFilters,
@@ -636,6 +643,70 @@ export async function sendAcceptanceTestBlasts(
     headers: {
       "Content-Type": "text/html; charset=utf-8",
     },
+  }, getToken);
+}
+
+// =============================================================================
+// Blast Emails
+// =============================================================================
+
+export async function sendBlastEmail(
+  payload: BlastSendRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastSendResponse>> {
+  return apiFetch<BlastSendResponse>(`/emails/blast`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function sendBlastEmailTest(
+  payload: BlastTestRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastTestResponse>> {
+  return apiFetch<BlastTestResponse>(`/emails/blast/test`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function getBlastEligibleCount(
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastEligibleCountResponse>> {
+  return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count`, {}, getToken);
+}
+
+export async function getEmailTemplates(getToken?: GetTokenFn): Promise<ApiResponse<EmailTemplate[]>> {
+  return apiFetch<EmailTemplate[]>(`/emails/blast/templates`, {}, getToken);
+}
+
+export async function createEmailTemplate(
+  payload: EmailTemplateInput,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailTemplate>> {
+  return apiFetch<EmailTemplate>(`/emails/blast/templates`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function updateEmailTemplate(
+  templateId: number,
+  payload: EmailTemplateInput,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailTemplate>> {
+  return apiFetch<EmailTemplate>(`/emails/blast/templates/${templateId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function deleteEmailTemplate(
+  templateId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(`/emails/blast/templates/${templateId}`, {
+    method: "DELETE",
   }, getToken);
 }
 

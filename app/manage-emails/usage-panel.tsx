@@ -84,6 +84,7 @@ export function UsagePanel() {
     "manual-certificate": "Manual Certificates",
     acceptance: "Acceptance",
     event_announcement: "Announcements",
+    blast: "Blast",
   };
 
   const maxTypeCount = stats ? Math.max(...Object.values(stats.by_type), 1) : 1;

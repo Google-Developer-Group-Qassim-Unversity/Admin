@@ -21,6 +21,17 @@ export interface AcceptanceData {
   member: Array<{ name: string; email: string }>;
 }
 
+export interface BlastData {
+  subject: string;
+  html_content: string;
+  preview_text: string | null;
+  order_by: "activity" | "alphabetical";
+  requested_count: number;
+  guaranteed_recipients: Array<{ name: string | null; email: string }>;
+  recipients: Array<{ name: string | null; email: string }>;
+  attachments: Array<{ filename: string; url: string }>;
+}
+
 export interface CertificateData {
   member: SnapshotMember;
   event: SnapshotEvent;
