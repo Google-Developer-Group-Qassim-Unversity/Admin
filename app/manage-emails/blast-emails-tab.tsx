@@ -84,7 +84,6 @@ import { MemberSearchDialog } from "./member-search-dialog";
 const MAX_ATTACHMENT_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_SIZE = 15 * 1024 * 1024;
 const MAX_ATTACHMENT_FILES = 5;
-const MAX_BLAST_RECIPIENTS = 1800;
 
 const DEFAULT_STYLES = `
 body {
@@ -295,13 +294,14 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const testMutation = useSendBlastEmailTest(getToken);
 
   const eligibleCount = eligibleCountQuery.data?.eligible_count ?? 0;
+  const remainingCapacity = eligibleCountQuery.data?.remaining_capacity ?? 0;
   const templates = templatesQuery.data ?? [];
   const isBusy = sendMutation.isPending || testMutation.isPending;
 
   const sliderMax = Math.max(eligibleCount, 1);
-  const recipientCap = Math.min(eligibleCount, MAX_BLAST_RECIPIENTS);
-  const showCapMarker = eligibleCount > MAX_BLAST_RECIPIENTS;
-  const capMarkerPercent = (Math.min(MAX_BLAST_RECIPIENTS, sliderMax) / sliderMax) * 100;
+  const recipientCap = Math.min(eligibleCount, remainingCapacity);
+  const showCapMarker = eligibleCount > remainingCapacity;
+  const capMarkerPercent = (Math.min(remainingCapacity, sliderMax) / sliderMax) * 100;
   const clampCount = (value: number) => Math.max(0, Math.min(recipientCap, value));
 
   const getCurrentHtml = (): string | null => {
@@ -693,7 +693,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   <div
                     className="pointer-events-none absolute top-0 h-full w-0.5 bg-destructive/70"
                     style={{ left: `${capMarkerPercent}%` }}
-                    title={`Capped at ${MAX_BLAST_RECIPIENTS} recipients per blast`}
+                    title={`Capped at ${remainingCapacity} — today's remaining email send capacity`}
                   />
                 )}
               </div>
@@ -919,7 +919,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <CardContent className="px-4 pb-4 pt-0">
             <p className="text-xs text-muted-foreground mb-3">
               {sentResult.algorithmic_count} selected by ordering + {sentResult.guaranteed_count} guaranteed. Sending
-              in the background — a single log entry will appear in Email Logs once it completes.
+              in the background — a log entry will appear in Email Logs once it completes (one per email address
+              used, if it had to split across both).
             </p>
             <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
               <Mail className="h-3.5 w-3.5" />

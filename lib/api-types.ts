@@ -569,6 +569,7 @@ export interface BlastTestResponse {
 
 export interface BlastEligibleCountResponse {
   eligible_count: number;
+  remaining_capacity: number;
 }
 
 export interface EmailTemplate {
