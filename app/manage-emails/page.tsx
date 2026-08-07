@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Mail, Send, Terminal } from "lucide-react";
+import { Mail, Megaphone, Send } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -9,6 +9,7 @@ import { EmailLogsTab } from "./email-logs-tab";
 import { UsagePanel } from "./usage-panel";
 import { AssetsPanel } from "./assets-panel";
 import { SendCertificatesTab } from "./send-certificates-tab";
+import { BlastEmailsTab } from "./blast-emails-tab";
 
 export default function ManageEmailsPage() {
   const [activeTab, setActiveTab] = React.useState("logs");
@@ -37,9 +38,9 @@ export default function ManageEmailsPage() {
                 <Send className="h-4 w-4" />
                 Send Certificates
               </TabsTrigger>
-              <TabsTrigger value="playground" disabled>
-                <Terminal className="h-4 w-4" />
-                Playground
+              <TabsTrigger value="blast">
+                <Megaphone className="h-4 w-4" />
+                Blast Emails
               </TabsTrigger>
             </TabsList>
             <TabsContent value="logs" className="mt-4">
@@ -48,10 +49,8 @@ export default function ManageEmailsPage() {
             <TabsContent value="certificates" className="mt-4">
               <SendCertificatesTab onGoToLogs={() => setActiveTab("logs")} />
             </TabsContent>
-            <TabsContent value="playground" className="mt-4">
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                Coming soon
-              </div>
+            <TabsContent value="blast" className="mt-4">
+              <BlastEmailsTab onGoToLogs={() => setActiveTab("logs")} />
             </TabsContent>
           </Tabs>
         </div>

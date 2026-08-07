@@ -3,10 +3,11 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { formatDistanceToNow } from "date-fns";
-import { Award, Eye, MailCheck, PenLine } from "lucide-react";
+import { Award, Eye, MailCheck, Megaphone, PenLine, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { EnrichedEmailLog } from "@/lib/api-types";
 
-import type { AcceptanceData, CertificateData } from "./types";
+import type { AcceptanceData, BlastData, CertificateData } from "./types";
 
 interface EmailLogRowProps {
   log: EnrichedEmailLog;
@@ -37,6 +38,11 @@ function getSnapshotData(log: EnrichedEmailLog): CertificateData | null {
 function getAcceptanceData(log: EnrichedEmailLog): AcceptanceData | null {
   if (!log.data || log.email_type !== "acceptance") return null;
   return log.data as unknown as AcceptanceData;
+}
+
+function getBlastData(log: EnrichedEmailLog): BlastData | null {
+  if (!log.data || log.email_type !== "blast") return null;
+  return log.data as unknown as BlastData;
 }
 
 export const TYPE_CONFIG: Record<
@@ -66,6 +72,12 @@ export const TYPE_CONFIG: Record<
     icon: MailCheck,
     color: "text-orange-500",
     badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
+  },
+  blast: {
+    label: "Blast",
+    icon: Megaphone,
+    color: "text-pink-500",
+    badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
   },
 };
 
@@ -194,9 +206,20 @@ function MemberListDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  members: Array<{ name: string; email: string }>;
+  members: Array<{ name: string | null; email: string }>;
   subject?: string;
 }) {
+  const [query, setQuery] = React.useState("");
+
+  React.useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
+  const q = query.trim().toLowerCase();
+  const filtered = q
+    ? members.filter((m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+    : members;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg! max-h-[80vh] flex flex-col p-0 overflow-hidden">
@@ -204,6 +227,19 @@ function MemberListDialog({
           <DialogTitle>Recipients ({members.length})</DialogTitle>
           {subject && <DialogDescription>{subject}</DialogDescription>}
         </DialogHeader>
+        {members.length > 10 && (
+          <div className="px-6 pb-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Search by name or email..."
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+          </div>
+        )}
         <ScrollArea className="flex-1 border-t">
           <table className="w-full text-sm">
             <thead className="bg-muted/50 sticky top-0 z-10">
@@ -213,12 +249,19 @@ function MemberListDialog({
               </tr>
             </thead>
             <tbody>
-              {members.map((m, i) => (
+              {filtered.map((m, i) => (
                 <tr key={i} className="border-t">
                   <td className="py-1.5 px-4 text-xs">{m.name}</td>
                   <td className="py-1.5 px-4 text-xs text-muted-foreground">{m.email}</td>
                 </tr>
               ))}
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={2} className="py-6 text-center text-xs text-muted-foreground">
+                    No matches.
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </ScrollArea>
@@ -340,6 +383,80 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
   );
 }
 
+function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
+  const data = getBlastData(log);
+  const subject = data?.subject;
+  const recipients = data?.recipients ?? [];
+  const guaranteed = data?.guaranteed_recipients ?? [];
+  const [recipientsOpen, setRecipientsOpen] = React.useState(false);
+  const [guaranteedOpen, setGuaranteedOpen] = React.useState(false);
+
+  return (
+    <>
+      <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+        <RowIcon type={log.email_type} />
+        <div className="flex-1 min-w-0 space-y-0.5">
+          {subject && (
+            <div className="text-xs text-muted-foreground truncate max-w-[320px]">
+              <span className="text-muted-foreground/60">Subject line:</span>{" "}
+              <span className="italic">&ldquo;{subject}&rdquo;</span>
+            </div>
+          )}
+          {data && (
+            <div className="text-xs text-muted-foreground">
+              <span className="text-muted-foreground/60">Ordered by:</span>{" "}
+              {data.order_by === "activity" ? "most recently active" : "alphabetical"}
+            </div>
+          )}
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            {recipients.length > 0 ? (
+              <button
+                onClick={() => setRecipientsOpen(true)}
+                className="underline decoration-dotted underline-offset-2 cursor-pointer hover:text-foreground transition-colors"
+              >
+                {log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}
+              </button>
+            ) : (
+              <span>{log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}</span>
+            )}
+            {guaranteed.length > 0 && (
+              <button
+                onClick={() => setGuaranteedOpen(true)}
+                className="underline decoration-dotted underline-offset-2 cursor-pointer hover:text-foreground transition-colors"
+              >
+                {guaranteed.length} guaranteed
+              </button>
+            )}
+            {data?.html_content && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-5 px-1.5 text-[10px] shrink-0"
+                onClick={() => onViewHtml(data.html_content, data.subject ?? "")}
+              >
+                <Eye className="h-3 w-3 mr-0.5" />
+                HTML
+              </Button>
+            )}
+          </div>
+        </div>
+        <MetaColumn log={log} />
+      </div>
+      {recipients.length > 0 && (
+        <MemberListDialog open={recipientsOpen} onOpenChange={setRecipientsOpen} members={recipients} subject={subject} />
+      )}
+      {guaranteed.length > 0 && (
+        <MemberListDialog
+          open={guaranteedOpen}
+          onOpenChange={setGuaranteedOpen}
+          members={guaranteed}
+          subject={subject}
+        />
+      )}
+    </>
+  );
+}
+
 function ManualCertificateRow({ log }: EmailLogRowProps) {
   const snapshot = getSnapshotData(log);
   const memberName = log.member_name ?? snapshot?.member.name;
@@ -443,6 +560,8 @@ export function EmailLogRow({ log, onViewHtml, isNew }: EmailLogRowProps) {
         return <CertificateRow log={log} onViewHtml={onViewHtml} />;
       case "acceptance":
         return <AcceptanceRow log={log} onViewHtml={onViewHtml} />;
+      case "blast":
+        return <BlastRow log={log} onViewHtml={onViewHtml} />;
       case "manual-certificate":
         return <ManualCertificateRow log={log} onViewHtml={onViewHtml} />;
       default:

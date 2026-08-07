@@ -21,6 +21,7 @@ import type {
   ReorderActionsPayload,
   Department,
   Member,
+  Gender,
   MemberWithRole,
   MemberRole,
   ManualMemberCreateRequest,
@@ -44,6 +45,18 @@ import type {
   BackfillResponse,
   AcceptanceBlastResponse,
   TestAcceptanceBlastResponse,
+  EmailAttachmentInfo,
+  CustomEmailRequest,
+  CustomEmailTestRequest,
+  CustomEmailResponse,
+  CustomEmailTestResponse,
+  BlastSendRequest,
+  BlastSendResponse,
+  BlastTestRequest,
+  BlastTestResponse,
+  BlastEligibleCountResponse,
+  EmailTemplate,
+  EmailTemplateInput,
   EnrichedEmailLog,
   EmailDashboardStats,
   EmailLogFilters,
@@ -343,8 +356,8 @@ export async function sendEventCertificates(
 export async function getCertificateEligibleCount(
   eventId: number,
   getToken?: GetTokenFn
-): Promise<ApiResponse<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>> {
-  return apiFetch<{ eligible_count: number; eligible_members: { id: number; name: string; email: string }[]; sent_count: number }>(
+): Promise<ApiResponse<{ eligible_count: number; eligible_members: { id: number; name: string; email: string; gender: Gender }[]; sent_count: number }>> {
+  return apiFetch<{ eligible_count: number; eligible_members: { id: number; name: string; email: string; gender: Gender }[]; sent_count: number }>(
     `/emails/certificate-event/eligible-count/${eventId}`,
     {},
     getToken
@@ -367,6 +380,28 @@ export async function sendManualCertificate(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<ManualCertificateResponse>> {
   return apiFetch<ManualCertificateResponse>(`/emails/manual-certificate`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function sendCustomEmail(
+  eventId: number,
+  payload: CustomEmailRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEmailResponse>> {
+  return apiFetch<CustomEmailResponse>(`/emails/custom/${eventId}`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function sendCustomEmailTest(
+  eventId: number,
+  payload: CustomEmailTestRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<CustomEmailTestResponse>> {
+  return apiFetch<CustomEmailTestResponse>(`/emails/custom/${eventId}/test`, {
     method: "POST",
     body: JSON.stringify(payload),
   }, getToken);
@@ -615,6 +650,70 @@ export async function sendAcceptanceTestBlasts(
 }
 
 // =============================================================================
+// Blast Emails
+// =============================================================================
+
+export async function sendBlastEmail(
+  payload: BlastSendRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastSendResponse>> {
+  return apiFetch<BlastSendResponse>(`/emails/blast`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function sendBlastEmailTest(
+  payload: BlastTestRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastTestResponse>> {
+  return apiFetch<BlastTestResponse>(`/emails/blast/test`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function getBlastEligibleCount(
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BlastEligibleCountResponse>> {
+  return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count`, {}, getToken);
+}
+
+export async function getEmailTemplates(getToken?: GetTokenFn): Promise<ApiResponse<EmailTemplate[]>> {
+  return apiFetch<EmailTemplate[]>(`/emails/blast/templates`, {}, getToken);
+}
+
+export async function createEmailTemplate(
+  payload: EmailTemplateInput,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailTemplate>> {
+  return apiFetch<EmailTemplate>(`/emails/blast/templates`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function updateEmailTemplate(
+  templateId: number,
+  payload: EmailTemplateInput,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailTemplate>> {
+  return apiFetch<EmailTemplate>(`/emails/blast/templates/${templateId}`, {
+    method: "PUT",
+    body: JSON.stringify(payload),
+  }, getToken);
+}
+
+export async function deleteEmailTemplate(
+  templateId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<void>> {
+  return apiFetch<void>(`/emails/blast/templates/${templateId}`, {
+    method: "DELETE",
+  }, getToken);
+}
+
+// =============================================================================
 // Upload API
 // =============================================================================
 
@@ -624,6 +723,68 @@ export async function uploadFile(
 ): Promise<ApiResponse<UploadResponse>> {
   const uploadEndpoint = "/upload";
   return apiUpload<UploadResponse>(uploadEndpoint, file, getToken);
+}
+
+export async function uploadEmailAttachment(
+  file: File,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailAttachmentInfo>> {
+  try {
+    const url = `${config.uploadSource.replace(/\/$/, "")}/email-attachment`;
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const headers: Record<string, string> = {};
+    if (getToken) {
+      const token = await getToken();
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers,
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const isValidationError = response.status === 422;
+      const isServerError = response.status >= 500;
+
+      let message = "Upload failed";
+      try {
+        const errorData = await response.json();
+        message = errorData.message || errorData.detail || message;
+      } catch {
+        message = response.statusText || message;
+      }
+
+      return {
+        success: false,
+        error: {
+          message,
+          status: response.status,
+          isValidationError,
+          isServerError,
+        },
+      };
+    }
+
+    const data = await response.json();
+    return { success: true, data };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Upload error occurred";
+    return {
+      success: false,
+      error: {
+        message,
+        status: 0,
+        isServerError: true,
+      },
+    };
+  }
 }
 
 // =============================================================================

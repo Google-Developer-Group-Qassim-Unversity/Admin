@@ -490,10 +490,117 @@ export interface TestAcceptanceBlastResponse {
 }
 
 // =============================================================================
+// Custom Email
+// =============================================================================
+
+export interface EmailAttachmentInfo {
+  url: string;
+  filename: string;
+  content_type: string;
+  size?: number;
+}
+
+export interface CustomEmailRequest {
+  subject: string;
+  html_content: string;
+  members: ManualCertificateMember[];
+  attachments: EmailAttachmentInfo[];
+  language: CertificateLanguage;
+}
+
+export interface CustomEmailTestRequest {
+  subject: string;
+  html_content: string;
+  test_recipients: ManualCertificateMember[];
+  attachments: EmailAttachmentInfo[];
+  language: CertificateLanguage;
+}
+
+export interface CustomEmailResponse {
+  message: string;
+  recipient_count: number;
+}
+
+export interface CustomEmailTestResponse {
+  sent_count: number;
+  emails: string[];
+}
+
+// =============================================================================
+// Blast Emails
+// =============================================================================
+
+export type BlastOrderBy = "activity" | "alphabetical";
+
+export interface BlastGuaranteedRecipientInput {
+  member_id?: number;
+  email?: string;
+  name?: string;
+}
+
+export interface BlastSendRequest {
+  subject: string;
+  html_content: string;
+  preview_text?: string;
+  count: number;
+  order_by: BlastOrderBy;
+  guaranteed_recipients: BlastGuaranteedRecipientInput[];
+  attachments: EmailAttachmentInfo[];
+}
+
+export interface BlastSendResponse {
+  message: string;
+  recipient_count: number;
+  guaranteed_count: number;
+  algorithmic_count: number;
+}
+
+export interface BlastTestRequest {
+  subject: string;
+  html_content: string;
+  preview_text?: string;
+  test_emails: string[];
+  attachments: EmailAttachmentInfo[];
+}
+
+export interface BlastTestResponse {
+  sent_count: number;
+  emails: string[];
+}
+
+export interface BlastEligibleCountResponse {
+  eligible_count: number;
+  remaining_capacity: number;
+}
+
+export interface EmailTemplate {
+  id: number;
+  name: string;
+  subject: string;
+  html_content: string;
+  preview_text: string | null;
+  created_by: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface EmailTemplateInput {
+  name: string;
+  subject: string;
+  html_content: string;
+  preview_text?: string;
+}
+
+// =============================================================================
 // Email Logs & Dashboard
 // =============================================================================
 
-export type EmailType = "event-certificate" | "manual-certificate" | "event_announcement" | "acceptance";
+export type EmailType =
+  | "event-certificate"
+  | "manual-certificate"
+  | "event_announcement"
+  | "acceptance"
+  | "blast";
 export type EmailFromAddress = "info@kerneltics.com" | "gdg.qu1@gmail.com";
 
 export interface EnrichedEmailLog {

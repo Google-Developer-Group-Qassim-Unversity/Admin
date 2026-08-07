@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Mail, Loader2, Activity, CheckCircle, Send, Users } from "lucide-react";
+import { Mail, Loader2, Activity, CheckCircle, Send, Users, MailPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE_URL, getCertificateEligibleCount, sendEventCertificates } from "@/lib/api";
 import { parseSSEStream } from "@/lib/sse";
+import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
 
@@ -26,6 +27,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   const [isSending, setIsSending] = React.useState(false);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [logs, setLogs] = React.useState<CertificateEmailLog[]>([]);
+  const [isCustomEmailOpen, setIsCustomEmailOpen] = React.useState(false);
   const abortRef = React.useRef<AbortController | null>(null);
 
   const loadData = React.useCallback(async () => {
@@ -147,6 +149,17 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   );
   const notSentCount = notSentMembers.length;
 
+  const customEmailRecipients = React.useMemo(
+    () =>
+      notSentMembers.map((member) => ({
+        name: member.name,
+        email: member.email,
+        gender: member.gender,
+        member_id: member.id,
+      })),
+    [notSentMembers],
+  );
+
   return (
     <div className="space-y-3 px-1 pb-1">
       <div className="flex gap-1 p-1 bg-muted rounded-lg">
@@ -235,27 +248,33 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                 ? "Loading..."
                 : `${notSentCount} eligible recipient${notSentCount !== 1 ? "s" : ""}`}
             </span>
-            <Button
-              onClick={handleSend}
-              disabled={isSending || notSentCount === 0}
-            >
-              {isSending ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
-                </>
-              ) : notSentCount === 0 ? (
-                <>
-                  <CheckCircle className="mr-2 h-4 w-4" />
-                  Certificates Sent
-                </>
-              ) : (
-                <>
-                  <Mail className="mr-2 h-4 w-4" />
-                  Send Certificates ({notSentCount})
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={handleSend}
+                disabled={isSending || notSentCount === 0}
+              >
+                {isSending ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending...
+                  </>
+                ) : notSentCount === 0 ? (
+                  <>
+                    <CheckCircle className="mr-2 h-4 w-4" />
+                    Certificates Sent
+                  </>
+                ) : (
+                  <>
+                    <Mail className="mr-2 h-4 w-4" />
+                    Send Certificates ({notSentCount})
+                  </>
+                )}
+              </Button>
+              <Button variant="outline" onClick={() => setIsCustomEmailOpen(true)}>
+                <MailPlus className="mr-2 h-4 w-4" />
+                Send Custom Email
+              </Button>
+            </div>
           </div>
 
           <div className="rounded-lg border bg-muted/30">
@@ -285,6 +304,14 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           </div>
         </div>
       )}
+
+      <SendCustomEmailDialog
+        open={isCustomEmailOpen}
+        onOpenChange={setIsCustomEmailOpen}
+        eventId={eventId}
+        getToken={getToken}
+        recipients={customEmailRecipients}
+      />
     </div>
   );
 }
