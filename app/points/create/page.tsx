@@ -52,7 +52,7 @@ export default function CreateCustomEventPage() {
   const handleMemberCreated = React.useCallback((member: Member) => {
     setMemberOptions((prev) => [
       ...prev,
-      { id: member.id, label: member.name, uni_id: member.uni_id },
+      { id: member.id, label: member.name, uni_id: member.uni_id, email: member.email },
     ]);
   }, []);
 
@@ -80,6 +80,7 @@ export default function CreateCustomEventPage() {
             id: m.id,
             label: m.name,
             uni_id: m.uni_id,
+            email: m.email,
           }))
         );
       }

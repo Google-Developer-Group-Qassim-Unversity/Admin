@@ -297,7 +297,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium">{member.name}</p>
                         <p className="text-xs text-muted-foreground">
-                          {member.uni_id ?? "—"}
+                          {member.uni_id ?? member.email}
                         </p>
                       </div>
                        <div className="flex items-center gap-2 shrink-0">

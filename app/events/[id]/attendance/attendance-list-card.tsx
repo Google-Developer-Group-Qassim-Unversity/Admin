@@ -179,7 +179,7 @@ export function AttendanceListCard({
                   <Item key={member.id} variant="outline" size="sm">
                     <ItemContent>
                       <ItemTitle>{member.name}</ItemTitle>
-                      <ItemDescription>{member.uni_id ?? "—"}</ItemDescription>
+                      <ItemDescription>{member.uni_id ?? member.email}</ItemDescription>
                     </ItemContent>
                     <ItemActions>
                       <div className="flex flex-wrap gap-1.5 items-center">

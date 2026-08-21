@@ -30,6 +30,7 @@ export interface MemberOption {
   id: number;
   label: string;
   uni_id: string | null;
+  email: string;
 }
 
 export interface PointDetailRowData {

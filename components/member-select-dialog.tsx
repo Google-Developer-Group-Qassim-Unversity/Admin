@@ -155,7 +155,7 @@ export function MemberSelectDialog({
                       <div className="h-4 w-4 border rounded shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm truncate">{member.label}</p>
-                        <p className="text-xs text-muted-foreground">{member.uni_id ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                       </div>
                     </div>
                   ))}
@@ -194,7 +194,7 @@ export function MemberSelectDialog({
                       <Check className="h-4 w-4 text-primary shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm truncate">{member.label}</p>
-                        <p className="text-xs text-muted-foreground">{member.uni_id ?? "—"}</p>
+                        <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                       </div>
                       <Button
                         variant="ghost"

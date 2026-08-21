@@ -107,7 +107,7 @@ export function MemberSelectionTab({
                   >
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.uni_id ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                     </div>
                     <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
                   </div>
@@ -138,7 +138,7 @@ export function MemberSelectionTab({
                     <Check className="h-4 w-4 text-primary shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.uni_id ?? "—"}</p>
+                      <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                     </div>
                     <Button variant="ghost" size="icon-sm" onClick={() => onRemove(member.id)}>
                       <X className="h-4 w-4" />
