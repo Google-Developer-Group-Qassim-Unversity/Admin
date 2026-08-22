@@ -1,0 +1,33 @@
+# dependencies
+node_modules
+
+# next.js
+.next
+out
+build
+
+# versioning
+.git
+.gitignore
+
+# env files (secrets are injected via Infisical at deploy time on the VPS)
+.env*
+!.env.example
+
+# misc
+Dockerfile
+.dockerignore
+docker-compose.production.yml
+.infisical.json
+*.tsbuildinfo
+next-env.d.ts
+.vercel
+docs
+backups
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*

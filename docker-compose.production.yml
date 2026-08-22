@@ -1,0 +1,28 @@
+# Production compose for self-hosted Next.js (standalone) on the VPS.
+# Secrets are NOT in git. On every deploy the CD writes .env.production to this
+# directory via Infisical machine identity, then runs compose with --env-file.
+#
+# Routing: host-level nginx (with certbot-managed TLS) reverse-proxies to this
+# container. The container only binds to 127.0.0.1 on the VPS -> never reachable
+# directly from the internet, and no collisions with other apps' ports.
+
+services:
+  web:
+    image: gdg-admin-web
+    container_name: gdg-admin-web
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_BACKEND_API_URL: ${NEXT_PUBLIC_BACKEND_API_URL}
+        NEXT_PUBLIC_AUTH_FRONTEND_URL: ${NEXT_PUBLIC_AUTH_FRONTEND_URL}
+        NEXT_PUBLIC_THIS_APP_URL: ${NEXT_PUBLIC_THIS_APP_URL}
+        NEXT_PUBLIC_MEMBER_APP_URL: ${NEXT_PUBLIC_MEMBER_APP_URL}
+        NEXT_PUBLIC_SHEET_PROCESSOR_FRONTEND_URL: ${NEXT_PUBLIC_SHEET_PROCESSOR_FRONTEND_URL}
+        NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+        NEXT_PUBLIC_UPLOAD_SOURCE: ${NEXT_PUBLIC_UPLOAD_SOURCE}
+    env_file:
+      - .env.production
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3012:3000"
