@@ -9,7 +9,7 @@ import {
   sendBlastEmailTest,
   updateEmailTemplate,
 } from "@/lib/api";
-import type { BlastSendRequest, BlastTestRequest, EmailTemplateInput } from "@/lib/api-types";
+import type { BlastSendRequest, BlastTestRequest, EmailProvider, EmailTemplateInput } from "@/lib/api-types";
 
 export const emailTemplateKeys = {
   all: ["email-templates"] as const,
@@ -18,6 +18,7 @@ export const emailTemplateKeys = {
 
 export const blastEligibleCountKeys = {
   all: ["blast-eligible-count"] as const,
+  byProvider: (provider: EmailProvider) => [...blastEligibleCountKeys.all, provider] as const,
 };
 
 export function useSendBlastEmail(getToken: () => Promise<string | null>) {
@@ -44,11 +45,11 @@ export function useSendBlastEmailTest(getToken: () => Promise<string | null>) {
   });
 }
 
-export function useBlastEligibleCount(getToken: () => Promise<string | null>) {
+export function useBlastEligibleCount(provider: EmailProvider, getToken: () => Promise<string | null>) {
   return useQuery({
-    queryKey: blastEligibleCountKeys.all,
+    queryKey: blastEligibleCountKeys.byProvider(provider),
     queryFn: async () => {
-      const result = await getBlastEligibleCount(getToken);
+      const result = await getBlastEligibleCount(provider, getToken);
       if (!result.success) {
         throw new ApiRequestError(result.error);
       }

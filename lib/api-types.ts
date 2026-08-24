@@ -416,6 +416,9 @@ export interface AttendanceResponse {
 export type CertificateJobStatus = "pending" | "processing" | "completed" | "failed";
 export type CertificateLanguage = "ar" | "en";
 
+/** "google" sends via the default Gmail threshold-switching system; "ses" is the optional AWS SES path. */
+export type EmailProvider = "google" | "ses";
+
 export interface CertificateMember {
   name: string;
   email: string;
@@ -438,6 +441,7 @@ export interface ManualCertificateRequest {
   event?: CertificateSimpleEvent;
   members: ManualCertificateMember[];
   language: CertificateLanguage;
+  provider?: EmailProvider;
 }
 
 export interface ManualCertificateResponse {
@@ -546,6 +550,7 @@ export interface BlastSendRequest {
   order_by: BlastOrderBy;
   guaranteed_recipients: BlastGuaranteedRecipientInput[];
   attachments: EmailAttachmentInfo[];
+  provider?: EmailProvider;
 }
 
 export interface BlastSendResponse {
@@ -561,6 +566,7 @@ export interface BlastTestRequest {
   preview_text?: string;
   test_emails: string[];
   attachments: EmailAttachmentInfo[];
+  provider?: EmailProvider;
 }
 
 export interface BlastTestResponse {
@@ -570,6 +576,7 @@ export interface BlastTestResponse {
 
 export interface BlastEligibleCountResponse {
   eligible_count: number;
+  remaining_capacity: number | null;
 }
 
 // =============================================================================
@@ -583,6 +590,7 @@ export interface DirectEmailRequest {
   email?: string;
   name?: string;
   attachments: EmailAttachmentInfo[];
+  provider?: EmailProvider;
 }
 
 export interface DirectEmailResponse {

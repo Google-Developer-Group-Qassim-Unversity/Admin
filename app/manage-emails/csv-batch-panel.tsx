@@ -40,7 +40,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 
 import { sendManualCertificate, getSubmissions } from "@/lib/api";
-import type { Event, Submission } from "@/lib/api-types";
+import type { Event, Submission, EmailProvider } from "@/lib/api-types";
 
 import type { CsvRow } from "./types";
 import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
@@ -48,6 +48,7 @@ import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
 interface CsvBatchPanelProps {
   events: Event[];
   onGoToLogs?: () => void;
+  provider: EmailProvider;
 }
 
 function formatEventDate(event: Event): string {
@@ -59,7 +60,7 @@ function formatEventDate(event: Event): string {
   return `${startStr} - ${endStr}`;
 }
 
-export function CsvBatchPanel({ events, onGoToLogs }: CsvBatchPanelProps) {
+export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelProps) {
   const { getToken } = useAuth();
 
   const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
@@ -353,6 +354,7 @@ export function CsvBatchPanel({ events, onGoToLogs }: CsvBatchPanelProps) {
       const payload: Parameters<typeof sendManualCertificate>[0] = {
         language: "en",
         event_id: eventId,
+        provider,
         members: rows.map((r) => ({ member: { name: r.name, email: r.email, gender: r.gender } })),
       };
 

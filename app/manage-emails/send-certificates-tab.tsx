@@ -47,11 +47,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 import { getCertificateEvents, sendManualCertificate } from "@/lib/api";
-import type { Event, Member, CertificateLanguage } from "@/lib/api-types";
+import type { Event, Member, CertificateLanguage, EmailProvider } from "@/lib/api-types";
 
 import type { RecipientRow, EventFormData } from "./types";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { CsvBatchPanel } from "./csv-batch-panel";
+import { ProviderSelect } from "./provider-select";
 
 function formatEventDate(event: Event): string {
   const start = new Date(event.start_datetime);
@@ -93,6 +94,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
   ]);
 
   const [language, setLanguage] = React.useState<CertificateLanguage>("ar");
+  const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [sentCount, setSentCount] = React.useState(0);
@@ -190,6 +192,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
 
     const payload: Parameters<typeof sendManualCertificate>[0] = {
       language,
+      provider,
       members: validRecipients.map((r) =>
         r.member_id
           ? { member_id: r.member_id }
@@ -378,6 +381,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                       </SelectContent>
                     </Select>
                   </div>
+                  <ProviderSelect value={provider} onChange={setProvider} disabled={isSubmitting} />
                 </div>
               </CardContent>
             </Card>
@@ -541,7 +545,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
         </TabsContent>
 
         <TabsContent value="batch" className="mt-4">
-          <CsvBatchPanel events={events} onGoToLogs={onGoToLogs} />
+          <CsvBatchPanel events={events} onGoToLogs={onGoToLogs} provider={provider} />
         </TabsContent>
       </Tabs>
 

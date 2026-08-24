@@ -69,7 +69,14 @@ import {
 
 import { uploadEmailAttachment } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { BlastOrderBy, BlastSendResponse, EmailAttachmentInfo, EmailTemplate, Member } from "@/lib/api-types";
+import type {
+  BlastOrderBy,
+  BlastSendResponse,
+  EmailAttachmentInfo,
+  EmailProvider,
+  EmailTemplate,
+  Member,
+} from "@/lib/api-types";
 import {
   useBlastEligibleCount,
   useCreateEmailTemplate,
@@ -80,6 +87,7 @@ import {
   useUpdateEmailTemplate,
 } from "@/hooks/use-blast-email";
 import { MemberSearchDialog } from "./member-search-dialog";
+import { ProviderSelect } from "./provider-select";
 import {
   DEFAULT_BODY,
   DEFAULT_STYLES,
@@ -128,6 +136,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const [deleteTarget, setDeleteTarget] = React.useState<EmailTemplate | null>(null);
 
   const [count, setCount] = React.useState(0);
+  const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [orderBy, setOrderBy] = React.useState<BlastOrderBy>("activity");
   const [guaranteed, setGuaranteed] = React.useState<GuaranteedRecipient[]>([]);
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
@@ -141,7 +150,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
   const [sentResult, setSentResult] = React.useState<BlastSendResponse | null>(null);
 
-  const eligibleCountQuery = useBlastEligibleCount(getToken);
+  const eligibleCountQuery = useBlastEligibleCount(provider, getToken);
   const templatesQuery = useEmailTemplates(getToken);
   const createTemplateMutation = useCreateEmailTemplate(getToken);
   const updateTemplateMutation = useUpdateEmailTemplate(getToken);
@@ -150,12 +159,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const testMutation = useSendBlastEmailTest(getToken);
 
   const eligibleCount = eligibleCountQuery.data?.eligible_count ?? 0;
+  const remainingCapacity = eligibleCountQuery.data?.remaining_capacity ?? null;
   const templates = templatesQuery.data ?? [];
   const isBusy = sendMutation.isPending || testMutation.isPending;
 
-  const sliderMax = Math.max(eligibleCount, 1);
-  const recipientCap = eligibleCount;
+  const recipientCap =
+    remainingCapacity === null ? eligibleCount : Math.min(eligibleCount, remainingCapacity);
+  const sliderMax = Math.max(recipientCap, 1);
   const clampCount = (value: number) => Math.max(0, Math.min(recipientCap, value));
+
+  React.useEffect(() => {
+    setCount((prev) => clampCount(prev));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [recipientCap]);
 
   const getCurrentHtml = (): string | null => {
     if (viewMode === "raw") {
@@ -338,6 +354,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         preview_text: previewText.trim() || undefined,
         test_emails: testEmailList,
         attachments: readyAttachments,
+        provider,
       });
       toast.success(`Sent test email to ${data.sent_count} recipient${data.sent_count !== 1 ? "s" : ""}`);
     } catch (err) {
@@ -363,6 +380,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           r.member_id ? { member_id: r.member_id } : { email: r.email, name: r.name }
         ),
         attachments: readyAttachments,
+        provider,
       });
       setSentResult(data);
       toast.success(data.message);
@@ -520,6 +538,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
+            <ProviderSelect value={provider} onChange={setProvider} disabled={isBusy} />
+
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>Recipient count</Label>
@@ -539,10 +559,16 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   min={0}
                   max={sliderMax}
                   step={1}
-                  disabled={isBusy || eligibleCount === 0}
+                  disabled={isBusy || recipientCap === 0}
                   onValueChange={([v]) => setCount(clampCount(v))}
                 />
               </div>
+              {remainingCapacity !== null && remainingCapacity < eligibleCount && (
+                <p className="text-[11px] text-muted-foreground">
+                  Capped at {remainingCapacity} remaining today on the Google addresses — switch to AWS SES for the
+                  full {eligibleCount} eligible.
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

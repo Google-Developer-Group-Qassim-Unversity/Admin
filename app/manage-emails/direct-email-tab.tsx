@@ -21,9 +21,10 @@ import {
 
 import { uploadEmailAttachment } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type { DirectEmailResponse, EmailAttachmentInfo, Member } from "@/lib/api-types";
+import type { DirectEmailResponse, EmailAttachmentInfo, EmailProvider, Member } from "@/lib/api-types";
 import { useSendDirectEmail } from "@/hooks/use-direct-email";
 import { MemberSearchDialog } from "./member-search-dialog";
+import { ProviderSelect } from "./provider-select";
 import {
   DEFAULT_BODY,
   DEFAULT_STYLES,
@@ -47,6 +48,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const { getToken } = useAuth();
 
   const [subject, setSubject] = React.useState("");
+  const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [bodyContent, setBodyContent] = React.useState(DEFAULT_BODY);
   const [composerKey, setComposerKey] = React.useState(0);
   const [viewMode, setViewMode] = React.useState<"rendered" | "raw">("rendered");
@@ -160,6 +162,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         email: selectedMember ? undefined : manualEmail.trim(),
         name: selectedMember ? undefined : manualName.trim() || undefined,
         attachments: readyAttachments,
+        provider,
       });
       setSentResult(data);
       toast.success(`Sent to ${data.email}`);
@@ -313,6 +316,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   disabled={isBusy}
                 />
               </div>
+              <ProviderSelect value={provider} onChange={setProvider} disabled={isBusy} />
             </div>
           </div>
         </CardContent>

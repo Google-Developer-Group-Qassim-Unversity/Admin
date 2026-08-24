@@ -55,6 +55,7 @@ import type {
   BlastTestRequest,
   BlastTestResponse,
   BlastEligibleCountResponse,
+  EmailProvider,
   DirectEmailRequest,
   DirectEmailResponse,
   EmailTemplate,
@@ -676,9 +677,10 @@ export async function sendBlastEmailTest(
 }
 
 export async function getBlastEligibleCount(
+  provider: EmailProvider,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<BlastEligibleCountResponse>> {
-  return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count`, {}, getToken);
+  return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count?provider=${provider}`, {}, getToken);
 }
 
 // =============================================================================
