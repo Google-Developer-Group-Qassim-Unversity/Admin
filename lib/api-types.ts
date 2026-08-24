@@ -570,7 +570,24 @@ export interface BlastTestResponse {
 
 export interface BlastEligibleCountResponse {
   eligible_count: number;
-  remaining_capacity: number;
+}
+
+// =============================================================================
+// Direct Email
+// =============================================================================
+
+export interface DirectEmailRequest {
+  subject: string;
+  html_content: string;
+  member_id?: number;
+  email?: string;
+  name?: string;
+  attachments: EmailAttachmentInfo[];
+}
+
+export interface DirectEmailResponse {
+  status: "sent";
+  email: string;
 }
 
 export interface EmailTemplate {
@@ -621,7 +638,7 @@ export interface EnrichedEmailLog {
 }
 
 export interface EmailDashboardStats {
-  addresses: Record<string, { usage: number; threshold: number }>;
+  addresses: Record<string, { usage: number }>;
   by_type: Record<string, number>;
   total_24h: number;
 }

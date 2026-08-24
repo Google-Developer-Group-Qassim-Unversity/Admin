@@ -10,34 +10,12 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
 
-function CircularProgress({ value, max, label }: { value: number; max: number; label: string }) {
-  const pct = max > 0 ? Math.min(value / max, 1) : 0;
-  const r = 36;
-  const circ = 2 * Math.PI * r;
-  const offset = circ * (1 - pct);
-  const color = pct > 0.8 ? "stroke-red-500" : pct > 0.5 ? "stroke-amber-500" : "stroke-emerald-500";
-
+function AddressUsageStat({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1.5">
-      <svg width="88" height="88" viewBox="0 0 88 88" className="-rotate-90">
-        <circle cx="44" cy="44" r={r} fill="none" className="stroke-muted" strokeWidth="6" />
-        <circle
-          cx="44"
-          cy="44"
-          r={r}
-          fill="none"
-          className={color}
-          strokeWidth="6"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-        />
-      </svg>
-      <div className="text-center -mt-[58px] mb-[30px]">
-        <p className="text-lg font-bold leading-none">{value}</p>
-        <p className="text-[10px] text-muted-foreground">/ {max}</p>
-      </div>
-      <p className="text-[10px] text-muted-foreground text-center truncate max-w-[100px]" title={label}>
+    <div className="flex flex-col items-center gap-1 px-4 py-2">
+      <p className="text-2xl font-bold leading-none">{value}</p>
+      <p className="text-[10px] text-muted-foreground">sent · last 24h</p>
+      <p className="text-[10px] text-muted-foreground text-center truncate max-w-[160px]" title={label}>
         {label}
       </p>
     </div>
@@ -116,7 +94,7 @@ export function UsagePanel() {
           <>
             <div className="flex justify-center gap-6">
               {Object.entries(stats.addresses).reverse().map(([addr, data]) => (
-                <CircularProgress key={addr} value={data.usage} max={data.threshold} label={addr} />
+                <AddressUsageStat key={addr} value={data.usage} label={addr} />
               ))}
             </div>
             <div className="pt-2">

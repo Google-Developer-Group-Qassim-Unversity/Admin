@@ -55,6 +55,8 @@ import type {
   BlastTestRequest,
   BlastTestResponse,
   BlastEligibleCountResponse,
+  DirectEmailRequest,
+  DirectEmailResponse,
   EmailTemplate,
   EmailTemplateInput,
   EnrichedEmailLog,
@@ -677,6 +679,20 @@ export async function getBlastEligibleCount(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<BlastEligibleCountResponse>> {
   return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count`, {}, getToken);
+}
+
+// =============================================================================
+// Direct Email
+// =============================================================================
+
+export async function sendDirectEmail(
+  payload: DirectEmailRequest,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<DirectEmailResponse>> {
+  return apiFetch<DirectEmailResponse>(`/emails/direct`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  }, getToken);
 }
 
 export async function getEmailTemplates(getToken?: GetTokenFn): Promise<ApiResponse<EmailTemplate[]>> {
