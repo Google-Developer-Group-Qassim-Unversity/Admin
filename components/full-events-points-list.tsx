@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FullEventPointsCard } from "@/components/full-event-points-card";
 import type { Event } from "@/lib/api-types";
-import { AVAILABLE_SEMESTERS } from "@/lib/constants";
+import { useSemesterOptions } from "@/hooks/use-semesters";
 import { useFuzzySearch } from "@/lib/search-utils";
 
 interface FullEventsPointsListProps {
@@ -22,6 +22,7 @@ export function FullEventsPointsList({
   onSemesterChange, 
 }: FullEventsPointsListProps) {
   const [searchQuery, setSearchQuery] = React.useState("");
+  const semesterOptions = useSemesterOptions();
 
   const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
 
@@ -70,8 +71,8 @@ export function FullEventsPointsList({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All</SelectItem>
-              {AVAILABLE_SEMESTERS.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
+              {semesterOptions.map((option) => (
+                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>

@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/multi-select";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { LocationType } from "@/lib/api-types";
-import { AVAILABLE_SEMESTERS } from "@/lib/constants";
+import { useSemesterOptions } from "@/hooks/use-semesters";
 
 interface EventFiltersProps {
   searchQuery: string;
@@ -42,6 +42,8 @@ export function EventFilters({
   semester,
   onSemesterChange,
 }: EventFiltersProps) {
+  const semesterOptions = useSemesterOptions();
+
   const hasActiveFilters =
     searchQuery ||
     locationTypes.length > 0 ||
@@ -69,8 +71,8 @@ export function EventFilters({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All</SelectItem>
-            {AVAILABLE_SEMESTERS.map((s) => (
-              <SelectItem key={s} value={s}>{s}</SelectItem>
+            {semesterOptions.map((option) => (
+              <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
           </SelectContent>
         </Select>

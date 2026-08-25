@@ -36,6 +36,7 @@ export const ROUTE_PERMISSIONS: Record<string, Role[]> = {
   "/manage-members": ["super_admin"],
   "/certificates": ["super_admin"],
   "/points": ["admin_points", "super_admin"],
+  "/settings/semesters": ["super_admin"],
 };
 
 export const FEATURE_PERMISSIONS: Record<string, Role[]> = {
