@@ -586,16 +586,14 @@ export interface BlastEligibleCountResponse {
 export interface DirectEmailRequest {
   subject: string;
   html_content: string;
-  member_id?: number;
-  email?: string;
-  name?: string;
+  recipients: BlastGuaranteedRecipientInput[];
   attachments: EmailAttachmentInfo[];
   provider?: EmailProvider;
 }
 
 export interface DirectEmailResponse {
-  status: "sent";
-  email: string;
+  message: string;
+  recipient_count: number;
 }
 
 export interface EmailTemplate {

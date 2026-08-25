@@ -3,7 +3,7 @@
 import * as React from "react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
-import { Loader2, Mail, UserPlus, X, Upload, Send, Paperclip, CheckCircle2 } from "lucide-react";
+import { Loader2, Mail, UserPlus, X, Upload, Send, Paperclip, Plus, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -44,6 +44,12 @@ interface AttachmentEntry {
   info?: EmailAttachmentInfo;
 }
 
+interface RecipientEntry {
+  name: string;
+  email: string;
+  member_id?: number;
+}
+
 export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const { getToken } = useAuth();
 
@@ -55,7 +61,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const [rawHtml, setRawHtml] = React.useState("");
   const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
-  const [selectedMember, setSelectedMember] = React.useState<Member | null>(null);
+  const [recipients, setRecipients] = React.useState<RecipientEntry[]>([]);
   const [manualName, setManualName] = React.useState("");
   const [manualEmail, setManualEmail] = React.useState("");
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
@@ -92,24 +98,31 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     setViewMode(mode);
   };
 
-  const handleMemberPicked = (members: Member[]) => {
-    if (members.length === 0) return;
-    if (members.length > 1) {
-      toast.info(`This tab sends to one recipient — using ${members[0].name}, the rest were ignored.`);
+  const handleMembersPicked = (members: Member[]) => {
+    setRecipients((prev) => {
+      const existing = new Set(prev.map((r) => r.email.toLowerCase()));
+      const additions = members
+        .filter((m) => !existing.has(m.email.toLowerCase()))
+        .map((m) => ({ name: m.name, email: m.email, member_id: m.id }));
+      return [...prev, ...additions];
+    });
+    toast.success(`Added ${members.length} member${members.length !== 1 ? "s" : ""}`);
+  };
+
+  const handleAddManualRecipient = () => {
+    const email = manualEmail.trim();
+    if (!email) return;
+    if (recipients.some((r) => r.email.toLowerCase() === email.toLowerCase())) {
+      toast.error("That email is already in the list");
+      return;
     }
-    setSelectedMember(members[0]);
+    setRecipients((prev) => [...prev, { name: manualName.trim() || email, email }]);
     setManualName("");
     setManualEmail("");
   };
 
-  const handleManualNameChange = (value: string) => {
-    setManualName(value);
-    if (selectedMember) setSelectedMember(null);
-  };
-
-  const handleManualEmailChange = (value: string) => {
-    setManualEmail(value);
-    if (selectedMember) setSelectedMember(null);
+  const removeRecipient = (email: string) => {
+    setRecipients((prev) => prev.filter((r) => r.email.toLowerCase() !== email.toLowerCase()));
   };
 
   const handleFilesAccepted = async (newFiles: File[]) => {
@@ -144,28 +157,24 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const totalAttachmentSize = readyAttachments.reduce((sum, a) => sum + (a.size ?? 0), 0);
   const attachmentSizeExceeded = totalAttachmentSize > MAX_TOTAL_ATTACHMENT_SIZE;
 
-  const recipientEmail = selectedMember ? selectedMember.email : manualEmail.trim();
-  const recipientLabel = selectedMember ? selectedMember.name : manualName.trim() || recipientEmail;
-  const hasRecipient = recipientEmail.length > 0;
-
   const isSendDisabled =
-    !subject.trim() || !hasRecipient || isBusy || isUploadingAttachments || attachmentSizeExceeded;
+    !subject.trim() || recipients.length === 0 || isBusy || isUploadingAttachments || attachmentSizeExceeded;
 
   const handleSend = async () => {
     const html = getCurrentHtml();
-    if (!html || !hasRecipient) return;
+    if (!html || recipients.length === 0) return;
     try {
       const data = await sendMutation.mutateAsync({
         subject: subject.trim(),
         html_content: html,
-        member_id: selectedMember?.id,
-        email: selectedMember ? undefined : manualEmail.trim(),
-        name: selectedMember ? undefined : manualName.trim() || undefined,
+        recipients: recipients.map((r) =>
+          r.member_id ? { member_id: r.member_id } : { email: r.email, name: r.name }
+        ),
         attachments: readyAttachments,
         provider,
       });
       setSentResult(data);
-      toast.success(`Sent to ${data.email}`);
+      toast.success(data.message);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send email");
     }
@@ -177,47 +186,40 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-primary" />
-            Recipient
+            Recipients {recipients.length > 0 && `(${recipients.length})`}
           </CardTitle>
-          <CardDescription className="text-xs">Pick an existing member, or type an email directly.</CardDescription>
+          <CardDescription className="text-xs">
+            Pick one or more members, or add emails directly. Each recipient gets their own individual send.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {selectedMember ? (
-            <div className="flex items-center gap-3 rounded-lg border px-3 py-2">
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{selectedMember.name}</p>
-                <p className="text-xs text-muted-foreground truncate">{selectedMember.email}</p>
-              </div>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                className="h-7 w-7 hover:text-destructive"
-                onClick={() => setSelectedMember(null)}
-                disabled={isBusy}
-              >
-                <X className="h-3.5 w-3.5" />
-              </Button>
-            </div>
-          ) : (
-            <div className="flex gap-2">
-              <Input
-                placeholder="Name (optional)"
-                value={manualName}
-                onChange={(e) => handleManualNameChange(e.target.value)}
-                disabled={isBusy}
-                className="h-9"
-              />
-              <Input
-                type="email"
-                placeholder="email@example.com"
-                value={manualEmail}
-                onChange={(e) => handleManualEmailChange(e.target.value)}
-                disabled={isBusy}
-                className="h-9"
-              />
-            </div>
-          )}
+          <div className="flex gap-2">
+            <Input
+              placeholder="Name (optional)"
+              value={manualName}
+              onChange={(e) => setManualName(e.target.value)}
+              disabled={isBusy}
+              className="h-9"
+            />
+            <Input
+              type="email"
+              placeholder="email@example.com"
+              value={manualEmail}
+              onChange={(e) => setManualEmail(e.target.value)}
+              disabled={isBusy}
+              className="h-9"
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              className="h-9 w-9 shrink-0"
+              onClick={handleAddManualRecipient}
+              disabled={isBusy || !manualEmail.trim()}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           <Button
             type="button"
             variant="outline"
@@ -226,8 +228,30 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             onClick={() => setMemberDialogOpen(true)}
             disabled={isBusy}
           >
-            <UserPlus className="h-3.5 w-3.5" /> Pick a Member Instead
+            <UserPlus className="h-3.5 w-3.5" /> Pick Members
           </Button>
+          {recipients.length > 0 && (
+            <div className="max-h-40 overflow-y-auto rounded-lg border divide-y">
+              {recipients.map((r) => (
+                <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-medium truncate">{r.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{r.email}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 hover:text-destructive"
+                    onClick={() => removeRecipient(r.email)}
+                    disabled={isBusy}
+                  >
+                    <X className="h-3 w-3" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 
@@ -375,7 +399,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <div className="flex justify-end">
         <Button type="button" onClick={handleSend} disabled={isSendDisabled} className="h-9 gap-2 shadow-sm">
           {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Send{hasRecipient ? ` to ${recipientLabel}` : ""}
+          Send{recipients.length > 0 ? ` (${recipients.length})` : ""}
         </Button>
       </div>
 
@@ -383,11 +407,15 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <Card className="bg-emerald-500/5 border-emerald-500/20">
           <CardHeader className="p-4">
             <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <CheckCircle2 className="h-4 w-4" />
-              Sent to {sentResult.email}
+              <Users className="h-4 w-4" />
+              Job started — {sentResult.recipient_count} recipient{sentResult.recipient_count !== 1 ? "s" : ""} queued
             </CardTitle>
           </CardHeader>
           <CardContent className="px-4 pb-4 pt-0">
+            <p className="text-xs text-muted-foreground mb-3">
+              Sending in the background, one email per recipient — a log entry will appear in Email Logs for each
+              once it completes.
+            </p>
             <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
               <Mail className="h-3.5 w-3.5" />
               View Email Logs
@@ -396,7 +424,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </Card>
       )}
 
-      <MemberSearchDialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen} onConfirm={handleMemberPicked} />
+      <MemberSearchDialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen} onConfirm={handleMembersPicked} />
     </div>
   );
 }

@@ -10,14 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
 
-function AddressUsageStat({ value, label }: { value: number; label: string }) {
+function AddressUsageRow({ value, label }: { value: number; label: string }) {
   return (
-    <div className="flex flex-col items-center gap-1 px-4 py-2">
-      <p className="text-2xl font-bold leading-none">{value}</p>
-      <p className="text-[10px] text-muted-foreground">sent · last 24h</p>
-      <p className="text-[10px] text-muted-foreground text-center truncate max-w-[160px]" title={label}>
+    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
+      <p className="text-xs text-muted-foreground truncate min-w-0" title={label}>
         {label}
       </p>
+      <p className="text-sm font-bold shrink-0">{value}</p>
     </div>
   );
 }
@@ -80,9 +79,10 @@ export function UsagePanel() {
       <CardContent className="space-y-4">
         {isLoading ? (
           <div className="space-y-4">
-            <div className="flex justify-center gap-6">
-              <Skeleton className="h-[100px] w-[88px] rounded-lg" />
-              <Skeleton className="h-[100px] w-[88px] rounded-lg" />
+            <div className="space-y-1.5">
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
+              <Skeleton className="h-8 w-full" />
             </div>
             <div className="space-y-3">
               <Skeleton className="h-8 w-full" />
@@ -92,9 +92,10 @@ export function UsagePanel() {
           </div>
         ) : stats ? (
           <>
-            <div className="flex justify-center gap-6">
+            <div className="space-y-1.5">
+              <p className="text-xs font-medium text-muted-foreground">Sent per address · last 24h</p>
               {Object.entries(stats.addresses).reverse().map(([addr, data]) => (
-                <AddressUsageStat key={addr} value={data.usage} label={addr} />
+                <AddressUsageRow key={addr} value={data.usage} label={addr} />
               ))}
             </div>
             <div className="pt-2">
