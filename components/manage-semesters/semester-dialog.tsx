@@ -1,8 +1,11 @@
 "use client";
 
 import * as React from "react";
+import { format } from "date-fns";
+import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +16,80 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
 import type { Semester } from "@/lib/api-types";
+import { cn } from "@/lib/utils";
+
+/** Semester codes run years ahead of the current term, so allow a wide dropdown range. */
+const CALENDAR_START = new Date(2020, 0);
+const CALENDAR_END = new Date(2035, 11);
+
+/** Parse the API's YYYY-MM-DD into a local Date, avoiding the UTC shift `new Date(str)` applies. */
+function parseIsoDate(value: string): Date | undefined {
+  if (!value) return undefined;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return undefined;
+  return new Date(year, month - 1, day);
+}
+
+/** Format back to YYYY-MM-DD from local parts - toISOString() would shift the day. */
+function toIsoDate(date: Date): string {
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+interface DateFieldProps {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  /** Days before this are unselectable, used to keep the end date after the start. */
+  minDate?: Date;
+  invalid?: boolean;
+}
+
+function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldProps) {
+  const [open, setOpen] = React.useState(false);
+  const selected = parseIsoDate(value);
+
+  return (
+    <div className="space-y-2">
+      <Label htmlFor={id}>{label}</Label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            id={id}
+            type="button"
+            variant="outline"
+            aria-invalid={invalid}
+            className={cn("w-full justify-start text-left font-normal", !selected && "text-muted-foreground")}
+          >
+            <CalendarIcon className="mr-2 h-4 w-4" />
+            {selected ? format(selected, "PPP") : "Select date..."}
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto p-0" align="start">
+          <Calendar
+            mode="single"
+            selected={selected}
+            defaultMonth={selected ?? minDate}
+            captionLayout="dropdown"
+            startMonth={CALENDAR_START}
+            endMonth={CALENDAR_END}
+            disabled={minDate ? { before: minDate } : undefined}
+            onSelect={(date) => {
+              if (!date) return;
+              onChange(toIsoDate(date));
+              setOpen(false);
+            }}
+          />
+        </PopoverContent>
+      </Popover>
+    </div>
+  );
+}
 
 export interface SemesterFormValues {
   id: number;
@@ -145,26 +220,21 @@ export function SemesterDialog({
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="semester-start">Start date</Label>
-                <Input
-                  id="semester-start"
-                  type="date"
-                  value={values.start_date}
-                  onChange={(e) => setValues((v) => ({ ...v, start_date: e.target.value }))}
-                />
-              </div>
+              <DateField
+                id="semester-start"
+                label="Start date"
+                value={values.start_date}
+                onChange={(start_date) => setValues((v) => ({ ...v, start_date }))}
+              />
 
-              <div className="space-y-2">
-                <Label htmlFor="semester-end">End date</Label>
-                <Input
-                  id="semester-end"
-                  type="date"
-                  value={values.end_date}
-                  onChange={(e) => setValues((v) => ({ ...v, end_date: e.target.value }))}
-                  aria-invalid={!!dateError}
-                />
-              </div>
+              <DateField
+                id="semester-end"
+                label="End date"
+                value={values.end_date}
+                onChange={(end_date) => setValues((v) => ({ ...v, end_date }))}
+                minDate={parseIsoDate(values.start_date)}
+                invalid={!!dateError}
+              />
             </div>
             {dateError && <p className="text-xs text-destructive">{dateError}</p>}
             <p className="text-xs text-muted-foreground">
