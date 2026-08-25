@@ -656,3 +656,33 @@ export interface EmailLogFilters {
   start_date?: string;
   end_date?: string;
 }
+// =============================================================================
+// Semesters
+// =============================================================================
+
+export interface Semester {
+  id: number;
+  name: string | null;
+  /** YYYY-MM-DD, the first day of the semester */
+  start_date: string;
+  /** YYYY-MM-DD, the last day of the semester (inclusive) */
+  end_date: string;
+  is_current: boolean;
+  is_public: boolean;
+}
+
+export interface CreateSemesterPayload {
+  id: number;
+  name?: string | null;
+  start_date: string;
+  end_date: string;
+  is_public: boolean;
+  is_current: boolean;
+}
+
+export interface UpdateSemesterPayload {
+  name?: string | null;
+  start_date: string;
+  end_date: string;
+  is_public: boolean;
+}
