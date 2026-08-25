@@ -528,7 +528,7 @@ export async function getAllActions(): Promise<ApiResponse<ActionWithUsage[]>> {
 
 export async function createAction(
   payload: CreateActionPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<Action>> {
   return apiFetch<Action>("/actions", {
     method: "POST",
@@ -539,7 +539,7 @@ export async function createAction(
 export async function updateAction(
   actionId: number,
   payload: UpdateActionPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<Action>> {
   return apiFetch<Action>(`/actions/${actionId}`, {
     method: "PUT",
@@ -549,7 +549,7 @@ export async function updateAction(
 
 export async function reorderActions(
   payload: ReorderActionsPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<void>> {
   return apiFetch<void>("/actions/reorder", {
     method: "PUT",
@@ -559,8 +559,8 @@ export async function reorderActions(
 
 export async function deleteAction(
   actionId: number,
-  replacementId?: number | null,
-  getToken?: GetTokenFn
+  replacementId: number | null | undefined,
+  getToken: GetTokenFn
 ): Promise<ApiResponse<void>> {
   const url = replacementId 
     ? `/actions/${actionId}?replacement_id=${replacementId}`
