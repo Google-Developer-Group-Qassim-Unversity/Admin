@@ -350,6 +350,12 @@ export async function closeEvent(
   return updateEventStatus(id, "closed", getToken);
 }
 
+// TODO: this endpoint now returns EmailJobResponse
+// ({ message, recipient_count, job_id }) instead of an empty body - see
+// Backend/app/routers/emails.py send_certificates. Type the response properly
+// and use job_id to poll GET /emails/jobs/{job_id}, instead of assuming a 200
+// here means every attendee's certificate actually sent (certificate jobs run
+// in the background and can partially fail).
 export async function sendEventCertificates(
   event_id: number,
   getToken?: GetTokenFn
