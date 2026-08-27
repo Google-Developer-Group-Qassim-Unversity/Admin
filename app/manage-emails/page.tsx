@@ -1,11 +1,12 @@
 "use client";
 
 import * as React from "react";
-import { Mail, MailPlus, Megaphone, Send } from "lucide-react";
+import { ListChecks, Mail, MailPlus, Megaphone, Send } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import { EmailLogsTab } from "./email-logs-tab";
+import { EmailJobsTab } from "./email-jobs-tab";
 import { UsagePanel } from "./usage-panel";
 import { AssetsPanel } from "./assets-panel";
 import { SendCertificatesTab } from "./send-certificates-tab";
@@ -47,6 +48,10 @@ export default function ManageEmailsPage() {
                 <Megaphone className="h-4 w-4" />
                 Blast Emails
               </TabsTrigger>
+              <TabsTrigger value="jobs">
+                <ListChecks className="h-4 w-4" />
+                Email Jobs
+              </TabsTrigger>
             </TabsList>
             <TabsContent value="logs" className="mt-4">
               <EmailLogsTab />
@@ -59,6 +64,9 @@ export default function ManageEmailsPage() {
             </TabsContent>
             <TabsContent value="blast" className="mt-4">
               <BlastEmailsTab onGoToLogs={() => setActiveTab("logs")} />
+            </TabsContent>
+            <TabsContent value="jobs" className="mt-4">
+              <EmailJobsTab />
             </TabsContent>
           </Tabs>
         </div>

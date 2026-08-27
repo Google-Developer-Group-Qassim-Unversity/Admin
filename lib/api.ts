@@ -66,6 +66,9 @@ import type {
   Semester,
   CreateSemesterPayload,
   UpdateSemesterPayload,
+  SendCertificatesResponse,
+  EmailJobModel,
+  EmailJobStatus,
 } from "./api-types";
 
 export class ApiRequestError extends Error {
@@ -350,17 +353,11 @@ export async function closeEvent(
   return updateEventStatus(id, "closed", getToken);
 }
 
-// TODO: this endpoint now returns EmailJobResponse
-// ({ message, recipient_count, job_id }) instead of an empty body - see
-// Backend/app/routers/emails.py send_certificates. Type the response properly
-// and use job_id to poll GET /emails/jobs/{job_id}, instead of assuming a 200
-// here means every attendee's certificate actually sent (certificate jobs run
-// in the background and can partially fail).
 export async function sendEventCertificates(
   event_id: number,
   getToken?: GetTokenFn
-): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/emails/${event_id}`, {
+): Promise<ApiResponse<SendCertificatesResponse>> {
+  return apiFetch<SendCertificatesResponse>(`/emails/${event_id}`, {
     method: "POST",
   }, getToken);
 }
@@ -738,6 +735,34 @@ export async function deleteEmailTemplate(
   return apiFetch<void>(`/emails/blast/templates/${templateId}`, {
     method: "DELETE",
   }, getToken);
+}
+
+// =============================================================================
+// Email Jobs
+// =============================================================================
+
+export async function getEmailJob(
+  jobId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailJobModel>> {
+  return apiFetch<EmailJobModel>(`/emails/jobs/${jobId}`, {}, getToken);
+}
+
+export async function listEmailJobs(
+  params?: { limit?: number; status?: EmailJobStatus },
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailJobModel[]>> {
+  const query = new URLSearchParams();
+  if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.status) query.set("status", params.status);
+  const qs = query.toString();
+  return apiFetch<EmailJobModel[]>(`/emails/jobs${qs ? `?${qs}` : ""}`, {}, getToken);
+}
+
+export async function listUnfinishedEmailJobs(
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EmailJobModel[]>> {
+  return apiFetch<EmailJobModel[]>(`/emails/jobs/unfinished`, {}, getToken);
 }
 
 // =============================================================================

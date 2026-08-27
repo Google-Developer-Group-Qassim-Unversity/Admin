@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { API_BASE_URL, getCertificateEligibleCount, sendEventCertificates } from "@/lib/api";
 import { parseSSEStream } from "@/lib/sse";
+import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
@@ -28,6 +29,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   const [isStreaming, setIsStreaming] = React.useState(false);
   const [logs, setLogs] = React.useState<CertificateEmailLog[]>([]);
   const [isCustomEmailOpen, setIsCustomEmailOpen] = React.useState(false);
+  const [activeJob, setActiveJob] = React.useState<{ jobId: number | null | undefined; total: number } | null>(null);
   const abortRef = React.useRef<AbortController | null>(null);
 
   const loadData = React.useCallback(async () => {
@@ -121,6 +123,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
         throw new Error(result.error.message);
       }
       toast.success("Certificate generation initiated");
+      setActiveJob({ jobId: result.data.job_id, total: result.data.recipient_count });
       setSubTab("sent");
       startStream();
       setTimeout(() => loadData(), 3000);
@@ -186,6 +189,15 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           Not Sent ({notSentCount})
         </button>
       </div>
+
+      {activeJob && (
+        <EmailJobStatusCard
+          jobId={activeJob.jobId}
+          getToken={getToken}
+          itemLabel="certificate"
+          totalHint={activeJob.total}
+        />
+      )}
 
       {subTab === "sent" && (
         <div className="rounded-lg border bg-muted/30">
@@ -311,6 +323,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
         eventId={eventId}
         getToken={getToken}
         recipients={customEmailRecipients}
+        onSent={(jobId, total) => setActiveJob({ jobId, total })}
       />
     </div>
   );

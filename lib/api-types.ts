@@ -447,10 +447,13 @@ export interface ManualCertificateRequest {
 export interface ManualCertificateResponse {
   message: string;
   recipient_count: number;
-  // TODO: backend now also returns `job_id: number | null` here (see
-  // Backend/app/routers/email_models.py EmailJobResponse). Add it here and
-  // use it to poll GET /emails/jobs/{job_id} for send progress/failures
-  // instead of assuming every recipient succeeded once this call returns.
+  job_id?: number | null;
+}
+
+export interface SendCertificatesResponse {
+  message: string;
+  recipient_count: number;
+  job_id?: number | null;
 }
 
 export interface CertificateJobResponse {
@@ -527,9 +530,7 @@ export interface CustomEmailTestRequest {
 export interface CustomEmailResponse {
   message: string;
   recipient_count: number;
-  // TODO: backend now also returns `job_id: number | null` (EmailJobResponse).
-  // Add it and surface job status via GET /emails/jobs/{job_id} instead of
-  // treating a 200 here as "all recipients received the email".
+  job_id?: number | null;
 }
 
 export interface CustomEmailTestResponse {
@@ -565,10 +566,7 @@ export interface BlastSendResponse {
   recipient_count: number;
   guaranteed_count: number;
   algorithmic_count: number;
-  // TODO: backend now also returns `job_id: number | null` (BlastQueuedResponse).
-  // Add it and surface job status via GET /emails/jobs/{job_id} - a blast can
-  // partially fail (some recipients sent, some not) and this response alone
-  // cannot tell you that.
+  job_id?: number | null;
 }
 
 export interface BlastTestRequest {
@@ -605,8 +603,35 @@ export interface DirectEmailRequest {
 export interface DirectEmailResponse {
   message: string;
   recipient_count: number;
-  // TODO: backend now also returns `job_id: number | null` (EmailJobResponse).
-  // Add it and surface job status via GET /emails/jobs/{job_id}.
+  job_id?: number | null;
+}
+
+// =============================================================================
+// Email Jobs
+// =============================================================================
+
+export type EmailJobStatus = "queued" | "running" | "succeeded" | "partial" | "failed";
+
+export type EmailJobType =
+  | "event-certificate"
+  | "manual-certificate"
+  | "custom-email"
+  | "direct-email"
+  | "blast";
+
+export interface EmailJobModel {
+  id: number;
+  job_type: EmailJobType;
+  status: EmailJobStatus;
+  created_by: number;
+  event_id: number | null;
+  total: number;
+  succeeded: number;
+  failed: number;
+  error: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
 }
 
 export interface EmailTemplate {

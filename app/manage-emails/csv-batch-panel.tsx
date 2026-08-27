@@ -14,7 +14,6 @@ import {
   Check,
   ChevronsUpDown,
   Globe,
-  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
@@ -44,6 +43,7 @@ import type { Event, Submission, EmailProvider } from "@/lib/api-types";
 
 import type { CsvRow } from "./types";
 import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
+import { EmailJobStatusCard } from "@/components/email-job-status-card";
 
 interface CsvBatchPanelProps {
   events: Event[];
@@ -76,7 +76,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingAttendance, setIsCheckingAttendance] = React.useState(false);
-  const [sentCount, setSentCount] = React.useState(0);
+  const [jobResults, setJobResults] = React.useState<{ jobId: number | null | undefined; total: number }[]>([]);
   const [failedCount, setFailedCount] = React.useState(0);
 
   const [unverifiedRows, setUnverifiedRows] = React.useState<CsvRow[]>([]);
@@ -304,15 +304,19 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
     toast.info(`Discarded: ${rowName}`);
   };
 
-  const clearCsv = () => {
+  const clearCsvRows = () => {
     setCsvRows([]);
     setFileName(null);
     setBatchSelectedEventId(null);
     setHasEventColumn(true);
-    setSentCount(0);
-    setFailedCount(0);
     setUnverifiedRows([]);
     setShowVerifyDialog(false);
+  };
+
+  const clearCsv = () => {
+    clearCsvRows();
+    setJobResults([]);
+    setFailedCount(0);
   };
 
   const handleSubmit = async () => {
@@ -338,10 +342,11 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
     }
 
     setIsSubmitting(true);
-    setSentCount(0);
+    setJobResults([]);
     setFailedCount(0);
     let ok = 0;
     let fail = 0;
+    const results: { jobId: number | null | undefined; total: number }[] = [];
 
     const groups = new Map<number, typeof includedRows>();
     for (const row of includedRows) {
@@ -361,18 +366,19 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       const response = await sendManualCertificate(payload, getToken);
       if (response.success) {
         ok += rows.length;
+        results.push({ jobId: response.data.job_id, total: response.data.recipient_count });
       } else {
         fail += rows.length;
         toast.error(response.error.message);
       }
     }
 
-    setSentCount(ok);
+    setJobResults(results);
     setFailedCount(fail);
 
     if (ok > 0 && fail === 0) {
       toast.success(`Sent ${ok} certificate${ok !== 1 ? "s" : ""}!`);
-      clearCsv();
+      clearCsvRows();
     } else if (ok > 0) {
       toast.warning(`Sent ${ok}, ${fail} failed.`);
     }
@@ -730,41 +736,24 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
           </CardContent>
         </Card>
 
-        {(sentCount > 0 || failedCount > 0) && !isSubmitting && (
+        {(jobResults.length > 0 || failedCount > 0) && !isSubmitting && (
           <div className="grid gap-4 sm:grid-cols-2">
-            {sentCount > 0 && (
-              <Card className="bg-emerald-500/5 border-emerald-500/20">
-                <CardHeader className="p-4">
-                  <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                    <Check className="h-4 w-4" />
-                    Job started — {sentCount} certificate{sentCount !== 1 ? "s" : ""} queued
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4 pt-0">
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Certificates are being sent in the background. You can track progress in Email Logs.
-                  </p>
-                  {onGoToLogs && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1.5"
-                      onClick={onGoToLogs}
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      View Email Logs
-                    </Button>
-                  )}
-                </CardContent>
-              </Card>
-            )}
+            {jobResults.map((result, index) => (
+              <EmailJobStatusCard
+                key={result.jobId ?? index}
+                jobId={result.jobId}
+                getToken={getToken}
+                itemLabel="certificate"
+                totalHint={result.total}
+                onGoToLogs={onGoToLogs}
+              />
+            ))}
             {failedCount > 0 && (
               <Card className="bg-destructive/5 border-destructive/20">
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
                     <AlertCircle className="h-4 w-4" />
-                    {failedCount} Failed
+                    {failedCount} Failed to queue
                   </CardTitle>
                 </CardHeader>
               </Card>

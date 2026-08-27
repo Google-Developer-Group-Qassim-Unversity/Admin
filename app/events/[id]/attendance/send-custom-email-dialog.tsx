@@ -253,6 +253,8 @@ interface SendCustomEmailDialogProps {
   getToken: () => Promise<string | null>;
   /** The event's eligible/not-yet-sent members. Read-only here — use Test Mode to send to anyone else. */
   recipients: RecipientRow[];
+  /** Called with the queued job right before the dialog closes, so the caller can track its progress. */
+  onSent?: (jobId: number | null | undefined, total: number) => void;
 }
 
 export function SendCustomEmailDialog({
@@ -261,6 +263,7 @@ export function SendCustomEmailDialog({
   eventId,
   getToken,
   recipients,
+  onSent,
 }: SendCustomEmailDialogProps) {
   const [subject, setSubject] = React.useState("");
   const [testRecipients, setTestRecipients] = React.useState<RecipientRow[]>([{ ...BLANK_ROW }]);
@@ -389,6 +392,7 @@ export function SendCustomEmailDialog({
         },
       });
       toast.success(data.message);
+      onSent?.(data.job_id, data.recipient_count);
       handleOpenChange(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Failed to send custom email");

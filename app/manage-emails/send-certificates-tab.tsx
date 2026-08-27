@@ -12,9 +12,7 @@ import {
   UserPlus,
   Check,
   ChevronsUpDown,
-  Award,
   AlertCircle,
-  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
@@ -53,6 +51,7 @@ import type { RecipientRow, EventFormData } from "./types";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { CsvBatchPanel } from "./csv-batch-panel";
 import { ProviderSelect } from "./provider-select";
+import { EmailJobStatusCard } from "@/components/email-job-status-card";
 
 function formatEventDate(event: Event): string {
   const start = new Date(event.start_datetime);
@@ -97,8 +96,9 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
   const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [sentCount, setSentCount] = React.useState(0);
-  const [failedCount, setFailedCount] = React.useState(0);
+  const [sentResult, setSentResult] = React.useState<{ jobId: number | null | undefined; total: number } | null>(
+    null
+  );
 
   const selectedEvent = eventForm.event_id
     ? events.find((e) => e.id === eventForm.event_id)
@@ -213,12 +213,10 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
     const response = await sendManualCertificate(payload, getToken);
     if (response.success) {
       toast.success(response.data.message);
-      setSentCount(validRecipients.length);
-      setFailedCount(0);
+      setSentResult({ jobId: response.data.job_id, total: response.data.recipient_count });
       setRecipients([{ name: "", email: "", gender: "Male" }]);
     } else {
       toast.error(response.error.message);
-      setFailedCount(validRecipients.length);
     }
 
     setIsSubmitting(false);
@@ -503,44 +501,14 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
             </Card>
           </div>
 
-          {(sentCount > 0 || failedCount > 0) && !isSubmitting && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              {sentCount > 0 && (
-                <Card className="bg-emerald-500/5 border-emerald-500/20">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-                      <Award className="h-4 w-4" />
-                      Job started — {sentCount} certificate{sentCount !== 1 ? "s" : ""} queued
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="px-4 pb-4 pt-0">
-                    <p className="text-xs text-muted-foreground mb-3">
-                      Certificates are being sent in the background. You can track progress in Email Logs.
-                    </p>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-xs gap-1.5"
-                      onClick={onGoToLogs}
-                    >
-                      <Mail className="h-3.5 w-3.5" />
-                      View Email Logs
-                    </Button>
-                  </CardContent>
-                </Card>
-              )}
-              {failedCount > 0 && (
-                <Card className="bg-destructive/5 border-destructive/20">
-                  <CardHeader className="p-4">
-                    <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
-                      <AlertCircle className="h-4 w-4" />
-                      {failedCount} Failed
-                    </CardTitle>
-                  </CardHeader>
-                </Card>
-              )}
-            </div>
+          {sentResult && !isSubmitting && (
+            <EmailJobStatusCard
+              jobId={sentResult.jobId}
+              getToken={getToken}
+              itemLabel="certificate"
+              totalHint={sentResult.total}
+              onGoToLogs={onGoToLogs}
+            />
           )}
         </TabsContent>
 

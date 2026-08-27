@@ -15,7 +15,6 @@ import {
   Send,
   Save,
   Trash2,
-  Users,
   SlidersHorizontal,
   Paperclip,
 } from "lucide-react";
@@ -88,6 +87,7 @@ import {
 } from "@/hooks/use-blast-email";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
+import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import {
   DEFAULT_BODY,
   DEFAULT_STYLES,
@@ -781,25 +781,14 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       </div>
 
       {sentResult && (
-        <Card className="bg-emerald-500/5 border-emerald-500/20">
-          <CardHeader className="p-4">
-            <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-              <Users className="h-4 w-4" />
-              Job started — {sentResult.recipient_count} recipient{sentResult.recipient_count !== 1 ? "s" : ""} queued
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="px-4 pb-4 pt-0">
-            <p className="text-xs text-muted-foreground mb-3">
-              {sentResult.algorithmic_count} selected by ordering + {sentResult.guaranteed_count} guaranteed. Sending
-              in the background — a log entry will appear in Email Logs once it completes (one per email address
-              used, if it had to split across both).
-            </p>
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
-              <Mail className="h-3.5 w-3.5" />
-              View Email Logs
-            </Button>
-          </CardContent>
-        </Card>
+        <EmailJobStatusCard
+          jobId={sentResult.job_id}
+          getToken={getToken}
+          itemLabel="email"
+          totalHint={sentResult.recipient_count}
+          description={`${sentResult.algorithmic_count} selected by ordering + ${sentResult.guaranteed_count} guaranteed. Sending in the background — a log entry will appear in Email Logs once it completes (one per email address used, if it had to split across both).`}
+          onGoToLogs={onGoToLogs}
+        />
       )}
 
       <MemberSearchDialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen} onConfirm={handleMembersPicked} />
