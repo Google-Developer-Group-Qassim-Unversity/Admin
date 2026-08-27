@@ -350,6 +350,12 @@ export async function closeEvent(
   return updateEventStatus(id, "closed", getToken);
 }
 
+// TODO: this endpoint now returns EmailJobResponse
+// ({ message, recipient_count, job_id }) instead of an empty body - see
+// Backend/app/routers/emails.py send_certificates. Type the response properly
+// and use job_id to poll GET /emails/jobs/{job_id}, instead of assuming a 200
+// here means every attendee's certificate actually sent (certificate jobs run
+// in the background and can partially fail).
 export async function sendEventCertificates(
   event_id: number,
   getToken?: GetTokenFn
@@ -528,7 +534,7 @@ export async function getAllActions(): Promise<ApiResponse<ActionWithUsage[]>> {
 
 export async function createAction(
   payload: CreateActionPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<Action>> {
   return apiFetch<Action>("/actions", {
     method: "POST",
@@ -539,7 +545,7 @@ export async function createAction(
 export async function updateAction(
   actionId: number,
   payload: UpdateActionPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<Action>> {
   return apiFetch<Action>(`/actions/${actionId}`, {
     method: "PUT",
@@ -549,7 +555,7 @@ export async function updateAction(
 
 export async function reorderActions(
   payload: ReorderActionsPayload,
-  getToken?: GetTokenFn
+  getToken: GetTokenFn
 ): Promise<ApiResponse<void>> {
   return apiFetch<void>("/actions/reorder", {
     method: "PUT",
@@ -559,8 +565,8 @@ export async function reorderActions(
 
 export async function deleteAction(
   actionId: number,
-  replacementId?: number | null,
-  getToken?: GetTokenFn
+  replacementId: number | null | undefined,
+  getToken: GetTokenFn
 ): Promise<ApiResponse<void>> {
   const url = replacementId 
     ? `/actions/${actionId}?replacement_id=${replacementId}`
