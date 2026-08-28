@@ -66,16 +66,8 @@ import {
   FileUploadList,
 } from "@/components/ui/file-upload";
 
-import { uploadEmailAttachment } from "@/lib/api";
 import { cn } from "@/lib/utils";
-import type {
-  BlastOrderBy,
-  BlastSendResponse,
-  EmailAttachmentInfo,
-  EmailProvider,
-  EmailTemplate,
-  Member,
-} from "@/lib/api-types";
+import type { BlastOrderBy, BlastSendResponse, EmailProvider, EmailTemplate } from "@/lib/api-types";
 import {
   useBlastEligibleCount,
   useCreateEmailTemplate,
@@ -85,33 +77,18 @@ import {
   useSendBlastEmailTest,
   useUpdateEmailTemplate,
 } from "@/hooks/use-blast-email";
+import { useEmailComposer } from "@/hooks/use-email-composer";
+import {
+  useAttachmentUploads,
+  MAX_ATTACHMENT_FILE_SIZE,
+  MAX_TOTAL_ATTACHMENT_SIZE,
+  MAX_ATTACHMENT_FILES,
+} from "@/hooks/use-attachment-uploads";
+import { useRecipientList } from "@/hooks/use-recipient-list";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
-import {
-  DEFAULT_BODY,
-  DEFAULT_STYLES,
-  buildEmailHtml,
-  extractTemplateParts,
-  formatSize,
-  sanitizeHtml,
-} from "./email-composer-utils";
-
-const MAX_ATTACHMENT_FILE_SIZE = 10 * 1024 * 1024;
-const MAX_TOTAL_ATTACHMENT_SIZE = 15 * 1024 * 1024;
-const MAX_ATTACHMENT_FILES = 5;
-
-interface GuaranteedRecipient {
-  name: string;
-  email: string;
-  member_id?: number;
-}
-
-interface AttachmentEntry {
-  file: File;
-  status: "uploading" | "done" | "error";
-  info?: EmailAttachmentInfo;
-}
+import { DEFAULT_BODY, DEFAULT_STYLES, extractTemplateParts, formatSize } from "./email-composer-utils";
 
 const ORDER_LABELS: Record<BlastOrderBy, string> = {
   activity: "most recently active",
@@ -123,13 +100,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
   const [subject, setSubject] = React.useState("");
   const [previewText, setPreviewText] = React.useState("");
-  const [templateBody, setTemplateBody] = React.useState(DEFAULT_BODY);
-  const [templateStyles, setTemplateStyles] = React.useState(DEFAULT_STYLES);
-  const [composerKey, setComposerKey] = React.useState(0);
   const [selectedTemplateId, setSelectedTemplateId] = React.useState<number | null>(null);
-  const [viewMode, setViewMode] = React.useState<"rendered" | "raw">("rendered");
-  const [rawHtml, setRawHtml] = React.useState("");
-  const iframeRef = React.useRef<HTMLIFrameElement>(null);
 
   const [saveTemplateDialogOpen, setSaveTemplateDialogOpen] = React.useState(false);
   const [templateNameDraft, setTemplateNameDraft] = React.useState("");
@@ -138,17 +109,21 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const [count, setCount] = React.useState(0);
   const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [orderBy, setOrderBy] = React.useState<BlastOrderBy>("activity");
-  const [guaranteed, setGuaranteed] = React.useState<GuaranteedRecipient[]>([]);
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
-  const [manualName, setManualName] = React.useState("");
-  const [manualEmail, setManualEmail] = React.useState("");
-
-  const [attachmentEntries, setAttachmentEntries] = React.useState<AttachmentEntry[]>([]);
 
   const [testSectionOpen, setTestSectionOpen] = React.useState(false);
   const [testEmails, setTestEmails] = React.useState("");
 
   const [sentResult, setSentResult] = React.useState<BlastSendResponse | null>(null);
+
+  const iframeRef = React.useRef<HTMLIFrameElement>(null);
+  const composer = useEmailComposer(iframeRef, {
+    initialBody: DEFAULT_BODY,
+    initialStyles: DEFAULT_STYLES,
+    trackStyles: true,
+  });
+  const recipientList = useRecipientList({ duplicateMessage: "That email is already in the guaranteed list" });
+  const attachments = useAttachmentUploads(getToken, MAX_TOTAL_ATTACHMENT_SIZE);
 
   const eligibleCountQuery = useBlastEligibleCount(provider, getToken);
   const templatesQuery = useEmailTemplates(getToken);
@@ -173,38 +148,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [recipientCap]);
 
-  const getCurrentHtml = (): string | null => {
-    if (viewMode === "raw") {
-      return rawHtml.trim() ? sanitizeHtml(rawHtml) : null;
-    }
-    if (!iframeRef.current?.contentDocument?.body) return null;
-    const bodyContent = iframeRef.current.contentDocument.body.innerHTML;
-    return sanitizeHtml(buildEmailHtml(templateStyles, bodyContent));
-  };
-
-  const handleViewModeChange = (mode: "rendered" | "raw") => {
-    if (mode === viewMode) return;
-    if (mode === "raw") {
-      const html = getCurrentHtml();
-      setRawHtml(html ?? "");
-    } else {
-      const { styleContent, bodyContent } = extractTemplateParts(rawHtml);
-      setTemplateStyles(styleContent);
-      setTemplateBody(bodyContent);
-      setComposerKey((k) => k + 1);
-    }
-    setViewMode(mode);
-  };
-
   const handleSelectTemplate = (value: string) => {
-    setViewMode("rendered");
     if (value === "blank") {
       setSelectedTemplateId(null);
       setSubject("");
       setPreviewText("");
-      setTemplateStyles(DEFAULT_STYLES);
-      setTemplateBody(DEFAULT_BODY);
-      setComposerKey((k) => k + 1);
+      composer.loadContent(DEFAULT_BODY, DEFAULT_STYLES);
       return;
     }
     const template = templates.find((t) => t.id === Number(value));
@@ -213,9 +162,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     setSelectedTemplateId(template.id);
     setSubject(template.subject);
     setPreviewText(template.preview_text ?? "");
-    setTemplateStyles(styleContent);
-    setTemplateBody(bodyContent);
-    setComposerKey((k) => k + 1);
+    composer.loadContent(bodyContent, styleContent);
   };
 
   const openSaveDialog = () => {
@@ -225,7 +172,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   };
 
   const handleSaveAsNew = async () => {
-    const html = getCurrentHtml();
+    const html = composer.getCurrentHtml();
     if (!html || !templateNameDraft.trim()) return;
     try {
       const template = await createTemplateMutation.mutateAsync({
@@ -244,7 +191,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
   const handleUpdateExisting = async () => {
     if (selectedTemplateId == null) return;
-    const html = getCurrentHtml();
+    const html = composer.getCurrentHtml();
     if (!html || !templateNameDraft.trim()) return;
     try {
       await updateTemplateMutation.mutateAsync({
@@ -278,74 +225,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     }
   };
 
-  const handleMembersPicked = (members: Member[]) => {
-    setGuaranteed((prev) => {
-      const existing = new Set(prev.map((r) => r.email.toLowerCase()));
-      const additions = members
-        .filter((m) => !existing.has(m.email.toLowerCase()))
-        .map((m) => ({ name: m.name, email: m.email, member_id: m.id }));
-      return [...prev, ...additions];
-    });
-    toast.success(`Added ${members.length} member${members.length !== 1 ? "s" : ""}`);
-  };
-
-  const handleAddManualGuaranteed = () => {
-    const email = manualEmail.trim();
-    if (!email) return;
-    if (guaranteed.some((r) => r.email.toLowerCase() === email.toLowerCase())) {
-      toast.error("That email is already in the guaranteed list");
-      return;
-    }
-    setGuaranteed((prev) => [...prev, { name: manualName.trim() || email, email }]);
-    setManualName("");
-    setManualEmail("");
-  };
-
-  const removeGuaranteed = (email: string) => {
-    setGuaranteed((prev) => prev.filter((r) => r.email.toLowerCase() !== email.toLowerCase()));
-  };
-
-  const handleFilesAccepted = async (newFiles: File[]) => {
-    setAttachmentEntries((prev) => [...prev, ...newFiles.map((file) => ({ file, status: "uploading" as const }))]);
-
-    for (const file of newFiles) {
-      const result = await uploadEmailAttachment(file, getToken);
-      setAttachmentEntries((prev) =>
-        prev.map((entry) =>
-          entry.file === file
-            ? result.success
-              ? { ...entry, status: "done" as const, info: result.data }
-              : { ...entry, status: "error" as const }
-            : entry
-        )
-      );
-      if (!result.success) {
-        toast.error(`Failed to upload ${file.name}: ${result.error.message}`);
-      }
-    }
-  };
-
-  const handleRemoveFile = (file: File) => {
-    setAttachmentEntries((prev) => prev.filter((entry) => entry.file !== file));
-  };
-
-  const files = attachmentEntries.map((entry) => entry.file);
-  const readyAttachments = attachmentEntries
-    .filter((entry): entry is AttachmentEntry & { info: EmailAttachmentInfo } => entry.status === "done" && !!entry.info)
-    .map((entry) => entry.info);
-  const isUploadingAttachments = attachmentEntries.some((entry) => entry.status === "uploading");
-  const totalAttachmentSize = readyAttachments.reduce((sum, a) => sum + (a.size ?? 0), 0);
-  const attachmentSizeExceeded = totalAttachmentSize > MAX_TOTAL_ATTACHMENT_SIZE;
-
   const testEmailList = testEmails
     .split(",")
     .map((email) => email.trim())
     .filter((email) => email.length > 0);
   const isTestDisabled =
-    !subject.trim() || isBusy || testEmailList.length === 0 || isUploadingAttachments || attachmentSizeExceeded;
+    !subject.trim() ||
+    isBusy ||
+    testEmailList.length === 0 ||
+    attachments.isUploadingAttachments ||
+    attachments.attachmentSizeExceeded;
 
   const handleTestSubmit = async () => {
-    const html = getCurrentHtml();
+    const html = composer.getCurrentHtml();
     if (!html) return;
     try {
       const data = await testMutation.mutateAsync({
@@ -353,7 +245,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         html_content: html,
         preview_text: previewText.trim() || undefined,
         test_emails: testEmailList,
-        attachments: readyAttachments,
+        attachments: attachments.readyAttachments,
         provider,
       });
       toast.success(`Sent test email to ${data.sent_count} recipient${data.sent_count !== 1 ? "s" : ""}`);
@@ -362,12 +254,16 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     }
   };
 
-  const totalRecipients = count + guaranteed.length;
+  const totalRecipients = count + recipientList.recipients.length;
   const isSendDisabled =
-    !subject.trim() || isBusy || totalRecipients === 0 || isUploadingAttachments || attachmentSizeExceeded;
+    !subject.trim() ||
+    isBusy ||
+    totalRecipients === 0 ||
+    attachments.isUploadingAttachments ||
+    attachments.attachmentSizeExceeded;
 
   const handleConfirmSend = async () => {
-    const html = getCurrentHtml();
+    const html = composer.getCurrentHtml();
     if (!html) return;
     try {
       const data = await sendMutation.mutateAsync({
@@ -376,10 +272,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         preview_text: previewText.trim() || undefined,
         count,
         order_by: orderBy,
-        guaranteed_recipients: guaranteed.map((r) =>
+        guaranteed_recipients: recipientList.recipients.map((r) =>
           r.member_id ? { member_id: r.member_id } : { email: r.email, name: r.name }
         ),
-        attachments: readyAttachments,
+        attachments: attachments.readyAttachments,
         provider,
       });
       setSentResult(data);
@@ -442,10 +338,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <div className="inline-flex rounded-md border p-0.5">
                   <button
                     type="button"
-                    onClick={() => handleViewModeChange("rendered")}
+                    onClick={() => composer.handleViewModeChange("rendered")}
                     className={cn(
                       "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      viewMode === "rendered"
+                      composer.viewMode === "rendered"
                         ? "bg-muted font-medium text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -454,10 +350,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   </button>
                   <button
                     type="button"
-                    onClick={() => handleViewModeChange("raw")}
+                    onClick={() => composer.handleViewModeChange("raw")}
                     className={cn(
                       "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      viewMode === "raw"
+                      composer.viewMode === "raw"
                         ? "bg-muted font-medium text-foreground"
                         : "text-muted-foreground hover:text-foreground"
                     )}
@@ -470,30 +366,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 className="border rounded-md overflow-auto"
                 style={{ width: "375px", height: "700px", minWidth: "280px", maxWidth: "100%", resize: "horizontal" }}
               >
-                {viewMode === "raw" ? (
+                {composer.viewMode === "raw" ? (
                   <Textarea
-                    value={rawHtml}
-                    onChange={(e) => setRawHtml(e.target.value)}
+                    value={composer.rawHtml}
+                    onChange={(e) => composer.setRawHtml(e.target.value)}
                     spellCheck={false}
                     placeholder="<html>...</html>"
                     className="resize-none border-0 rounded-none font-mono text-xs h-full w-full"
                   />
                 ) : (
                   <iframe
-                    key={composerKey}
+                    key={composer.composerKey}
                     ref={iframeRef}
-                    srcDoc={`
-                      <!DOCTYPE html>
-                      <html dir="rtl" lang="ar">
-                      <head>
-                        <meta charset="UTF-8">
-                        <style>${templateStyles}</style>
-                        <style>
-                          body { padding: 10px; min-height: 100%; direction: rtl; margin: 0; background-color: #f1f5f9; }
-                        </style>
-                      </head>
-                      <body contenteditable="true" dir="rtl" style="background-color:#f1f5f9;margin:0">${templateBody}</body>
-                      </html>`}
+                    srcDoc={composer.iframeSrcDoc}
                     className="border-0 h-full w-full"
                   />
                 )}
@@ -586,7 +471,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Guaranteed Recipients {guaranteed.length > 0 && `(${guaranteed.length})`}</Label>
+                <Label>
+                  Guaranteed Recipients {recipientList.recipients.length > 0 && `(${recipientList.recipients.length})`}
+                </Label>
                 <Button
                   type="button"
                   variant="outline"
@@ -604,16 +491,16 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               <div className="flex gap-2">
                 <Input
                   placeholder="Name (optional)"
-                  value={manualName}
-                  onChange={(e) => setManualName(e.target.value)}
+                  value={recipientList.manualName}
+                  onChange={(e) => recipientList.setManualName(e.target.value)}
                   disabled={isBusy}
                   className="h-8 text-xs"
                 />
                 <Input
                   type="email"
                   placeholder="email@example.com"
-                  value={manualEmail}
-                  onChange={(e) => setManualEmail(e.target.value)}
+                  value={recipientList.manualEmail}
+                  onChange={(e) => recipientList.setManualEmail(e.target.value)}
                   disabled={isBusy}
                   className="h-8 text-xs"
                 />
@@ -622,15 +509,15 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   variant="outline"
                   size="icon"
                   className="h-8 w-8 shrink-0"
-                  onClick={handleAddManualGuaranteed}
-                  disabled={isBusy || !manualEmail.trim()}
+                  onClick={recipientList.addManual}
+                  disabled={isBusy || !recipientList.manualEmail.trim()}
                 >
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
-              {guaranteed.length > 0 && (
+              {recipientList.recipients.length > 0 && (
                 <div className="max-h-40 overflow-y-auto rounded-lg border divide-y">
-                  {guaranteed.map((r) => (
+                  {recipientList.recipients.map((r) => (
                     <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                       <div className="flex-1 min-w-0">
                         <p className="text-xs font-medium truncate">{r.name}</p>
@@ -641,7 +528,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         variant="ghost"
                         size="icon"
                         className="h-6 w-6 hover:text-destructive"
-                        onClick={() => removeGuaranteed(r.email)}
+                        onClick={() => recipientList.remove(r.email)}
                         disabled={isBusy}
                       >
                         <X className="h-3 w-3" />
@@ -654,7 +541,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
             <p className="text-xs font-medium text-muted-foreground">
               Up to <span className="text-foreground font-bold">{totalRecipients}</span> recipients — {count} by{" "}
-              {ORDER_LABELS[orderBy]} + {guaranteed.length} guaranteed.
+              {ORDER_LABELS[orderBy]} + {recipientList.recipients.length} guaranteed.
             </p>
           </CardContent>
         </Card>
@@ -673,8 +560,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               maxFiles={MAX_ATTACHMENT_FILES}
               maxSize={MAX_ATTACHMENT_FILE_SIZE}
               accept="image/*,application/pdf"
-              value={files}
-              onAccept={handleFilesAccepted}
+              value={attachments.files}
+              onAccept={attachments.handleFilesAccepted}
               onFileReject={(_file, message) => toast.error(message)}
               disabled={isBusy}
             >
@@ -686,7 +573,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 </p>
               </FileUploadDropzone>
               <FileUploadList>
-                {attachmentEntries.map((entry) => (
+                {attachments.attachmentEntries.map((entry) => (
                   <FileUploadItem key={`${entry.file.name}-${entry.file.lastModified}`} value={entry.file}>
                     <FileUploadItemPreview />
                     <FileUploadItemMetadata />
@@ -697,7 +584,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => handleRemoveFile(entry.file)}
+                        onClick={() => attachments.handleRemoveFile(entry.file)}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -706,9 +593,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 ))}
               </FileUploadList>
             </FileUpload>
-            {attachmentSizeExceeded && (
+            {attachments.attachmentSizeExceeded && (
               <p className="text-xs text-destructive">
-                Total attachment size ({formatSize(totalAttachmentSize)}) exceeds the{" "}
+                Total attachment size ({formatSize(attachments.totalAttachmentSize)}) exceeds the{" "}
                 {formatSize(MAX_TOTAL_ATTACHMENT_SIZE)} limit. Remove a file to continue.
               </p>
             )}
@@ -769,7 +656,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               <AlertDialogTitle>Send this blast?</AlertDialogTitle>
               <AlertDialogDescription>
                 You&apos;re about to email up to <strong>{totalRecipients}</strong> people ({count} by{" "}
-                {ORDER_LABELS[orderBy]} + {guaranteed.length} guaranteed). This can&apos;t be undone.
+                {ORDER_LABELS[orderBy]} + {recipientList.recipients.length} guaranteed). This can&apos;t be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -791,7 +678,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         />
       )}
 
-      <MemberSearchDialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen} onConfirm={handleMembersPicked} />
+      <MemberSearchDialog open={memberDialogOpen} onOpenChange={setMemberDialogOpen} onConfirm={recipientList.addMembers} />
 
       <Dialog open={saveTemplateDialogOpen} onOpenChange={setSaveTemplateDialogOpen}>
         <DialogContent className="sm:max-w-md">

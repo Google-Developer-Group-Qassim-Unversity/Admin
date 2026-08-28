@@ -38,7 +38,6 @@ import type {
   CreateCustomMemberPayload,
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
-  CertificateJobResponse,
   ManualCertificateRequest,
   ManualCertificateResponse,
   BackfillMember,
@@ -181,7 +180,7 @@ async function apiUpload<T>(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<T>> {
   try {
-    const url = `${config.uploadSource}`;
+    const url = `${config.uploadSource.replace(/\/$/, "")}${endpoint}`;
     const formData = new FormData();
     formData.append("file", file);
 
@@ -773,70 +772,14 @@ export async function uploadFile(
   file: File,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<UploadResponse>> {
-  const uploadEndpoint = "/upload";
-  return apiUpload<UploadResponse>(uploadEndpoint, file, getToken);
+  return apiUpload<UploadResponse>("/", file, getToken);
 }
 
 export async function uploadEmailAttachment(
   file: File,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<EmailAttachmentInfo>> {
-  try {
-    const url = `${config.uploadSource.replace(/\/$/, "")}/email-attachment`;
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const headers: Record<string, string> = {};
-    if (getToken) {
-      const token = await getToken();
-      if (token) {
-        headers["Authorization"] = `Bearer ${token}`;
-      }
-    }
-
-    const response = await fetch(url, {
-      method: "POST",
-      headers,
-      body: formData,
-    });
-
-    if (!response.ok) {
-      const isValidationError = response.status === 422;
-      const isServerError = response.status >= 500;
-
-      let message = "Upload failed";
-      try {
-        const errorData = await response.json();
-        message = errorData.message || errorData.detail || message;
-      } catch {
-        message = response.statusText || message;
-      }
-
-      return {
-        success: false,
-        error: {
-          message,
-          status: response.status,
-          isValidationError,
-          isServerError,
-        },
-      };
-    }
-
-    const data = await response.json();
-    return { success: true, data };
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Upload error occurred";
-    return {
-      success: false,
-      error: {
-        message,
-        status: 0,
-        isServerError: true,
-      },
-    };
-  }
+  return apiUpload<EmailAttachmentInfo>("/email-attachment", file, getToken);
 }
 
 // =============================================================================

@@ -413,7 +413,6 @@ export interface AttendanceResponse {
   attendance: AttendanceRecord[];
 }
 
-export type CertificateJobStatus = "pending" | "processing" | "completed" | "failed";
 export type CertificateLanguage = "ar" | "en";
 
 /** "google" sends via the default Gmail threshold-switching system; "ses" is the optional AWS SES path. */
@@ -454,14 +453,6 @@ export interface SendCertificatesResponse {
   message: string;
   recipient_count: number;
   job_id?: number | null;
-}
-
-export interface CertificateJobResponse {
-  job_id: string;
-  event_name: string;
-  folder_name: string;
-  status: CertificateJobStatus;
-  message: string;
 }
 
 // =============================================================================
