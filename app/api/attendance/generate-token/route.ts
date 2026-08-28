@@ -8,6 +8,9 @@ interface TokenPayload {
   eventId: number;
   iat: number;
   exp: number;
+  requireAttendanceTimeWindow: boolean;
+  requireAttendanceRegistration: boolean;
+  preventDuplicateDailyAttendance: boolean;
 }
 
 export async function POST(request: NextRequest) {
@@ -31,7 +34,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { eventId, expirationMinutes } = body;
+    const {
+      eventId,
+      expirationMinutes,
+      requireAttendanceTimeWindow = true,
+      requireAttendanceRegistration = true,
+      preventDuplicateDailyAttendance = true,
+    } = body;
 
     if (!eventId || typeof eventId !== 'number') {
       return NextResponse.json(
@@ -47,6 +56,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    for (const [name, value] of [
+      ['requireAttendanceTimeWindow', requireAttendanceTimeWindow],
+      ['requireAttendanceRegistration', requireAttendanceRegistration],
+      ['preventDuplicateDailyAttendance', preventDuplicateDailyAttendance],
+    ] as const) {
+      if (typeof value !== 'boolean') {
+        return NextResponse.json(
+          { error: `Invalid ${name}` },
+          { status: 400 }
+        );
+      }
+    }
+
     const now = Math.floor(Date.now() / 1000);
     const exp = now + (expirationMinutes * 60);
 
@@ -54,6 +76,9 @@ export async function POST(request: NextRequest) {
       eventId,
       iat: now,
       exp,
+      requireAttendanceTimeWindow,
+      requireAttendanceRegistration,
+      preventDuplicateDailyAttendance,
     };
 
     const token = jwt.sign(payload, serverConfig.attendanceJwtSecret);

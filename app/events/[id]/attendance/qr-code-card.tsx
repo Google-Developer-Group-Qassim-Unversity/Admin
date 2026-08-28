@@ -11,11 +11,21 @@ import {
   Check,
   Timer,
   ExternalLink,
+  ChevronDown,
+  ChevronUp,
+  HelpCircle,
+  SlidersHorizontal,
+  CalendarClock,
+  ClipboardCheck,
+  CopyX,
+  type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import {
   Select,
   SelectContent,
@@ -23,6 +33,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface TokenResponse {
   token: string;
@@ -75,9 +96,49 @@ interface QRCodeCardProps {
   children?: React.ReactNode;
 }
 
+interface GuardToggleRowProps {
+  id: string;
+  icon: LucideIcon;
+  label: string;
+  helpText: string;
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+}
+
+function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedChange }: GuardToggleRowProps) {
+  return (
+    <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+      <div className="flex items-center gap-2">
+        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+        <Label htmlFor={id} className="text-sm font-normal">
+          {label}
+        </Label>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button type="button" className="text-muted-foreground hover:text-foreground">
+                <HelpCircle className="h-3.5 w-3.5" />
+                <span className="sr-only">What does this do?</span>
+              </button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{helpText}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      </div>
+      <Switch id={id} checked={checked} onCheckedChange={onCheckedChange} />
+    </div>
+  );
+}
+
 export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
   const { getToken } = useAuth();
   const [expirationMinutes, setExpirationMinutes] = useState('15');
+  const [requireAttendanceTimeWindow, setRequireAttendanceTimeWindow] = useState(true);
+  const [requireAttendanceRegistration, setRequireAttendanceRegistration] = useState(true);
+  const [preventDuplicateDailyAttendance, setPreventDuplicateDailyAttendance] = useState(true);
+  const [advancedOpen, setAdvancedOpen] = useState(false);
   const [tokenData, setTokenData] = useState<TokenResponse | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -141,6 +202,9 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
         body: JSON.stringify({
           eventId,
           expirationMinutes: parseInt(expirationMinutes, 10),
+          requireAttendanceTimeWindow,
+          requireAttendanceRegistration,
+          preventDuplicateDailyAttendance,
         }),
       });
 
@@ -261,6 +325,44 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
                 The QR code will expire after the selected duration.
               </p>
             </div>
+
+            <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="outline" className="w-full justify-between">
+                  <span className="flex items-center gap-2">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    Advanced: Attendance Rules
+                  </span>
+                  {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="mt-3 space-y-3">
+                <GuardToggleRow
+                  id="require-time-window"
+                  icon={CalendarClock}
+                  label="Require attendance within event time window"
+                  helpText="When on, members can only mark attendance while the event is in progress. When off, attendance can be marked at any time, regardless of the event's start/end dates."
+                  checked={requireAttendanceTimeWindow}
+                  onCheckedChange={setRequireAttendanceTimeWindow}
+                />
+                <GuardToggleRow
+                  id="require-registration"
+                  icon={ClipboardCheck}
+                  label="Require prior event registration"
+                  helpText="When on, members must have a submitted and accepted form before they can mark attendance (only applies to registration/Google-form events). When off, anyone can mark attendance regardless of registration status."
+                  checked={requireAttendanceRegistration}
+                  onCheckedChange={setRequireAttendanceRegistration}
+                />
+                <GuardToggleRow
+                  id="prevent-duplicate"
+                  icon={CopyX}
+                  label="Prevent duplicate same-day attendance"
+                  helpText="When on, members can only mark attendance once per day. When off, members can mark attendance multiple times on the same day."
+                  checked={preventDuplicateDailyAttendance}
+                  onCheckedChange={setPreventDuplicateDailyAttendance}
+                />
+              </CollapsibleContent>
+            </Collapsible>
 
             <Button onClick={handleGenerateToken} disabled={isGenerating} className="w-full">
               {isGenerating ? (
