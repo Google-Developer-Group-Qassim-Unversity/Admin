@@ -89,9 +89,9 @@ export function CreatableCombobox({
           role="combobox"
           aria-expanded={open}
           disabled={disabled || isLoading}
-          className={cn("w-full justify-between", className)}
+          className={cn("h-auto min-h-9 w-full justify-between whitespace-normal py-2 text-left", className)}
         >
-          {value || placeholder}
+          <span className="break-words">{value || placeholder}</span>
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>

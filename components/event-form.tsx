@@ -4,12 +4,25 @@ import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, FileBadge, AlertCircle } from "lucide-react";
+import {
+  Loader2,
+  AlertCircle,
+  Type,
+  AlignLeft,
+  MapPin,
+  Building2,
+  CalendarClock,
+  Ticket,
+  Award,
+  Briefcase,
+  Zap,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { LocationToggle } from "@/components/ui/location-toggle";
 import { RegistrationToggle } from "@/components/ui/registration-toggle";
@@ -80,6 +93,7 @@ export function EventForm({
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(eventFormSchema),
+    mode: "onBlur",
     defaultValues: {
       event_id: initialData?.event_id ?? null,
       name: initialData?.name ?? "",
@@ -167,70 +181,94 @@ export function EventForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Event Name */}
       <div className="space-y-2">
-        <Label htmlFor="name">Event Name *</Label>
+        <Label htmlFor="name" className="flex items-center gap-2">
+          <Type className="h-4 w-4 text-muted-foreground" />
+          Event Name
+        </Label>
         <Input
           id="name"
-          placeholder="Enter event name"
+          placeholder="GDG DevFest 2026"
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "name-error" : undefined}
           {...register("name")}
           className={errors.name ? "border-destructive" : ""}
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <p id="name-error" role="alert" className="text-sm text-destructive">
+            {errors.name.message}
+          </p>
         )}
       </div>
 
       {/* Description */}
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="description" className="flex items-center gap-2">
+            <AlignLeft className="h-4 w-4 text-muted-foreground" />
+            Description
+          </Label>
+          <Badge variant="secondary">Optional</Badge>
+        </div>
         <Textarea
           id="description"
-          placeholder="Enter event description (optional)"
+          placeholder="A hands-on workshop where members build a small project together."
           rows={3}
           dir="auto"
           {...register("description")}
         />
-        <p className="text-xs text-muted-foreground">
-          Leave empty if no description is needed
-        </p>
       </div>
 
-      {/* Location Type Toggle */}
-      <div className="space-y-2">
-        <Label className="mb-4">Location Type *</Label>
-        <Controller
-          name="location_type"
-          control={control}
-          render={({ field }) => (
-            <LocationToggle value={field.value} onChange={field.onChange} />
-          )}
-        />
-      </div>
+      {/* Location Type + Location - Side by Side */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Location Type Toggle */}
+        <div className="space-y-2">
+          <Label className="flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-muted-foreground" />
+            Location Type
+          </Label>
+          <Controller
+            name="location_type"
+            control={control}
+            render={({ field }) => (
+              <LocationToggle value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </div>
 
-      {/* Location Selection */}
-      <div className="space-y-2">
-        <Label>Location *</Label>
-        <Controller
-          name="location"
-          control={control}
-          render={({ field }) => (
-            <CreatableCombobox
-              options={locationOptions}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder="Select or enter location..."
-              searchPlaceholder="Search locations..."
-              emptyMessage="No locations found"
-            />
+        {/* Location Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="location" className="flex items-center gap-2">
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+            Location
+          </Label>
+          <Controller
+            name="location"
+            control={control}
+            render={({ field }) => (
+              <CreatableCombobox
+                options={locationOptions}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder="Select or enter location..."
+                searchPlaceholder="Search locations..."
+                emptyMessage="No locations found"
+              />
+            )}
+          />
+          {errors.location && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.location.message}
+            </p>
           )}
-        />
-        {errors.location && (
-          <p className="text-sm text-destructive">{errors.location.message}</p>
-        )}
+        </div>
       </div>
 
       {/* Date & Time Range */}
       <div className="space-y-2">
-        <Label>Event Date & Time *</Label>
+        <Label className="flex items-center gap-2">
+          <CalendarClock className="h-4 w-4 text-muted-foreground" />
+          Event Date & Time
+        </Label>
         <Controller
           name="startDate"
           control={control}
@@ -254,7 +292,7 @@ export function EventForm({
           )}
         />
         {(errors.startDate || errors.endDate) && (
-          <p className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive">
             {errors.startDate?.message || errors.endDate?.message}
           </p>
         )}
@@ -263,7 +301,10 @@ export function EventForm({
       {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
       {mode === "create" && (
         <div className="space-y-2">
-          <Label>Attendance Access *</Label>
+          <Label className="flex items-center gap-2">
+            <Ticket className="h-4 w-4 text-muted-foreground" />
+            Attendance Access
+          </Label>
           <Controller
             name="requireRegistration"
             control={control}
@@ -280,46 +321,32 @@ export function EventForm({
       )}
 
       {/* Is Official */}
-      <div className="space-y-2">
-        <Label htmlFor="is_official">Official Event</Label>
-        <div className="flex items-center gap-4 rounded-lg border p-4">
-          <Controller
-            name="is_official"
-            control={control}
-            render={({ field }) => (
-              <Switch
-                id="is_official"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
-            )}
-          />
-          <div className="space-y-0.5">
-            <Label
-              htmlFor="is_official"
-              className="text-base cursor-pointer flex items-center gap-2"
-            >
-              {watch("is_official") && (
-                <FileBadge className="h-4 w-4 text-amber-500" />
-              )}
-              {watch("is_official")
-                ? "This is an official event"
-                : "This is not an official event"}
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              {watch("is_official")
-                ? "Event will be marked as official"
-                : "Event will be marked as unofficial/community event"}
-            </p>
-          </div>
-        </div>
+      <div className="flex items-center gap-3">
+        <Controller
+          name="is_official"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              id="is_official"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+        <Label htmlFor="is_official" className="flex cursor-pointer items-center gap-2">
+          <Award className="h-4 w-4 text-muted-foreground" />
+          Official Event
+        </Label>
       </div>
 
       {/* Department and Composite Action Selection - Side by Side */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Department Selection */}
         <div className="space-y-2">
-          <Label htmlFor="department_id">Department *</Label>
+          <Label htmlFor="department_id" className="flex items-center gap-2">
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            Department
+          </Label>
           <Controller
             name="department_id"
             control={control}
@@ -332,6 +359,8 @@ export function EventForm({
                >
                 <SelectTrigger
                   id="department_id"
+                  aria-invalid={!!errors.department_id}
+                  aria-describedby={errors.department_id ? "department-error" : undefined}
                   className={errors.department_id ? "border-destructive" : ""}
                 >
                   <SelectValue placeholder="Select a department..." />
@@ -347,7 +376,7 @@ export function EventForm({
             )}
           />
           {errors.department_id && (
-            <p className="text-sm text-destructive">
+            <p id="department-error" role="alert" className="text-sm text-destructive">
               {errors.department_id.message}
             </p>
           )}
@@ -355,7 +384,10 @@ export function EventForm({
 
         {/* Composite Action Selection */}
         <div className="space-y-2">
-          <Label htmlFor="composite_action">Department Action *</Label>
+          <Label htmlFor="composite_action" className="flex items-center gap-2">
+            <Zap className="h-4 w-4 text-muted-foreground" />
+            Department Action
+          </Label>
           <Controller
             name="composite_action"
             control={control}
@@ -366,6 +398,8 @@ export function EventForm({
               >
                 <SelectTrigger
                   id="composite_action"
+                  aria-invalid={!!errors.composite_action}
+                  aria-describedby={errors.composite_action ? "composite-action-error" : undefined}
                   className={errors.composite_action ? "border-destructive" : ""}
                 >
                   <SelectValue placeholder="Select a department action..." />
@@ -381,7 +415,7 @@ export function EventForm({
             )}
           />
           {errors.composite_action && (
-            <p className="text-sm text-destructive">
+            <p id="composite-action-error" role="alert" className="text-sm text-destructive">
               {errors.composite_action.message}
             </p>
           )}
