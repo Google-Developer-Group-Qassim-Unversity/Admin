@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FormsCopyItem } from '@/components/forms-copy-item';
+import { MeetingUrlItem } from '@/components/meeting-url-item';
 import { PublishItem } from '@/components/publish-item';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
@@ -98,6 +99,10 @@ export default function EventManagePage() {
           user={user}
           disabled={isFormTypeNone}
         />
+        {event.location_type === 'online' && (
+          <MeetingUrlItem event={event} onEventChange={handleFormChange} />
+        )}
+
         <PublishItem 
           event={event}
           formData={formData}

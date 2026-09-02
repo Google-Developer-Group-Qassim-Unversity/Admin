@@ -305,6 +305,17 @@ export async function updateEventPartial(
   }, getToken);
 }
 
+export async function updateEventMeetingUrl(
+  id: number,
+  meetingUrl: string | null,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Event>> {
+  return apiFetch<Event>(`/events/${id}/meeting-url`, {
+    method: "PUT",
+    body: JSON.stringify({ meeting_url: meetingUrl }),
+  }, getToken);
+}
+
 export async function updateEventStatus(
   id: number,
   status: EventStatus,

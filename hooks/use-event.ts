@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, publishEvent, unpublishEvent, closeEventResponses, openEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
+import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, updateEventMeetingUrl, publishEvent, unpublishEvent, closeEventResponses, openEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
 import type { Event, UpdateEventPayload, BackfillMember } from '@/lib/api-types';
 
 // Query keys
@@ -96,6 +96,29 @@ export function useUpdateEventPartial(getToken: () => Promise<string | null>) {
       // Update the cache with the new data
       queryClient.setQueryData(eventKeys.detail(id), data);
       // Invalidate details and list to refetch
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    },
+  });
+}
+
+/**
+ * Hook for setting (or clearing) a remote event's join link via
+ * PUT /events/[id]/meeting-url. Pass null to clear it.
+ */
+export function useUpdateEventMeetingUrl(getToken: () => Promise<string | null>) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ id, meetingUrl }: { id: number; meetingUrl: string | null }) => {
+      const result = await updateEventMeetingUrl(id, meetingUrl, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
+    },
+    onSuccess: (data, { id }) => {
+      queryClient.setQueryData(eventKeys.detail(id), data);
       queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
     },
