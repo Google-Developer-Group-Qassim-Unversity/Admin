@@ -68,10 +68,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <Label className="flex items-center gap-2">
-          <ImageIcon className="h-4 w-4 text-muted-foreground" />
-          Event Image
-        </Label>
+        <Label>Event Image</Label>
         <Badge variant="secondary">Optional</Badge>
       </div>
 

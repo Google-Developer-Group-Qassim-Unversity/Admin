@@ -37,7 +37,7 @@ export function RegistrationToggle({
       <ToggleGroupItem
         value="required"
         aria-label="Registration required"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        className="flex items-center gap-2"
       >
         <UserCheck className="h-4 w-4" />
         Registration Required
@@ -45,7 +45,7 @@ export function RegistrationToggle({
       <ToggleGroupItem
         value="open"
         aria-label="Open to everyone"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        className="flex items-center gap-2"
       >
         <Users className="h-4 w-4" />
         Open to Everyone

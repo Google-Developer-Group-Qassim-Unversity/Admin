@@ -4,19 +4,7 @@ import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import {
-  Loader2,
-  AlertCircle,
-  Type,
-  AlignLeft,
-  MapPin,
-  Building2,
-  CalendarClock,
-  Ticket,
-  Award,
-  Briefcase,
-  Zap,
-} from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -181,10 +169,7 @@ export function EventForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Event Name */}
       <div className="space-y-2">
-        <Label htmlFor="name" className="flex items-center gap-2">
-          <Type className="h-4 w-4 text-muted-foreground" />
-          Event Name
-        </Label>
+        <Label htmlFor="name">Event Name</Label>
         <Input
           id="name"
           placeholder="GDG DevFest 2026"
@@ -203,10 +188,7 @@ export function EventForm({
       {/* Description */}
       <div className="space-y-2">
         <div className="flex items-center gap-2">
-          <Label htmlFor="description" className="flex items-center gap-2">
-            <AlignLeft className="h-4 w-4 text-muted-foreground" />
-            Description
-          </Label>
+          <Label htmlFor="description">Description</Label>
           <Badge variant="secondary">Optional</Badge>
         </div>
         <Textarea
@@ -222,10 +204,7 @@ export function EventForm({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Location Type Toggle */}
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-            Location Type
-          </Label>
+          <Label>Location Type</Label>
           <Controller
             name="location_type"
             control={control}
@@ -237,10 +216,7 @@ export function EventForm({
 
         {/* Location Selection */}
         <div className="space-y-2">
-          <Label htmlFor="location" className="flex items-center gap-2">
-            <Building2 className="h-4 w-4 text-muted-foreground" />
-            Location
-          </Label>
+          <Label htmlFor="location">Location</Label>
           <Controller
             name="location"
             control={control}
@@ -265,10 +241,7 @@ export function EventForm({
 
       {/* Date & Time Range */}
       <div className="space-y-2">
-        <Label className="flex items-center gap-2">
-          <CalendarClock className="h-4 w-4 text-muted-foreground" />
-          Event Date & Time
-        </Label>
+        <Label>Event Date & Time</Label>
         <Controller
           name="startDate"
           control={control}
@@ -301,10 +274,7 @@ export function EventForm({
       {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
       {mode === "create" && (
         <div className="space-y-2">
-          <Label className="flex items-center gap-2">
-            <Ticket className="h-4 w-4 text-muted-foreground" />
-            Attendance Access
-          </Label>
+          <Label>Attendance Access</Label>
           <Controller
             name="requireRegistration"
             control={control}
@@ -333,8 +303,7 @@ export function EventForm({
             />
           )}
         />
-        <Label htmlFor="is_official" className="flex cursor-pointer items-center gap-2">
-          <Award className="h-4 w-4 text-muted-foreground" />
+        <Label htmlFor="is_official" className="cursor-pointer">
           Official Event
         </Label>
       </div>
@@ -343,10 +312,7 @@ export function EventForm({
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Department Selection */}
         <div className="space-y-2">
-          <Label htmlFor="department_id" className="flex items-center gap-2">
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
-            Department
-          </Label>
+          <Label htmlFor="department_id">Department</Label>
           <Controller
             name="department_id"
             control={control}
@@ -384,10 +350,7 @@ export function EventForm({
 
         {/* Composite Action Selection */}
         <div className="space-y-2">
-          <Label htmlFor="composite_action" className="flex items-center gap-2">
-            <Zap className="h-4 w-4 text-muted-foreground" />
-            Department Action
-          </Label>
+          <Label htmlFor="composite_action">Department Action</Label>
           <Controller
             name="composite_action"
             control={control}
