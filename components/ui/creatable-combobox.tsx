@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 
 interface CreatableComboboxProps {
+  id?: string;
   options: string[];
   value: string;
   onChange: (value: string) => void;
@@ -32,6 +33,7 @@ interface CreatableComboboxProps {
 }
 
 export function CreatableCombobox({
+  id,
   options,
   value,
   onChange,
@@ -85,6 +87,7 @@ export function CreatableCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}

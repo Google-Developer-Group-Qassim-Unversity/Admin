@@ -222,6 +222,7 @@ export function EventForm({
             control={control}
             render={({ field }) => (
               <CreatableCombobox
+                id="location"
                 options={locationOptions}
                 value={field.value}
                 onChange={field.onChange}
