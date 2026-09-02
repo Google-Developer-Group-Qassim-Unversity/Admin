@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { LocationToggle } from "@/components/ui/location-toggle";
+import { RegistrationToggle } from "@/components/ui/registration-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
@@ -37,6 +38,8 @@ export const eventFormSchema = z.object({
   startDate: z.date({ message: "Start date is required" }),
   endDate: z.date({ message: "End date is required" }),
   is_official: z.boolean(),
+  /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
+  requireRegistration: z.boolean(),
   image_url: z.string().nullable(),
   department_id: z.number({ required_error: "Department is required" }),
   composite_action: z.array(z.any()).length(2, "Composite action is required"),
@@ -86,6 +89,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
       department_id: initialData?.department_id,
       composite_action: initialData?.composite_action,
@@ -255,6 +259,25 @@ export function EventForm({
           </p>
         )}
       </div>
+
+      {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
+      {mode === "create" && (
+        <div className="space-y-2">
+          <Label>Attendance Access *</Label>
+          <Controller
+            name="requireRegistration"
+            control={control}
+            render={({ field }) => (
+              <RegistrationToggle value={field.value} onChange={field.onChange} />
+            )}
+          />
+          <p className="text-sm text-muted-foreground">
+            {watch("requireRegistration")
+              ? "Members must register beforehand. Only registered members can attend and earn points."
+              : "No registration needed. Anyone can attend this event and earn points."}
+          </p>
+        </div>
+      )}
 
       {/* Is Official */}
       <div className="space-y-2">
