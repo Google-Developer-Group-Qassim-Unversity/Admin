@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   FileUpload,
   FileUploadDropzone,
@@ -66,8 +67,11 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
 
   return (
     <div className="space-y-2">
-      <Label>Event Image</Label>
-      
+      <div className="flex items-center gap-2">
+        <Label>Event Image</Label>
+        <Badge variant="secondary">Optional</Badge>
+      </div>
+
       {/* Show existing image preview if no new file uploaded */}
       {existingImageUrl && !uploadedFile && displayImageUrl && (
         <div className="relative rounded-lg border p-4">

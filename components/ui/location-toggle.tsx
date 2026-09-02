@@ -36,7 +36,7 @@ export function LocationToggle({
       <ToggleGroupItem
         value="on-site"
         aria-label="On-site location"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        className="flex items-center gap-2"
       >
         <Building2 className="h-4 w-4" />
         On-site
@@ -44,7 +44,7 @@ export function LocationToggle({
       <ToggleGroupItem
         value="online"
         aria-label="Online/Remote"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        className="flex items-center gap-2"
       >
         <Globe className="h-4 w-4" />
         Remote
