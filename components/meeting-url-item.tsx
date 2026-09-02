@@ -107,8 +107,8 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
         </Button>
         {savedUrl && (
           <>
-            <Button variant="outline" size="icon" asChild title="Open meeting link">
-              <a href={savedUrl} target="_blank" rel="noopener noreferrer">
+            <Button variant="outline" size="icon" asChild>
+              <a href={savedUrl} target="_blank" rel="noopener noreferrer" title="Open meeting link" aria-label="Open meeting link">
                 <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
@@ -116,6 +116,7 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
               variant="outline"
               size="icon"
               title="Remove meeting link"
+              aria-label="Remove meeting link"
               onClick={() => save(null)}
               disabled={updateMeetingUrl.isPending}
             >
