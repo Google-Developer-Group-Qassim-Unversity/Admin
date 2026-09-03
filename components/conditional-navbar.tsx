@@ -4,7 +4,7 @@ import { usePathname } from 'next/navigation';
 import { Navbar } from '@/components/navbar';
 import type { ReactNode } from 'react';
 
-const MINIMAL_ROUTES = ['/qr-display'];
+const MINIMAL_ROUTES = ['/qr-display', '/access-denied'];
 
 export function ConditionalNavbar() {
   const pathname = usePathname();
