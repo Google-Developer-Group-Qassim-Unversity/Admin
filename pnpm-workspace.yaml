@@ -1,5 +1,10 @@
 allowBuilds:
   '@clerk/shared': true
+  # next-intl pulls these in for its message-extractor tooling, which this
+  # app does not use. Both `next dev` and `next build` work without their
+  # native postinstalls, so decline them rather than build binaries.
+  '@parcel/watcher': false
+  '@swc/core': false
   msw: true
   sharp: true
   unrs-resolver: true

@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { format, setHours, setMinutes, isSameDay, addDays } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
@@ -57,6 +58,7 @@ export function DateTimeRangePicker({
   disabled = false,
   className,
 }: DateTimeRangePickerProps) {
+  const t = useTranslations("dateTimeRangePicker");
   const [open, setOpen] = React.useState(false);
 
   // Extract time from dates
@@ -137,7 +139,7 @@ export function DateTimeRangePicker({
 
   // Format display string
   const getDisplayText = () => {
-    if (!value.startDate) return "Select date and time";
+    if (!value.startDate) return t("selectDateTime");
 
     const startDay = format(value.startDate, "d");
     const startMonth = format(value.startDate, "MMM");
@@ -186,12 +188,12 @@ export function DateTimeRangePicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start text-start font-normal",
             !value.startDate && "text-muted-foreground",
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="me-2 h-4 w-4" />
           {getDisplayText()}
         </Button>
       </PopoverTrigger>
@@ -207,13 +209,13 @@ export function DateTimeRangePicker({
           <div className="border-t pt-4">
             <div className="grid grid-cols-2 gap-4">
               <TimeInput
-                label="Start Time"
+                label={t("startTime")}
                 value={startTime}
                 onChange={handleStartTimeChange}
                 disabled={disabled || !value.startDate}
               />
               <TimeInput
-                label="End Time"
+                label={t("endTime")}
                 value={endTime}
                 onChange={handleEndTimeChange}
                 disabled={disabled || !value.startDate}

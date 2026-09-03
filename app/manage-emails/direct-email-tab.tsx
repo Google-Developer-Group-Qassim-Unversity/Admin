@@ -34,8 +34,10 @@ import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
 import { DEFAULT_BODY, DEFAULT_STYLES, formatSize } from "./email-composer-utils";
+import { useTranslations } from "next-intl";
 
 export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
+  const t = useTranslations("manageEmails.directEmail");
   const { getToken } = useAuth();
 
   const [subject, setSubject] = React.useState("");
@@ -74,7 +76,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       setSentResult(data);
       toast.success(data.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send email");
+      toast.error(err instanceof Error ? err.message : t("sendFailed"));
     }
   };
 
@@ -84,16 +86,16 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <UserPlus className="h-4 w-4 text-primary" />
-            Recipients {recipientList.recipients.length > 0 && `(${recipientList.recipients.length})`}
+            {t("recipients")} {recipientList.recipients.length > 0 && `(${recipientList.recipients.length})`}
           </CardTitle>
           <CardDescription className="text-xs">
-            Pick one or more members, or add emails directly. Each recipient gets their own individual send.
+            {t("recipientsHint")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex gap-2">
             <Input
-              placeholder="Name (optional)"
+              placeholder={t("namePlaceholder")}
               value={recipientList.manualName}
               onChange={(e) => recipientList.setManualName(e.target.value)}
               disabled={isBusy}
@@ -101,7 +103,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             />
             <Input
               type="email"
-              placeholder="email@example.com"
+              placeholder={t("emailPlaceholder")}
               value={recipientList.manualEmail}
               onChange={(e) => recipientList.setManualEmail(e.target.value)}
               disabled={isBusy}
@@ -126,7 +128,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             onClick={() => setMemberDialogOpen(true)}
             disabled={isBusy}
           >
-            <UserPlus className="h-3.5 w-3.5" /> Pick Members
+            <UserPlus className="h-3.5 w-3.5" /> {t("pickMembers")}
           </Button>
           {recipientList.recipients.length > 0 && (
             <div className="max-h-40 overflow-y-auto rounded-lg border divide-y">
@@ -157,15 +159,15 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Mail className="h-4 w-4 text-primary" />
-            Compose
+            {t("compose")}
           </CardTitle>
-          <CardDescription className="text-xs">Edit the email body directly.</CardDescription>
+          <CardDescription className="text-xs">{t("composeHint")}</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-shrink-0">
               <div className="mb-2 flex items-center justify-between">
-                <Label>Email Content</Label>
+                <Label>{t("emailContent")}</Label>
                 <div className="inline-flex rounded-md border p-0.5">
                   <button
                     type="button"
@@ -177,7 +179,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Rendered
+                    {t("rendered")}
                   </button>
                   <button
                     type="button"
@@ -189,7 +191,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Raw HTML
+                    {t("rawHtml")}
                   </button>
                 </div>
               </div>
@@ -218,10 +220,10 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="direct-subject">Subject</Label>
+                <Label htmlFor="direct-subject">{t("subject")}</Label>
                 <Input
                   id="direct-subject"
-                  placeholder="Enter email subject..."
+                  placeholder={t("subjectPlaceholder")}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   disabled={isBusy}
@@ -237,9 +239,9 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
             <Paperclip className="h-4 w-4 text-primary" />
-            Attachments
+            {t("attachments")}
           </CardTitle>
-          <CardDescription className="text-xs">Optional files included with this email.</CardDescription>
+          <CardDescription className="text-xs">{t("attachmentsHint")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-2">
           <FileUpload
@@ -254,9 +256,9 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           >
             <FileUploadDropzone className="min-h-20 flex-col">
               <Upload className="h-6 w-6 text-muted-foreground" />
-              <p className="mt-1 text-xs text-muted-foreground">Drag &amp; drop images or PDFs, or click to browse</p>
+              <p className="mt-1 text-xs text-muted-foreground">{t("dropzoneHint")}</p>
               <p className="text-xs text-muted-foreground">
-                Up to {MAX_ATTACHMENT_FILES} files, {formatSize(MAX_ATTACHMENT_FILE_SIZE)} each
+                {t("dropzoneLimits", { max: MAX_ATTACHMENT_FILES, size: formatSize(MAX_ATTACHMENT_FILE_SIZE) })}
               </p>
             </FileUploadDropzone>
             <FileUploadList>
@@ -282,8 +284,10 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           </FileUpload>
           {attachments.attachmentSizeExceeded && (
             <p className="text-xs text-destructive">
-              Total attachment size ({formatSize(attachments.totalAttachmentSize)}) exceeds the{" "}
-              {formatSize(MAX_TOTAL_ATTACHMENT_SIZE)} limit. Remove a file to continue.
+              {t("sizeExceeded", {
+                total: formatSize(attachments.totalAttachmentSize),
+                limit: formatSize(MAX_TOTAL_ATTACHMENT_SIZE),
+              })}
             </p>
           )}
         </CardContent>
@@ -292,7 +296,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <div className="flex justify-end">
         <Button type="button" onClick={handleSend} disabled={isSendDisabled} className="h-9 gap-2 shadow-sm">
           {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Send{recipientList.recipients.length > 0 ? ` (${recipientList.recipients.length})` : ""}
+          {t("send", { count: recipientList.recipients.length })}
         </Button>
       </div>
 
@@ -300,7 +304,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <EmailJobStatusCard
           jobId={sentResult.job_id}
           getToken={getToken}
-          itemLabel="email"
+          itemKey="email"
           totalHint={sentResult.recipient_count}
           onGoToLogs={onGoToLogs}
         />

@@ -65,6 +65,7 @@ import {
 
 import { getAllActions, createAction, updateAction, reorderActions, deleteAction } from "@/lib/api";
 import type { ActionWithUsage, ActionType, CreateActionPayload, UpdateActionPayload } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface ActionFormData {
   action_name: string;
@@ -100,6 +101,7 @@ interface SortableTableRowProps {
 }
 
 function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: SortableTableRowProps) {
+  const t = useTranslations("manageActions");
   const {
     attributes,
     listeners,
@@ -117,7 +119,7 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
   const getTypeBadge = (type: ActionType) => {
     return (
       <Badge className={`${actionTypeColors[type]} text-white`}>
-        {type}
+        {t(`types.${type}`)}
       </Badge>
     );
   };
@@ -141,8 +143,8 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
           {action.action_name}
           {action.is_hidden && (
             <Badge variant="outline" className="text-xs">
-              <EyeOff className="h-3 w-3 mr-1" />
-              Hidden
+              <EyeOff className="h-3 w-3 me-1" />
+              {t("hidden")}
             </Badge>
           )}
         </div>
@@ -151,13 +153,13 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
       <TableCell>{action.points}</TableCell>
       <TableCell>{getTypeBadge(action.action_type)}</TableCell>
       <TableCell>{action.usage_count}</TableCell>
-      <TableCell className="text-right">
+      <TableCell className="text-end">
         <div className="flex items-center justify-end gap-1">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => onToggleHidden(action)}
-            title={action.is_hidden ? "Show action" : "Hide action"}
+            title={action.is_hidden ? t("showAction") : t("hideAction")}
           >
             {action.is_hidden ? (
               <EyeOff className="h-4 w-4" />
@@ -170,8 +172,8 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
             size="sm"
             onClick={() => onEdit(action)}
           >
-            <Pencil className="h-4 w-4 mr-1" />
-            Edit
+            <Pencil className="h-4 w-4 me-1" />
+            {t("edit")}
           </Button>
           <Button
             variant="ghost"
@@ -188,6 +190,8 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
 }
 
 export default function ManagePointsPage() {
+  const t = useTranslations("manageActions");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
 
   const [actions, setActions] = useState<ActionWithUsage[]>([]);
@@ -260,12 +264,12 @@ export default function ManagePointsPage() {
       if (response.success) {
         setActions(response.data);
       } else {
-        toast.error("Failed to load actions: " + response.error.message);
+        toast.error(t("loadFailed", { error: response.error.message }));
       }
       setIsLoading(false);
     }
     loadActions();
-  }, []);
+  }, [t]);
 
   const fetchActions = useCallback(async () => {
     setIsLoading(true);
@@ -273,10 +277,10 @@ export default function ManagePointsPage() {
     if (response.success) {
       setActions(response.data);
     } else {
-      toast.error("Failed to load actions: " + response.error.message);
+      toast.error(t("loadFailed", { error: response.error.message }));
     }
     setIsLoading(false);
-  }, []);
+  }, [t]);
 
   const resetForm = () => {
     setFormData(initialFormData);
@@ -312,9 +316,9 @@ export default function ManagePointsPage() {
       setActions(actions.map(a => 
         a.id === action.id ? { ...a, is_hidden: newHiddenState } : a
       ));
-      toast.success(newHiddenState ? "Action hidden" : "Action shown");
+      toast.success(newHiddenState ? t("actionHidden") : t("actionShown"));
     } else {
-      toast.error("Failed to update action: " + response.error.message);
+      toast.error(t("updateFailed", { error: response.error.message }));
     }
   };
 
@@ -328,7 +332,7 @@ export default function ManagePointsPage() {
     if (!deletingAction) return;
     
     if (deletingAction.usage_count > 0 && !replacementActionId) {
-      toast.error("Please select a replacement action");
+      toast.error(t("selectReplacement"));
       return;
     }
 
@@ -337,13 +341,13 @@ export default function ManagePointsPage() {
     setIsDeleting(false);
 
     if (response.success) {
-      toast.success("Action deleted successfully");
+      toast.success(t("deletedSuccess"));
       setIsDeleteDialogOpen(false);
       setDeletingAction(null);
       setReplacementActionId(null);
       fetchActions();
     } else {
-      toast.error("Failed to delete action: " + response.error.message);
+      toast.error(t("deleteFailed", { error: response.error.message }));
     }
   };
 
@@ -369,7 +373,7 @@ export default function ManagePointsPage() {
       const response = await reorderActions(payload, getToken);
 
       if (!response.success) {
-        toast.error("Failed to reorder actions: " + response.error.message);
+        toast.error(t("reorderFailed", { error: response.error.message }));
         setActions(actions);
       }
     }
@@ -377,7 +381,7 @@ export default function ManagePointsPage() {
 
   const handleCreateAction = async () => {
     if (!formData.action_name.trim() || !formData.ar_action_name.trim()) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("fillRequiredFields"));
       return;
     }
 
@@ -393,19 +397,19 @@ export default function ManagePointsPage() {
     setIsSubmitting(false);
 
     if (response.success) {
-      toast.success("Action created successfully");
+      toast.success(t("createdSuccess"));
       setIsAddDialogOpen(false);
       resetForm();
       fetchActions();
     } else {
-      toast.error("Failed to create action: " + response.error.message);
+      toast.error(t("createFailed", { error: response.error.message }));
     }
   };
 
   const handleUpdateAction = async () => {
     if (!editingAction) return;
     if (!formData.action_name.trim() || !formData.ar_action_name.trim()) {
-      toast.error("Please fill in all required fields");
+      toast.error(t("fillRequiredFields"));
       return;
     }
 
@@ -422,12 +426,12 @@ export default function ManagePointsPage() {
     setIsSubmitting(false);
 
     if (response.success) {
-      toast.success("Action updated successfully");
+      toast.success(t("updatedSuccess"));
       setIsEditDialogOpen(false);
       resetForm();
       fetchActions();
     } else {
-      toast.error("Failed to update action: " + response.error.message);
+      toast.error(t("updateFailed", { error: response.error.message }));
     }
   };
 
@@ -455,31 +459,31 @@ export default function ManagePointsPage() {
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
-              <CardTitle>Actions</CardTitle>
+              <CardTitle>{t("actionsTitle")}</CardTitle>
               <CardDescription>
-                {actions.length} action{actions.length !== 1 ? "s" : ""} configured • Drag to reorder
+                {t("actionsCount", { count: actions.length })}
               </CardDescription>
             </div>
             <Button onClick={handleOpenAddDialog} disabled={isLoading}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Action
+              <Plus className="h-4 w-4 me-2" />
+              {t("addAction")}
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center gap-4 mb-4">
             <div className="flex items-center gap-2">
-              <label className="text-sm font-medium">Filter:</label>
+              <label className="text-sm font-medium">{t("filter")}</label>
               <Select value={filterType} onValueChange={(value) => setFilterType(value as ActionType | "all")}>
                 <SelectTrigger className="w-[150px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="composite">Composite</SelectItem>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="bonus">Bonus</SelectItem>
+                  <SelectItem value="all">{t("allTypes")}</SelectItem>
+                  <SelectItem value="composite">{t("types.composite")}</SelectItem>
+                  <SelectItem value="department">{t("types.department")}</SelectItem>
+                  <SelectItem value="member">{t("types.member")}</SelectItem>
+                  <SelectItem value="bonus">{t("types.bonus")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -487,11 +491,11 @@ export default function ManagePointsPage() {
 
           {isLoading ? (
             <div className="flex justify-center py-8">
-              <div className="animate-pulse text-muted-foreground">Loading actions...</div>
+              <div className="animate-pulse text-muted-foreground">{t("loadingActions")}</div>
             </div>
           ) : filteredAndSortedActions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              <p>{filterType === "all" ? "No actions found" : "No actions match the filter"}</p>
+              <p>{filterType === "all" ? t("noneFound") : t("noneMatchFilter")}</p>
             </div>
           ) : (
             <div className="rounded-md border">
@@ -503,29 +507,29 @@ export default function ManagePointsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead className="w-[100px]">ID</TableHead>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Arabic Name</TableHead>
+                      <TableHead className="w-[100px]">{t("columnId")}</TableHead>
+                      <TableHead>{t("columnName")}</TableHead>
+                      <TableHead>{t("columnArabicName")}</TableHead>
                       <TableHead className="w-[100px]">
                         <button
                           onClick={() => toggleSort("points")}
                           className="flex items-center gap-1 hover:text-foreground transition-colors"
                         >
-                          Points
+                          {t("columnPoints")}
                           {getSortIcon("points")}
                         </button>
                       </TableHead>
-                      <TableHead className="w-[120px]">Type</TableHead>
+                      <TableHead className="w-[120px]">{t("columnType")}</TableHead>
                       <TableHead className="w-[80px]">
                         <button
                           onClick={() => toggleSort("used")}
                           className="flex items-center gap-1 hover:text-foreground transition-colors"
                         >
-                          Used
+                          {t("columnUsed")}
                           {getSortIcon("used")}
                         </button>
                       </TableHead>
-                      <TableHead className="w-[140px] text-right">Actions</TableHead>
+                      <TableHead className="w-[140px] text-end">{t("columnActions")}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -554,24 +558,24 @@ export default function ManagePointsPage() {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Add New Action</DialogTitle>
+            <DialogTitle>{t("addTitle")}</DialogTitle>
             <DialogDescription>
-              Create a new action for assigning points
+              {t("addDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Name (English)</label>
+              <label className="text-sm font-medium">{t("nameEnglish")}</label>
               <Input
                 value={formData.action_name}
                 onChange={(e) => setFormData({ ...formData, action_name: e.target.value })}
-                placeholder="Action name"
+                placeholder={t("actionNamePlaceholder")}
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Name (Arabic)</label>
+              <label className="text-sm font-medium">{t("nameArabic")}</label>
               <Input
                 dir="rtl"
                 value={formData.ar_action_name}
@@ -581,7 +585,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Points</label>
+              <label className="text-sm font-medium">{t("points")}</label>
               <Input
                 type="number"
                 value={formData.points}
@@ -590,7 +594,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Type</label>
+              <label className="text-sm font-medium">{t("type")}</label>
               <Select
                 value={formData.action_type}
                 onValueChange={(value: ActionType) => setFormData({ ...formData, action_type: value })}
@@ -600,10 +604,10 @@ export default function ManagePointsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="composite">Composite</SelectItem>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="bonus">Bonus</SelectItem>
+                  <SelectItem value="composite">{t("types.composite")}</SelectItem>
+                  <SelectItem value="department">{t("types.department")}</SelectItem>
+                  <SelectItem value="member">{t("types.member")}</SelectItem>
+                  <SelectItem value="bonus">{t("types.bonus")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -615,16 +619,16 @@ export default function ManagePointsPage() {
               onClick={() => setIsAddDialogOpen(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button onClick={handleCreateAction} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {t("creating")}
                 </>
               ) : (
-                "Create Action"
+                t("createAction")
               )}
             </Button>
           </DialogFooter>
@@ -634,24 +638,24 @@ export default function ManagePointsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Action</DialogTitle>
+            <DialogTitle>{t("editTitle")}</DialogTitle>
             <DialogDescription>
-              Update the action details
+              {t("editDescription")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
             <div>
-              <label className="text-sm font-medium">Name (English)</label>
+              <label className="text-sm font-medium">{t("nameEnglish")}</label>
               <Input
                 value={formData.action_name}
                 onChange={(e) => setFormData({ ...formData, action_name: e.target.value })}
-                placeholder="Action name"
+                placeholder={t("actionNamePlaceholder")}
                 disabled={isSubmitting}
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Name (Arabic)</label>
+              <label className="text-sm font-medium">{t("nameArabic")}</label>
               <Input
                 dir="rtl"
                 value={formData.ar_action_name}
@@ -661,7 +665,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Points</label>
+              <label className="text-sm font-medium">{t("points")}</label>
               <Input
                 type="number"
                 value={formData.points}
@@ -670,7 +674,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">Type</label>
+              <label className="text-sm font-medium">{t("type")}</label>
               <Select
                 value={formData.action_type}
                 onValueChange={(value: ActionType) => setFormData({ ...formData, action_type: value })}
@@ -680,10 +684,10 @@ export default function ManagePointsPage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="composite">Composite</SelectItem>
-                  <SelectItem value="department">Department</SelectItem>
-                  <SelectItem value="member">Member</SelectItem>
-                  <SelectItem value="bonus">Bonus</SelectItem>
+                  <SelectItem value="composite">{t("types.composite")}</SelectItem>
+                  <SelectItem value="department">{t("types.department")}</SelectItem>
+                  <SelectItem value="member">{t("types.member")}</SelectItem>
+                  <SelectItem value="bonus">{t("types.bonus")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -697,10 +701,10 @@ export default function ManagePointsPage() {
                 className="h-4 w-4"
               />
               <label htmlFor="is_hidden" className="text-sm font-medium">
-                Hide this action
+                {t("hideThisAction")}
               </label>
               {formData.action_type === "bonus" && (
-                <span className="text-xs text-muted-foreground">(Bonus actions are always hidden)</span>
+                <span className="text-xs text-muted-foreground">{t("bonusAlwaysHidden")}</span>
               )}
             </div>
           </div>
@@ -711,16 +715,16 @@ export default function ManagePointsPage() {
               onClick={() => setIsEditDialogOpen(false)}
               disabled={isSubmitting}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button onClick={handleUpdateAction} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating...
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {t("updating")}
                 </>
               ) : (
-                "Update Action"
+                t("updateAction")
               )}
             </Button>
           </DialogFooter>
@@ -730,33 +734,32 @@ export default function ManagePointsPage() {
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent className="max-w-lg">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Action</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-4">
                 {deletingAction && (
                   <>
                     <p>
-                      Are you sure you want to delete <strong>{deletingAction.action_name}</strong>?
+                      {t.rich("confirmDelete", { strong: (chunks) => <strong>{chunks}</strong>, name: deletingAction.action_name })}
                     </p>
                     {deletingAction.usage_count > 0 ? (
                       <div className="space-y-3">
                         <p className="text-destructive font-medium">
-                          This action has been used {deletingAction.usage_count} time{deletingAction.usage_count !== 1 ? "s" : ""}.
-                          You must select a replacement action to reassign these logs.
+                          {t("usedTimesWarning", { count: deletingAction.usage_count })}
                         </p>
                         <div>
-                          <label className="text-sm font-medium">Replacement Action</label>
+                          <label className="text-sm font-medium">{t("replacementAction")}</label>
                           <Select
                             value={replacementActionId?.toString() || ""}
                             onValueChange={(value) => setReplacementActionId(parseInt(value))}
                           >
                             <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select a replacement action" />
+                              <SelectValue placeholder={t("selectReplacementPlaceholder")} />
                             </SelectTrigger>
                             <SelectContent>
                               {groupedReplacements.composite.length > 0 && (
                                 <SelectGroup>
-                                  <SelectLabel>Composite</SelectLabel>
+                                  <SelectLabel>{t("types.composite")}</SelectLabel>
                                   {groupedReplacements.composite.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
                                       {action.action_name} (+{action.points})
@@ -766,7 +769,7 @@ export default function ManagePointsPage() {
                               )}
                               {groupedReplacements.department.length > 0 && (
                                 <SelectGroup>
-                                  <SelectLabel>Department</SelectLabel>
+                                  <SelectLabel>{t("types.department")}</SelectLabel>
                                   {groupedReplacements.department.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
                                       {action.action_name} (+{action.points})
@@ -776,7 +779,7 @@ export default function ManagePointsPage() {
                               )}
                               {groupedReplacements.member.length > 0 && (
                                 <SelectGroup>
-                                  <SelectLabel>Member</SelectLabel>
+                                  <SelectLabel>{t("types.member")}</SelectLabel>
                                   {groupedReplacements.member.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
                                       {action.action_name} (+{action.points})
@@ -786,7 +789,7 @@ export default function ManagePointsPage() {
                               )}
                               {groupedReplacements.bonus.length > 0 && (
                                 <SelectGroup>
-                                  <SelectLabel>Bonus</SelectLabel>
+                                  <SelectLabel>{t("types.bonus")}</SelectLabel>
                                   {groupedReplacements.bonus.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
                                       {action.action_name} (+{action.points})
@@ -799,7 +802,7 @@ export default function ManagePointsPage() {
                         </div>
                       </div>
                     ) : (
-                      <p>This action has not been used yet. It can be safely deleted.</p>
+                      <p>{t("notUsedYet")}</p>
                     )}
                   </>
                 )}
@@ -807,7 +810,7 @@ export default function ManagePointsPage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{tc("cancel")}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteAction}
               disabled={isDeleting || (deletingAction !== null && deletingAction.usage_count > 0 && !replacementActionId)}
@@ -815,13 +818,13 @@ export default function ManagePointsPage() {
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Deleting...
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {t("deleting")}
                 </>
               ) : deletingAction && deletingAction.usage_count > 0 ? (
-                `Delete & Reassign ${deletingAction.usage_count} Log${deletingAction.usage_count !== 1 ? "s" : ""}`
+                t("deleteAndReassign", { count: deletingAction.usage_count })
               ) : (
-                "Delete"
+                t("delete")
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

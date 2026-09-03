@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import type { ConfirmDialogState } from "./types";
+import { useTranslations } from "next-intl";
 
 interface ConfirmDialogProps {
   dialog: ConfirmDialogState | null;
@@ -23,6 +24,8 @@ interface ConfirmDialogProps {
 }
 
 export function ConfirmDialog({ dialog, onOpenChange, isSubmitting }: ConfirmDialogProps) {
+  const t = useTranslations("attendance.confirmDialog");
+  const tc = useTranslations("common.actions");
   if (!dialog) return null;
 
   return (
@@ -42,20 +45,20 @@ export function ConfirmDialog({ dialog, onOpenChange, isSubmitting }: ConfirmDia
             ))}
             {dialog.items.length > 10 && (
               <div className="text-muted-foreground italic text-xs">
-                ...and {dialog.items.length - 10} more
+                {t("andMore", { count: dialog.items.length - 10 })}
               </div>
             )}
           </div>
         )}
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isSubmitting}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isSubmitting}>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={dialog.onConfirm}
             disabled={isSubmitting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Confirm
+            {isSubmitting && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+            {t("confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

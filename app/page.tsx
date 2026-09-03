@@ -1,65 +1,37 @@
 import { CalendarPlus, Trophy, ShieldCheck, Mail, Users, Settings } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 
 import { ModuleCard } from "@/components/module-card";
 
 const modules = [
-  {
-    icon: CalendarPlus,
-    title: "Manage Events",
-    description: "Create and manage events for participants to join and compete",
-    href: "/events",
-    buttonText: "Manage Events",
-  },
-  {
-    icon: Trophy,
-    title: "Manage Points",
-    description: "Create and manage custom point events for departments",
-    href: "/points",
-    buttonText: "Manage Points",
-  },
-  {
-    icon: Users,
-    title: "Manage Members",
-    description: "View, search, and create members manually or via batch import",
-    href: "/manage-members",
-    buttonText: "Manage Members",
-  },
-  {
-    icon: Mail,
-    title: "Manage Emails",
-    description: "Monitor email logs, usage stats, and manage email assets",
-    href: "/manage-emails",
-    buttonText: "Manage Emails",
-  },
-  {
-    icon: ShieldCheck,
-    title: "Manage Admins",
-    description: "Add, view, and manage administrator roles and permissions",
-    href: "/manage-admins",
-    buttonText: "Manage Admins",
-  },
-  {
-    icon: Settings,
-    title: "Settings",
-    description: "Manage application settings and reset the leaderboard cache",
-    href: "/settings",
-    buttonText: "Open Settings",
-  }
-];
+  { key: "events", icon: CalendarPlus, href: "/events" },
+  { key: "points", icon: Trophy, href: "/points" },
+  { key: "members", icon: Users, href: "/manage-members" },
+  { key: "emails", icon: Mail, href: "/manage-emails" },
+  { key: "admins", icon: ShieldCheck, href: "/manage-admins" },
+  { key: "settings", icon: Settings, href: "/settings" },
+] as const;
 
-export default function Page() {
+export default async function Page() {
+  const t = await getTranslations("home");
+
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage events, participants, and scores
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
       </div>
 
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {modules.map((module) => (
-          <ModuleCard key={module.href} {...module} />
+          <ModuleCard
+            key={module.href}
+            icon={module.icon}
+            href={module.href}
+            title={t(`${module.key}.title`)}
+            description={t(`${module.key}.description`)}
+            buttonText={t(`${module.key}.button`)}
+          />
         ))}
       </div>
     </div>

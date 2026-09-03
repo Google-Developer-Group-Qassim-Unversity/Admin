@@ -1,3 +1,5 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -11,12 +13,15 @@ import { Badge } from "@/components/ui/badge";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import { MapPin, Globe } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface EventCardProps {
   event: Event;
 }
 
 export function EventCard({ event }: EventCardProps) {
+  const t = useTranslations("events");
+  const tc = useTranslations("common.actions");
   // Format the start date to "MMM DD" format
   const formatStartDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
@@ -62,7 +67,7 @@ export function EventCard({ event }: EventCardProps) {
           />
         ) : (
           <div className="flex items-center justify-center h-full text-muted-foreground">
-            <span className="text-sm">No image</span>
+            <span className="text-sm">{t("card.noImage")}</span>
           </div>
         )}
       </div>
@@ -73,14 +78,14 @@ export function EventCard({ event }: EventCardProps) {
           <Button
             asChild
             variant="link"
-            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-left whitespace-normal text-foreground hover:text-foreground"
+            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
           >
             <Link href={`/events/${event.id}`} className="line-clamp-2">
               {event.name}
             </Link>
           </Button>
           <Badge variant={getStatusVariant(event.status)}>
-            {event.status}
+            {t(`status.${event.status}`)}
           </Badge>
         </div>
 
@@ -102,7 +107,7 @@ export function EventCard({ event }: EventCardProps) {
 
         {/* Start Date */}
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium">Starts:</span>
+          <span className="font-medium">{t("card.starts")}</span>
           <span className="text-muted-foreground">
             {formatStartDate(event.start_datetime)}
           </span>
@@ -112,10 +117,10 @@ export function EventCard({ event }: EventCardProps) {
       {/* Actions */}
       <CardFooter className="pt-3 gap-2">
         <Button asChild variant="outline" className="flex-1">
-          <Link href={`/events/${event.id}/edit`}>Edit</Link>
+          <Link href={`/events/${event.id}/edit`}>{tc("edit")}</Link>
         </Button>
         <Button asChild className="flex-1">
-          <Link href={`/events/${event.id}`}>Manage</Link>
+          <Link href={`/events/${event.id}`}>{tc("manage")}</Link>
         </Button>
       </CardFooter>
     </Card>

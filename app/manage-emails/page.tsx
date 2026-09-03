@@ -4,6 +4,7 @@ import * as React from "react";
 import { ListChecks, Mail, MailPlus, Megaphone, Send } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useTranslations } from "next-intl";
 
 import { EmailLogsTab } from "./email-logs-tab";
 import { EmailJobsTab } from "./email-jobs-tab";
@@ -15,6 +16,7 @@ import { BlastEmailsTab } from "./blast-emails-tab";
 
 export default function ManageEmailsPage() {
   const [activeTab, setActiveTab] = React.useState("logs");
+  const t = useTranslations("manageEmails");
 
   return (
     <div className="space-y-6">
@@ -23,8 +25,8 @@ export default function ManageEmailsPage() {
           <Mail className="h-5 w-5 text-primary" />
         </div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Manage Emails</h1>
-          <p className="text-sm text-muted-foreground">Monitor email logs, usage stats, and assets</p>
+          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
         </div>
       </div>
 
@@ -34,23 +36,23 @@ export default function ManageEmailsPage() {
             <TabsList>
               <TabsTrigger value="logs">
                 <Mail className="h-4 w-4" />
-                Email Logs
+                {t("tabs.logs")}
               </TabsTrigger>
               <TabsTrigger value="certificates">
                 <Send className="h-4 w-4" />
-                Send Certificates
+                {t("tabs.certificates")}
               </TabsTrigger>
               <TabsTrigger value="direct">
                 <MailPlus className="h-4 w-4" />
-                Send Email
+                {t("tabs.direct")}
               </TabsTrigger>
               <TabsTrigger value="blast">
                 <Megaphone className="h-4 w-4" />
-                Blast Emails
+                {t("tabs.blast")}
               </TabsTrigger>
               <TabsTrigger value="jobs">
                 <ListChecks className="h-4 w-4" />
-                Email Jobs
+                {t("tabs.jobs")}
               </TabsTrigger>
             </TabsList>
             <TabsContent value="logs" className="mt-4">

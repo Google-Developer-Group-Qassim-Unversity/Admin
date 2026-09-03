@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { CheckCheck, X, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface SelectedRowsActionsProps {
   selectedCount: number;
@@ -16,6 +17,7 @@ export function SelectedRowsActions({
   onAcceptSelected,
   isLoading = false,
 }: SelectedRowsActionsProps) {
+  const t = useTranslations("responses");
   if (selectedCount === 0) {
     return null;
   }
@@ -23,7 +25,7 @@ export function SelectedRowsActions({
   return (
     <div className="flex items-center gap-2">
       <span className="text-sm text-muted-foreground">
-        {selectedCount} selected
+        {t("selectedCount", { count: selectedCount })}
       </span>
       <Button
         variant={allAccepted ? "destructive" : "default"}
@@ -35,17 +37,17 @@ export function SelectedRowsActions({
         {isLoading ? (
           <>
             <Loader2 className="h-4 w-4 animate-spin" />
-            Processing...
+            {t("processing")}
           </>
         ) : allAccepted ? (
           <>
             <X className="h-4 w-4" />
-            Remove Acceptance
+            {t("removeAcceptance")}
           </>
         ) : (
           <>
             <CheckCheck className="h-4 w-4" />
-            Accept Selected
+            {t("acceptSelected")}
           </>
         )}
       </Button>

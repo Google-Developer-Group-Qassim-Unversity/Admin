@@ -10,8 +10,11 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CustomEventsList } from "@/components/custom-events-list";
 import { getEvents } from "@/lib/api";
 import type { Event } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 export default function PointsPage() {
+  const t = useTranslations("pointsList");
+  const te = useTranslations("events");
   const [customEvents, setCustomEvents] = useState<Event[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ message: string; isServerError?: boolean } | null>(null);
@@ -37,7 +40,7 @@ export default function PointsPage() {
   if (isLoading) {
     return (
       <div className="flex justify-center py-12">
-        <div className="animate-pulse text-muted-foreground">Loading events...</div>
+        <div className="animate-pulse text-muted-foreground">{t("loadingEvents")}</div>
       </div>
     );
   }
@@ -47,15 +50,11 @@ export default function PointsPage() {
       <div className="flex justify-center">
         <Alert variant="destructive" className="max-w-2xl">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Failed to Load Events</AlertTitle>
+          <AlertTitle>{te("loadFailed")}</AlertTitle>
           <AlertDescription>
-            {error.message ||
-              "An error occurred while fetching events. Please try refreshing the page."}
+            {error.message || te("loadFailedDescription")}
             {error.isServerError && (
-              <span className="block mt-1">
-                The server may be temporarily unavailable. Please try again
-                later.
-              </span>
+              <span className="block mt-1">{te("serverUnavailable")}</span>
             )}
           </AlertDescription>
         </Alert>
@@ -68,9 +67,9 @@ export default function PointsPage() {
       <div className="flex justify-center">
         <Alert className="max-w-2xl">
           <Calendar className="h-4 w-4" />
-          <AlertTitle>No Custom Events Yet</AlertTitle>
+          <AlertTitle>{t("noneYetTitle")}</AlertTitle>
           <AlertDescription>
-            Get started by creating your first custom point event.
+            {t("noneYetDescription")}
             <div className="mt-4">
               <Button asChild size="sm">
                 <Link
@@ -78,7 +77,7 @@ export default function PointsPage() {
                   className="flex items-center gap-2"
                 >
                   <Trophy className="h-4 w-4" />
-                  Create Your First Custom Event
+                  {t("createFirst")}
                 </Link>
               </Button>
             </div>

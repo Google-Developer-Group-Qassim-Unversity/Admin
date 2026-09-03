@@ -10,8 +10,11 @@ import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEnd
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
 import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 export default function EventInfoPage() {
+  const t = useTranslations("eventInfo");
+  const te = useTranslations("events");
   const { event } = useEventContext();
   const { getToken } = useAuth();
 
@@ -80,11 +83,11 @@ export default function EventInfoPage() {
   const getLocationTypeLabel = () => {
     switch (event.location_type) {
       case "online":
-        return "Online Event";
+        return t("onlineEvent");
       case "on-site":
-        return "On-site Event";
+        return t("onsiteEvent");
       case "none":
-        return "No Location";
+        return t("noLocation");
       default:
         return event.location_type;
     }
@@ -105,7 +108,7 @@ export default function EventInfoPage() {
           <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-xl text-muted-foreground">
             <div className="text-center">
               <Calendar className="h-16 w-16 mx-auto mb-2 opacity-50" />
-              <span className="text-sm">No event image</span>
+              <span className="text-sm">{t("noImage")}</span>
             </div>
           </div>
         )}
@@ -121,17 +124,17 @@ export default function EventInfoPage() {
             variant={getStatusVariant(event.status)}
             className="text-sm px-3 py-1"
           >
-            {event.status.charAt(0).toUpperCase() + event.status.slice(1)}
+            {te(`status.${event.status}`)}
           </Badge>
           {event.is_official ? (
             <Badge variant="secondary" className="text-sm px-3 py-1">
-              <Trophy className="h-3.5 w-3.5 mr-1" />
-              Official Event
+              <Trophy className="h-3.5 w-3.5 me-1" />
+              {t("official")}
             </Badge>
           ) : (
             <Badge variant="outline" className="text-sm px-3 py-1">
-              <Users className="h-3.5 w-3.5 mr-1" />
-              Unoffical Event
+              <Users className="h-3.5 w-3.5 me-1" />
+              {t("unofficial")}
             </Badge>
           )}
         </div>
@@ -154,8 +157,8 @@ export default function EventInfoPage() {
                     {endDate}
                   </span>
                   {diffDays > 1 && (
-                    <span className="ml-2 text-sm text-muted-foreground font-normal">
-                      ({diffDays} Days)
+                    <span className="ms-2 text-sm text-muted-foreground font-normal">
+                      {t("daysCount", { count: diffDays })}
                     </span>
                   )}
                 </>
@@ -168,7 +171,7 @@ export default function EventInfoPage() {
               {dailyStartTime} - {dailyEndTime}
             </span>
             {!isSameDay && !overnight && (
-              <span className="text-sm text-muted-foreground">(daily)</span>
+              <span className="text-sm text-muted-foreground">{t("daily")}</span>
             )}
           </div>
         </div>
@@ -187,9 +190,9 @@ export default function EventInfoPage() {
           <div className="flex items-center gap-2 text-muted-foreground">
             <UserCheck className="h-5 w-5 text-primary shrink-0" />
             <div>
-              <span className="text-sm">Attendance</span>
+              <span className="text-sm">{t("attendance")}</span>
               <p className="font-medium text-foreground">
-                {attendanceData?.attendance_count ?? 0} attendees
+                {t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}
               </p>
             </div>
           </div>
@@ -200,7 +203,7 @@ export default function EventInfoPage() {
         <Card>
           <CardHeader className="flex flex-row items-center gap-2 py-4">
             <Info className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-xl font-semibold">Description</CardTitle>
+            <CardTitle className="text-xl font-semibold">{t("description")}</CardTitle>
           </CardHeader>
           <CardContent className="pb-6">
             {event.description ? (
@@ -209,7 +212,7 @@ export default function EventInfoPage() {
               </p>
             ) : (
               <p className="text-muted-foreground italic">
-                No description provided for this event.
+                {t("noDescription")}
               </p>
             )}
           </CardContent>

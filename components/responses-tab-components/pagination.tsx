@@ -15,6 +15,7 @@ import {
   ChevronsRight,
 } from "lucide-react";
 import type { Table as TanStackTable } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 
 interface PaginationProps<TData> {
   table: TanStackTable<TData>;
@@ -27,6 +28,8 @@ const PAGE_SIZE_OPTIONS = [
 ] as const;
 
 export function Pagination<TData>({ table }: PaginationProps<TData>) {
+  const t = useTranslations("responses");
+  const tm = useTranslations("manageMembersPage");
   const totalRows = table.getFilteredRowModel().rows.length;
   const currentPageSize = table.getState().pagination.pageSize;
 
@@ -39,21 +42,17 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
     <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
       <div className="flex items-center gap-4">
         <div className="text-sm text-muted-foreground">
-          Showing{" "}
-          {table.getState().pagination.pageIndex *
-            table.getState().pagination.pageSize +
-            1}
-          -
-          {Math.min(
-            (table.getState().pagination.pageIndex + 1) *
-              table.getState().pagination.pageSize,
-            totalRows
-          )}{" "}
-          of {totalRows} submission
-          {totalRows !== 1 ? "s" : ""}
+          {t("showingRange", {
+            from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1,
+            to: Math.min(
+              (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+              totalRows
+            ),
+            count: totalRows,
+          })}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">Rows:</span>
+          <span className="text-sm text-muted-foreground">{tm("rows")}</span>
           <Select value={String(currentPageSize)} onValueChange={handlePageSizeChange}>
             <SelectTrigger className="w-[70px]" size="sm">
               <SelectValue />
@@ -83,11 +82,10 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
-          <ChevronLeft className="h-4 w-4" />
+          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
         <span className="px-3 text-sm">
-          Page {table.getState().pagination.pageIndex + 1} of{" "}
-          {table.getPageCount()}
+          {tm("page", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
         </span>
         <Button
           variant="outline"
@@ -95,7 +93,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
-          <ChevronRight className="h-4 w-4" />
+          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
         <Button
           variant="outline"

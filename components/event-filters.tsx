@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { Search, Globe, Building2, X, MapPin } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -42,6 +43,7 @@ export function EventFilters({
   semester,
   onSemesterChange,
 }: EventFiltersProps) {
+  const t = useTranslations("events.filters");
   const semesterOptions = useSemesterOptions();
 
   const hasActiveFilters =
@@ -54,12 +56,12 @@ export function EventFilters({
     <div className="flex items-center gap-2 flex-wrap">
       {/* Search Input */}
       <div className="relative w-64">
-        <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <Input
-          placeholder="Search events..."
+          placeholder={t("search")}
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="pl-8 h-9 text-sm"
+          className="ps-8 h-9 text-sm"
         />
       </div>
 
@@ -67,10 +69,10 @@ export function EventFilters({
       {onSemesterChange && (
         <Select value={semester || "all"} onValueChange={onSemesterChange}>
           <SelectTrigger className="h-9 w-36">
-            <SelectValue placeholder="Semester" />
+            <SelectValue placeholder={t("semester")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All</SelectItem>
+            <SelectItem value="all">{t("all")}</SelectItem>
             {semesterOptions.map((option) => (
               <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
             ))}
@@ -88,11 +90,11 @@ export function EventFilters({
         spacing={0}
         className="shrink-0 [&_[data-state=on]]:bg-primary [&_[data-state=on]]:text-primary-foreground"
       >
-        <ToggleGroupItem value="online" aria-label="Online events">
-          <Globe className="h-4 w-4" /> online
+        <ToggleGroupItem value="online" aria-label={t("onlineAria")}>
+          <Globe className="h-4 w-4" /> {t("online")}
         </ToggleGroupItem>
-        <ToggleGroupItem value="on-site" aria-label="On-site events">
-          <Building2 className="h-4 w-4" /> on-site
+        <ToggleGroupItem value="on-site" aria-label={t("onsiteAria")}>
+          <Building2 className="h-4 w-4" /> {t("onsite")}
         </ToggleGroupItem>
       </ToggleGroup>
 
@@ -102,10 +104,10 @@ export function EventFilters({
         onValuesChange={onSelectedLocationsChange}
       >
         <MultiSelectTrigger className="h-9 w-75 max-w-75">
-          <MapPin className="h-4 w-4 mr-2" />
-          <MultiSelectValue placeholder="Select locations" overflowBehavior="cutoff" />
+          <MapPin className="h-4 w-4 me-2" />
+          <MultiSelectValue placeholder={t("selectLocations")} overflowBehavior="cutoff" />
         </MultiSelectTrigger>
-        <MultiSelectContent search={{ placeholder: "Search locations...", emptyMessage: "No locations found." }}>
+        <MultiSelectContent search={{ placeholder: t("searchLocations"), emptyMessage: t("noLocations") }}>
           <MultiSelectGroup>
             {locations.map((location) => (
               <MultiSelectItem key={location} value={location}>
@@ -125,7 +127,7 @@ export function EventFilters({
           className="h-9 shrink-0"
         >
           <X className="h-4 w-4" />
-          remove filters
+          {t("remove")}
         </Button>
       )}
     </div>

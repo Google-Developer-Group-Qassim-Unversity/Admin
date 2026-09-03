@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getMembers, updateMemberRole } from "@/lib/api";
 import type { Member, MemberRole } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { useTranslations } from "next-intl";
 
 interface AddAdminDialogProps {
   open: boolean;
@@ -36,6 +37,9 @@ interface SelectedMember {
 const MAX_DISPLAY = 50;
 
 export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialogProps) {
+  const t = useTranslations("addAdmin");
+  const tc = useTranslations("common.actions");
+  const tr = useTranslations("common.roles");
   const { getToken } = useAuth();
 
   const [members, setMembers] = React.useState<Member[]>([]);
@@ -59,12 +63,12 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
         );
         setMembers(sortedMembers);
       } else {
-        toast.error("Failed to load members: " + response.error.message);
+        toast.error(t("loadFailed", { error: response.error.message }));
       }
       setIsLoadingMembers(false);
     }
     fetchMembers();
-  }, [open, getToken, members.length]);
+  }, [open, getToken, members.length, t]);
 
   // Filter and limit members for display
   const unselectedMembers = React.useMemo(() => {
@@ -98,7 +102,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
 
   const handleSubmit = async () => {
     if (selectedMembers.length === 0) {
-      toast.error("Please select at least one member");
+      toast.error(t("selectAtLeastOne"));
       return;
     }
 
@@ -113,7 +117,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
         const response = await updateMemberRole(member.id, role, getToken);
 
         if (!response.success) {
-          toast.error(`Failed to promote ${member.name}: ${response.error.message}`);
+          toast.error(t("promoteFailed", { name: member.name, error: response.error.message }));
           failCount++;
           continue;
         }
@@ -136,18 +140,16 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
         if (!metadataResponse.ok) {
           const errorData = await metadataResponse.json();
           if (errorData.warning) {
-            toast.warning(
-              `${member.name}: Role updated in database, but user not found in authentication system.`
-            );
+            toast.warning(t("metadataWarning", { name: member.name }));
           } else {
-            toast.error(`${member.name}: Failed to update authentication metadata`);
+            toast.error(t("metadataFailed", { name: member.name }));
           }
         }
 
         successCount++;
       } catch (error) {
         toast.error(
-          `Failed to promote ${member.name}: ${error instanceof Error ? error.message : "Unknown error"}`
+          t("promoteFailedUnknown", { name: member.name, error: error instanceof Error ? error.message : t("unknownError") })
         );
         failCount++;
       }
@@ -157,10 +159,10 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
 
     // Show summary
     if (successCount > 0) {
-      toast.success(`Successfully promoted ${successCount} member${successCount > 1 ? "s" : ""}`);
+      toast.success(t("promotedSuccess", { count: successCount }));
     }
     if (failCount > 0) {
-      toast.error(`Failed to promote ${failCount} member${failCount > 1 ? "s" : ""}`);
+      toast.error(t("promoteFailedCount", { count: failCount }));
     }
 
     // Close dialog and refresh if any succeeded
@@ -177,21 +179,21 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-1xl! max-h-[85vh] flex flex-col w-full sm:!max-w-4xl">
         <DialogHeader>
-          <DialogTitle>Add New Admins</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Search for members and select their role to promote them to administrators
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, uni_id, or email..."
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="ps-9"
               disabled={isLoadingMembers}
             />
           </div>
@@ -199,15 +201,15 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
           {/* Member List */}
           <div className="border rounded-lg">
             <div className="p-3 border-b bg-muted/50">
-              <h3 className="text-sm font-medium">Select Members</h3>
+              <h3 className="text-sm font-medium">{t("selectMembers")}</h3>
               {showLimitMessage && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Showing top {MAX_DISPLAY} results. Use search to find more.
+                  {t("limitMessage", { max: MAX_DISPLAY })}
                 </p>
               )}
               {showSearchLimitMessage && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Showing top {MAX_DISPLAY} matching results.
+                  {t("searchLimitMessage", { max: MAX_DISPLAY })}
                 </p>
               )}
             </div>
@@ -227,8 +229,8 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
               ) : displayMembers.length === 0 ? (
                 <div className="p-8 text-center text-sm text-muted-foreground">
                   {searchQuery.trim()
-                    ? "No members found. Try a different search term."
-                    : "All members have been selected."}
+                    ? t("noneFound")
+                    : t("allSelected")}
                 </div>
               ) : (
                  <div className="divide-y">
@@ -251,7 +253,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            disabled={isSubmitting}
                            className="whitespace-nowrap"
                          >
-                           Admin
+                           {tr("admin")}
                          </Button>
                          <Button
                            size="sm"
@@ -260,7 +262,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            disabled={isSubmitting}
                            className="whitespace-nowrap"
                          >
-                           Admin Points
+                           {tr("adminPoints")}
                          </Button>
                          <Button
                            size="sm"
@@ -269,7 +271,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            disabled={isSubmitting}
                            className="whitespace-nowrap"
                          >
-                           Super Admin
+                           {tr("superAdmin")}
                          </Button>
                        </div>
                     </div>
@@ -284,7 +286,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
             <div className="border rounded-lg">
               <div className="p-3 border-b bg-muted/50">
                 <h3 className="text-sm font-medium">
-                  Selected Members ({selectedMembers.length})
+                  {t("selectedMembers", { count: selectedMembers.length })}
                 </h3>
               </div>
               <div className="max-h-[180px] overflow-y-auto">
@@ -305,7 +307,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            variant={role === "super_admin" ? "default" : role === "admin_points" ? "secondary" : "outline"} 
                            className="whitespace-nowrap"
                          >
-                           {role === "super_admin" ? "Super Admin" : role === "admin_points" ? "Admin Points" : "Admin"}
+                           {role === "super_admin" ? tr("superAdmin") : role === "admin_points" ? tr("adminPoints") : tr("admin")}
                          </Badge>
                         <Button
                           size="icon-sm"
@@ -330,7 +332,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             onClick={handleSubmit}
@@ -338,14 +340,13 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
           >
             {isSubmitting ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Promoting {selectedMembers.length} member{selectedMembers.length > 1 ? "s" : ""}...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t("promoting", { count: selectedMembers.length })}
               </>
             ) : (
               <>
-                <UserPlus className="mr-2 h-4 w-4" />
-                Add {selectedMembers.length > 0 ? selectedMembers.length : ""} Admin
-                {selectedMembers.length > 1 ? "s" : ""}
+                <UserPlus className="me-2 h-4 w-4" />
+                {t("addAdminButton", { count: selectedMembers.length })}
               </>
             )}
           </Button>

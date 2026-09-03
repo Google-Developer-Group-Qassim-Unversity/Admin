@@ -18,6 +18,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { useTranslations } from "next-intl";
 
 function WhatsAppIcon({ className }: { className?: string }) {
   return (
@@ -192,6 +193,12 @@ export function SendAcceptanceDialog({
   isTestLoading = false,
   event,
 }: SendAcceptanceDialogProps) {
+  const t = useTranslations("responses.sendAcceptanceDialog");
+  const ts = useTranslations("sendCustomEmail");
+  const td = useTranslations("manageEmails.directEmail");
+  const tb = useTranslations("manageEmails.blast");
+  const tbf = useTranslations("attendance.backfill");
+  const tc = useTranslations("common.actions");
   const [subject, setSubject] = useState("");
   const [whatsappUrl, setWhatsappUrl] = useState("");
   const [templateBody, setTemplateBody] = useState("");
@@ -209,7 +216,7 @@ export function SendAcceptanceDialog({
     async function loadTemplate() {
       try {
         const res = await fetch("/acceptance-template.html");
-        if (!res.ok) throw new Error("Failed to load template");
+        if (!res.ok) throw new Error(ts("loadTemplateFailed"));
         let html = await res.text();
         if (event) {
           html = replacePlaceholders(html, event);
@@ -221,7 +228,7 @@ export function SendAcceptanceDialog({
         setTemplateError(null);
       } catch (err) {
         setTemplateError(
-          err instanceof Error ? err.message : "Failed to load template",
+          err instanceof Error ? err.message : ts("loadTemplateFailed"),
         );
       }
     }
@@ -232,7 +239,7 @@ export function SendAcceptanceDialog({
     if (open && (!templateLoaded || eventChanged)) {
       loadTemplate();
     }
-  }, [open, templateLoaded, event]);
+  }, [open, templateLoaded, event, ts]);
 
   useEffect(() => {
     if (open && event?.name) {
@@ -312,14 +319,14 @@ return (
         className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
       >
         <DialogHeader>
-          <DialogTitle>Send Acceptance Emails</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
             {hasNoRecipients ? (
               <span className="text-destructive">
-                No recipients available. Accept some submissions first to send acceptance emails.
+                {t("noRecipientsWarning")}
               </span>
             ) : (
-              `Send acceptance emails to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}. Edit the email template before sending.`
+              t("descriptionWithCount", { count: recipientCount })
             )}
           </DialogDescription>
         </DialogHeader>
@@ -327,7 +334,7 @@ return (
         <div className="flex gap-6 flex-1 min-h-0">
           <div className="flex-shrink-0">
             <div className="space-y-2">
-              <Label>Email Content</Label>
+              <Label>{td("emailContent")}</Label>
               {templateError ? (
                 <div className="p-4 border rounded-md bg-destructive/10 text-destructive">
                   {templateError}
@@ -361,10 +368,10 @@ return (
 
           <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
             <div className="space-y-2">
-              <Label htmlFor="subject">Subject</Label>
+              <Label htmlFor="subject">{td("subject")}</Label>
               <Input
                 id="subject"
-                placeholder="Enter email subject..."
+                placeholder={td("subjectPlaceholder")}
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
                 disabled={isLoading || isTestLoading}
@@ -372,18 +379,18 @@ return (
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="whatsappUrl">WhatsApp Group Link</Label>
+              <Label htmlFor="whatsappUrl">{t("whatsappLabel")}</Label>
               <div className="relative">
-                <div className="absolute left-3 top-1/2 -translate-y-1/2 text-green-600">
+                <div className="absolute start-3 top-1/2 -translate-y-1/2 text-green-600">
                   <WhatsAppIcon className="h-5 w-5" />
                 </div>
                 <Input
                   id="whatsappUrl"
-                  placeholder="https://chat.whatsapp.com/..."
+                  placeholder={t("whatsappPlaceholder")}
                   value={whatsappUrl}
                   onChange={(e) => setWhatsappUrl(e.target.value)}
                   disabled={isLoading || isTestLoading}
-                  className="pl-10"
+                  className="ps-10"
                 />
               </div>
             </div>
@@ -395,7 +402,7 @@ return (
                   size="sm"
                   className="w-full justify-between"
                 >
-                  <span>Recipients ({recipientCount})</span>
+                  <span>{ts("recipients", { count: recipientCount })}</span>
                   {recipientsOpen ? (
                     <ChevronUp className="h-4 w-4" />
                   ) : (
@@ -408,8 +415,8 @@ return (
                   <table className="w-full text-sm">
                     <thead className="bg-muted/50 sticky top-0">
                       <tr>
-                        <th className="text-left py-2 px-3 font-medium">Name</th>
-                        <th className="text-left py-2 px-3 font-medium">Email</th>
+                        <th className="text-start py-2 px-3 font-medium">{tbf("columnName")}</th>
+                        <th className="text-start py-2 px-3 font-medium">{tbf("columnEmail")}</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -436,7 +443,7 @@ return (
                     size="sm"
                     className="w-full justify-between"
                   >
-                    <span>Test Mode</span>
+                    <span>{tb("testMode")}</span>
                     {testSectionOpen ? (
                       <ChevronUp className="h-4 w-4" />
                     ) : (
@@ -446,10 +453,10 @@ return (
                 </CollapsibleTrigger>
                 <CollapsibleContent className="mt-3 space-y-3">
                   <div className="space-y-2">
-                    <Label htmlFor="testEmails">Test Email Addresses</Label>
+                    <Label htmlFor="testEmails">{tb("testEmailAddresses")}</Label>
                     <Textarea
                       id="testEmails"
-                      placeholder="Enter comma-separated emails (e.g., test1@example.com, test2@example.com)"
+                      placeholder={tb("testEmailsPlaceholder")}
                       value={testEmails}
                       onChange={(e) => setTestEmails(e.target.value)}
                       disabled={isTestLoading}
@@ -457,7 +464,7 @@ return (
                       className="resize-none"
                     />
                     <p className="text-xs text-muted-foreground">
-                      Emails will be sent to these addresses for testing. Submissions will NOT be marked as invited.
+                      {t("testHint")}
                     </p>
                   </div>
                   <Button
@@ -469,13 +476,13 @@ return (
                   >
                     {isTestLoading ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Sending Test...
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        {tb("sendingTest")}
                       </>
                     ) : (
                       <>
-                        <Mail className="mr-2 h-4 w-4" />
-                        Send Test ({emailList.length} email{emailList.length !== 1 ? "s" : ""})
+                        <Mail className="me-2 h-4 w-4" />
+                        {t("sendTestCount", { count: emailList.length })}
                       </>
                     )}
                   </Button>
@@ -489,18 +496,18 @@ return (
                 onClick={() => handleOpenChange(false)}
                 disabled={isLoading || isTestLoading}
               >
-                Cancel
+                {tc("cancel")}
               </Button>
               <Button onClick={handleSubmit} disabled={isSubmitDisabled || hasNoRecipients}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {ts("sending")}
                   </>
                 ) : hasNoRecipients ? (
-                  "No Recipients"
+                  t("noRecipientsButton")
                 ) : (
-                  `Send to ${recipientCount} recipient${recipientCount !== 1 ? "s" : ""}`
+                  t("sendToCount", { count: recipientCount })
                 )}
               </Button>
             </div>

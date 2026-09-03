@@ -24,6 +24,7 @@ import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 
 import type { MemberWithRole, MemberRole } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface EditRoleDialogProps {
   admin: MemberWithRole | null;
@@ -33,12 +34,6 @@ interface EditRoleDialogProps {
   isLoading?: boolean;
 }
 
-const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
-  { value: "admin", label: "Admin" },
-  { value: "admin_points", label: "Admin Points" },
-  { value: "super_admin", label: "Super Admin" },
-];
-
 export function EditRoleDialog({
   admin,
   open,
@@ -46,7 +41,16 @@ export function EditRoleDialog({
   onConfirm,
   isLoading = false,
 }: EditRoleDialogProps) {
+  const t = useTranslations("editRole");
+  const tc = useTranslations("common.actions");
+  const tr = useTranslations("common.roles");
   const [selectedRole, setSelectedRole] = React.useState<MemberRole>("admin");
+
+  const ROLE_OPTIONS: { value: MemberRole; label: string }[] = [
+    { value: "admin", label: tr("admin") },
+    { value: "admin_points", label: tr("adminPoints") },
+    { value: "super_admin", label: tr("superAdmin") },
+  ];
 
   React.useEffect(() => {
     if (admin) {
@@ -70,11 +74,11 @@ export function EditRoleDialog({
   const getRoleBadge = (role: MemberRole) => {
     switch (role) {
       case "super_admin":
-        return <Badge variant="default">Super Admin</Badge>;
+        return <Badge variant="default">{tr("superAdmin")}</Badge>;
       case "admin_points":
-        return <Badge variant="secondary">Admin Points</Badge>;
+        return <Badge variant="secondary">{tr("adminPoints")}</Badge>;
       default:
-        return <Badge variant="outline">Admin</Badge>;
+        return <Badge variant="outline">{tr("admin")}</Badge>;
     }
   };
 
@@ -82,16 +86,16 @@ export function EditRoleDialog({
     <AlertDialog open={open} onOpenChange={onOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Edit Role for {admin.name}</AlertDialogTitle>
+          <AlertDialogTitle>{t("title", { name: admin.name })}</AlertDialogTitle>
           <AlertDialogDescription asChild>
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <span className="text-sm">Current role:</span>
+                <span className="text-sm">{t("currentRole")}</span>
                 {getRoleBadge(admin.role)}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="role-select">New role</Label>
+                <Label htmlFor="role-select">{t("newRole")}</Label>
                 <Select value={selectedRole} onValueChange={(v) => setSelectedRole(v as MemberRole)}>
                   <SelectTrigger id="role-select">
                     <SelectValue />
@@ -109,7 +113,7 @@ export function EditRoleDialog({
               {roleChanged && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   {getRoleBadge(admin.role)}
-                  <ArrowRight className="h-4 w-4" />
+                  <ArrowRight className="h-4 w-4 rtl:-scale-x-100" />
                   {getRoleBadge(selectedRole)}
                 </div>
               )}
@@ -118,9 +122,9 @@ export function EditRoleDialog({
                 <div className="flex items-start gap-2 p-3 rounded-lg bg-destructive/10 text-destructive">
                   <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0" />
                   <div className="text-sm">
-                    <p className="font-medium">Warning: Demoting from Super Admin</p>
+                    <p className="font-medium">{t("demotingWarningTitle")}</p>
                     <p className="text-destructive/80 mt-1">
-                      This user will lose access to manage administrators and certificates.
+                      {t("demotingWarningDescription")}
                     </p>
                   </div>
                 </div>
@@ -129,7 +133,7 @@ export function EditRoleDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -137,7 +141,7 @@ export function EditRoleDialog({
             }}
             disabled={isLoading || !roleChanged}
           >
-            {isLoading ? "Updating..." : "Update Role"}
+            {isLoading ? t("updating") : t("updateRole")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

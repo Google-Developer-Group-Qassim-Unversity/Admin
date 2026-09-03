@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { Button } from '@/components/ui/button';
 import {
   Item,
@@ -28,6 +29,7 @@ interface PublishItemProps {
 }
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
+  const t = useTranslations('publishItem');
   const { getToken } = useAuth();
   const publishEvent = usePublishEvent(getToken);
   const unpublishEvent = useUnpublishEvent(getToken);
@@ -41,39 +43,39 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
   const handlePublish = async () => {
     try {
       await publishEvent.mutateAsync(event.id);
-      toast.success('Event published successfully!');
+      toast.success(t('publishedSuccess'));
       onEventChange();
     } catch {
-      toast.error('Failed to publish event. Please try again.');
+      toast.error(t('publishFailed'));
     }
   };
 
   const handleUnpublish = async () => {
     try {
       await unpublishEvent.mutateAsync(event.id);
-      toast.success('Event unpublished successfully!');
+      toast.success(t('unpublishedSuccess'));
       onEventChange();
     } catch {
-      toast.error('Failed to unpublish event. Please try again.');
+      toast.error(t('unpublishFailed'));
     }
   };
 
   const handleCopyLink = async () => {
     try {
       await navigator.clipboard.writeText(`${config.memberAppUrl}/events/${event.id}`);
-      toast.success('Event link copied to clipboard!');
+      toast.success(t('linkCopied'));
     } catch {
-      toast.error('Failed to copy link. Please try again.');
+      toast.error(t('copyFailed'));
     }
   };
 
   const getStatusDescription = () => {
     if (isLocked) {
-      return event.status === 'active' 
-        ? 'Event is active - publish status cannot be changed'
-        : 'Event is closed - publish status cannot be changed';
+      return event.status === 'active'
+        ? t('activeLocked')
+        : t('closedLocked');
     }
-    return isPublished ? 'Event is open for registration' : 'Make event available for registration';
+    return isPublished ? t('openDescription') : t('closedDescription');
   };
 
   const getStatusIcon = () => {
@@ -109,7 +111,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
         </div>
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>Publish Event</ItemTitle>
+        <ItemTitle>{t('title')}</ItemTitle>
         <ItemDescription>
           {getStatusDescription()}
         </ItemDescription>
@@ -127,8 +129,8 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
                   target="_blank" 
                   rel="noopener noreferrer"
                 >
-                  Open Event
-                  <ExternalLink className="ml-2 h-4 w-4" />
+                  {t('openEvent')}
+                  <ExternalLink className="ms-2 h-4 w-4" />
                 </a>
               </Button>
             </>
@@ -141,13 +143,13 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
                     disabled
                     variant="outline"
                   >
-                    <Lock className="mr-2 h-4 w-4" />
-                    Locked
+                    <Lock className="me-2 h-4 w-4" />
+                    {t('locked')}
                   </Button>
                 </span>
               </TooltipTrigger>
               <TooltipContent>
-                Cannot control publish status anymore because the event is either active or closed
+                {t('lockedTooltip')}
               </TooltipContent>
             </Tooltip>
           ) : (
@@ -158,11 +160,11 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
             >
               {isLoading ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {isPublished ? 'Unpublishing...' : 'Publishing...'}
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {isPublished ? t('unpublishing') : t('publishing')}
                 </>
               ) : (
-                isPublished ? 'Unpublish' : 'Publish'
+                isPublished ? t('unpublish') : t('publish')
               )}
             </Button>
           )}

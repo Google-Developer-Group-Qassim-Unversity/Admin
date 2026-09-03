@@ -95,7 +95,7 @@ export function CreatableCombobox({
           className={cn("h-auto min-h-9 w-full justify-between whitespace-normal py-2 text-left", className)}
         >
           <span className="break-words">{value || placeholder}</span>
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -131,7 +131,7 @@ export function CreatableCombobox({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "me-2 h-4 w-4",
                         value === option ? "opacity-100" : "opacity-0"
                       )}
                     />

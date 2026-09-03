@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@clerk/nextjs';
+import { useTranslations } from 'next-intl';
 import { Check, ExternalLink, Loader2, Trash2, Video } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -23,6 +24,8 @@ interface MeetingUrlItemProps {
 }
 
 export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
+  const t = useTranslations('meetingUrlItem');
+  const tc = useTranslations('common.states');
   const { getToken } = useAuth();
   const updateMeetingUrl = useUpdateEventMeetingUrl(getToken);
   const savedUrl = event.meeting_url ?? '';
@@ -42,11 +45,11 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
       { id: event.id, meetingUrl },
       {
         onSuccess: () => {
-          toast.success(meetingUrl ? 'Meeting link saved' : 'Meeting link removed');
+          toast.success(meetingUrl ? t('savedToast') : t('removedToast'));
           onEventChange();
         },
         onError: (error) => {
-          toast.error('Failed to save meeting link', { description: error.message });
+          toast.error(t('saveFailed'), { description: error.message });
         },
       }
     );
@@ -68,11 +71,11 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
         </div>
       </ItemMedia>
       <ItemContent>
-        <ItemTitle>Meeting Link</ItemTitle>
+        <ItemTitle>{t('title')}</ItemTitle>
         <ItemDescription>
           {savedUrl
-            ? 'Members see a join button on the event page'
-            : 'Paste a link, or just a Google Meet code like abc-defg-hij'}
+            ? t('descriptionSaved')
+            : t('descriptionEmpty')}
         </ItemDescription>
       </ItemContent>
       <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:flex-nowrap">
@@ -80,7 +83,7 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
           type="text"
           inputMode="url"
           dir="ltr"
-          placeholder="https://meet.google.com/abc-defg-hij"
+          placeholder={t('placeholder')}
           value={value}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={(e) => {
@@ -89,7 +92,7 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
             }
           }}
           disabled={updateMeetingUrl.isPending}
-          aria-label="Meeting link"
+          aria-label={t('ariaLabel')}
           className="min-w-0 flex-1 sm:w-80"
         />
         <Button
@@ -98,25 +101,25 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
         >
           {updateMeetingUrl.isPending ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Saving...
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {tc('saving')}
             </>
           ) : (
-            'Save'
+            t('save')
           )}
         </Button>
         {savedUrl && (
           <>
             <Button variant="outline" size="icon" asChild>
-              <a href={savedUrl} target="_blank" rel="noopener noreferrer" title="Open meeting link" aria-label="Open meeting link">
+              <a href={savedUrl} target="_blank" rel="noopener noreferrer" title={t('openLink')} aria-label={t('openLink')}>
                 <ExternalLink className="h-4 w-4" />
               </a>
             </Button>
             <Button
               variant="outline"
               size="icon"
-              title="Remove meeting link"
-              aria-label="Remove meeting link"
+              title={t('removeLink')}
+              aria-label={t('removeLink')}
               onClick={() => save(null)}
               disabled={updateMeetingUrl.isPending}
             >

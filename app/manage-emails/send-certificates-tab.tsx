@@ -52,6 +52,7 @@ import { MemberSearchDialog } from "./member-search-dialog";
 import { CsvBatchPanel } from "./csv-batch-panel";
 import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
+import { useTranslations } from "next-intl";
 
 function formatEventDate(event: Event): string {
   const start = new Date(event.start_datetime);
@@ -75,6 +76,9 @@ function toDateString(datetime: string): string {
 }
 
 export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) {
+  const t = useTranslations("manageEmails.sendCertificates");
+  const tf = useTranslations("common.fields");
+  const tDirect = useTranslations("manageEmails.directEmail");
   const { getToken } = useAuth();
 
   const [events, setEvents] = React.useState<Event[]>([]);
@@ -173,18 +177,18 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
         member_id: m.id,
       })),
     ]);
-    toast.success(`Added ${members.length} member${members.length !== 1 ? "s" : ""}`);
+    toast.success(t("addedMembers", { count: members.length }));
   };
 
   const handleSend = async () => {
     if (!isEventValid) {
-      toast.error("Please fill in event details");
+      toast.error(t("fillEventDetails"));
       return;
     }
 
     const validRecipients = recipients.filter((r) => r.name.trim() && r.email.trim());
     if (validRecipients.length === 0) {
-      toast.error("No valid recipients to send to");
+      toast.error(t("noValidRecipients"));
       return;
     }
 
@@ -235,7 +239,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
     return (
       <Alert variant="destructive" className="rounded-xl border-destructive/20 bg-destructive/5">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Error Loading Events</AlertTitle>
+        <AlertTitle>{t("errorLoadingEvents")}</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
@@ -247,11 +251,11 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
         <TabsList className="grid w-full grid-cols-2 max-w-[400px]">
           <TabsTrigger value="individual" className="flex items-center gap-2">
             <Users className="h-4 w-4" />
-            Individual
+            {t("individual")}
           </TabsTrigger>
           <TabsTrigger value="batch" className="flex items-center gap-2">
             <FileSpreadsheet className="h-4 w-4" />
-            Batch (CSV)
+            {t("batchCsv")}
           </TabsTrigger>
         </TabsList>
 
@@ -261,10 +265,10 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Calendar className="h-4 w-4 text-primary" />
-                  Event
+                  {t("event")}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Select from existing events or fill in manually.
+                  {t("eventHint")}
                 </CardDescription>
               </CardHeader>
               <CardContent className="p-4 pt-0 space-y-3">
@@ -279,9 +283,9 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                       {selectedEvent ? (
                         <span className="truncate">{selectedEvent.name}</span>
                       ) : (
-                        <span className="text-muted-foreground">Search &amp; select...</span>
+                        <span className="text-muted-foreground">{t("searchAndSelect")}</span>
                       )}
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[300px] p-0 shadow-lg" align="start">
@@ -291,9 +295,9 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                       if (!normSearch) return 1;
                       return normValue.includes(normSearch) ? 1 : 0;
                     }}>
-                      <CommandInput placeholder="Search events..." className="h-9" />
+                      <CommandInput placeholder={t("searchEvents")} className="h-9" />
                       <CommandList>
-                        <CommandEmpty>No events found.</CommandEmpty>
+                        <CommandEmpty>{t("noEventsFound")}</CommandEmpty>
                         <CommandGroup>
                           {events.map((event) => (
                             <CommandItem
@@ -304,7 +308,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                             >
                               <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4 text-primary",
+                                  "me-2 h-4 w-4 text-primary",
                                   eventForm.event_id === event.id ? "opacity-100" : "opacity-0",
                                 )}
                               />
@@ -325,18 +329,18 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                 <div className="space-y-2">
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                      Event Name
+                      {t("eventName")}
                     </Label>
                     <Input
                       value={eventForm.name}
                       onChange={(e) => handleEventFieldChange("name", e.target.value)}
-                      placeholder="Enter event name"
+                      placeholder={t("eventNamePlaceholder")}
                       className="h-8 text-xs"
                     />
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                      Date
+                      {tf("date")}
                     </Label>
                     <Input
                       type="date"
@@ -347,7 +351,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                      Type
+                      {t("type")}
                     </Label>
                     <Select
                       value={eventForm.official ? "official" : "unofficial"}
@@ -357,14 +361,14 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="official">Official</SelectItem>
-                        <SelectItem value="unofficial">Unofficial</SelectItem>
+                        <SelectItem value="official">{t("official")}</SelectItem>
+                        <SelectItem value="unofficial">{t("unofficial")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
                   <div>
                     <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                      Language
+                      {t("language")}
                     </Label>
                     <Select
                       value={language}
@@ -374,8 +378,8 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="ar">Arabic</SelectItem>
+                        <SelectItem value="en">{t("english")}</SelectItem>
+                        <SelectItem value="ar">{t("arabic")}</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -388,7 +392,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Users className="h-4 w-4 text-primary" />
-                  Recipients
+                  {t("recipients")}
                   {validRecipientCount > 0 && (
                     <Badge variant="outline" className="text-[10px] font-bold">
                       {validRecipientCount}
@@ -396,7 +400,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                   )}
                 </CardTitle>
                 <CardDescription className="text-xs">
-                  Fill in details manually or use &quot;Pick Members&quot; to search and auto-fill from existing members.
+                  {t("recipientsHint")}
                 </CardDescription>
                 <div className="flex items-center gap-2 pt-1">
                   <Button
@@ -406,7 +410,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                     onClick={() => setMemberDialogOpen(true)}
                     className="h-7 text-xs gap-1.5"
                   >
-                    <UserPlus className="h-3.5 w-3.5" /> Pick Members
+                    <UserPlus className="h-3.5 w-3.5" /> {tDirect("pickMembers")}
                   </Button>
                   <Button
                     type="button"
@@ -415,12 +419,12 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                     onClick={addRecipient}
                     className="h-7 text-xs gap-1.5"
                   >
-                    <Plus className="h-3.5 w-3.5" /> Add Row
+                    <Plus className="h-3.5 w-3.5" /> {t("addRow")}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-4 pt-0 flex-1">
-                <div className="space-y-3 max-h-[400px] overflow-y-auto pr-2">
+                <div className="space-y-3 max-h-[400px] overflow-y-auto pe-2">
                   {recipients.map((recipient, index) => (
                     <div
                       key={index}
@@ -432,37 +436,37 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                           variant="ghost"
                           size="icon"
                           onClick={() => removeRecipient(index)}
-                          className="absolute -right-2 -top-2 h-6 w-6 rounded-full bg-background border shadow-sm hover:text-destructive"
+                          className="absolute -end-2 -top-2 h-6 w-6 rounded-full bg-background border shadow-sm hover:text-destructive"
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       )}
                       <div className="md:col-span-5">
                         <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                          Name
+                          {tf("name")}
                         </Label>
                         <Input
                           value={recipient.name}
                           onChange={(e) => handleRecipientChange(index, "name", e.target.value)}
-                          placeholder="Full Name"
+                          placeholder={t("fullNamePlaceholder")}
                           className="h-8 text-xs bg-background"
                         />
                       </div>
                       <div className="md:col-span-4">
                         <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                          Email
+                          {tf("email")}
                         </Label>
                         <Input
                           type="email"
                           value={recipient.email}
                           onChange={(e) => handleRecipientChange(index, "email", e.target.value)}
-                          placeholder="email@example.com"
+                          placeholder={tDirect("emailPlaceholder")}
                           className="h-8 text-xs bg-background"
                         />
                       </div>
                       <div className="md:col-span-3">
                         <Label className="text-[10px] uppercase font-bold text-muted-foreground mb-1 block">
-                          Gender
+                          {tf("gender")}
                         </Label>
                         <Select
                           value={recipient.gender}
@@ -474,8 +478,8 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="Male">Male</SelectItem>
-                            <SelectItem value="Female">Female</SelectItem>
+                            <SelectItem value="Male">{tf("male")}</SelectItem>
+                            <SelectItem value="Female">{tf("female")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -495,7 +499,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                   ) : (
                     <Send className="h-4 w-4" />
                   )}
-                  Send Certificates{validRecipientCount > 0 ? ` (${validRecipientCount})` : ""}
+                  {t("sendCertificatesButton", { count: validRecipientCount })}
                 </Button>
               </CardFooter>
             </Card>
@@ -505,7 +509,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
             <EmailJobStatusCard
               jobId={sentResult.jobId}
               getToken={getToken}
-              itemLabel="certificate"
+              itemKey="certificate"
               totalHint={sentResult.total}
               onGoToLogs={onGoToLogs}
             />

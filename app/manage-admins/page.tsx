@@ -15,8 +15,12 @@ import { EditRoleDialog } from "@/components/manage-admins/edit-role-dialog";
 
 import { getMemberRoles, updateMemberRole } from "@/lib/api";
 import type { MemberWithRole, MemberRole } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 export default function ManageAdminsPage() {
+  const t = useTranslations("manageAdminsPage");
+  const tc = useTranslations("common.errors");
+  const tr = useTranslations("common.roles");
   const { getToken } = useAuth();
   const { user } = useUser();
 
@@ -65,7 +69,7 @@ export default function ManageAdminsPage() {
       );
 
       if (!response.success) {
-        toast.error("Failed to revoke admin: " + response.error.message);
+        toast.error(t("revokeFailed", { error: response.error.message }));
         setIsRevoking(false);
         return;
       }
@@ -88,14 +92,12 @@ export default function ManageAdminsPage() {
       if (!metadataResponse.ok) {
         const errorData = await metadataResponse.json();
         if (errorData.warning) {
-          toast.warning(
-            "Role revoked in database, but user not found in authentication system"
-          );
+          toast.warning(t("revokeMetadataWarning"));
         } else {
-          toast.error("Failed to update authentication metadata: " + errorData.error);
+          toast.error(t("metadataFailed", { error: errorData.error }));
         }
       } else {
-        toast.success(`Successfully revoked admin access for ${revokeAdmin.name}`);
+        toast.success(t("revokedSuccess", { name: revokeAdmin.name }));
       }
 
       // Close dialog and refresh
@@ -103,7 +105,7 @@ export default function ManageAdminsPage() {
       fetchAdmins();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to revoke admin access"
+        error instanceof Error ? error.message : t("revokeGenericFailed")
       );
     } finally {
       setIsRevoking(false);
@@ -125,7 +127,7 @@ export default function ManageAdminsPage() {
       );
 
       if (!response.success) {
-        toast.error("Failed to update role: " + response.error.message);
+        toast.error(t("updateRoleFailed", { error: response.error.message }));
         setIsUpdatingRole(false);
         return;
       }
@@ -148,14 +150,12 @@ export default function ManageAdminsPage() {
       if (!metadataResponse.ok) {
         const errorData = await metadataResponse.json();
         if (errorData.warning) {
-          toast.warning(
-            "Role updated in database, but user not found in authentication system"
-          );
+          toast.warning(t("updateMetadataWarning"));
         } else {
-          toast.error("Failed to update authentication metadata: " + errorData.error);
+          toast.error(t("metadataFailed", { error: errorData.error }));
         }
       } else {
-        toast.success(`Successfully updated role for ${editAdmin.name} to ${newRole.replace("_", " ")}`);
+        toast.success(t("roleUpdatedSuccess", { name: editAdmin.name, role: tr(newRole === "admin_points" ? "adminPoints" : newRole === "super_admin" ? "superAdmin" : "admin") }));
       }
 
       // Close dialog and refresh
@@ -163,7 +163,7 @@ export default function ManageAdminsPage() {
       fetchAdmins();
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : "Failed to update role"
+        error instanceof Error ? error.message : t("updateGenericFailed")
       );
     } finally {
       setIsUpdatingRole(false);
@@ -179,14 +179,12 @@ export default function ManageAdminsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Admins</h1>
-          <p className="text-muted-foreground mt-2">
-            Add, view, and manage administrator roles and permissions
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
         </div>
         <Button onClick={() => setIsAddDialogOpen(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Add Admin
+          <UserPlus className="h-4 w-4 me-2" />
+          {t("addAdmin")}
         </Button>
       </div>
 
@@ -201,12 +199,12 @@ export default function ManageAdminsPage() {
       {!isLoading && error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Failed to Load Admins</AlertTitle>
+          <AlertTitle>{t("loadFailed")}</AlertTitle>
           <AlertDescription>
             {error}
             {error.includes("403") && (
               <span className="block mt-1">
-                You don&apos;t have permission to view this page. Super admin access is required.
+                {tc("noPermission")}
               </span>
             )}
           </AlertDescription>

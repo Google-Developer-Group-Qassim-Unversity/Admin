@@ -43,6 +43,7 @@ import {
 import { backfillAttendance } from "@/lib/api";
 import type { BackfillMember } from "@/lib/api-types";
 import type { BackfillSummary } from "./types";
+import { useTranslations } from "next-intl";
 
 interface BackfillTabProps {
   dayCount: number;
@@ -73,6 +74,7 @@ export function BackfillTab({
   eventId,
   getToken,
 }: BackfillTabProps) {
+  const t = useTranslations("attendance.backfill");
   const [token, setToken] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [verifyError, setVerifyError] = React.useState<string | null>(null);
@@ -91,7 +93,7 @@ export function BackfillTab({
 
   const handleVerify = async () => {
     if (!token.trim()) {
-      setVerifyError("Please paste an export token");
+      setVerifyError(t("pasteTokenFirst"));
       return;
     }
 
@@ -118,7 +120,7 @@ export function BackfillTab({
       }
 
       if (!response.ok || !result.valid) {
-        setVerifyError(result.error || "Token verification failed");
+        setVerifyError(result.error || t("tokenVerificationFailed"));
         if (!result.metadata) {
           setVerifiedRows(null);
           setMetadata(null);
@@ -126,11 +128,11 @@ export function BackfillTab({
         }
       } else {
         setVerifyError(null);
-        toast.success(`Verified ${result.data?.length || 0} members`);
+        toast.success(t("verifiedCount", { count: result.data?.length || 0 }));
       }
     } catch (err) {
       setVerifyError(
-        err instanceof Error ? err.message : "Verification failed",
+        err instanceof Error ? err.message : t("verificationFailed"),
       );
       setVerifiedRows(null);
       setMetadata(null);
@@ -156,13 +158,13 @@ export function BackfillTab({
 
   const handleSubmit = async () => {
     if (!verifiedRows || verifiedRows.length === 0) {
-      toast.error("No verified data to submit");
+      toast.error(t("noVerifiedData"));
       return;
     }
 
     const day = parseInt(selectedDay, 10);
     if (isNaN(day) || day < 1 || day > dayCount) {
-      toast.error("Invalid day selected");
+      toast.error(t("invalidDaySelected"));
       return;
     }
 
@@ -184,7 +186,7 @@ export function BackfillTab({
         attendance_date: result.data.attendance_date,
       });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Backfill failed");
+      toast.error(err instanceof Error ? err.message : t("backfillFailed"));
     } finally {
       setIsSubmitting(false);
     }
@@ -209,8 +211,7 @@ export function BackfillTab({
   return (
     <div className="space-y-4 px-1 pb-1">
       <p className="text-sm text-muted-foreground">
-        Import attendance data from Sheet Processor. Get your export token from
-        the link below, then paste it here to verify and submit.
+        {t("intro")}
       </p>
 
       <a
@@ -219,15 +220,15 @@ export function BackfillTab({
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
       >
-        Get Export Token
+        {t("getExportToken")}
         <ExternalLink className="h-3.5 w-3.5" />
       </a>
 
       <div className="space-y-2">
-        <Label htmlFor="token">Export Token</Label>
+        <Label htmlFor="token">{t("exportTokenLabel")}</Label>
         <Textarea
           id="token"
-          placeholder="Paste your export token here..."
+          placeholder={t("exportTokenPlaceholder")}
           value={token}
           onChange={(e) => {
             setToken(e.target.value);
@@ -249,13 +250,13 @@ export function BackfillTab({
         <Button onClick={handleVerify} disabled={isVerifying || !token.trim()}>
           {isVerifying ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Verifying...
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {t("verifying")}
             </>
           ) : (
             <>
-              <CheckCircle className="mr-2 h-4 w-4" />
-              Verify Token
+              <CheckCircle className="me-2 h-4 w-4" />
+              {t("verifyToken")}
             </>
           )}
         </Button>
@@ -263,18 +264,18 @@ export function BackfillTab({
         <>
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-base">Token Metadata</CardTitle>
+              <CardTitle className="text-base">{t("tokenMetadata")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Row Count</span>
+                  <span className="text-muted-foreground">{t("rowCount")}</span>
                   <span className="font-medium">
                     {metadata?.row_count ?? "-"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Valid</span>
+                  <span className="text-muted-foreground">{t("valid")}</span>
                   <Badge
                     className={
                       isValidData
@@ -283,11 +284,11 @@ export function BackfillTab({
                     }
                     variant={isValidData ? "outline" : "destructive"}
                   >
-                    {isValidData ? "Yes" : "No"}
+                    {isValidData ? t("yes") : t("no")}
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Validated At</span>
+                  <span className="text-muted-foreground">{t("validatedAt")}</span>
                   <span className="font-medium">
                     {metadata?.validated_at
                       ? new Date(metadata.validated_at).toLocaleString()
@@ -295,14 +296,14 @@ export function BackfillTab({
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">Source</span>
+                  <span className="text-muted-foreground">{t("source")}</span>
                   <span className="font-medium">{metadata?.source ?? "-"}</span>
                 </div>
               </div>
               {signature && (
                 <div className="pt-2 border-t">
                   <div className="text-muted-foreground text-sm mb-1">
-                    Signature
+                    {t("signature")}
                   </div>
                   <div className="font-mono text-xs text-muted-foreground break-all">
                     {signature}
@@ -314,10 +315,9 @@ export function BackfillTab({
 
           {!isValidData && (
             <Alert variant="destructive">
-              <AlertTitle>Invalid Data</AlertTitle>
+              <AlertTitle>{t("invalidDataTitle")}</AlertTitle>
               <AlertDescription>
-                Token data is not valid. Go back to Sheet Processor and make
-                sure all rows are valid.
+                {t("invalidDataDescription")}
               </AlertDescription>
             </Alert>
           )}
@@ -327,18 +327,17 @@ export function BackfillTab({
               <Separator />
               <div className="space-y-2">
                 <Label>
-                  Preview ({verifiedRows.length} member
-                  {verifiedRows.length !== 1 ? "s" : ""})
+                  {t("preview", { count: verifiedRows.length })}
                 </Label>
                 <Card className="p-0 overflow-hidden">
                   <ScrollArea className="h-48">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>University ID</TableHead>
-                          <TableHead>Email</TableHead>
-                          <TableHead>Gender</TableHead>
+                          <TableHead>{t("columnName")}</TableHead>
+                          <TableHead>{t("columnUniversityId")}</TableHead>
+                          <TableHead>{t("columnEmail")}</TableHead>
+                          <TableHead>{t("columnGender")}</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -358,7 +357,7 @@ export function BackfillTab({
                               colSpan={4}
                               className="text-center text-muted-foreground"
                             >
-                              ... and {verifiedRows.length - 50} more
+                              {t("andMore", { count: verifiedRows.length - 50 })}
                             </TableCell>
                           </TableRow>
                         )}
@@ -373,7 +372,7 @@ export function BackfillTab({
 
           <div className="flex items-center gap-3">
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">Day</Label>
+              <Label className="text-muted-foreground">{t("dayLabel")}</Label>
               <Select value={selectedDay} onValueChange={onDayChange}>
                 <SelectTrigger className="w-24">
                   <SelectValue />
@@ -382,7 +381,7 @@ export function BackfillTab({
                   {Array.from({ length: dayCount }, (_, i) => i + 1).map(
                     (day) => (
                       <SelectItem key={day} value={String(day)}>
-                        Day {day}
+                        {t("day", { number: day })}
                       </SelectItem>
                     ),
                   )}
@@ -397,22 +396,20 @@ export function BackfillTab({
               onClick={handleReset}
               disabled={isSubmitting}
             >
-              Reset
+              {t("reset")}
             </Button>
 
             {isValidData && (
               <Button onClick={handleSubmit} disabled={isSubmitting}>
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Submitting...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {t("submitting")}
                   </>
                 ) : (
                   <>
-                    <Upload className="mr-2 h-4 w-4" />
-                    Backfill {verifiedRows?.length ?? 0} Member
-                    {verifiedRows?.length !== 1 ? "s" : ""} for Day{" "}
-                    {selectedDay}
+                    <Upload className="me-2 h-4 w-4" />
+                    {t("backfillButton", { count: verifiedRows?.length ?? 0, day: selectedDay })}
                   </>
                 )}
               </Button>
@@ -427,28 +424,28 @@ export function BackfillTab({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Backfill Complete</DialogTitle>
+            <DialogTitle>{t("completeTitle")}</DialogTitle>
             <DialogDescription>
-              Attendance has been recorded successfully.
+              {t("completeDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <Card size="sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Members</CardTitle>
+                <CardTitle className="text-sm">{t("members")}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      Created
+                      {t("created")}
                     </span>
                     <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Found</span>
+                    <span className="text-sm text-muted-foreground">{t("found")}</span>
                     <span className="font-medium">
                       {summaryDialog?.existing_count ?? 0}
                     </span>
@@ -458,13 +455,13 @@ export function BackfillTab({
             </Card>
             <Card size="sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Attendance</CardTitle>
+                <CardTitle className="text-sm">{t("attendance")}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      Marked
+                      {t("marked")}
                     </span>
                     <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
                       {summaryDialog?.marked_count ?? 0}
@@ -472,7 +469,7 @@ export function BackfillTab({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">
-                      Skipped (already marked)
+                      {t("skipped")}
                     </span>
                     <Badge className="bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
                       {summaryDialog?.already_attended_count ?? 0}
@@ -482,7 +479,7 @@ export function BackfillTab({
               </CardContent>
             </Card>
             <div className="flex justify-between items-center p-3 bg-muted rounded-md">
-              <span className="text-sm text-muted-foreground">Date</span>
+              <span className="text-sm text-muted-foreground">{t("date")}</span>
               <span className="font-medium text-sm">
                 {summaryDialog
                   ? formatDate(summaryDialog.attendance_date)
@@ -491,7 +488,7 @@ export function BackfillTab({
             </div>
           </div>
           <Button onClick={handleCloseSummary} className="w-full">
-            Done
+            {t("done")}
           </Button>
         </DialogContent>
       </Dialog>

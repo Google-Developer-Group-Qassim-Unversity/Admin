@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import type { MemberWithRole } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { useTranslations } from "next-intl";
 
 interface AdminListTableProps {
   admins: MemberWithRole[];
@@ -34,6 +35,8 @@ export function AdminListTable({
   onEditRole,
   isLoading = false,
 }: AdminListTableProps) {
+  const t = useTranslations("adminList");
+  const tr = useTranslations("common.roles");
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const getRoleBadge = (role: string) => {
@@ -41,7 +44,7 @@ export function AdminListTable({
       return (
         <Badge variant="default" className="gap-1">
           <ShieldAlert className="h-3 w-3" />
-          Super Admin
+          {tr("superAdmin")}
         </Badge>
       );
     }
@@ -49,14 +52,14 @@ export function AdminListTable({
       return (
         <Badge variant="secondary" className="gap-1">
           <Shield className="h-3 w-3" />
-          Admin Points
+          {tr("adminPoints")}
         </Badge>
       );
     }
     return (
       <Badge variant="outline" className="gap-1">
         <ShieldCheck className="h-3 w-3" />
-        Admin
+        {tr("admin")}
       </Badge>
     );
   };
@@ -71,20 +74,20 @@ export function AdminListTable({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Current Admins</CardTitle>
+        <CardTitle>{t("title")}</CardTitle>
         <CardDescription>
           {searchQuery.trim()
-            ? `${filteredAdmins.length} of ${activeAdmins.length} administrator${activeAdmins.length !== 1 ? "s" : ""}`
-            : `${activeAdmins.length} active administrator${activeAdmins.length !== 1 ? "s" : ""}`
+            ? t("countFiltered", { shown: filteredAdmins.length, total: activeAdmins.length })
+            : t("countActive", { count: activeAdmins.length })
           }
         </CardDescription>
         <div className="relative mt-2">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, email, or uni ID..."
+            placeholder={t("searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-9"
+            className="ps-9"
           />
         </div>
       </CardHeader>
@@ -92,18 +95,18 @@ export function AdminListTable({
         {filteredAdmins.length === 0 ? (
           <div className="text-center py-8 text-muted-foreground">
             <ShieldCheck className="h-12 w-12 mx-auto mb-2 opacity-50" />
-            <p>{searchQuery.trim() ? "No matching administrators found" : "No administrators found"}</p>
+            <p>{searchQuery.trim() ? t("noneMatch") : t("noneFound")}</p>
           </div>
         ) : (
           <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Uni ID</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>{t("columnName")}</TableHead>
+                  <TableHead>{t("columnEmail")}</TableHead>
+                  <TableHead>{t("columnUniId")}</TableHead>
+                  <TableHead>{t("columnRole")}</TableHead>
+                  <TableHead className="text-end">{t("columnActions")}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -115,20 +118,20 @@ export function AdminListTable({
                       <TableCell className="font-medium">
                         {admin.name}
                         {isCurrent && (
-                          <span className="ml-2 text-xs text-muted-foreground">(You)</span>
+                          <span className="ms-2 text-xs text-muted-foreground">{t("you")}</span>
                         )}
                       </TableCell>
                       <TableCell>{admin.email}</TableCell>
                       <TableCell>{admin.uni_id ?? "—"}</TableCell>
                       <TableCell>{getRoleBadge(admin.role)}</TableCell>
-                      <TableCell className="text-right">
+                      <TableCell className="text-end">
                         <div className="flex items-center justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => onEditRole(admin)}
                             disabled={isCurrent || isLoading}
-                            title="Edit role"
+                            title={t("editRole")}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
@@ -138,7 +141,7 @@ export function AdminListTable({
                             onClick={() => onRevoke(admin)}
                             disabled={isCurrent || isLoading}
                             className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                            title="Revoke access"
+                            title={t("revokeAccess")}
                           >
                             <UserMinus className="h-4 w-4" />
                           </Button>

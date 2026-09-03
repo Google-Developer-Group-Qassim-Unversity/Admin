@@ -84,8 +84,11 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useEventContext } from "@/contexts/event-context";
+import { useTranslations } from "next-intl";
 
 export default function EventResponsesPage() {
+  const t = useTranslations("responsesPage");
+  const tc = useTranslations("common.actions");
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const { data: submissions, isLoading: submissionsLoading, error, refetch: refetchSubmissions } = useSubmissions(event?.id ?? 0, getToken);
@@ -232,20 +235,20 @@ export default function EventResponsesPage() {
       const tsvContent = generateTSV(allRows, columns, columnVisibility);
 
       navigator.clipboard.writeText(tsvContent).then(() => {
-        toast.success(`Copied ${allRows.length} row${allRows.length !== 1 ? "s" : ""} as TSV`);
+        toast.success(t("copiedRowsAsTsv", { count: allRows.length }));
       }).catch((err) => {
         console.error("Failed to copy:", err);
-        toast.error("Failed to copy data to clipboard");
+        toast.error(t("copyFailed"));
       });
     } catch (error) {
       console.error("Error generating TSV:", error);
-      toast.error("Failed to generate TSV data");
+      toast.error(t("generateTsvFailed"));
     }
   };
 
   const handleCopyAcceptedEmails = () => {
     if (!filteredSubmissions) {
-      toast.error("No submissions available");
+      toast.error(t("noSubmissions"));
       return;
     }
 
@@ -256,21 +259,21 @@ export default function EventResponsesPage() {
         .filter((email) => email && email.trim() !== "");
 
       if (acceptedEmails.length === 0) {
-        toast.warning("No accepted submissions with emails found");
+        toast.warning(t("noAcceptedWithEmails"));
         return;
       }
 
       const emailsText = acceptedEmails.join(", ");
 
       navigator.clipboard.writeText(emailsText).then(() => {
-        toast.success(`Copied ${acceptedEmails.length} email${acceptedEmails.length !== 1 ? "s" : ""} to clipboard`);
+        toast.success(t("copiedEmails", { count: acceptedEmails.length }));
       }).catch((err) => {
         console.error("Failed to copy:", err);
-        toast.error("Failed to copy emails to clipboard");
+        toast.error(t("copyEmailsFailed"));
       });
     } catch (error) {
       console.error("Error copying emails:", error);
-      toast.error("Failed to copy emails");
+      toast.error(t("copyEmailsGenericFailed"));
     }
   };
 
@@ -286,11 +289,11 @@ export default function EventResponsesPage() {
     
     try {
       await acceptSubmissionsMutation.mutateAsync(payload);
-      toast.success(`Accepted ${allRows.length} submission${allRows.length !== 1 ? "s" : ""}`);
+      toast.success(t("acceptedCount", { count: allRows.length }));
       setAcceptAllDialogOpen(false);
     } catch (error) {
       console.error("Failed to accept submissions:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to accept submissions");
+      toast.error(error instanceof Error ? error.message : t("acceptFailed"));
     }
   };
 
@@ -298,19 +301,17 @@ export default function EventResponsesPage() {
     const { payload, acceptedCount } = getBulkAcceptPayload(allTableData, uniIds);
     
     if (acceptedCount === 0) {
-      toast.warning("No submissions found matching the provided Uni IDs");
+      toast.warning(t("noMatchingUniIds"));
       return;
     }
     
     try {
       await acceptSubmissionsMutation.mutateAsync(payload);
-      toast.success(
-        `Accepted ${acceptedCount} submission${acceptedCount !== 1 ? "s" : ""} by Uni ID`
-      );
+      toast.success(t("acceptedByUniId", { count: acceptedCount }));
       setBulkAcceptDialogOpen(false);
     } catch (error) {
       console.error("Failed to accept submissions:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to accept submissions");
+      toast.error(error instanceof Error ? error.message : t("acceptFailed"));
     }
   };
 
@@ -324,11 +325,14 @@ export default function EventResponsesPage() {
       await acceptSubmissionsMutation.mutateAsync(payload);
       setRowSelection({});
       
-      const action = allAccepted ? "Removed acceptance from" : "Accepted";
-      toast.success(`${action} ${selectedRows.length} submission${selectedRows.length !== 1 ? "s" : ""}`);
+      toast.success(
+        allAccepted
+          ? t("removedAcceptanceFrom", { count: selectedRows.length })
+          : t("acceptedFrom", { count: selectedRows.length })
+      );
     } catch (error) {
       console.error("Failed to update submissions:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to update submissions");
+      toast.error(error instanceof Error ? error.message : t("updateFailed"));
     }
   };
 
@@ -348,22 +352,22 @@ export default function EventResponsesPage() {
   const handleCloseResponses = async () => {
     try {
       await closeResponsesMutation.mutateAsync(event.id);
-      toast.success('Responses have been closed. Event is now active.');
+      toast.success(t('closedSuccess'));
       setToggleResponsesDialogOpen(false);
       refetch?.();
     } catch {
-      toast.error('Failed to close responses. Please try again.');
+      toast.error(t('closeFailed'));
     }
   };
 
   const handleOpenResponses = async () => {
     try {
       await openResponsesMutation.mutateAsync(event.id);
-      toast.success('Responses have been opened. Event is now accepting responses.');
+      toast.success(t('openedSuccess'));
       setToggleResponsesDialogOpen(false);
       refetch?.();
     } catch {
-      toast.error('Failed to open responses. Please try again.');
+      toast.error(t('openFailed'));
     }
   };
 
@@ -374,11 +378,11 @@ export default function EventResponsesPage() {
         subject,
         htmlContent,
       });
-      toast.success(`Acceptance emails sent to ${acceptedNotInvited} recipient${acceptedNotInvited !== 1 ? "s" : ""}`);
+      toast.success(t("acceptanceSentCount", { count: acceptedNotInvited }));
       setSendAcceptanceDialogOpen(false);
     } catch (error) {
       console.error("Failed to send acceptance emails:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send acceptance emails");
+      toast.error(error instanceof Error ? error.message : t("sendAcceptanceFailed"));
     }
   };
 
@@ -389,10 +393,10 @@ export default function EventResponsesPage() {
         htmlContent,
         emails,
       });
-      toast.success(`Test emails sent to ${emails.length} recipient${emails.length !== 1 ? "s" : ""}`);
+      toast.success(t("testSentCount", { count: emails.length }));
     } catch (error) {
       console.error("Failed to send test acceptance emails:", error);
-      toast.error(error instanceof Error ? error.message : "Failed to send test acceptance emails");
+      toast.error(error instanceof Error ? error.message : t("sendTestFailed"));
     }
   };
 
@@ -400,17 +404,17 @@ export default function EventResponsesPage() {
     return (
       <Card className="max-w-full mx-auto">
         <CardHeader>
-          <CardTitle>Manage Responses: {event.name}</CardTitle>
+          <CardTitle>{t("title", { name: event.name })}</CardTitle>
           <CardDescription>
-            View and manage responses for this event.
+            {t("subtitle")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="rounded-lg border border-dashed p-12 text-center">
             <FileX className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">No Signups Required</h3>
+            <h3 className="text-lg font-medium mb-2">{t("noSignupsTitle")}</h3>
             <p className="text-muted-foreground">
-              This event does not require signups. Responses are not being collected.
+              {t("noSignupsDescription")}
             </p>
           </div>
         </CardContent>
@@ -421,9 +425,9 @@ export default function EventResponsesPage() {
   return (
     <Card className="max-w-full mx-auto">
       <CardHeader>
-        <CardTitle>Manage Responses: {event.name}</CardTitle>
+        <CardTitle>{t("title", { name: event.name })}</CardTitle>
         <CardDescription>
-          View and manage responses for this event.
+          {t("subtitle")}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -431,7 +435,7 @@ export default function EventResponsesPage() {
           <TableSkeleton />
         ) : error ? (
           <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-            <p>Failed to load submissions.</p>
+            <p>{t("loadSubmissionsFailed")}</p>
             <p className="mt-2 text-xs">
               {String((error as Error).message ?? error)}
             </p>
@@ -446,24 +450,24 @@ export default function EventResponsesPage() {
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
               >
                 <SelectTrigger className="w-37.5" size="sm">
-                  <SelectValue placeholder="Filter status" />
+                  <SelectValue placeholder={t("filterStatus")} />
                 </SelectTrigger>
                 <SelectContent align="start">
-                  <SelectItem value="all">All</SelectItem>
-                  <SelectItem value="accepted">Accepted</SelectItem>
-                  <SelectItem value="not_accepted">Not Accepted</SelectItem>
-                  <SelectItem value="accepted_invited">Accepted & Emailed</SelectItem>
-                  <SelectItem value="accepted_not_invited">Accepted & Not Emailed</SelectItem>
+                  <SelectItem value="all">{t("filters.all")}</SelectItem>
+                  <SelectItem value="accepted">{t("filters.accepted")}</SelectItem>
+                  <SelectItem value="not_accepted">{t("filters.notAccepted")}</SelectItem>
+                  <SelectItem value="accepted_invited">{t("filters.acceptedInvited")}</SelectItem>
+                  <SelectItem value="accepted_not_invited">{t("filters.acceptedNotInvited")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <div className="relative max-w-sm">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name..."
+                  placeholder={t("searchByName")}
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="pl-8"
+                  className="ps-8"
                 />
               </div>
 
@@ -486,8 +490,8 @@ export default function EventResponsesPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <Columns3 className="mr-1 h-4 w-4" />
-                    Columns
+                    <Columns3 className="me-1 h-4 w-4" />
+                    {t("columns")}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-50">
@@ -517,8 +521,8 @@ export default function EventResponsesPage() {
                 onClick={() => refetchSubmissions()}
                 disabled={submissionsLoading}
               >
-                <RefreshCw className={`mr-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
-                Refresh
+                <RefreshCw className={`me-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
+                {t("refresh")}
               </Button>
 
               <SendAcceptanceButton
@@ -537,25 +541,25 @@ export default function EventResponsesPage() {
                   {event.status === 'open' ? (
                     closeResponsesMutation.isPending ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Closing...
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        {t("closing")}
                       </>
                     ) : (
                       <>
-                        <Lock className="mr-2 h-4 w-4" />
-                        Close Responses
+                        <Lock className="me-2 h-4 w-4" />
+                        {t("closeResponses")}
                       </>
                     )
                   ) : (
                     openResponsesMutation.isPending ? (
                       <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Opening...
+                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        {t("opening")}
                       </>
                     ) : (
                       <>
-                        <Unlock className="mr-2 h-4 w-4" />
-                        Open Responses
+                        <Unlock className="me-2 h-4 w-4" />
+                        {t("openResponses")}
                       </>
                     )
                   )}
@@ -604,7 +608,7 @@ export default function EventResponsesPage() {
                         colSpan={columns.length}
                         className="h-24 text-center text-muted-foreground"
                       >
-                        No submissions found.
+                        {t("noneFound")}
                       </TableCell>
                     </TableRow>
                   )}
@@ -639,17 +643,17 @@ export default function EventResponsesPage() {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {event.status === 'open' ? 'Close Responses?' : 'Open Responses?'}
+              {event.status === 'open' ? t('closeConfirmTitle') : t('openConfirmTitle')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {event.status === 'open'
-                ? 'Are you sure you want to close responses for this event? The event status will change from "open" to "active" and no new responses will be accepted.'
-                : 'Are you sure you want to open responses for this event? The event status will change from "active" to "open" and new responses will be accepted.'}
+                ? t('closeConfirmDescription')
+                : t('openConfirmDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}>
-              Cancel
+              {tc("cancel")}
             </AlertDialogCancel>
             <Button
               onClick={event.status === 'open' ? handleCloseResponses : handleOpenResponses}
@@ -658,25 +662,25 @@ export default function EventResponsesPage() {
               {event.status === 'open' ? (
                 closeResponsesMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Closing...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {t("closing")}
                   </>
                 ) : (
                   <>
-                    <Lock className="mr-2 h-4 w-4" />
-                    Close Responses
+                    <Lock className="me-2 h-4 w-4" />
+                    {t("closeResponses")}
                   </>
                 )
               ) : (
                 openResponsesMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Opening...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {t("opening")}
                   </>
                 ) : (
                   <>
-                    <Unlock className="mr-2 h-4 w-4" />
-                    Open Responses
+                    <Unlock className="me-2 h-4 w-4" />
+                    {t("openResponses")}
                   </>
                 )
               )}

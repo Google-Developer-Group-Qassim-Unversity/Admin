@@ -13,6 +13,7 @@ import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
+import { useTranslations } from "next-intl";
 
 type SubTab = "sent" | "not-sent";
 
@@ -22,6 +23,7 @@ interface CertificateTabProps {
 }
 
 export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
+  const t = useTranslations("attendance.certificateTab");
   const [subTab, setSubTab] = React.useState<SubTab>("sent");
   const [data, setData] = React.useState<CertificateEligibility | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -122,14 +124,14 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
       if (!result.success) {
         throw new Error(result.error.message);
       }
-      toast.success("Certificate generation initiated");
+      toast.success(t("generationInitiated"));
       setActiveJob({ jobId: result.data.job_id, total: result.data.recipient_count });
       setSubTab("sent");
       startStream();
       setTimeout(() => loadData(), 3000);
     } catch (error) {
-      toast.error("Failed to send certificates", {
-        description: error instanceof Error ? error.message : "Unknown error",
+      toast.error(t("sendFailed"), {
+        description: error instanceof Error ? error.message : t("unknownError"),
       });
     } finally {
       setIsSending(false);
@@ -175,7 +177,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           }`}
         >
           <Send className="h-3.5 w-3.5" />
-          Sent {logs.length > 0 ? `(${logs.length})` : sentCount > 0 ? `(${sentCount})` : ""}
+          {t("sent", { count: logs.length > 0 ? logs.length : sentCount })}
         </button>
         <button
           onClick={() => setSubTab("not-sent")}
@@ -186,7 +188,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           }`}
         >
           <Users className="h-3.5 w-3.5" />
-          Not Sent ({notSentCount})
+          {t("notSent", { count: notSentCount })}
         </button>
       </div>
 
@@ -194,7 +196,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
         <EmailJobStatusCard
           jobId={activeJob.jobId}
           getToken={getToken}
-          itemLabel="certificate"
+          itemKey="certificate"
           totalHint={activeJob.total}
         />
       )}
@@ -205,13 +207,13 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
             <div className="flex items-center gap-2">
               <span className="text-xs text-muted-foreground">
                 {logs.length > 0
-                  ? `${logs.length} certificate${logs.length !== 1 ? "s" : ""} sent`
-                  : "No certificates sent yet"}
+                  ? t("certificatesSentCount", { count: logs.length })
+                  : t("noneSentYet")}
               </span>
               {isStreaming && (
                 <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
                   <Activity className="h-3 w-3 animate-pulse" />
-                  Live
+                  {t("live")}
                 </Badge>
               )}
             </div>
@@ -222,10 +224,10 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                 {isStreaming ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin opacity-50" />
-                    Waiting for logs...
+                    {t("waitingForLogs")}
                   </>
                 ) : (
-                  "No certificate emails sent yet."
+                  t("noCertEmailsYet")
                 )}
               </div>
             ) : (
@@ -240,7 +242,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                       <span className="text-sm font-medium">{log.member_name}</span>
                       <p className="text-xs text-muted-foreground truncate">{log.member_email}</p>
                     </div>
-                    <div className="text-right shrink-0">
+                    <div className="text-end shrink-0">
                       <div className="text-xs text-muted-foreground">{formatSentAt(log.sent_at)}</div>
                       <div className="text-[10px] text-muted-foreground/70">{log.from_address}</div>
                     </div>
@@ -257,8 +259,8 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
           <div className="flex items-center justify-between">
             <span className="text-sm text-muted-foreground">
               {isLoading
-                ? "Loading..."
-                : `${notSentCount} eligible recipient${notSentCount !== 1 ? "s" : ""}`}
+                ? t("loading")
+                : t("eligibleCount", { count: notSentCount })}
             </span>
             <div className="flex items-center gap-2">
               <Button
@@ -267,24 +269,24 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
               >
                 {isSending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {t("sending")}
                   </>
                 ) : notSentCount === 0 ? (
                   <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Certificates Sent
+                    <CheckCircle className="me-2 h-4 w-4" />
+                    {t("certificatesSent")}
                   </>
                 ) : (
                   <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Certificates ({notSentCount})
+                    <Mail className="me-2 h-4 w-4" />
+                    {t("sendCertificates", { count: notSentCount })}
                   </>
                 )}
               </Button>
               <Button variant="outline" onClick={() => setIsCustomEmailOpen(true)}>
-                <MailPlus className="mr-2 h-4 w-4" />
-                Send Custom Email
+                <MailPlus className="me-2 h-4 w-4" />
+                {t("sendCustomEmail")}
               </Button>
             </div>
           </div>
@@ -297,7 +299,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
                 </div>
               ) : notSentMembers.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground">
-                  All attendees have received certificates.
+                  {t("allReceived")}
                 </div>
               ) : (
                 <div className="divide-y">

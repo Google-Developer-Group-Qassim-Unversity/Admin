@@ -41,8 +41,12 @@ import {
   deleteCustomMemberPointDetail,
 } from "@/lib/api";
 import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 export default function EditCustomEventPage() {
+  const t = useTranslations("editCustomEvent");
+  const tc = useTranslations("createCustomEvent");
+  const tl = useTranslations("eventLayout");
   const params = useParams();
   const router = useRouter();
   const { getToken } = useAuth();
@@ -101,7 +105,7 @@ export default function EditCustomEventPage() {
       ]);
 
       if (!eventDetailsRes.success) {
-        setError(eventDetailsRes.error.message || "Failed to load event details.");
+        setError(eventDetailsRes.error.message || t("loadFailed"));
         setIsLoading(false);
         return;
       }
@@ -157,7 +161,7 @@ if (actionsRes.success) {
       setIsLoading(false);
     }
     fetchData();
-  }, [eventId, getToken]);
+  }, [eventId, getToken, t]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
     if (!eventDetails) return;
@@ -216,9 +220,9 @@ if (actionsRes.success) {
         if (!eventUpdateRes.success) {
           if (shouldContactSupport(eventUpdateRes.error)) {
             toast.error(
-              "Failed to update event info. Please contact support.",
+              t("updateEventInfoFailedContactSupport"),
               {
-                description: `Error: ${eventUpdateRes.error.message}`,
+                description: tc("errorDetail", { message: eventUpdateRes.error.message }),
                 duration: 10000,
               }
             );
@@ -258,7 +262,7 @@ if (actionsRes.success) {
         const firstError = failedDeletes[0];
         if (!firstError.success) {
           toast.error(
-            `Failed to delete ${failedDeletes.length} point detail(s).`,
+            t("deleteFailedCount", { count: failedDeletes.length }),
             {
               description: firstError.error.message,
             }
@@ -323,7 +327,7 @@ if (actionsRes.success) {
         const firstError = failedUpdates[0];
         if (!firstError.success) {
           toast.error(
-            `Failed to update ${failedUpdates.length} point detail(s).`,
+            t("updateFailedCount", { count: failedUpdates.length }),
             {
               description: firstError.error.message,
             }
@@ -359,9 +363,9 @@ if (actionsRes.success) {
         if (!createRes.success) {
           if (shouldContactSupport(createRes.error)) {
             toast.error(
-              "Failed to create new department point details. Please contact support.",
+              t("createDeptFailedContactSupport"),
               {
-                description: `Error: ${createRes.error.message}`,
+                description: tc("errorDetail", { message: createRes.error.message }),
                 duration: 10000,
               }
             );
@@ -396,9 +400,9 @@ if (actionsRes.success) {
         if (!createRes.success) {
           if (shouldContactSupport(createRes.error)) {
             toast.error(
-              "Failed to create new member point details. Please contact support.",
+              t("createMemberFailedContactSupport"),
               {
-                description: `Error: ${createRes.error.message}`,
+                description: tc("errorDetail", { message: createRes.error.message }),
                 duration: 10000,
               }
             );
@@ -411,11 +415,11 @@ if (actionsRes.success) {
       }
 
       if (failedUpdates.length === 0) {
-        toast.success("Event points updated successfully!");
+        toast.success(t("updatedSuccess"));
       }
       router.push("/points");
     } catch {
-      toast.error("An unexpected error occurred. Please contact support.");
+      toast.error(tc("unexpectedError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -463,12 +467,12 @@ if (actionsRes.success) {
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/points" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Points
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+            {tl("backToPoints")}
           </Link>
         </Button>
         <div className="text-center py-12 text-destructive">
-          Error: {error}
+          {tl("errorPrefix", { message: error })}
         </div>
       </div>
     );
@@ -479,12 +483,12 @@ if (actionsRes.success) {
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href="/points" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Points
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+            {tl("backToPoints")}
           </Link>
         </Button>
         <div className="text-center py-12 text-muted-foreground">
-          Event not found
+          {tl("eventNotFound")}
         </div>
       </div>
     );
@@ -497,8 +501,8 @@ if (actionsRes.success) {
           <div className="mb-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/points" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Points
+                <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+                {tl("backToPoints")}
               </Link>
             </Button>
           </div>
@@ -506,12 +510,12 @@ if (actionsRes.success) {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <Trophy className="h-5 w-5 text-primary" />
             </div>
-            {isFullEvent ? "Edit Points for Full Event" : "Edit Custom Event"}
+            {isFullEvent ? t("titleFull") : t("titleCustom")}
           </CardTitle>
           <CardDescription>
             {isFullEvent 
-              ? "Edit department and member point assignments for this event"
-              : "Edit event details and department/member point assignments"}
+              ? t("descriptionFull")
+              : t("descriptionCustom")}
           </CardDescription>
         </CardHeader>
         <CardContent>

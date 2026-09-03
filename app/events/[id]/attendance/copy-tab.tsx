@@ -12,6 +12,7 @@ import { AccessDenied } from "@/components/ui/access-denied";
 import { useHasPermission } from "@/hooks/use-rbac";
 
 import type { CopyTabProps } from "./types";
+import { useTranslations } from "next-intl";
 
 export function CopyTab({
   dayCount,
@@ -21,6 +22,7 @@ export function CopyTab({
   onTargetDayChange,
   preview,
 }: CopyTabProps) {
+  const t = useTranslations("attendance.copyTab");
   const hasAccess = useHasPermission(["super_admin"]);
 
   const sourceInt = parseInt(sourceDay, 10);
@@ -36,8 +38,8 @@ export function CopyTab({
   if (dayCount <= 1) {
     return (
       <AccessDenied
-        title="Multi-day Event Required"
-        description="Copying attendance requires an event with at least 2 days."
+        title={t("multiDayTitle")}
+        description={t("multiDayDescription")}
       />
     );
   }
@@ -45,8 +47,8 @@ export function CopyTab({
   if (!hasAccess) {
     return (
       <AccessDenied
-        title="Super Admin Access Required"
-        description="Only super admins can copy attendance between days."
+        title={t("superAdminTitle")}
+        description={t("superAdminDescription")}
       />
     );
   }
@@ -55,7 +57,7 @@ export function CopyTab({
     <div className="space-y-6 py-4">
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium w-24">Source Day:</span>
+          <span className="text-sm font-medium w-24">{t("sourceDay")}</span>
           <Select value={sourceDay} onValueChange={onSourceDayChange}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
@@ -63,7 +65,7 @@ export function CopyTab({
             <SelectContent>
               {allDays.map((day) => (
                 <SelectItem key={day} value={String(day)}>
-                  Day {day}
+                  {t("day", { number: day })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -71,7 +73,7 @@ export function CopyTab({
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium w-24">Target Day:</span>
+          <span className="text-sm font-medium w-24">{t("targetDay")}</span>
           <Select value={targetDay} onValueChange={onTargetDayChange}>
             <SelectTrigger className="w-[140px]">
               <SelectValue />
@@ -79,7 +81,7 @@ export function CopyTab({
             <SelectContent>
               {remainingDays.map((day) => (
                 <SelectItem key={day} value={String(day)}>
-                  Day {day}
+                  {t("day", { number: day })}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -88,12 +90,12 @@ export function CopyTab({
       </div>
 
       <div className="border rounded-lg p-4 bg-muted/30">
-        <h4 className="text-sm font-medium mb-2">Preview</h4>
+        <h4 className="text-sm font-medium mb-2">{t("preview")}</h4>
         <p className="text-sm text-muted-foreground">
-          {preview.sourceCount} members attended Day {sourceDay}
+          {t("previewCount", { count: preview.sourceCount, day: sourceDay })}
         </p>
         <p className="text-xs text-muted-foreground mt-1">
-          Members who already have attendance on the target day will be skipped.
+          {t("skipHint")}
         </p>
       </div>
     </div>

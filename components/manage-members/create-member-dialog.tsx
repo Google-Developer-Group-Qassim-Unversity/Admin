@@ -25,6 +25,7 @@ import {
 
 import { useCreateMemberManual } from "@/hooks/use-members";
 import type { Gender, Member, ManualMemberCreateRequest } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface CreateMemberDialogProps {
   open: boolean;
@@ -34,11 +35,6 @@ interface CreateMemberDialogProps {
   getToken: () => Promise<string | null>;
 }
 
-const GENDER_OPTIONS: { value: Gender; label: string }[] = [
-  { value: "Male", label: "Male" },
-  { value: "Female", label: "Female" },
-];
-
 export function CreateMemberDialog({
   open,
   onOpenChange,
@@ -46,7 +42,15 @@ export function CreateMemberDialog({
   onCreatedMember,
   getToken,
 }: CreateMemberDialogProps) {
+  const t = useTranslations("createMember");
+  const tf = useTranslations("common.fields");
+  const tc = useTranslations("common.actions");
   const createMutation = useCreateMemberManual(getToken);
+
+  const GENDER_OPTIONS: { value: Gender; label: string }[] = [
+    { value: "Male", label: tf("male") },
+    { value: "Female", label: tf("female") },
+  ];
 
   const [name, setName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -66,12 +70,12 @@ export function CreateMemberDialog({
 
   const validate = React.useCallback((): Record<string, string> => {
     const newErrors: Record<string, string> = {};
-    if (!name.trim()) newErrors.name = "Name is required";
-    if (!email.trim()) newErrors.email = "Email is required";
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = "Invalid email format";
-    if (uniId.trim() && !/^\d{9}$/.test(uniId.trim())) newErrors.uniId = "University ID must be 9 digits";
+    if (!name.trim()) newErrors.name = t("nameRequired");
+    if (!email.trim()) newErrors.email = t("emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) newErrors.email = t("invalidEmail");
+    if (uniId.trim() && !/^\d{9}$/.test(uniId.trim())) newErrors.uniId = t("uniIdDigits");
     return newErrors;
-  }, [name, email, uniId]);
+  }, [name, email, uniId, t]);
 
   const handleSubmit = React.useCallback(
     (e: React.FormEvent) => {
@@ -91,11 +95,11 @@ export function CreateMemberDialog({
       createMutation.mutate(data, {
         onSuccess: (result) => {
           if (result.already_exists) {
-            toast.warning(`Member with uni ID ${uniId} already exists`, {
-              description: "The existing member's information has been updated.",
+            toast.warning(t("alreadyExists", { uniId }), {
+              description: t("alreadyExistsDescription"),
             });
           } else {
-            toast.success(`Member ${name} created successfully`);
+            toast.success(t("createdSuccess", { name }));
           }
           resetForm();
           onOpenChange(false);
@@ -103,13 +107,13 @@ export function CreateMemberDialog({
           onSuccess?.();
         },
         onError: (error) => {
-          toast.error("Failed to create member", {
+          toast.error(t("createFailed"), {
             description: error.message,
           });
         },
       });
     },
-    [name, email, phoneNumber, uniId, gender, createMutation, resetForm, onOpenChange, onSuccess, validate]
+    [name, email, phoneNumber, uniId, gender, createMutation, resetForm, onOpenChange, onSuccess, validate, t]
   );
 
   return (
@@ -122,15 +126,15 @@ export function CreateMemberDialog({
     >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Create Member</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Add a new member manually. They will be marked as unauthenticated until they register through the system.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Name *</Label>
+            <Label htmlFor="name">{tf("name")} *</Label>
             <Input
               id="name"
               value={name}
@@ -138,13 +142,13 @@ export function CreateMemberDialog({
                 setName(e.target.value);
                 if (errors.name) setErrors((prev) => ({ ...prev, name: "" }));
               }}
-              placeholder="Full name"
+              placeholder={t("namePlaceholder")}
             />
             {errors.name && <p className="text-sm text-destructive">{errors.name}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="email">Email *</Label>
+            <Label htmlFor="email">{tf("email")} *</Label>
             <Input
               id="email"
               type="email"
@@ -159,17 +163,17 @@ export function CreateMemberDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="phone">Phone Number</Label>
+            <Label htmlFor="phone">{t("phoneNumber")}</Label>
             <Input
               id="phone"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
-              placeholder="05XXXXXXXX (optional)"
+              placeholder={t("phonePlaceholder")}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="uniId">University ID</Label>
+            <Label htmlFor="uniId">{t("universityId")}</Label>
             <Input
               id="uniId"
               value={uniId}
@@ -177,13 +181,13 @@ export function CreateMemberDialog({
                 setUniId(e.target.value);
                 if (errors.uniId) setErrors((prev) => ({ ...prev, uniId: "" }));
               }}
-              placeholder="9-digit university ID (optional)"
+              placeholder={t("uniIdPlaceholder")}
             />
             {errors.uniId && <p className="text-sm text-destructive">{errors.uniId}</p>}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="gender">Gender *</Label>
+            <Label htmlFor="gender">{tf("gender")} *</Label>
             <Select value={gender} onValueChange={(v) => setGender(v as Gender)}>
               <SelectTrigger id="gender">
                 <SelectValue />
@@ -208,16 +212,16 @@ export function CreateMemberDialog({
               }}
               disabled={createMutation.isPending}
             >
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={createMutation.isPending}>
               {createMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {t("creating")}
                 </>
               ) : (
-                "Create Member"
+                t("createMember")
               )}
             </Button>
           </DialogFooter>

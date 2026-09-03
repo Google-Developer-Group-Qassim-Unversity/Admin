@@ -52,6 +52,7 @@ import { useSendCustomEmail, useSendCustomEmailTest } from "@/hooks/use-custom-e
 import { MemberSearchDialog } from "@/app/manage-emails/member-search-dialog";
 import type { RecipientRow } from "@/app/manage-emails/types";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 const MAX_ATTACHMENT_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENT_SIZE = 15 * 1024 * 1024;
@@ -122,6 +123,10 @@ interface RecipientRowsEditorProps {
 }
 
 function RecipientRowsEditor({ recipients, onChange, disabled, compact }: RecipientRowsEditorProps) {
+  const t = useTranslations("manageEmails.directEmail");
+  const trc = useTranslations("recipientList");
+  const tf = useTranslations("common.fields");
+  const tsc = useTranslations("manageEmails.sendCertificates");
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
   const handleRowChange = (index: number, field: keyof RecipientRow, value: string) => {
@@ -149,7 +154,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
         member_id: m.id,
       })),
     ]);
-    toast.success(`Added ${members.length} member${members.length !== 1 ? "s" : ""}`);
+    toast.success(trc("addedMembers", { count: members.length }));
   };
 
   return (
@@ -163,7 +168,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
           disabled={disabled}
           className="h-7 text-xs gap-1.5"
         >
-          <UserPlus className="h-3.5 w-3.5" /> Pick Members
+          <UserPlus className="h-3.5 w-3.5" /> {t("pickMembers")}
         </Button>
         <Button
           type="button"
@@ -173,10 +178,10 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
           disabled={disabled}
           className="h-7 text-xs gap-1.5"
         >
-          <Plus className="h-3.5 w-3.5" /> Add Row
+          <Plus className="h-3.5 w-3.5" /> {tsc("addRow")}
         </Button>
       </div>
-      <div className={cn("space-y-2 overflow-y-auto pr-1", compact ? "max-h-40" : "max-h-56")}>
+      <div className={cn("space-y-2 overflow-y-auto pe-1", compact ? "max-h-40" : "max-h-56")}>
         {recipients.map((recipient, index) => (
           <div
             key={index}
@@ -189,7 +194,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 size="icon"
                 onClick={() => removeRow(index)}
                 disabled={disabled}
-                className="absolute -right-2 -top-2 h-5 w-5 rounded-full bg-background border shadow-sm hover:text-destructive"
+                className="absolute -end-2 -top-2 h-5 w-5 rounded-full bg-background border shadow-sm hover:text-destructive"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -198,7 +203,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
               <Input
                 value={recipient.name}
                 onChange={(e) => handleRowChange(index, "name", e.target.value)}
-                placeholder="Full Name"
+                placeholder={tsc("fullNamePlaceholder")}
                 disabled={disabled}
                 className="h-8 text-xs bg-background"
               />
@@ -208,7 +213,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 type="email"
                 value={recipient.email}
                 onChange={(e) => handleRowChange(index, "email", e.target.value)}
-                placeholder="email@example.com"
+                placeholder={t("emailPlaceholder")}
                 disabled={disabled}
                 className="h-8 text-xs bg-background"
               />
@@ -223,8 +228,8 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Male">Male</SelectItem>
-                  <SelectItem value="Female">Female</SelectItem>
+                  <SelectItem value="Male">{tf("male")}</SelectItem>
+                  <SelectItem value="Female">{tf("female")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -265,6 +270,9 @@ export function SendCustomEmailDialog({
   recipients,
   onSent,
 }: SendCustomEmailDialogProps) {
+  const t = useTranslations("sendCustomEmail");
+  const td = useTranslations("manageEmails.directEmail");
+  const tc = useTranslations("common.actions");
   const [subject, setSubject] = React.useState("");
   const [testRecipients, setTestRecipients] = React.useState<RecipientRow[]>([{ ...BLANK_ROW }]);
   const [attachmentEntries, setAttachmentEntries] = React.useState<AttachmentEntry[]>([]);
@@ -291,7 +299,7 @@ export function SendCustomEmailDialog({
     async function loadTemplate() {
       try {
         const res = await fetch("/custom-email-template.html");
-        if (!res.ok) throw new Error("Failed to load template");
+        if (!res.ok) throw new Error(t("loadTemplateFailed"));
         const html = await res.text();
         const { styleContent, bodyContent } = extractTemplateParts(html);
         setTemplateStyles(styleContent);
@@ -299,14 +307,14 @@ export function SendCustomEmailDialog({
         setTemplateLoaded(true);
         setTemplateError(null);
       } catch (err) {
-        setTemplateError(err instanceof Error ? err.message : "Failed to load template");
+        setTemplateError(err instanceof Error ? err.message : t("loadTemplateFailed"));
       }
     }
 
     if (open && !templateLoaded) {
       loadTemplate();
     }
-  }, [open, templateLoaded]);
+  }, [open, templateLoaded, t]);
 
   const handleOpenChange = (newOpen: boolean) => {
     if (isBusy && !newOpen) return;
@@ -341,7 +349,7 @@ export function SendCustomEmailDialog({
         )
       );
       if (!result.success) {
-        toast.error(`Failed to upload ${file.name}: ${result.error.message}`);
+        toast.error(t("uploadFailed", { file: file.name, error: result.error.message }));
       }
     }
   };
@@ -395,7 +403,7 @@ export function SendCustomEmailDialog({
       onSent?.(data.job_id, data.recipient_count);
       handleOpenChange(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send custom email");
+      toast.error(err instanceof Error ? err.message : t("sendFailed"));
     }
   };
 
@@ -415,9 +423,9 @@ export function SendCustomEmailDialog({
           language: "ar",
         },
       });
-      toast.success(`Sent test email to ${data.sent_count} recipient${data.sent_count !== 1 ? "s" : ""}`);
+      toast.success(t("testSent", { count: data.sent_count }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send test email");
+      toast.error(err instanceof Error ? err.message : t("testFailed"));
     }
   };
 
@@ -425,18 +433,18 @@ export function SendCustomEmailDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent key={dialogKey} className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Send Custom Email</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Compose a personalized email for hand-picked recipients. Use{" "}
-            <code className="text-xs">[Name]</code> and <code className="text-xs">[Event Name]</code>{" "}
-            in the subject or body to personalize each recipient&apos;s email.
+            {t.rich("description", {
+              code: (chunks) => <code className="text-xs">{chunks}</code>,
+            })}
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex gap-6 flex-1 min-h-0">
           <div className="flex-shrink-0">
             <div className="space-y-2">
-              <Label>Email Body</Label>
+              <Label>{t("emailBody")}</Label>
               {templateError ? (
                 <div className="p-4 border rounded-md bg-destructive/10 text-destructive">{templateError}</div>
               ) : (
@@ -465,10 +473,10 @@ export function SendCustomEmailDialog({
 
           <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
           <div className="space-y-2">
-            <Label htmlFor="custom-email-subject">Subject</Label>
+            <Label htmlFor="custom-email-subject">{td("subject")}</Label>
             <Input
               id="custom-email-subject"
-              placeholder="Enter email subject..."
+              placeholder={td("subjectPlaceholder")}
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
               disabled={isBusy}
@@ -476,10 +484,10 @@ export function SendCustomEmailDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Recipients ({recipients.length})</Label>
+            <Label>{t("recipients", { count: recipients.length })}</Label>
             <div className="rounded-lg border max-h-48 overflow-y-auto divide-y">
               {recipients.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">No eligible recipients.</div>
+                <div className="p-4 text-sm text-muted-foreground text-center">{t("noEligibleRecipients")}</div>
               ) : (
                 recipients.map((r, index) => (
                   <div key={r.member_id ?? index} className="flex items-center gap-3 px-3 py-2">
@@ -492,16 +500,14 @@ export function SendCustomEmailDialog({
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              These are the event&apos;s eligible, not-yet-sent members and can&apos;t be edited here — use Test Mode
-              below to preview with different people.
+              {t("recipientsHint")}
             </p>
           </div>
 
           <div className="space-y-2">
-            <Label>Extra Attachments</Label>
+            <Label>{t("extraAttachments")}</Label>
             <p className="text-xs text-muted-foreground">
-              The certificate is always attached automatically. Add extra files here (optional) — e.g. a flyer or ID
-              card.
+              {t("extraAttachmentsHint")}
             </p>
             <FileUpload
               multiple
@@ -516,10 +522,10 @@ export function SendCustomEmailDialog({
               <FileUploadDropzone className="min-h-20 flex-col">
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Drag &amp; drop images or PDFs, or click to browse
+                  {td("dropzoneHint")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Up to {MAX_ATTACHMENT_FILES} files, {formatSize(MAX_ATTACHMENT_FILE_SIZE)} each
+                  {td("dropzoneLimits", { max: MAX_ATTACHMENT_FILES, size: formatSize(MAX_ATTACHMENT_FILE_SIZE) })}
                 </p>
               </FileUploadDropzone>
               <FileUploadList>
@@ -545,8 +551,7 @@ export function SendCustomEmailDialog({
             </FileUpload>
             {attachmentSizeExceeded && (
               <p className="text-xs text-destructive">
-                Total attachment size ({formatSize(totalAttachmentSize)}) exceeds the{" "}
-                {formatSize(MAX_TOTAL_ATTACHMENT_SIZE)} limit. Remove a file to continue.
+                {t("sizeExceeded", { total: formatSize(totalAttachmentSize), limit: formatSize(MAX_TOTAL_ATTACHMENT_SIZE) })}
               </p>
             )}
           </div>
@@ -554,13 +559,13 @@ export function SendCustomEmailDialog({
           <Collapsible open={testSectionOpen} onOpenChange={setTestSectionOpen}>
             <CollapsibleTrigger asChild>
               <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-                <span>Test Mode</span>
+                <span>{t("testMode")}</span>
                 {testSectionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
               <p className="text-xs text-muted-foreground">
-                Send a personalized preview to these recipients without logging it as a real send.
+                {t("testModeHint")}
               </p>
               <RecipientRowsEditor
                 recipients={testRecipients}
@@ -577,13 +582,13 @@ export function SendCustomEmailDialog({
               >
                 {testMutation.isPending ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Sending Test...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {t("sendingTest")}
                   </>
                 ) : (
                   <>
-                    <Mail className="mr-2 h-4 w-4" />
-                    Send Test ({validTestRecipients.length})
+                    <Mail className="me-2 h-4 w-4" />
+                    {t("sendTest", { count: validTestRecipients.length })}
                   </>
                 )}
               </Button>
@@ -592,18 +597,18 @@ export function SendCustomEmailDialog({
 
           <div className="flex justify-end gap-2 pt-2 border-t">
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isBusy}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
               {sendMutation.isPending ? (
                 <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Sending...
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {t("sending")}
                 </>
               ) : (
                 <>
-                  <Send className="mr-2 h-4 w-4" />
-                  Send ({validRecipients.length} recipient{validRecipients.length !== 1 ? "s" : ""})
+                  <Send className="me-2 h-4 w-4" />
+                  {t("send", { count: validRecipients.length })}
                 </>
               )}
             </Button>

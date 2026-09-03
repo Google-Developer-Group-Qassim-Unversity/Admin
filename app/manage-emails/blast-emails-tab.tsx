@@ -89,14 +89,17 @@ import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { DEFAULT_BODY, DEFAULT_STYLES, extractTemplateParts, formatSize } from "./email-composer-utils";
-
-const ORDER_LABELS: Record<BlastOrderBy, string> = {
-  activity: "most recently active",
-  alphabetical: "alphabetical order",
-};
+import { useTranslations } from "next-intl";
 
 export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
+  const t = useTranslations("manageEmails.blast");
+  const tDirect = useTranslations("manageEmails.directEmail");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
+  const ORDER_LABELS: Record<BlastOrderBy, string> = {
+    activity: t("orderLabels.activity"),
+    alphabetical: t("orderLabels.alphabetical"),
+  };
 
   const [subject, setSubject] = React.useState("");
   const [previewText, setPreviewText] = React.useState("");
@@ -122,7 +125,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
     initialStyles: DEFAULT_STYLES,
     trackStyles: true,
   });
-  const recipientList = useRecipientList({ duplicateMessage: "That email is already in the guaranteed list" });
+  const recipientList = useRecipientList({ duplicateMessage: t("guaranteedDuplicate") });
   const attachments = useAttachmentUploads(getToken, MAX_TOTAL_ATTACHMENT_SIZE);
 
   const eligibleCountQuery = useBlastEligibleCount(provider, getToken);
@@ -182,10 +185,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         preview_text: previewText.trim() || undefined,
       });
       setSelectedTemplateId(template.id);
-      toast.success("Template saved");
+      toast.success(t("templateSaved"));
       setSaveTemplateDialogOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to save template");
+      toast.error(err instanceof Error ? err.message : t("templateSaveFailed"));
     }
   };
 
@@ -203,10 +206,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           preview_text: previewText.trim() || undefined,
         },
       });
-      toast.success("Template updated");
+      toast.success(t("templateUpdated"));
       setSaveTemplateDialogOpen(false);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to update template");
+      toast.error(err instanceof Error ? err.message : t("templateUpdateFailed"));
     }
   };
 
@@ -217,9 +220,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       if (selectedTemplateId === deleteTarget.id) {
         setSelectedTemplateId(null);
       }
-      toast.success("Template deleted");
+      toast.success(t("templateDeleted"));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete template");
+      toast.error(err instanceof Error ? err.message : t("templateDeleteFailed"));
     } finally {
       setDeleteTarget(null);
     }
@@ -248,9 +251,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         attachments: attachments.readyAttachments,
         provider,
       });
-      toast.success(`Sent test email to ${data.sent_count} recipient${data.sent_count !== 1 ? "s" : ""}`);
+      toast.success(t("testSent", { count: data.sent_count }));
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send test blast");
+      toast.error(err instanceof Error ? err.message : t("testFailed"));
     }
   };
 
@@ -281,7 +284,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       setSentResult(data);
       toast.success(data.message);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Failed to send blast");
+      toast.error(err instanceof Error ? err.message : t("sendFailed"));
     }
   };
 
@@ -293,19 +296,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <Mail className="h-4 w-4 text-primary" />
-                Compose
+                {tDirect("compose")}
               </CardTitle>
               <CardDescription className="text-xs">
-                Edit the email body directly, then optionally save it as a reusable template.
+                {t("composeHint")}
               </CardDescription>
             </div>
             <div className="flex items-center gap-2">
               <Select value={selectedTemplateId ? String(selectedTemplateId) : "blank"} onValueChange={handleSelectTemplate}>
                 <SelectTrigger className="h-8 w-[220px] text-xs">
-                  <SelectValue placeholder="Start from template..." />
+                  <SelectValue placeholder={t("startFromTemplate")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="blank">Blank</SelectItem>
+                  <SelectItem value="blank">{t("blank")}</SelectItem>
                   {templates.map((t) => (
                     <SelectItem key={t.id} value={String(t.id)}>
                       {t.name}
@@ -325,7 +328,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 </Button>
               )}
               <Button type="button" variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={openSaveDialog}>
-                <Save className="h-3.5 w-3.5" /> Save Template
+                <Save className="h-3.5 w-3.5" /> {t("saveTemplate")}
               </Button>
             </div>
           </div>
@@ -334,7 +337,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <div className="flex flex-col lg:flex-row gap-6">
             <div className="flex-shrink-0">
               <div className="mb-2 flex items-center justify-between">
-                <Label>Email Content</Label>
+                <Label>{tDirect("emailContent")}</Label>
                 <div className="inline-flex rounded-md border p-0.5">
                   <button
                     type="button"
@@ -346,7 +349,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Rendered
+                    {tDirect("rendered")}
                   </button>
                   <button
                     type="button"
@@ -358,7 +361,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         : "text-muted-foreground hover:text-foreground"
                     )}
                   >
-                    Raw HTML
+                    {tDirect("rawHtml")}
                   </button>
                 </div>
               </div>
@@ -387,20 +390,20 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
             <div className="flex-1 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="blast-subject">Subject</Label>
+                <Label htmlFor="blast-subject">{tDirect("subject")}</Label>
                 <Input
                   id="blast-subject"
-                  placeholder="Enter email subject..."
+                  placeholder={tDirect("subjectPlaceholder")}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
                   disabled={isBusy}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="blast-preview-text">Preview Text (optional)</Label>
+                <Label htmlFor="blast-preview-text">{t("previewText")}</Label>
                 <Input
                   id="blast-preview-text"
-                  placeholder="Shown as a preview snippet in inboxes..."
+                  placeholder={t("previewTextPlaceholder")}
                   value={previewText}
                   onChange={(e) => setPreviewText(e.target.value)}
                   disabled={isBusy}
@@ -416,10 +419,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <SlidersHorizontal className="h-4 w-4 text-primary" />
-              Audience
+              {t("audience")}
             </CardTitle>
             <CardDescription className="text-xs">
-              Choose how many members to reach and in what order they&apos;re selected.
+              {t("audienceHint")}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -427,7 +430,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label>Recipient count</Label>
+                <Label>{t("recipientCount")}</Label>
                 <Input
                   type="number"
                   min={0}
@@ -450,21 +453,20 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               </div>
               {remainingCapacity !== null && remainingCapacity < eligibleCount && (
                 <p className="text-[11px] text-muted-foreground">
-                  Capped at {remainingCapacity} remaining today on the Google addresses — switch to AWS SES for the
-                  full {eligibleCount} eligible.
+                  {t("cappedHint", { remaining: remainingCapacity, eligible: eligibleCount })}
                 </p>
               )}
             </div>
 
             <div className="space-y-2">
-              <Label>Order</Label>
+              <Label>{t("order")}</Label>
               <Select value={orderBy} onValueChange={(v) => setOrderBy(v as BlastOrderBy)} disabled={isBusy}>
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="activity">Most recently active</SelectItem>
-                  <SelectItem value="alphabetical">Alphabetical (A-Z)</SelectItem>
+                  <SelectItem value="activity">{t("mostRecentlyActive")}</SelectItem>
+                  <SelectItem value="alphabetical">{t("alphabeticalAz")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -472,7 +474,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <Label>
-                  Guaranteed Recipients {recipientList.recipients.length > 0 && `(${recipientList.recipients.length})`}
+                  {t("guaranteedRecipients", { count: recipientList.recipients.length > 0 ? `(${recipientList.recipients.length})` : "" })}
                 </Label>
                 <Button
                   type="button"
@@ -482,15 +484,15 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   onClick={() => setMemberDialogOpen(true)}
                   disabled={isBusy}
                 >
-                  <UserPlus className="h-3.5 w-3.5" /> Pick Members
+                  <UserPlus className="h-3.5 w-3.5" /> {tDirect("pickMembers")}
                 </Button>
               </div>
               <p className="text-xs text-muted-foreground">
-                These always receive the blast, on top of the {count} selected above.
+                {t("guaranteedHint", { count })}
               </p>
               <div className="flex gap-2">
                 <Input
-                  placeholder="Name (optional)"
+                  placeholder={tDirect("namePlaceholder")}
                   value={recipientList.manualName}
                   onChange={(e) => recipientList.setManualName(e.target.value)}
                   disabled={isBusy}
@@ -498,7 +500,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 />
                 <Input
                   type="email"
-                  placeholder="email@example.com"
+                  placeholder={tDirect("emailPlaceholder")}
                   value={recipientList.manualEmail}
                   onChange={(e) => recipientList.setManualEmail(e.target.value)}
                   disabled={isBusy}
@@ -540,8 +542,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </div>
 
             <p className="text-xs font-medium text-muted-foreground">
-              Up to <span className="text-foreground font-bold">{totalRecipients}</span> recipients — {count} by{" "}
-              {ORDER_LABELS[orderBy]} + {recipientList.recipients.length} guaranteed.
+              {t("totalRecipients", {
+                total: totalRecipients,
+                count,
+                order: ORDER_LABELS[orderBy],
+                guaranteed: recipientList.recipients.length,
+              })}
             </p>
           </CardContent>
         </Card>
@@ -550,9 +556,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
               <Paperclip className="h-4 w-4 text-primary" />
-              Attachments
+              {tDirect("attachments")}
             </CardTitle>
-            <CardDescription className="text-xs">Optional files included with every send.</CardDescription>
+            <CardDescription className="text-xs">{t("attachmentsHint")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-2">
             <FileUpload
@@ -567,9 +573,9 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             >
               <FileUploadDropzone className="min-h-20 flex-col">
                 <Upload className="h-6 w-6 text-muted-foreground" />
-                <p className="mt-1 text-xs text-muted-foreground">Drag &amp; drop images or PDFs, or click to browse</p>
+                <p className="mt-1 text-xs text-muted-foreground">{tDirect("dropzoneHint")}</p>
                 <p className="text-xs text-muted-foreground">
-                  Up to {MAX_ATTACHMENT_FILES} files, {formatSize(MAX_ATTACHMENT_FILE_SIZE)} each
+                  {tDirect("dropzoneLimits", { max: MAX_ATTACHMENT_FILES, size: formatSize(MAX_ATTACHMENT_FILE_SIZE) })}
                 </p>
               </FileUploadDropzone>
               <FileUploadList>
@@ -595,8 +601,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </FileUpload>
             {attachments.attachmentSizeExceeded && (
               <p className="text-xs text-destructive">
-                Total attachment size ({formatSize(attachments.totalAttachmentSize)}) exceeds the{" "}
-                {formatSize(MAX_TOTAL_ATTACHMENT_SIZE)} limit. Remove a file to continue.
+                {tDirect("sizeExceeded", {
+                  total: formatSize(attachments.totalAttachmentSize),
+                  limit: formatSize(MAX_TOTAL_ATTACHMENT_SIZE),
+                })}
               </p>
             )}
           </CardContent>
@@ -606,16 +614,16 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <Collapsible open={testSectionOpen} onOpenChange={setTestSectionOpen}>
         <CollapsibleTrigger asChild>
           <Button type="button" variant="outline" size="sm" className="w-full justify-between">
-            <span>Test Mode</span>
+            <span>{t("testMode")}</span>
             {testSectionOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
         </CollapsibleTrigger>
         <CollapsibleContent className="mt-3 space-y-3">
           <div className="space-y-2">
-            <Label htmlFor="blast-test-emails">Test Email Addresses</Label>
+            <Label htmlFor="blast-test-emails">{t("testEmailAddresses")}</Label>
             <Textarea
               id="blast-test-emails"
-              placeholder="Enter comma-separated emails (e.g., test1@example.com, test2@example.com)"
+              placeholder={t("testEmailsPlaceholder")}
               value={testEmails}
               onChange={(e) => setTestEmails(e.target.value)}
               disabled={isBusy}
@@ -623,20 +631,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               className="resize-none"
             />
             <p className="text-xs text-muted-foreground">
-              Sends the current draft to these addresses only — the audience settings above are ignored and nothing
-              is logged as a real send.
+              {t("testModeHint")}
             </p>
           </div>
           <Button type="button" variant="secondary" onClick={handleTestSubmit} disabled={isTestDisabled} className="w-full">
             {testMutation.isPending ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Sending Test...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t("sendingTest")}
               </>
             ) : (
               <>
-                <Mail className="mr-2 h-4 w-4" />
-                Send Test ({testEmailList.length})
+                <Mail className="me-2 h-4 w-4" />
+                {t("sendTest", { count: testEmailList.length })}
               </>
             )}
           </Button>
@@ -648,20 +655,24 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <AlertDialogTrigger asChild>
             <Button type="button" disabled={isSendDisabled} className="h-9 gap-2 shadow-sm">
               {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-              Send Blast{totalRecipients > 0 ? ` (${totalRecipients})` : ""}
+              {t("sendBlast", { count: totalRecipients })}
             </Button>
           </AlertDialogTrigger>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Send this blast?</AlertDialogTitle>
+              <AlertDialogTitle>{t("confirmTitle")}</AlertDialogTitle>
               <AlertDialogDescription>
-                You&apos;re about to email up to <strong>{totalRecipients}</strong> people ({count} by{" "}
-                {ORDER_LABELS[orderBy]} + {recipientList.recipients.length} guaranteed). This can&apos;t be undone.
+                {t("confirmDescription", {
+                  total: totalRecipients,
+                  count,
+                  order: ORDER_LABELS[orderBy],
+                  guaranteed: recipientList.recipients.length,
+                })}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmSend}>Send</AlertDialogAction>
+              <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmSend}>{t("send")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -671,9 +682,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         <EmailJobStatusCard
           jobId={sentResult.job_id}
           getToken={getToken}
-          itemLabel="email"
+          itemKey="email"
           totalHint={sentResult.recipient_count}
-          description={`${sentResult.algorithmic_count} selected by ordering + ${sentResult.guaranteed_count} guaranteed. Sending in the background — a log entry will appear in Email Logs once it completes (one per email address used, if it had to split across both).`}
+          description={t("jobDescription", {
+            algo: sentResult.algorithmic_count,
+            guaranteed: sentResult.guaranteed_count,
+          })}
           onGoToLogs={onGoToLogs}
         />
       )}
@@ -683,16 +697,16 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <Dialog open={saveTemplateDialogOpen} onOpenChange={setSaveTemplateDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Save Template</DialogTitle>
-            <DialogDescription>Saves the subject and email body. Attachments are not included.</DialogDescription>
+            <DialogTitle>{t("saveTemplate")}</DialogTitle>
+            <DialogDescription>{t("saveTemplateDescription")}</DialogDescription>
           </DialogHeader>
           <div className="space-y-2">
-            <Label htmlFor="template-name">Template Name</Label>
+            <Label htmlFor="template-name">{t("templateName")}</Label>
             <Input
               id="template-name"
               value={templateNameDraft}
               onChange={(e) => setTemplateNameDraft(e.target.value)}
-              placeholder="e.g. Monthly Newsletter"
+              placeholder={t("templateNamePlaceholder")}
             />
           </div>
           <DialogFooter>
@@ -702,13 +716,13 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 onClick={handleUpdateExisting}
                 disabled={!templateNameDraft.trim() || updateTemplateMutation.isPending}
               >
-                {updateTemplateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Update Existing
+                {updateTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                {t("updateExisting")}
               </Button>
             )}
             <Button onClick={handleSaveAsNew} disabled={!templateNameDraft.trim() || createTemplateMutation.isPending}>
-              {createTemplateMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save as New
+              {createTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {t("saveAsNew")}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -717,19 +731,15 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete template?</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteTemplateTitle")}</AlertDialogTitle>
             <AlertDialogDescription>
-              {deleteTarget && (
-                <>
-                  <strong>{deleteTarget.name}</strong> will be permanently deleted. This can&apos;t be undone.
-                </>
-              )}
+              {deleteTarget && t.rich("deleteTemplateRich", { strong: (chunks) => <strong>{chunks}</strong>, name: deleteTarget.name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDeleteTemplate} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-              <Trash2 className="h-4 w-4" /> Delete
+              <Trash2 className="h-4 w-4" /> {tc("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
