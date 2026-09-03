@@ -5,6 +5,7 @@ import { Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { FormsCopyItem } from '@/components/forms-copy-item';
+import { MeetingUrlItem } from '@/components/meeting-url-item';
 import { PublishItem } from '@/components/publish-item';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import {
@@ -17,8 +18,10 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useFormData, useGoogleAuthStatus, useUpdateFormType } from '@/hooks/use-form-data';
 import { useEventContext } from '@/contexts/event-context';
+import { useTranslations } from 'next-intl';
 
 export default function EventManagePage() {
+  const t = useTranslations('eventManage');
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const { data: formData = null, refetch: refetchForm } = useFormData(event?.id ?? 0);
@@ -45,14 +48,14 @@ export default function EventManagePage() {
       {
         onSuccess: () => {
           toast.success(
-            checked 
-              ? 'Registration is now required for this event' 
-              : 'Registration is no longer required'
+            checked
+              ? t('registrationRequired')
+              : t('registrationNotRequired')
           );
           handleFormChange();
         },
         onError: (error) => {
-          toast.error('Failed to update registration setting', {
+          toast.error(t('updateFailed'), {
             description: error.message,
           });
         },
@@ -63,19 +66,19 @@ export default function EventManagePage() {
   return (
     <Card className="max-w-3xl mx-auto">
       <CardHeader>
-        <CardTitle>Google Integration & Publishing</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          Connect your Google account to manage drive files and publish the event form.
+          {t('subtitle')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <Item variant="outline">
           <ItemContent>
-            <ItemTitle>Require Registration</ItemTitle>
+            <ItemTitle>{t('requireRegistration')}</ItemTitle>
             <ItemDescription>
               {requiresRegistration
-                ? 'Members must register to participate in this event'
-                : 'Anyone can participate without registration'}
+                ? t('requiredHint')
+                : t('notRequiredHint')}
             </ItemDescription>
           </ItemContent>
           <ItemActions>
@@ -98,6 +101,10 @@ export default function EventManagePage() {
           user={user}
           disabled={isFormTypeNone}
         />
+        {event.location_type === 'online' && (
+          <MeetingUrlItem event={event} onEventChange={handleFormChange} />
+        )}
+
         <PublishItem 
           event={event}
           formData={formData}

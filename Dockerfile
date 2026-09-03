@@ -13,7 +13,7 @@ RUN apk add --no-cache libc6-compat \
  && npm install -g pnpm@${PNPM_VERSION}
 ENV PNPM_HOME=/usr/local/share/pnpm
 WORKDIR /app
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN --mount=type=cache,id=pnpm,target=/usr/local/share/pnpm/store \
     pnpm install --frozen-lockfile
 

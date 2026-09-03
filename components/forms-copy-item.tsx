@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import { useState } from 'react';
 import Image from 'next/image';
 import { Button } from '@/components/ui/button';
@@ -38,6 +39,7 @@ interface FormsCopyItemProps {
 }
 
 export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled = false }: FormsCopyItemProps) {
+  const t = useTranslations('formsCopyItem');
   const [imgError, setImgError] = useState(false);
   const hasSavedToken = hasRefreshToken();
 
@@ -53,11 +55,11 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
     if (refreshToken) {
       copyForm.mutate(refreshToken, {
         onSuccess: () => {
-          toast.success('Form attached successfully!');
+          toast.success(t('attachedSuccess'));
           onFormChange();
         },
         onError: () => {
-          toast.error('Failed to attach form. Please try again.');
+          toast.error(t('attachFailed'));
         },
       });
     } else {
@@ -68,7 +70,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
   const handleUnattach = () => {
     unattachForm.mutate(undefined, {
       onSuccess: () => onFormChange(),
-      onError: () => toast.error('Failed to un-attach form. Please try again.'),
+      onError: () => toast.error(t('unattachFailed')),
     });
   };
 
@@ -84,16 +86,16 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
-          {isCopied ? 'Google Form is now attached' : 'Attach a Form'}
+          {isCopied ? t('attached') : t('attachForm')}
         </ItemTitle>
         <ItemDescription className="max-w-100">
           {isCopied ? (
             <div className="flex flex-col gap-1">
-              <span>Members will now have to fill out the form before signing up to the event.</span>
-              <span className="text-xs text-muted-foreground">You can edit the form in Google Forms and members will be shown the latest updated form.</span>
+              <span>{t('attachedDescription')}</span>
+              <span className="text-xs text-muted-foreground">{t('attachedEditHint')}</span>
             </div>
           ) : (
-            'Connect your Google account to attach a form for member sign-ups'
+            t('connectDescription')
           )}
         </ItemDescription>
       </ItemContent>
@@ -106,8 +108,8 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
                 target="_blank" 
                 rel="noopener noreferrer"
               >
-                Open Form
-                <ExternalLink className="ml-2 h-4 w-4" />
+                {t('openForm')}
+                <ExternalLink className="ms-2 h-4 w-4" />
               </a>
             </Button>
             {user && (
@@ -139,7 +141,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground mt-2">
-                    This form is owned by this Google account.
+                    {t('formOwnerHint')}
                   </p>
                 </PopoverContent>
               </Popover>
@@ -156,8 +158,8 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={handleUnattach} variant="destructive">
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Un-attach
+                  <Trash2 className="me-2 h-4 w-4" />
+                  {t('unattach')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -166,17 +168,17 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
           <Button onClick={handleConnect} disabled={isLoading || disabled}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Attaching Form...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t('attaching')}
               </>
             ) : hasSavedToken ? (
-              "Copy Form Template"
+              t('copyTemplate')
             ) : (
               <>
-                <span className="mr-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
+                <span className="me-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
                   <GoogleIcon className="h-4 w-4" />
                 </span>
-                Connect to Google
+                {t('connectGoogle')}
               </>
             )}
           </Button>
@@ -193,7 +195,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
           <div className="cursor-not-allowed">{itemContent}</div>
         </TooltipTrigger>
         <TooltipContent>
-          <p>Registration is disabled. Enable registration to manage Google Forms.</p>
+          <p>{t('disabledTooltip')}</p>
         </TooltipContent>
       </Tooltip>
     );

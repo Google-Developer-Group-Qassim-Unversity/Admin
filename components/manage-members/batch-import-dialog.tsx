@@ -35,6 +35,7 @@ import {
 } from "@/lib/export-token";
 import { useBatchCreateMembers } from "@/hooks/use-members";
 import type { BatchCreateMemberItem, Gender } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface BatchImportDialogProps {
   open: boolean;
@@ -65,6 +66,8 @@ export function BatchImportDialog({
   onSuccess,
   getToken,
 }: BatchImportDialogProps) {
+  const t = useTranslations("batchImport");
+  const tb = useTranslations("attendance.backfill");
   const batchMutation = useBatchCreateMembers(getToken);
 
   const [token, setToken] = React.useState("");
@@ -80,7 +83,7 @@ export function BatchImportDialog({
 
   const handleVerify = async () => {
     if (!token.trim()) {
-      setVerifyError("Please paste an export token");
+      setVerifyError(tb("pasteTokenFirst"));
       return;
     }
 
@@ -107,7 +110,7 @@ export function BatchImportDialog({
       }
 
       if (!response.ok || !result.valid) {
-        setVerifyError(result.error || "Token verification failed");
+        setVerifyError(result.error || tb("tokenVerificationFailed"));
         if (!result.metadata) {
           setVerifiedRows(null);
           setMetadata(null);
@@ -115,10 +118,10 @@ export function BatchImportDialog({
         }
       } else {
         setVerifyError(null);
-        toast.success(`Verified ${result.data?.length || 0} members`);
+        toast.success(tb("verifiedCount", { count: result.data?.length || 0 }));
       }
     } catch (err) {
-      setVerifyError(err instanceof Error ? err.message : "Verification failed");
+      setVerifyError(err instanceof Error ? err.message : tb("verificationFailed"));
       setVerifiedRows(null);
       setMetadata(null);
       setSignature(null);
@@ -129,7 +132,7 @@ export function BatchImportDialog({
 
   const handleSubmit = async () => {
     if (!verifiedRows || verifiedRows.length === 0) {
-      toast.error("No verified data to submit");
+      toast.error(tb("noVerifiedData"));
       return;
     }
 
@@ -144,7 +147,7 @@ export function BatchImportDialog({
         });
       },
       onError: (error) => {
-        toast.error(error.message || "Batch import failed");
+        toast.error(error.message || t("batchFailed"));
       },
     });
   };
@@ -171,9 +174,9 @@ export function BatchImportDialog({
       }}>
         <DialogContent className="max-w-3xl! flex flex-col max-h-[90vh]">
           <DialogHeader>
-            <DialogTitle>Batch Import Members</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
-              Import member data from Sheet Processor. Get your export token, then paste it here to verify and create members.
+              {t("description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -184,15 +187,15 @@ export function BatchImportDialog({
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
             >
-              Get Export Token
+              {tb("getExportToken")}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
 
             <div className="space-y-2">
-              <Label htmlFor="batch-token">Export Token</Label>
+              <Label htmlFor="batch-token">{tb("exportTokenLabel")}</Label>
               <Textarea
                 id="batch-token"
-                placeholder="Paste your export token here..."
+                placeholder={tb("exportTokenPlaceholder")}
                 value={token}
                 onChange={(e) => {
                   setToken(e.target.value);
@@ -214,13 +217,13 @@ export function BatchImportDialog({
               <Button onClick={handleVerify} disabled={isVerifying || !token.trim()}>
                 {isVerifying ? (
                   <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Verifying...
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {tb("verifying")}
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Verify Token
+                    <CheckCircle className="me-2 h-4 w-4" />
+                    {tb("verifyToken")}
                   </>
                 )}
               </Button>
@@ -228,16 +231,16 @@ export function BatchImportDialog({
               <>
                 <Card>
                   <CardHeader className="pb-3">
-                    <CardTitle className="text-base">Token Metadata</CardTitle>
+                    <CardTitle className="text-base">{tb("tokenMetadata")}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 pt-0">
                     <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Row Count</span>
+                        <span className="text-muted-foreground">{tb("rowCount")}</span>
                         <span className="font-medium">{metadata?.row_count ?? "-"}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Valid</span>
+                        <span className="text-muted-foreground">{tb("valid")}</span>
                         <Badge
                           className={
                             isValidData
@@ -246,11 +249,11 @@ export function BatchImportDialog({
                           }
                           variant={isValidData ? "outline" : "destructive"}
                         >
-                          {isValidData ? "Yes" : "No"}
+                          {isValidData ? tb("yes") : tb("no")}
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Validated At</span>
+                        <span className="text-muted-foreground">{tb("validatedAt")}</span>
                         <span className="font-medium">
                           {metadata?.validated_at
                             ? new Date(metadata.validated_at).toLocaleString()
@@ -258,13 +261,13 @@ export function BatchImportDialog({
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Source</span>
+                        <span className="text-muted-foreground">{tb("source")}</span>
                         <span className="font-medium">{metadata?.source ?? "-"}</span>
                       </div>
                     </div>
                     {signature && (
                       <div className="pt-2 border-t">
-                        <div className="text-muted-foreground text-sm mb-1">Signature</div>
+                        <div className="text-muted-foreground text-sm mb-1">{tb("signature")}</div>
                         <div className="font-mono text-xs text-muted-foreground break-all">
                           {signature}
                         </div>
@@ -275,9 +278,9 @@ export function BatchImportDialog({
 
                 {!isValidData && (
                   <Alert variant="destructive">
-                    <AlertTitle>Invalid Data</AlertTitle>
+                    <AlertTitle>{tb("invalidDataTitle")}</AlertTitle>
                     <AlertDescription>
-                      Token data is not valid. Go back to Sheet Processor and make sure all rows are valid.
+                      {tb("invalidDataDescription")}
                     </AlertDescription>
                   </Alert>
                 )}
@@ -287,17 +290,17 @@ export function BatchImportDialog({
                     <Separator />
                     <div className="space-y-2">
                       <Label>
-                        Preview ({verifiedRows.length} member{verifiedRows.length !== 1 ? "s" : ""})
+                        {tb("preview", { count: verifiedRows.length })}
                       </Label>
                       <Card className="p-0 overflow-hidden">
                         <ScrollArea className="h-48">
                           <Table>
                             <TableHeader>
                               <TableRow>
-                                <TableHead>Name</TableHead>
-                                <TableHead>University ID</TableHead>
-                                <TableHead>Email</TableHead>
-                                <TableHead>Gender</TableHead>
+                                <TableHead>{tb("columnName")}</TableHead>
+                                <TableHead>{tb("columnUniversityId")}</TableHead>
+                                <TableHead>{tb("columnEmail")}</TableHead>
+                                <TableHead>{tb("columnGender")}</TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -312,7 +315,7 @@ export function BatchImportDialog({
                               {verifiedRows.length > 50 && (
                                 <TableRow>
                                   <TableCell colSpan={4} className="text-center text-muted-foreground">
-                                    ... and {verifiedRows.length - 50} more
+                                    {tb("andMore", { count: verifiedRows.length - 50 })}
                                   </TableCell>
                                 </TableRow>
                               )}
@@ -332,19 +335,19 @@ export function BatchImportDialog({
             <div className="flex items-center gap-3 pt-4 border-t shrink-0">
               <div className="flex-1" />
               <Button variant="outline" onClick={handleReset} disabled={batchMutation.isPending}>
-                Reset
+                {tb("reset")}
               </Button>
               {isValidData && (
                 <Button onClick={handleSubmit} disabled={batchMutation.isPending}>
                   {batchMutation.isPending ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Importing...
+                      <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                      {t("importing")}
                     </>
                   ) : (
                     <>
-                      <Upload className="mr-2 h-4 w-4" />
-                      Import {verifiedRows?.length ?? 0} Member{verifiedRows?.length !== 1 ? "s" : ""}
+                      <Upload className="me-2 h-4 w-4" />
+                      {t("importButton", { count: verifiedRows?.length ?? 0 })}
                     </>
                   )}
                 </Button>
@@ -360,26 +363,26 @@ export function BatchImportDialog({
       >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Batch Import Complete</DialogTitle>
+            <DialogTitle>{t("completeTitle")}</DialogTitle>
             <DialogDescription>
-              Members have been processed successfully.
+              {t("completeDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 pt-2">
             <Card size="sm">
               <CardHeader className="pb-2">
-                <CardTitle className="text-sm">Members</CardTitle>
+                <CardTitle className="text-sm">{tb("members")}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Created</span>
+                    <span className="text-sm text-muted-foreground">{tb("created")}</span>
                     <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">Existing</span>
+                    <span className="text-sm text-muted-foreground">{t("existing")}</span>
                     <span className="font-medium">{summaryDialog?.existing_count ?? 0}</span>
                   </div>
                 </div>
@@ -387,15 +390,15 @@ export function BatchImportDialog({
             </Card>
             {(summaryDialog?.failed_count ?? 0) > 0 && (
               <Alert variant="destructive">
-                <AlertTitle>Some members failed</AlertTitle>
+                <AlertTitle>{t("someFailedTitle")}</AlertTitle>
                 <AlertDescription>
-                  {summaryDialog?.failed_count} member{summaryDialog?.failed_count !== 1 ? "s" : ""} could not be created due to errors.
+                  {t("someFailedDescription", { count: summaryDialog?.failed_count ?? 0 })}
                 </AlertDescription>
               </Alert>
             )}
           </div>
           <Button onClick={handleCloseSummary} className="w-full">
-            Done
+            {tb("done")}
           </Button>
         </DialogContent>
       </Dialog>

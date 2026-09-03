@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface BulkAcceptDialogProps {
   open: boolean;
@@ -27,6 +28,8 @@ export function BulkAcceptDialog({
   onSubmit,
   isLoading = false,
 }: BulkAcceptDialogProps) {
+  const t = useTranslations("responses");
+  const tc = useTranslations("common.actions");
   const [uniIdsText, setUniIdsText] = useState("");
   const [dialogKey, setDialogKey] = useState(0);
 
@@ -63,17 +66,16 @@ export function BulkAcceptDialog({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent key={dialogKey}>
         <DialogHeader>
-          <DialogTitle>Accept Bulk by Uni ID</DialogTitle>
+          <DialogTitle>{t("bulkAcceptTitle")}</DialogTitle>
           <DialogDescription>
-            Enter Uni IDs (one per line, or separated by commas). Invalid or
-            non-existent IDs will be skipped.
+            {t("bulkAcceptDescription")}
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="uni-ids">Uni IDs</Label>
+          <Label htmlFor="uni-ids">{t("uniIds")}</Label>
           <Textarea
             id="uni-ids"
-            placeholder="Enter Uni IDs here...&#10;Example:&#10;12345&#10;67890&#10;11111"
+            placeholder={t("uniIdsPlaceholder")}
             value={uniIdsText}
             onChange={(e) => setUniIdsText(e.target.value)}
             className="min-h-[150px] font-mono text-sm"
@@ -86,16 +88,16 @@ export function BulkAcceptDialog({
             onClick={() => handleOpenChange(false)}
             disabled={isLoading}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button onClick={handleSubmit} disabled={!uniIdsText.trim() || isLoading}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t("processing")}
               </>
             ) : (
-              "Accept"
+              t("accept")
             )}
           </Button>
         </DialogFooter>

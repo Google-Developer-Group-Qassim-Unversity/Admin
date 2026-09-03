@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { buildEnrichedStreamUrl, getEmailLogsEnriched } from "@/lib/api";
 import { parseSSEStream } from "@/lib/sse";
 import type { EnrichedEmailLog } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 import { EmailLogFiltersBar } from "./email-log-filters";
 import { EmailLogRow } from "./email-log-row";
@@ -21,6 +22,7 @@ interface EmailLogsTabProps {
 }
 
 export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
+  const t = useTranslations("manageEmails.logsTab");
   const { getToken } = useAuth();
   const [logs, setLogs] = React.useState<EnrichedEmailLog[]>([]);
   const [filters, setFilters] = React.useState<EmailLogFilters>({});
@@ -168,22 +170,22 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
-              {logs.length > 0 ? `${logs.length} log${logs.length !== 1 ? "s" : ""}` : "No logs"}
+              {t("logsCount", { count: logs.length })}
             </span>
             {isStreaming && isLive && (
               <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30 text-[10px]">
                 <Activity className="h-3 w-3 animate-pulse" />
-                Live
+                {t("live")}
               </Badge>
             )}
           </div>
-          <span className="text-[10px] text-muted-foreground">{isLive ? "Auto-updating" : "Static view"}</span>
+          <span className="text-[10px] text-muted-foreground">{isLive ? t("autoUpdating") : t("staticView")}</span>
         </div>
         <ScrollArea className="h-[520px]">
           {isLoading && !isLive ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading logs...
+              {t("loading")}
             </div>
           ) : logs.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-3">
@@ -191,24 +193,24 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
                 hasActiveFilters ? (
                   <>
                     <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
-                    <span>Listening for logs matching filters...</span>
+                    <span>{t("listeningFiltered")}</span>
                     <Button variant="outline" size="sm" className="h-7 text-xs" onClick={clearAllFilters}>
-                      Clear filters
+                      {t("clearFilters")}
                     </Button>
                   </>
                 ) : (
                   <>
                     <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
-                    <span>Listening for new logs...</span>
+                    <span>{t("listening")}</span>
                   </>
                 )
               ) : isLive && !isStreaming ? (
                 <>
                   <Activity className="h-4 w-4 opacity-50" />
-                  <span>Stream disconnected</span>
+                  <span>{t("disconnected")}</span>
                 </>
               ) : (
-                <span>No email logs found for this period.</span>
+                <span>{t("noneForPeriod")}</span>
               )}
             </div>
           ) : (

@@ -16,6 +16,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, X } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -100,9 +101,14 @@ export function getQuestionKeys(
   return Object.keys(firstValid.parsedAnswers);
 }
 
-// Helper function to create a header with dropdown menu for sorting and hiding
-function createHeaderWithDropdown(title: string, sortable: boolean = false) {
+// Helper function to create a header with dropdown menu for sorting and hiding.
+// `titleKey` looks up responsesTable.{titleKey} unless `isLiteral` is set, which
+// is used for dynamic Google Form question columns - their titles are the
+// form's own question text and must not be run through the app's translations.
+function createHeaderWithDropdown(titleKey: string, sortable: boolean = false, isLiteral: boolean = false) {
   function HeaderDropdown({ column }: HeaderContext<TableRowData, unknown>) {
+    const t = useTranslations("responsesTable");
+    const title = isLiteral ? titleKey : t(titleKey as never);
     const sortDirection = sortable ? column.getIsSorted() : false;
     const isVisible = column.getIsVisible();
     
@@ -112,10 +118,10 @@ function createHeaderWithDropdown(title: string, sortable: boolean = false) {
           <Button
             variant="ghost"
             size="sm"
-            className="-ml-2 h-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
+            className="-ms-2 h-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
           >
             {title}
-            {sortable && <ArrowUpDown className="ml-1 h-3 w-3" />}
+            {sortable && <ArrowUpDown className="ms-1 h-3 w-3" />}
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -125,19 +131,19 @@ function createHeaderWithDropdown(title: string, sortable: boolean = false) {
                 onClick={() => column.toggleSorting(false)}
                 disabled={sortDirection === "asc"}
               >
-                <ArrowUp className="mr-2 h-4 w-4" />
-                Sort Ascending
+                <ArrowUp className="me-2 h-4 w-4" />
+                {t("sortAscending")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => column.toggleSorting(true)}
                 disabled={sortDirection === "desc"}
               >
-                <ArrowDown className="mr-2 h-4 w-4" />
-                Sort Descending
+                <ArrowDown className="me-2 h-4 w-4" />
+                {t("sortDescending")}
               </DropdownMenuItem>
               {sortDirection && (
                 <DropdownMenuItem onClick={() => column.clearSorting()}>
-                  Clear Sort
+                  {t("clearSort")}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
@@ -149,13 +155,13 @@ function createHeaderWithDropdown(title: string, sortable: boolean = false) {
           >
             {isVisible ? (
               <>
-                <Eye className="mr-2 h-4 w-4" />
-                Hide Column
+                <Eye className="me-2 h-4 w-4" />
+                {t("hideColumn")}
               </>
             ) : (
               <>
-                <EyeOff className="mr-2 h-4 w-4" />
-                Show Column
+                <EyeOff className="me-2 h-4 w-4" />
+                {t("showColumn")}
               </>
             )}
           </DropdownMenuCheckboxItem>
@@ -163,7 +169,7 @@ function createHeaderWithDropdown(title: string, sortable: boolean = false) {
       </DropdownMenu>
     );
   }
-  HeaderDropdown.displayName = `HeaderDropdown(${title})`;
+  HeaderDropdown.displayName = `HeaderDropdown(${titleKey})`;
   
   return HeaderDropdown;
 }
@@ -173,25 +179,45 @@ export function createColumns(
   questionKeys: string[]
 ): ColumnDef<TableRowData>[] {
   // Select column for row selection
-  const selectColumn: ColumnDef<TableRowData> = {
-    id: "select",
-    header: ({ table }) => (
+  function AcceptedHeader() {
+    const t = useTranslations("responsesTable");
+    return t("accepted");
+  }
+
+  function EmailedHeader() {
+    const t = useTranslations("responsesTable");
+    return t("emailed");
+  }
+
+  const SelectAllHeader = ({ table }: HeaderContext<TableRowData, unknown>) => {
+    const t = useTranslations("responsesTable");
+    return (
       <Checkbox
         checked={
           table.getIsAllPageRowsSelected() ||
           (table.getIsSomePageRowsSelected() && "indeterminate")
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
+        aria-label={t("selectAll")}
       />
-    ),
-    cell: ({ row }) => (
+    );
+  };
+
+  const SelectRowCell = ({ row }: { row: { getIsSelected: () => boolean; toggleSelected: (value: boolean) => void } }) => {
+    const t = useTranslations("responsesTable");
+    return (
       <Checkbox
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Select row"
+        aria-label={t("selectRow")}
       />
-    ),
+    );
+  };
+
+  const selectColumn: ColumnDef<TableRowData> = {
+    id: "select",
+    header: SelectAllHeader,
+    cell: ({ row }) => <SelectRowCell row={row} />,
     enableSorting: false,
     enableHiding: false,
   };
@@ -200,7 +226,7 @@ export function createColumns(
   const statusColumns: ColumnDef<TableRowData>[] = [
     {
       accessorKey: "is_accepted",
-      header: "Accepted",
+      header: AcceptedHeader,
       enableSorting: false,
       size: 70,
       minSize: 70,
@@ -216,7 +242,7 @@ export function createColumns(
     },
     {
       accessorKey: "is_invited",
-      header: "Emailed",
+      header: EmailedHeader,
       enableSorting: false,
       size: 70,
       minSize: 70,
@@ -236,7 +262,7 @@ export function createColumns(
   const baseColumns: ColumnDef<TableRowData>[] = [
     {
       accessorKey: "name",
-      header: createHeaderWithDropdown("Name", false),
+      header: createHeaderWithDropdown("name", false),
       enableSorting: false,
       cell: ({ row }) => {
         const name = String(row.getValue("name"));
@@ -257,7 +283,7 @@ export function createColumns(
     },
     {
       accessorKey: "email",
-      header: createHeaderWithDropdown("Email", false),
+      header: createHeaderWithDropdown("email", false),
       enableSorting: false,
       cell: ({ row }) => {
         const email = String(row.getValue("email"));
@@ -278,27 +304,27 @@ export function createColumns(
     },
     {
       accessorKey: "phone_number",
-      header: createHeaderWithDropdown("Phone", false),
+      header: createHeaderWithDropdown("phone", false),
       enableSorting: false,
     },
     {
       accessorKey: "uni_id",
-      header: createHeaderWithDropdown("Uni ID", false),
+      header: createHeaderWithDropdown("uniId", false),
       enableSorting: false,
     },
     {
       accessorKey: "gender",
-      header: createHeaderWithDropdown("Gender", false),
+      header: createHeaderWithDropdown("gender", false),
       enableSorting: false,
     },
     {
       accessorKey: "uni_level",
-      header: createHeaderWithDropdown("Level", false),
+      header: createHeaderWithDropdown("level", false),
       enableSorting: false,
     },
     {
       accessorKey: "uni_college",
-      header: createHeaderWithDropdown("College", false),
+      header: createHeaderWithDropdown("college", false),
       enableSorting: false,
       cell: ({ row }) => {
         const value = row.getValue("uni_college");
@@ -320,7 +346,7 @@ export function createColumns(
     },
     {
       accessorKey: "submitted_at",
-      header: createHeaderWithDropdown("Submitted At", true),
+      header: createHeaderWithDropdown("submittedAt", true),
       cell: ({ row }) => {
         const date = new Date(row.getValue("submitted_at"));
         return (
@@ -337,7 +363,7 @@ export function createColumns(
   const questionColumns: ColumnDef<TableRowData>[] = questionKeys.map(
     (key) => ({
       accessorKey: key,
-      header: createHeaderWithDropdown(key, false),
+      header: createHeaderWithDropdown(key, false, true),
       enableSorting: false,
       cell: ({ row }) => {
         const value = row.getValue(key);

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/alert-dialog";
 
 import type { MemberWithRole } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface RevokeAdminDialogProps {
   admin: MemberWithRole | null;
@@ -31,9 +32,12 @@ export function RevokeAdminDialog({
   onConfirm,
   isLoading = false,
 }: RevokeAdminDialogProps) {
+  const t = useTranslations("revokeAdmin");
+  const tc = useTranslations("common.actions");
+  const tr = useTranslations("common.roles");
   if (!admin) return null;
 
-  const roleLabel = admin.role === "super_admin" ? "Super Admin" : "Admin";
+  const roleLabel = admin.role === "super_admin" ? tr("superAdmin") : tr("admin");
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
@@ -41,28 +45,31 @@ export function RevokeAdminDialog({
         <AlertDialogHeader>
           <div className="flex items-center gap-2 text-destructive">
             <AlertTriangle className="h-5 w-5" />
-            <AlertDialogTitle>Revoke {roleLabel} Access</AlertDialogTitle>
+            <AlertDialogTitle>{t("title", { role: roleLabel })}</AlertDialogTitle>
           </div>
           <AlertDialogDescription className="space-y-2">
             <p>
-              Are you sure you want to revoke {roleLabel.toLowerCase()} access for{" "}
-              <span className="font-semibold">{admin.name}</span>?
+              {t.rich("confirmDescription", {
+                role: roleLabel,
+                strong: (chunks) => <span className="font-semibold">{chunks}</span>,
+                name: admin.name,
+              })}
             </p>
             <p>
-              They will no longer be able to:
+              {t("loseAccessIntro")}
             </p>
-            <ul className="list-disc list-inside ml-2 space-y-1">
-              <li>Access the admin dashboard</li>
-              <li>Manage events and participants</li>
+            <ul className="list-disc list-inside ms-2 space-y-1">
+              <li>{t("loseAccessDashboard")}</li>
+              <li>{t("loseAccessEvents")}</li>
               {admin.role === "super_admin" && (
-                <li>Manage other administrators</li>
+                <li>{t("loseAccessAdmins")}</li>
               )}
             </ul>
-            <p className="font-medium mt-4">This action can be reversed by promoting them again.</p>
+            <p className="font-medium mt-4">{t("reversible")}</p>
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={isLoading}>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={isLoading}>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction
             onClick={(e) => {
               e.preventDefault();
@@ -71,7 +78,7 @@ export function RevokeAdminDialog({
             disabled={isLoading}
             className="bg-destructive hover:bg-destructive/90"
           >
-            {isLoading ? "Revoking..." : "Revoke Access"}
+            {isLoading ? t("revoking") : t("revokeAccess")}
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>

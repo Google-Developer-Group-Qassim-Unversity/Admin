@@ -4,14 +4,16 @@ import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, FileBadge, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { LocationToggle } from "@/components/ui/location-toggle";
+import { RegistrationToggle } from "@/components/ui/registration-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
@@ -26,21 +28,31 @@ import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
 import type { Action, LocationType } from "@/lib/api-types";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
+import { useTranslations } from "next-intl";
 
-// Form validation schema
-export const eventFormSchema = z.object({
-  event_id: z.number().nullable().optional(), // ID of existing event if reusing
-  name: z.string().min(1, "Event name is required").max(100, "Name is too long"),
-  description: z.string().nullable(),
-  location_type: z.enum(["online", "on-site"]),
-  location: z.string().min(1, "Location is required"),
-  startDate: z.date({ message: "Start date is required" }),
-  endDate: z.date({ message: "End date is required" }),
-  is_official: z.boolean(),
-  image_url: z.string().nullable(),
-  department_id: z.number({ required_error: "Department is required" }),
-  composite_action: z.array(z.any()).length(2, "Composite action is required"),
-});
+// Messages come from a translator, so the schema is built per render rather
+// than at module scope where `useTranslations` is unavailable.
+export const buildEventFormSchema = (t: (key: string) => string) =>
+  z.object({
+    event_id: z.number().nullable().optional(), // ID of existing event if reusing
+    name: z
+      .string()
+      .min(1, t("nameRequired"))
+      .max(100, t("nameTooLong")),
+    description: z.string().nullable(),
+    location_type: z.enum(["online", "on-site"]),
+    location: z.string().min(1, t("locationRequired")),
+    startDate: z.date({ message: t("startDateRequired") }),
+    endDate: z.date({ message: t("endDateRequired") }),
+    is_official: z.boolean(),
+    /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
+    requireRegistration: z.boolean(),
+    image_url: z.string().nullable(),
+    department_id: z.number({ required_error: t("departmentRequired") }),
+    composite_action: z.array(z.any()).length(2, t("compositeActionRequired")),
+  });
+
+export const eventFormSchema = buildEventFormSchema((key) => key);
 
 export type EventFormData = z.infer<typeof eventFormSchema>;
 
@@ -66,6 +78,12 @@ export function EventForm({
   submitButtonText,
   submittingText,
 }: EventFormProps) {
+  const t = useTranslations("eventForm");
+  const tv = useTranslations("eventForm.validation");
+  const tc = useTranslations("common.fields");
+  const te = useTranslations("events");
+  const schema = React.useMemo(() => buildEventFormSchema(tv), [tv]);
+
   const {
     register,
     handleSubmit,
@@ -76,7 +94,8 @@ export function EventForm({
     clearErrors,
     formState: { errors },
   } = useForm<EventFormData>({
-    resolver: zodResolver(eventFormSchema),
+    resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: {
       event_id: initialData?.event_id ?? null,
       name: initialData?.name ?? "",
@@ -86,6 +105,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
       department_id: initialData?.department_id,
       composite_action: initialData?.composite_action,
@@ -121,8 +141,8 @@ export function EventForm({
 
   const isLoading = isLoadingData || isLoadingActions || isLoadingDepartments;
 
-  const defaultSubmitText = mode === "create" ? "Create Event" : "Update Event";
-  const defaultSubmittingText = mode === "create" ? "Creating Event..." : "Updating Event...";
+  const defaultSubmitText = mode === "create" ? t("submit.create") : t("submit.update");
+  const defaultSubmittingText = mode === "create" ? t("submit.creating") : t("submit.updating");
 
   if (isLoading) {
     return (
@@ -137,8 +157,7 @@ export function EventForm({
     return (
       <div className="flex items-center justify-center py-10">
         <p className="text-sm text-destructive">
-          Failed to load necessary data for the form. Please try again later.
-          and contact support if the issue persists.
+          {t("loadFailed")}
         </p>
       </div>
     );
@@ -148,12 +167,11 @@ export function EventForm({
     return (
       <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
-        <AlertTitle>Invalid Event Data</AlertTitle>
+        <AlertTitle>{t("invalidData.title")}</AlertTitle>
         <AlertDescription>
-          This event has corrupted or missing department data and cannot be edited.
-          The event&apos;s department association is invalid (department_id is null).
+          {t("invalidData.body")}
           <br /><br />
-          <strong>Please contact support</strong> with the event details so this can be resolved.
+          <strong>{t("invalidData.contactStrong")}</strong>{t("invalidData.contactRest")}
         </AlertDescription>
       </Alert>
     );
@@ -163,70 +181,80 @@ export function EventForm({
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
       {/* Event Name */}
       <div className="space-y-2">
-        <Label htmlFor="name">Event Name *</Label>
+        <Label htmlFor="name">{t("fields.name")}</Label>
         <Input
           id="name"
-          placeholder="Enter event name"
+          placeholder={t("fields.namePlaceholder")}
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "name-error" : undefined}
           {...register("name")}
           className={errors.name ? "border-destructive" : ""}
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <p id="name-error" role="alert" className="text-sm text-destructive">
+            {errors.name.message}
+          </p>
         )}
       </div>
 
       {/* Description */}
       <div className="space-y-2">
-        <Label htmlFor="description">Description</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="description">{tc("description")}</Label>
+          <Badge variant="secondary">{tc("optional")}</Badge>
+        </div>
         <Textarea
           id="description"
-          placeholder="Enter event description (optional)"
+          placeholder={t("fields.descriptionPlaceholder")}
           rows={3}
           dir="auto"
           {...register("description")}
         />
-        <p className="text-xs text-muted-foreground">
-          Leave empty if no description is needed
-        </p>
       </div>
 
-      {/* Location Type Toggle */}
-      <div className="space-y-2">
-        <Label className="mb-4">Location Type *</Label>
-        <Controller
-          name="location_type"
-          control={control}
-          render={({ field }) => (
-            <LocationToggle value={field.value} onChange={field.onChange} />
-          )}
-        />
-      </div>
+      {/* Location Type + Location - Side by Side */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Location Type Toggle */}
+        <div className="space-y-2">
+          <Label>{t("fields.locationType")}</Label>
+          <Controller
+            name="location_type"
+            control={control}
+            render={({ field }) => (
+              <LocationToggle value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </div>
 
-      {/* Location Selection */}
-      <div className="space-y-2">
-        <Label>Location *</Label>
-        <Controller
-          name="location"
-          control={control}
-          render={({ field }) => (
-            <CreatableCombobox
-              options={locationOptions}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder="Select or enter location..."
-              searchPlaceholder="Search locations..."
-              emptyMessage="No locations found"
-            />
+        {/* Location Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="location">{t("fields.location")}</Label>
+          <Controller
+            name="location"
+            control={control}
+            render={({ field }) => (
+              <CreatableCombobox
+                id="location"
+                options={locationOptions}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={t("fields.locationPlaceholder")}
+                searchPlaceholder={te("filters.searchLocations")}
+                emptyMessage={t("fields.locationEmpty")}
+              />
+            )}
+          />
+          {errors.location && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.location.message}
+            </p>
           )}
-        />
-        {errors.location && (
-          <p className="text-sm text-destructive">{errors.location.message}</p>
-        )}
+        </div>
       </div>
 
       {/* Date & Time Range */}
       <div className="space-y-2">
-        <Label>Event Date & Time *</Label>
+        <Label>{t("fields.dateTime")}</Label>
         <Controller
           name="startDate"
           control={control}
@@ -250,53 +278,54 @@ export function EventForm({
           )}
         />
         {(errors.startDate || errors.endDate) && (
-          <p className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive">
             {errors.startDate?.message || errors.endDate?.message}
           </p>
         )}
       </div>
 
-      {/* Is Official */}
-      <div className="space-y-2">
-        <Label htmlFor="is_official">Official Event</Label>
-        <div className="flex items-center gap-4 rounded-lg border p-4">
+      {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
+      {mode === "create" && (
+        <div className="space-y-2">
+          <Label>{t("fields.attendanceAccess")}</Label>
           <Controller
-            name="is_official"
+            name="requireRegistration"
             control={control}
             render={({ field }) => (
-              <Switch
-                id="is_official"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
+              <RegistrationToggle value={field.value} onChange={field.onChange} />
             )}
           />
-          <div className="space-y-0.5">
-            <Label
-              htmlFor="is_official"
-              className="text-base cursor-pointer flex items-center gap-2"
-            >
-              {watch("is_official") && (
-                <FileBadge className="h-4 w-4 text-amber-500" />
-              )}
-              {watch("is_official")
-                ? "This is an official event"
-                : "This is not an official event"}
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              {watch("is_official")
-                ? "Event will be marked as official"
-                : "Event will be marked as unofficial/community event"}
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {watch("requireRegistration")
+              ? t("registration.requiredHint")
+              : t("registration.notRequiredHint")}
+          </p>
         </div>
+      )}
+
+      {/* Is Official */}
+      <div className="flex items-center gap-3">
+        <Controller
+          name="is_official"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              id="is_official"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+        <Label htmlFor="is_official" className="cursor-pointer">
+          {t("fields.official")}
+        </Label>
       </div>
 
       {/* Department and Composite Action Selection - Side by Side */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {/* Department Selection */}
         <div className="space-y-2">
-          <Label htmlFor="department_id">Department *</Label>
+          <Label htmlFor="department_id">{t("fields.department")}</Label>
           <Controller
             name="department_id"
             control={control}
@@ -309,9 +338,11 @@ export function EventForm({
                >
                 <SelectTrigger
                   id="department_id"
+                  aria-invalid={!!errors.department_id}
+                  aria-describedby={errors.department_id ? "department-error" : undefined}
                   className={errors.department_id ? "border-destructive" : ""}
                 >
-                  <SelectValue placeholder="Select a department..." />
+                  <SelectValue placeholder={t("fields.departmentPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {departments?.map((dept) => (
@@ -324,7 +355,7 @@ export function EventForm({
             )}
           />
           {errors.department_id && (
-            <p className="text-sm text-destructive">
+            <p id="department-error" role="alert" className="text-sm text-destructive">
               {errors.department_id.message}
             </p>
           )}
@@ -332,7 +363,7 @@ export function EventForm({
 
         {/* Composite Action Selection */}
         <div className="space-y-2">
-          <Label htmlFor="composite_action">Department Action *</Label>
+          <Label htmlFor="composite_action">{t("fields.departmentAction")}</Label>
           <Controller
             name="composite_action"
             control={control}
@@ -343,9 +374,11 @@ export function EventForm({
               >
                 <SelectTrigger
                   id="composite_action"
+                  aria-invalid={!!errors.composite_action}
+                  aria-describedby={errors.composite_action ? "composite-action-error" : undefined}
                   className={errors.composite_action ? "border-destructive" : ""}
                 >
-                  <SelectValue placeholder="Select a department action..." />
+                  <SelectValue placeholder={t("fields.departmentActionPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {compositeActions.map((action, index) => (
@@ -358,7 +391,7 @@ export function EventForm({
             )}
           />
           {errors.composite_action && (
-            <p className="text-sm text-destructive">
+            <p id="composite-action-error" role="alert" className="text-sm text-destructive">
               {errors.composite_action.message}
             </p>
           )}
@@ -387,7 +420,7 @@ export function EventForm({
       >
         {isSubmitting ? (
           <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            <Loader2 className="me-2 h-4 w-4 animate-spin" />
             {submittingText ?? defaultSubmittingText}
           </>
         ) : (

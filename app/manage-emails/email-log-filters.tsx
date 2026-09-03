@@ -22,9 +22,10 @@ import type { Event, Member } from "@/lib/api-types";
 import { getEvents, getMembers } from "@/lib/api";
 import { useFuzzySearch, normalizeArabic } from "@/lib/search-utils";
 import type { DateRange } from "react-day-picker";
+import { useTranslations } from "next-intl";
 
 import type { EmailLogFilters, EmailType } from "./types";
-import { TYPE_CONFIG } from "./email-log-row";
+import { TYPE_CONFIG, TYPE_LABEL_KEY } from "./email-log-row";
 
 interface EmailLogFiltersBarProps {
   filters: EmailLogFilters;
@@ -36,6 +37,8 @@ interface EmailLogFiltersBarProps {
 const MAX_DISPLAY = 50;
 
 export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveToggle }: EmailLogFiltersBarProps) {
+  const t = useTranslations("manageEmails.logFilters");
+  const tt = useTranslations("manageEmails.logRow.types");
   const { getToken } = useAuth();
   const [events, setEvents] = React.useState<Event[]>([]);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
@@ -85,16 +88,16 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
   };
 
   const dateRangeLabel = React.useMemo(() => {
-    if (!filters.start_date && !filters.end_date) return "Period";
+    if (!filters.start_date && !filters.end_date) return t("period");
     const fmt = (iso: string) =>
       new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
     if (filters.start_date && filters.end_date) {
       return `${fmt(filters.start_date)} – ${fmt(filters.end_date)}`;
     }
-    if (filters.start_date) return `From ${fmt(filters.start_date)}`;
-    if (filters.end_date) return `Until ${fmt(filters.end_date)}`;
-    return "Period";
-  }, [filters.start_date, filters.end_date]);
+    if (filters.start_date) return t("from", { date: fmt(filters.start_date) });
+    if (filters.end_date) return t("until", { date: fmt(filters.end_date) });
+    return t("period");
+  }, [filters.start_date, filters.end_date, t]);
 
   const dateRange = filters.start_date && filters.end_date
     ? { from: new Date(filters.start_date), to: new Date(filters.end_date) }
@@ -112,7 +115,7 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
           }`}
         >
           <Activity className="h-3 w-3" />
-          Live
+          {t("live")}
         </button>
         <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
           <PopoverTrigger asChild>
@@ -144,17 +147,17 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
         }
       >
         <SelectTrigger size="sm" className="w-[140px] h-7 text-xs">
-          <SelectValue placeholder="All types" />
+          <SelectValue placeholder={t("allTypes")} />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="all">All types</SelectItem>
+          <SelectItem value="all">{t("allTypes")}</SelectItem>
           {Object.entries(TYPE_CONFIG).map(([key, cfg]) => {
             const Icon = cfg.icon;
             return (
               <SelectItem key={key} value={key}>
                 <span className="inline-flex items-center gap-1.5">
                   <Icon className={`h-3 w-3 ${cfg.color}`} />
-                  {cfg.label}
+                  {tt(TYPE_LABEL_KEY[key])}
                 </span>
               </SelectItem>
             );
@@ -167,8 +170,8 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
           <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5">
             <Filter className="h-3 w-3" />
             {filters.event_id
-              ? events.find((e) => e.id === filters.event_id)?.name ?? `Event #${filters.event_id}`
-              : "Event"}
+              ? events.find((e) => e.id === filters.event_id)?.name ?? t("eventFallback", { id: filters.event_id })
+              : t("eventDefault")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[280px] p-0" align="start">
@@ -178,15 +181,15 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
             if (!normSearch) return 1;
             return normValue.includes(normSearch) ? 1 : 0;
           }}>
-            <CommandInput placeholder="Search events..." className="h-8" />
+            <CommandInput placeholder={t("searchEvents")} className="h-8" />
             <CommandList>
-              <CommandEmpty>No events found.</CommandEmpty>
+              <CommandEmpty>{t("noEventsFound")}</CommandEmpty>
               <CommandGroup>
                 <CommandItem
                   value="all-events"
                   onSelect={() => onFiltersChange({ ...filters, event_id: undefined })}
                 >
-                  All events
+                  {t("allEvents")}
                 </CommandItem>
                 {events.map((event) => (
                   <CommandItem
@@ -217,8 +220,8 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
 
       {activeFilterCount > 0 && (
         <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={clearFilters}>
-          <X className="h-3 w-3 mr-1" />
-          Clear ({activeFilterCount})
+          <X className="h-3 w-3 me-1" />
+          {t("clear", { count: activeFilterCount })}
         </Button>
       )}
     </div>
@@ -234,6 +237,7 @@ function MemberFilterButton({
   onSelect: (member: { id: number; name: string } | null) => void;
   getToken: () => Promise<string | null>;
 }) {
+  const t = useTranslations("manageEmails.logFilters");
   const [open, setOpen] = React.useState(false);
   const [members, setMembers] = React.useState<Member[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -275,35 +279,35 @@ function MemberFilterButton({
     <>
       <Button variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={() => setOpen(true)}>
         <User className="h-3 w-3" />
-        {selectedMember ? selectedMember.name : "Member"}
+        {selectedMember ? selectedMember.name : t("member")}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="max-w-lg! max-h-[80vh] flex flex-col p-0 overflow-hidden">
           <DialogHeader className="px-6 pt-6 pb-2">
-            <DialogTitle>Filter by Member</DialogTitle>
-            <DialogDescription>Search by name, university ID, or email</DialogDescription>
+            <DialogTitle>{t("filterByMember")}</DialogTitle>
+            <DialogDescription>{t("searchByMember")}</DialogDescription>
           </DialogHeader>
           <div className="px-6 pb-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={t("search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9 h-9"
+                className="ps-9 h-9"
                 disabled={isLoading}
               />
             </div>
             {showLimitHint && (
               <p className="text-xs text-muted-foreground mt-1.5">
-                Showing {MAX_DISPLAY} of {members.length}. Use search to find more.
+                {t("limitHint", { shown: MAX_DISPLAY, total: members.length })}
               </p>
             )}
           </div>
           {selectedMember && (
             <div className="mx-6 border rounded-lg">
               <div className="flex items-center gap-2 px-3 py-2 bg-primary/5">
-                <span className="text-xs text-muted-foreground">Selected:</span>
+                <span className="text-xs text-muted-foreground">{t("selected")}</span>
                 <span className="text-sm font-medium flex-1">{selectedMember.name}</span>
                 <Button
                   variant="ghost"
@@ -330,14 +334,14 @@ function MemberFilterButton({
               </div>
             ) : displayMembers.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">
-                {searchQuery.trim() ? "No members found" : "No members available"}
+                {searchQuery.trim() ? t("noMembersFound") : t("noMembersAvailable")}
               </div>
             ) : (
               <div className="divide-y">
                 {displayMembers.map((member) => (
                   <button
                     key={member.id}
-                    className="w-full flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50 transition-colors text-left"
+                    className="w-full flex items-center gap-3 px-6 py-2.5 hover:bg-muted/50 transition-colors text-start"
                     onClick={() => {
                       onSelect({ id: member.id, name: member.name });
                       setOpen(false);

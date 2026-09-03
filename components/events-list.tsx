@@ -1,6 +1,8 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
+
 import { EventCard } from "@/components/event-card";
 import { EventFilters } from "@/components/event-filters";
 import type { Event, LocationType } from "@/lib/api-types";
@@ -17,6 +19,7 @@ export function EventsList({
   semester, 
   onSemesterChange, 
 }: EventsListProps) {
+  const t = useTranslations("events");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [locationTypes, setLocationTypes] = React.useState<LocationType[]>([]);
   const [selectedLocations, setSelectedLocations] = React.useState<string[]>([]);
@@ -88,7 +91,7 @@ export function EventsList({
         </div>
       ) : (
         <div className="text-center py-12 text-muted-foreground">
-          No events match your filters. Try adjusting your search criteria.
+          {t("noneMatchFilters")}
         </div>
       )}
     </div>

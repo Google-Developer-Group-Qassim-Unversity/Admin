@@ -44,6 +44,7 @@ import type { Event, Submission, EmailProvider } from "@/lib/api-types";
 import type { CsvRow } from "./types";
 import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
+import { useTranslations } from "next-intl";
 
 interface CsvBatchPanelProps {
   events: Event[];
@@ -61,6 +62,9 @@ function formatEventDate(event: Event): string {
 }
 
 export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelProps) {
+  const t = useTranslations("manageEmails.csvBatch");
+  const tSend = useTranslations("manageEmails.sendCertificates");
+  const tDirect = useTranslations("manageEmails.directEmail");
   const { getToken } = useAuth();
 
   const [csvRows, setCsvRows] = React.useState<CsvRow[]>([]);
@@ -138,12 +142,13 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
         }
       } catch (err) {
         console.error("Verification failed:", err);
-        toast.error("Attendance verification failed. Showing all rows.");
+        toast.error(t("verificationFailed"));
         setCsvRows(rows);
       } finally {
         setIsCheckingAttendance(false);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [getToken],
   );
 
@@ -152,7 +157,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       try {
         const lines = text.split(/\r?\n/);
         if (lines.length < 2) {
-          toast.error("CSV file is empty or invalid");
+          toast.error(t("csvEmpty"));
           return;
         }
 
@@ -220,7 +225,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
         setHasEventColumn(eventIdx !== -1);
 
         if (nameIdx === -1 || emailIdx === -1) {
-          toast.error("Required columns (Name, Email) not found in CSV. Try using custom columns.");
+          toast.error(t("missingColumns"));
           return;
         }
 
@@ -261,12 +266,13 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
         if (eventIdx !== -1 && parsedRows.length > 0) {
           verifyAttendance(parsedRows);
         }
-        toast.success(`Parsed ${parsedRows.length} members from CSV`);
+        toast.success(t("parsed", { count: parsedRows.length }));
       } catch (err) {
-        toast.error("Failed to parse CSV file");
+        toast.error(t("parseFailed"));
         console.error(err);
       }
     },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [events, verifyAttendance],
   );
 
@@ -301,7 +307,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       if (updated.length === 0) setShowVerifyDialog(false);
       return updated;
     });
-    toast.info(`Discarded: ${rowName}`);
+    toast.info(t("discarded", { name: rowName }));
   };
 
   const clearCsvRows = () => {
@@ -322,21 +328,19 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
   const handleSubmit = async () => {
     const includedRows = csvRows.filter((r) => r.included);
     if (includedRows.length === 0) {
-      toast.error("No recipients selected.");
+      toast.error(t("noRecipientsSelected"));
       return;
     }
 
     if (!hasEventColumn && !batchSelectedEventId) {
-      toast.error("Please select an event for this batch.");
+      toast.error(t("selectEventForBatch"));
       return;
     }
 
     if (hasEventColumn) {
       const unmappedRows = includedRows.filter((r) => !r.matchedEvent);
       if (unmappedRows.length > 0) {
-        toast.error(
-          `${unmappedRows.length} selected rows have no matching event. Fix or unselect them.`,
-        );
+        toast.error(t("unmappedRows", { count: unmappedRows.length }));
         return;
       }
     }
@@ -377,10 +381,10 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
     setFailedCount(fail);
 
     if (ok > 0 && fail === 0) {
-      toast.success(`Sent ${ok} certificate${ok !== 1 ? "s" : ""}!`);
+      toast.success(t("sentAll", { count: ok }));
       clearCsvRows();
     } else if (ok > 0) {
-      toast.warning(`Sent ${ok}, ${fail} failed.`);
+      toast.warning(t("sentPartial", { ok, fail }));
     }
     setIsSubmitting(false);
   };
@@ -393,18 +397,18 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
                 <Settings2 className="h-4 w-4 text-primary" />
-                Column Settings
+                {t("columnSettings")}
               </CardTitle>
               <Switch checked={useCustomColumns} onCheckedChange={setUseCustomColumns} />
             </div>
             <CardDescription className="text-xs">
-              Configure non-standard CSV headers before uploading.
+              {t("columnSettingsHint")}
             </CardDescription>
           </CardHeader>
           {useCustomColumns && (
             <CardContent className="p-4 pt-0 space-y-3">
               <div className="space-y-1">
-                <Label className="text-xs">Name Column Header</Label>
+                <Label className="text-xs">{t("nameColumnHeader")}</Label>
                 <Input
                   value={customNameCol}
                   onChange={(e) => setCustomNameCol(e.target.value)}
@@ -412,7 +416,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                 />
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">Email Column Header</Label>
+                <Label className="text-xs">{t("emailColumnHeader")}</Label>
                 <Input
                   value={customEmailCol}
                   onChange={(e) => setCustomEmailCol(e.target.value)}
@@ -443,7 +447,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               ) : (
                 <Calendar className="h-4 w-4 text-primary" />
               )}
-              Event Selection
+              {t("eventSelection")}
             </CardTitle>
             <CardDescription
               className={cn(
@@ -454,8 +458,8 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               )}
             >
               {hasEventColumn && csvRows.length > 0
-                ? "Events are assigned automatically from CSV columns."
-                : "Select an event to assign to this batch."}
+                ? t("eventsAutoAssigned")
+                : t("selectEventHint")}
             </CardDescription>
           </CardHeader>
           <CardContent className="p-4 pt-0">
@@ -470,9 +474,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   {batchSelectedEvent ? (
                     <span className="truncate font-medium">{batchSelectedEvent.name}</span>
                   ) : (
-                    <span className="text-muted-foreground">Select event for batch...</span>
+                    <span className="text-muted-foreground">{t("selectEventPlaceholder")}</span>
                   )}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[300px] p-0 shadow-lg" align="start">
@@ -482,9 +486,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   if (!normSearch) return 1;
                   return normValue.includes(normSearch) ? 1 : 0;
                 }}>
-                  <CommandInput placeholder="Search events..." className="h-9" />
+                  <CommandInput placeholder={t("searchEvents")} className="h-9" />
                   <CommandList>
-                    <CommandEmpty>No events found.</CommandEmpty>
+                    <CommandEmpty>{t("noEventsFound")}</CommandEmpty>
                     <CommandGroup>
                       {events.map((event) => (
                         <CommandItem
@@ -498,7 +502,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                         >
                           <Check
                             className={cn(
-                              "mr-2 h-4 w-4 text-primary",
+                              "me-2 h-4 w-4 text-primary",
                               batchSelectedEventId === event.id ? "opacity-100" : "opacity-0",
                             )}
                           />
@@ -527,7 +531,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                     variant={batchSelectedEvent.is_official ? "default" : "secondary"}
                     className="text-[10px] px-1.5 py-0 h-4"
                   >
-                    {batchSelectedEvent.is_official ? "Official" : "Unofficial"}
+                    {batchSelectedEvent.is_official ? tSend("official") : tSend("unofficial")}
                   </Badge>
                 </div>
               </div>
@@ -540,7 +544,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
         {isCheckingAttendance && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center gap-2 animate-in fade-in duration-300 rounded-xl border">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            <p className="text-sm font-medium">Verifying attendance...</p>
+            <p className="text-sm font-medium">{t("verifyingAttendance")}</p>
           </div>
         )}
 
@@ -550,7 +554,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <FileSpreadsheet className="h-4 w-4 text-primary" />
-                  Batch Import (CSV)
+                  {t("batchImport")}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {fileName ? (
@@ -558,10 +562,10 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                       <span className="font-bold text-foreground">
                         {csvRows.filter((r) => r.included).length}
                       </span>{" "}
-                      selected of {csvRows.length} recipients
+                      {t("selectedOfTotal", { total: csvRows.length })}
                     </>
                   ) : (
-                    "Upload your CSV file"
+                    t("uploadYourCsv")
                   )}
                 </CardDescription>
               </div>
@@ -578,7 +582,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                     }
                     className="h-8 text-xs"
                   >
-                    <Plus className="h-4 w-4 mr-1" /> Add Row
+                    <Plus className="h-4 w-4 me-1" /> {t("addRow")}
                   </Button>
                   <Button
                     variant="ghost"
@@ -586,7 +590,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                     onClick={clearCsv}
                     className="h-8 text-destructive hover:bg-destructive/10"
                   >
-                    <Trash2 className="h-4 w-4 mr-2" /> Clear
+                    <Trash2 className="h-4 w-4 me-2" /> {t("clear")}
                   </Button>
                   <Button
                     onClick={handleSubmit}
@@ -599,7 +603,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                     ) : (
                       <Send className="h-3 w-3" />
                     )}
-                    Dispatch All
+                    {t("dispatchAll")}
                   </Button>
                 </div>
               )}
@@ -621,9 +625,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                 <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted shadow-inner">
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold">Upload CSV File</h3>
+                <h3 className="text-lg font-semibold">{t("uploadCsvFile")}</h3>
                 <p className="text-xs text-muted-foreground mt-1 text-center max-w-sm">
-                  Configure column headers on the left before uploading if your CSV uses non-standard headers.
+                  {t("uploadHint")}
                 </p>
               </div>
             ) : (
@@ -637,13 +641,13 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                           onCheckedChange={(checked) => {
                             setCsvRows((rows) => rows.map((r) => ({ ...r, included: !!checked })));
                           }}
-                          aria-label="Select all"
+                          aria-label={t("selectAll")}
                         />
                       </TableHead>
-                      <TableHead className="text-[10px] uppercase font-bold py-0">Name</TableHead>
-                      <TableHead className="text-[10px] uppercase font-bold py-0">Email</TableHead>
+                      <TableHead className="text-[10px] uppercase font-bold py-0">{t("columnName")}</TableHead>
+                      <TableHead className="text-[10px] uppercase font-bold py-0">{t("columnEmail")}</TableHead>
                       {hasEventColumn && (
-                        <TableHead className="text-[10px] uppercase font-bold py-0">Event</TableHead>
+                        <TableHead className="text-[10px] uppercase font-bold py-0">{t("columnEvent")}</TableHead>
                       )}
                       <TableHead className="w-12 py-0 text-center" />
                     </TableRow>
@@ -666,7 +670,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                         <TableCell className="py-2">
                           <Input
                             value={row.name}
-                            placeholder="Full Name"
+                            placeholder={tSend("fullNamePlaceholder")}
                             className="h-8 text-xs bg-background md:max-w-[200px]"
                             onChange={(e) =>
                               setCsvRows((rows) => {
@@ -680,7 +684,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                         <TableCell className="py-2">
                           <Input
                             value={row.email}
-                            placeholder="email@example.com"
+                            placeholder={tDirect("emailPlaceholder")}
                             className="h-8 text-xs bg-background md:max-w-[250px]"
                             onChange={(e) =>
                               setCsvRows((rows) => {
@@ -707,11 +711,11 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                               </div>
                               {row.matchedEvent ? (
                                 <div className="text-[9px] text-emerald-600 dark:text-emerald-500 font-bold uppercase tracking-wider">
-                                  Matched
+                                  {t("matched")}
                                 </div>
                               ) : row.eventName ? (
                                 <div className="text-[9px] text-amber-600 dark:text-amber-500 font-bold uppercase tracking-wider">
-                                  Unmatched
+                                  {t("unmatched")}
                                 </div>
                               ) : null}
                             </div>
@@ -743,7 +747,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                 key={result.jobId ?? index}
                 jobId={result.jobId}
                 getToken={getToken}
-                itemLabel="certificate"
+                itemKey="certificate"
                 totalHint={result.total}
                 onGoToLogs={onGoToLogs}
               />
@@ -753,7 +757,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                 <CardHeader className="p-4">
                   <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
                     <AlertCircle className="h-4 w-4" />
-                    {failedCount} Failed to queue
+                    {t("failedToQueue", { count: failedCount })}
                   </CardTitle>
                 </CardHeader>
               </Card>

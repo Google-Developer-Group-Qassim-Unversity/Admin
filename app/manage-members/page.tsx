@@ -58,6 +58,7 @@ import { BatchImportDialog } from "@/components/manage-members/batch-import-dial
 import { useMembers } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { useTranslations } from "next-intl";
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -65,76 +66,84 @@ const PAGE_SIZE_OPTIONS = [
   { value: "100", label: "100" },
 ] as const;
 
-const columns: ColumnDef<Member>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-ml-4"
-      >
-        Name
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>,
-  },
-  {
-    accessorKey: "email",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-ml-4"
-      >
-        Email
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-  },
-  {
-    accessorKey: "uni_id",
-    header: ({ column }) => (
-      <Button
-        variant="ghost"
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-        className="-ml-4"
-      >
-        University ID
-        <ArrowUpDown className="ml-2 h-4 w-4" />
-      </Button>
-    ),
-    cell: ({ row }) => row.getValue("uni_id") ?? "—",
-  },
-  {
-    accessorKey: "gender",
-    header: "Gender",
-    cell: ({ row }) => row.getValue("gender"),
-  },
-  {
-    accessorKey: "phone_number",
-    header: "Phone",
-    cell: ({ row }) => row.getValue("phone_number") || "-",
-  },
-  {
-    accessorKey: "is_authenticated",
-    header: "Status",
-    cell: ({ row }) => {
-      const isAuth = row.getValue("is_authenticated");
-      return isAuth ? (
-        <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400" variant="outline">
-          Authenticated
-        </Badge>
-      ) : (
-        <Badge variant="secondary">Manual</Badge>
-      );
+// Messages come from a translator, so column defs are built per render
+// rather than at module scope where `useTranslations` is unavailable.
+function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>): ColumnDef<Member>[] {
+  return [
+    {
+      accessorKey: "name",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ms-4"
+        >
+          {t("columns.name")}
+          <ArrowUpDown className="ms-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>,
     },
-  },
-];
+    {
+      accessorKey: "email",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ms-4"
+        >
+          {t("columns.email")}
+          <ArrowUpDown className="ms-2 h-4 w-4" />
+        </Button>
+      ),
+    },
+    {
+      accessorKey: "uni_id",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ms-4"
+        >
+          {t("columns.universityId")}
+          <ArrowUpDown className="ms-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => row.getValue("uni_id") ?? "—",
+    },
+    {
+      accessorKey: "gender",
+      header: t("columns.gender"),
+      cell: ({ row }) => row.getValue("gender"),
+    },
+    {
+      accessorKey: "phone_number",
+      header: t("columns.phone"),
+      cell: ({ row }) => row.getValue("phone_number") || "-",
+    },
+    {
+      accessorKey: "is_authenticated",
+      header: t("columns.status"),
+      cell: ({ row }) => {
+        const isAuth = row.getValue("is_authenticated");
+        return isAuth ? (
+          <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400" variant="outline">
+            {t("authenticated")}
+          </Badge>
+        ) : (
+          <Badge variant="secondary">{t("manual")}</Badge>
+        );
+      },
+    },
+  ];
+}
 
 export default function ManageMembersPage() {
+  const t = useTranslations("manageMembersPage");
+  const tc = useTranslations("common.errors");
+  const createMemberT = useTranslations("createMember");
   const { getToken } = useAuth();
+  const columns = React.useMemo(() => buildColumns(t), [t]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isBatchDialogOpen, setIsBatchDialogOpen] = React.useState(false);
@@ -188,19 +197,17 @@ export default function ManageMembersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Members</h1>
-          <p className="text-muted-foreground mt-2">
-            View, search, and manage all members. Create members manually or batch import from Sheet Processor.
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
-            <Upload className="h-4 w-4 mr-2" />
-            Batch Import
+            <Upload className="h-4 w-4 me-2" />
+            {t("batchImport")}
           </Button>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <UserPlus className="h-4 w-4 mr-2" />
-            Create Member
+            <UserPlus className="h-4 w-4 me-2" />
+            {createMemberT("createMember")}
           </Button>
         </div>
       </div>
@@ -214,12 +221,12 @@ export default function ManageMembersPage() {
       {!isLoading && error && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Failed to Load Members</AlertTitle>
+          <AlertTitle>{t("loadFailed")}</AlertTitle>
           <AlertDescription>
             {error.message}
             {error.message.includes("403") && (
               <span className="block mt-1">
-                You don&apos;t have permission to view this page. Super admin access is required.
+                {tc("noPermission")}
               </span>
             )}
           </AlertDescription>
@@ -233,31 +240,31 @@ export default function ManageMembersPage() {
               <Card size="sm">
                 <CardContent className="pt-4 pb-4 px-4">
                   <div className="text-2xl font-bold">{stats.total}</div>
-                  <div className="text-xs text-muted-foreground">Total Members</div>
+                  <div className="text-xs text-muted-foreground">{t("stats.total")}</div>
                 </CardContent>
               </Card>
               <Card size="sm">
                 <CardContent className="pt-4 pb-4 px-4">
                   <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.authenticated}</div>
-                  <div className="text-xs text-muted-foreground">Authenticated</div>
+                  <div className="text-xs text-muted-foreground">{t("stats.authenticated")}</div>
                 </CardContent>
               </Card>
               <Card size="sm">
                 <CardContent className="pt-4 pb-4 px-4">
                   <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.manual}</div>
-                  <div className="text-xs text-muted-foreground">Manual</div>
+                  <div className="text-xs text-muted-foreground">{t("stats.manual")}</div>
                 </CardContent>
               </Card>
               <Card size="sm">
                 <CardContent className="pt-4 pb-4 px-4">
                   <div className="text-2xl font-bold">{stats.male}</div>
-                  <div className="text-xs text-muted-foreground">Male</div>
+                  <div className="text-xs text-muted-foreground">{t("stats.male")}</div>
                 </CardContent>
               </Card>
               <Card size="sm">
                 <CardContent className="pt-4 pb-4 px-4">
                   <div className="text-2xl font-bold">{stats.female}</div>
-                  <div className="text-xs text-muted-foreground">Female</div>
+                  <div className="text-xs text-muted-foreground">{t("stats.female")}</div>
                 </CardContent>
               </Card>
             </div>
@@ -265,20 +272,20 @@ export default function ManageMembersPage() {
 
           <div className="flex flex-wrap items-center gap-4">
 <div className="relative max-w-sm flex-1 min-w-[200px]">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search by name, email, uni ID, phone..."
+                placeholder={t("searchPlaceholder")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8"
+                className="ps-8"
               />
             </div>
 
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="sm">
-                  <Columns3 className="mr-1 h-4 w-4" />
-                  Columns
+                  <Columns3 className="me-1 h-4 w-4" />
+                  {t("columnsMenu")}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
@@ -292,7 +299,19 @@ export default function ManageMembersPage() {
                       checked={column.getIsVisible()}
                       onCheckedChange={(value) => column.toggleVisibility(!!value)}
                     >
-                      {column.id === "is_authenticated" ? "Status" : column.id === "uni_id" ? "University ID" : column.id === "phone_number" ? "Phone" : column.id.replace(/_/g, " ")}
+                      {column.id === "is_authenticated"
+                        ? t("columns.status")
+                        : column.id === "uni_id"
+                          ? t("columns.universityId")
+                          : column.id === "phone_number"
+                            ? t("columns.phone")
+                            : column.id === "name"
+                              ? t("columns.name")
+                              : column.id === "email"
+                                ? t("columns.email")
+                                : column.id === "gender"
+                                  ? t("columns.gender")
+                                  : column.id.replace(/_/g, " ")}
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>
@@ -301,8 +320,8 @@ export default function ManageMembersPage() {
             <div className="flex-1" />
 
             <div className="text-sm text-muted-foreground">
-              {totalRows} member{totalRows !== 1 ? "s" : ""}
-              {searchQuery.trim().length > 0 && ` (filtered from ${totalCount} total)`}
+              {t("memberCount", { count: totalRows })}
+              {searchQuery.trim().length > 0 && t("filteredFromTotal", { total: totalCount })}
             </div>
 
             
@@ -337,7 +356,7 @@ export default function ManageMembersPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                      {searchQuery.trim().length > 0 ? "No members match your search" : "No members found"}
+                      {searchQuery.trim().length > 0 ? t("noneMatchSearch") : t("noneFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -348,17 +367,17 @@ export default function ManageMembersPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
-                Showing{" "}
-                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
-                -
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                  totalRows
-                )}{" "}
-                of {totalRows} member{totalRows !== 1 ? "s" : ""}
+                {t("showingRange", {
+                  from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1,
+                  to: Math.min(
+                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                    totalRows
+                  ),
+                  count: totalRows,
+                })}
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">Rows:</span>
+                <span className="text-sm text-muted-foreground">{t("rows")}</span>
                 <Select
                   value={String(table.getState().pagination.pageSize)}
                   onValueChange={(value) => {
@@ -394,11 +413,10 @@ export default function ManageMembersPage() {
                 onClick={() => table.previousPage()}
                 disabled={!table.getCanPreviousPage()}
               >
-                <ChevronLeft className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
               </Button>
               <span className="px-3 text-sm">
-                Page {table.getState().pagination.pageIndex + 1} of{" "}
-                {table.getPageCount()}
+                {t("page", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
               </span>
               <Button
                 variant="outline"
@@ -406,7 +424,7 @@ export default function ManageMembersPage() {
                 onClick={() => table.nextPage()}
                 disabled={!table.getCanNextPage()}
               >
-                <ChevronRight className="h-4 w-4" />
+                <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
               </Button>
               <Button
                 variant="outline"

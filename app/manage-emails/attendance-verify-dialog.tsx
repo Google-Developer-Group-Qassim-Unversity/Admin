@@ -3,6 +3,7 @@
 import * as React from "react";
 import { AlertCircle, Check, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -33,16 +34,19 @@ export function AttendanceVerifyDialog({
   onAllow,
   onDeny,
 }: AttendanceVerifyDialogProps) {
+  const t = useTranslations("manageEmails.attendanceVerify");
+  const tf = useTranslations("common.fields");
+  const tc = useTranslations("common.actions");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[80vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle className="flex items-center gap-2 text-xl text-amber-600 dark:text-amber-500">
             <AlertCircle className="h-5 w-5" />
-            Attendance Verification
+            {t("title")}
           </DialogTitle>
           <DialogDescription className="text-sm">
-            The following students were not found in the official event submission list. Would you like to allow them anyway?
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -50,9 +54,9 @@ export function AttendanceVerifyDialog({
           <Table>
             <TableHeader className="bg-muted/50 sticky top-0 z-10">
               <TableRow className="h-10">
-                <TableHead className="text-[10px] uppercase font-bold py-0">Student Name</TableHead>
-                <TableHead className="text-[10px] uppercase font-bold py-0">Claimed Event</TableHead>
-                <TableHead className="w-24 text-right py-0 px-4">Actions</TableHead>
+                <TableHead className="text-[10px] uppercase font-bold py-0">{t("studentName")}</TableHead>
+                <TableHead className="text-[10px] uppercase font-bold py-0">{t("claimedEvent")}</TableHead>
+                <TableHead className="w-24 text-end py-0 px-4">{tf("actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -75,14 +79,14 @@ export function AttendanceVerifyDialog({
                       {row.eventName}
                     </Badge>
                   </TableCell>
-                  <TableCell className="py-2 px-4 text-right">
+                  <TableCell className="py-2 px-4 text-end">
                     <div className="flex justify-end gap-1">
                       <Button
                         size="sm"
                         variant="ghost"
                         className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                         onClick={() => onDeny(i)}
-                        title="Deny"
+                        title={t("deny")}
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -92,9 +96,9 @@ export function AttendanceVerifyDialog({
                         className="h-8 w-8 p-0 text-emerald-600 hover:bg-emerald-600/10"
                         onClick={() => {
                           onAllow(i);
-                          toast.success(`Allowed: ${unverifiedRows[i].name}`);
+                          toast.success(t("allowedToast", { name: unverifiedRows[i].name }));
                         }}
-                        title="Allow"
+                        title={t("allow")}
                       >
                         <Check className="h-4 w-4" />
                       </Button>
@@ -109,10 +113,10 @@ export function AttendanceVerifyDialog({
         <DialogFooter className="p-6 pt-2 border-t bg-muted/30">
           <div className="flex items-center justify-between w-full">
             <div className="text-xs text-muted-foreground">
-              <span className="font-bold text-foreground">{unverifiedRows.length}</span> unverified students remaining
+              <span className="font-bold text-foreground">{unverifiedRows.length}</span> {t("remaining")}
             </div>
             <Button onClick={() => onOpenChange(false)}>
-              Done
+              {tc("done")}
             </Button>
           </div>
         </DialogFooter>

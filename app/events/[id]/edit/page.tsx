@@ -25,8 +25,11 @@ import { shouldContactSupport } from "@/lib/api";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import type { LocationType, EventAction, Action } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 export default function EventEditPage() {
+  const t = useTranslations("editEvent");
+  const tc = useTranslations("common.actions");
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const router = useRouter();
@@ -124,10 +127,10 @@ export default function EventEditPage() {
 
       await updateEventMutation.mutateAsync({ id: event.id, data: payload });
       
-      toast.success("Event updated successfully!");
+      toast.success(t("updatedSuccess"));
       refetch?.();
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
+      const errorMessage = error instanceof Error ? error.message : t("unknownError");
       
       const apiError = { 
         message: errorMessage, 
@@ -136,8 +139,8 @@ export default function EventEditPage() {
       };
       
       if (shouldContactSupport(apiError)) {
-        toast.error("Failed to update event. Please contact support.", {
-          description: `Error: ${errorMessage}`,
+        toast.error(t("updateFailedContactSupport"), {
+          description: t("errorDetail", { message: errorMessage }),
           duration: 10000,
         });
       } else {
@@ -149,11 +152,11 @@ export default function EventEditPage() {
   const handleDelete = async () => {
     try {
       await deleteEventMutation.mutateAsync(event.id);
-      toast.success("Event deleted successfully");
+      toast.success(t("deletedSuccess"));
       router.push("/events");
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Unknown error";
-      toast.error("Failed to delete event", {
+      const errorMessage = error instanceof Error ? error.message : t("unknownError");
+      toast.error(t("deleteFailed"), {
         description: errorMessage,
       });
     }
@@ -165,7 +168,7 @@ export default function EventEditPage() {
         <CardContent className="flex items-center justify-center py-16">
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">Loading event details...</p>
+            <p className="text-sm text-muted-foreground">{t("loadingDetails")}</p>
           </div>
         </CardContent>
       </Card>
@@ -177,7 +180,7 @@ export default function EventEditPage() {
       <Card className="max-w-3xl mx-auto">
         <CardContent className="py-16">
           <div className="text-center text-destructive">
-            <p className="font-medium">Failed to load event details</p>
+            <p className="font-medium">{t("loadFailed")}</p>
             <p className="text-sm mt-1">{detailsError.message}</p>
           </div>
         </CardContent>
@@ -190,7 +193,7 @@ export default function EventEditPage() {
       <Card className="max-w-3xl mx-auto">
         <CardContent className="py-16">
           <div className="text-center text-muted-foreground">
-            <p>Event details not available</p>
+            <p>{t("notAvailable")}</p>
           </div>
         </CardContent>
       </Card>
@@ -206,10 +209,10 @@ export default function EventEditPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <Pencil className="h-5 w-5 text-primary" />
               </div>
-              Edit Event: {event.name}
+              {t("title", { name: event.name })}
             </CardTitle>
             <CardDescription className="mt-1.5">
-              Update the event details and configuration.
+              {t("subtitle")}
             </CardDescription>
           </div>
           {isDraft && (
@@ -221,28 +224,28 @@ export default function EventEditPage() {
                   disabled={deleteEventMutation.isPending}
                 >
                   {deleteEventMutation.isPending ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Trash2 className="mr-2 h-4 w-4" />
+                    <Trash2 className="me-2 h-4 w-4" />
                   )}
-                  Delete Draft
+                  {t("deleteDraft")}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
-                  <AlertDialogTitle>Delete Event</AlertDialogTitle>
+                  <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
                   <AlertDialogDescription>
-                    Are you sure you want to delete <strong>{event.name}</strong>?
-                    This action cannot be undone. All associated data (forms, logs, submissions) will be permanently removed.
+                    {t.rich("confirmDelete", { strong: (chunks) => <strong>{chunks}</strong>, name: event.name })}
+                    {" "}{t("deleteDescription")}
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
                   <AlertDialogAction
                     variant="destructive"
                     onClick={handleDelete}
                   >
-                    Delete
+                    {tc("delete")}
                   </AlertDialogAction>
                 </AlertDialogFooter>
               </AlertDialogContent>
@@ -258,8 +261,8 @@ export default function EventEditPage() {
           onSubmit={handleSubmit}
           isSubmitting={updateEventMutation.isPending}
           getToken={getToken}
-          submitButtonText="Save Changes"
-          submittingText="Saving..."
+          submitButtonText={t("saveChanges")}
+          submittingText={t("saving")}
         />
       </CardContent>
     </Card>

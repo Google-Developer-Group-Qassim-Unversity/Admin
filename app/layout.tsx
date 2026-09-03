@@ -1,15 +1,27 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
+import { Geist, Geist_Mono, Figtree, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { DirectionProvider } from "@/components/direction-provider";
+import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { QueryProvider } from "@/lib/query-provider";
 import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { config } from "@/lib/config";
+import { getDirection } from "@/i18n/config";
+import { getLocale } from "@/i18n/locale";
 
-const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
+const figtree = Figtree({ subsets: ["latin"], variable: "--font-latin" });
+
+// Figtree and Geist carry no Arabic glyphs. This sits behind them in the stack
+// so Arabic renders properly in either locale - member names and event titles
+// are often Arabic even while the UI is in English.
+const plexArabic = IBM_Plex_Sans_Arabic({
+  subsets: ["arabic"],
+  weight: ["300", "400", "500", "600", "700"],
+  variable: "--font-arabic",
+});
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,36 +41,45 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const locale = await getLocale();
+  const dir = getDirection(locale);
+
   return (
-    <ClerkProvider
-      publishableKey={config.clerkPublishableKey}
-      dynamic
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${figtree.variable} ${plexArabic.variable}`}
+      suppressHydrationWarning
     >
-      <html lang="en" className={figtree.variable} suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <NextIntlClientProvider>
           <ThemeProvider
             attribute="class"
             defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >
-            <QueryProvider>
-              <div className="relative min-h-screen flex flex-col">
-                <ConditionalNavbar />
-                <ConditionalWrapper>{children}</ConditionalWrapper>
-              </div>
-              <Toaster />
-            </QueryProvider>
+            <ClerkProviderWrapper locale={locale}>
+              <DirectionProvider dir={dir}>
+                <QueryProvider>
+                  <div className="relative min-h-screen flex flex-col">
+                    <ConditionalNavbar />
+                    <ConditionalWrapper>{children}</ConditionalWrapper>
+                  </div>
+                  <Toaster />
+                </QueryProvider>
+              </DirectionProvider>
+            </ClerkProviderWrapper>
           </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
   );
 }

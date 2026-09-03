@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Check, ChevronsUpDown, Plus, X } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -59,6 +60,7 @@ export function ActionReasonSelect({
   error = false,
   className,
 }: ActionReasonSelectProps) {
+  const t = useTranslations("actionReasonSelect");
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
@@ -153,7 +155,7 @@ export function ActionReasonSelect({
           )}
         >
           <span className="truncate">
-            {displayValue || (restricted ? "Select action..." : "Select reason (optional)...")}
+            {displayValue || (restricted ? t("selectAction") : t("selectReasonOptional"))}
           </span>
           <div className="flex items-center gap-1 shrink-0">
             {displayValue && !isCompositeAction && !restricted && (
@@ -180,7 +182,7 @@ export function ActionReasonSelect({
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
-            placeholder={restricted ? "Search actions..." : "Search or type custom reason..."}
+            placeholder={restricted ? t("searchActions") : t("searchOrCreate")}
             value={searchValue}
             onValueChange={setSearchValue}
             onKeyDown={handleKeyDown}
@@ -188,7 +190,7 @@ export function ActionReasonSelect({
           <CommandList>
             {!hasAnyResults && (
               <CommandEmpty>
-                {restricted ? "No actions found." : "No actions found. Type to create custom."}
+                {restricted ? t("noActionsFound") : t("noActionsFoundCreate")}
               </CommandEmpty>
             )}
 
@@ -201,7 +203,7 @@ export function ActionReasonSelect({
                     className="flex items-center gap-2 text-primary"
                   >
                     <Plus className="h-4 w-4" />
-                    <span>Create &quot;{searchValue.trim()}&quot;</span>
+                    <span>{t("createCustom", { value: searchValue.trim() })}</span>
                   </CommandItem>
                 </CommandGroup>
                 {(filteredDepartment.length > 0 || filteredMember.length > 0 || filteredBonus.length > 0) && (
@@ -212,7 +214,7 @@ export function ActionReasonSelect({
 
             {/* Department actions group */}
             {filteredDepartment.length > 0 && (
-              <CommandGroup heading="Department">
+              <CommandGroup heading={t("department")}>
                 {filteredDepartment.map((action) => (
                   <CommandItem
                     key={action.id}
@@ -221,7 +223,7 @@ export function ActionReasonSelect({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "me-2 h-4 w-4",
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />
@@ -238,7 +240,7 @@ export function ActionReasonSelect({
 
             {/* Member actions group */}
             {filteredMember.length > 0 && (
-              <CommandGroup heading="Member">
+              <CommandGroup heading={t("member")}>
                 {filteredMember.map((action) => (
                   <CommandItem
                     key={action.id}
@@ -247,7 +249,7 @@ export function ActionReasonSelect({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "me-2 h-4 w-4",
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />
@@ -269,7 +271,7 @@ export function ActionReasonSelect({
 
             {/* Custom/Bonus actions group - hidden in restricted mode */}
             {!restricted && filteredBonus.length > 0 && (
-              <CommandGroup heading="Custom">
+              <CommandGroup heading={t("custom")}>
                 {filteredBonus.map((action) => (
                   <CommandItem
                     key={action.id}
@@ -278,7 +280,7 @@ export function ActionReasonSelect({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "me-2 h-4 w-4",
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />

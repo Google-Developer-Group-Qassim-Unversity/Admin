@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Search, X, Check, UserPlus } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
@@ -39,6 +40,8 @@ export function MemberSelectDialog({
   onSelectionChange,
   onMemberCreated,
 }: MemberSelectDialogProps) {
+  const t = useTranslations("memberSelectDialog");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
   const [searchQuery, setSearchQuery] = React.useState("");
   const [pendingSelectedIds, setPendingSelectedIds] = React.useState<Set<number>>(new Set());
@@ -105,9 +108,9 @@ export function MemberSelectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl! max-h-[90vh] md:max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Select Members</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Search and select members to assign points to
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -116,33 +119,33 @@ export function MemberSelectDialog({
           <div className="flex-1 flex flex-col border rounded-lg">
             <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
               <span className="text-sm font-medium">
-                Available ({totalAvailable})
+                {t("available", { count: totalAvailable })}
               </span>
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsCreateDialogOpen(true)}>
                 <UserPlus className="h-3.5 w-3.5" />
-                Create
+                {t("create")}
               </Button>
             </div>
             <div className="px-3 py-2 border-b">
               <div className="relative">
-                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder="Search by name or uni ID..."
+                  placeholder={t("searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-8 h-8 text-sm"
+                  className="ps-8 h-8 text-sm"
                 />
               </div>
               {(showLimitHint || showSearchLimitHint) && (
                 <p className="text-xs text-muted-foreground mt-1.5">
-                  Showing {DISPLAY_LIMIT} of {totalAvailable}. Refine search to find more.
+                  {t("showingLimit", { limit: DISPLAY_LIMIT, total: totalAvailable })}
                 </p>
               )}
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
               {availableMembers.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  {searchQuery.trim() ? "No members found" : "All members selected"}
+                  {searchQuery.trim() ? t("noneFound") : t("allSelected")}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -167,7 +170,7 @@ export function MemberSelectDialog({
           {/* Selected Members Column */}
           <div className="flex-1 flex flex-col border rounded-lg">
             <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
-              <span className="text-sm font-medium">Selected ({selectedMembers.length})</span>
+              <span className="text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
               {selectedMembers.length > 0 && (
                 <Button
                   variant="ghost"
@@ -175,14 +178,14 @@ export function MemberSelectDialog({
                   className="h-7 text-xs text-muted-foreground hover:text-destructive"
                   onClick={() => setPendingSelectedIds(new Set())}
                 >
-                  Clear all
+                  {tc("clearAll")}
                 </Button>
               )}
             </div>
             <div className="flex-1 overflow-y-auto min-h-0">
               {selectedMembers.length === 0 ? (
                 <div className="p-4 text-center text-sm text-muted-foreground">
-                  No members selected
+                  {t("noneSelected")}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -214,10 +217,10 @@ export function MemberSelectDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button onClick={handleApply} disabled={pendingSelectedIds.size === 0}>
-            Apply ({pendingSelectedIds.size})
+            {t("apply", { count: pendingSelectedIds.size })}
           </Button>
         </DialogFooter>
       </DialogContent>

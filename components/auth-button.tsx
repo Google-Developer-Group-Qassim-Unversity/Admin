@@ -1,13 +1,15 @@
 "use client";
 
 import { UserButton, useUser } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, ArrowLeftRight } from "lucide-react";
 import { config } from "@/lib/config";
 
 export function AuthButton() {
   const { isLoaded, isSignedIn } = useUser();
+  const t = useTranslations("auth");
 
   // Loading state
   if (!isLoaded) {
@@ -23,7 +25,17 @@ export function AuthButton() {
             avatarBox: "h-8 w-8",
           },
         }}
-      />
+      >
+        <UserButton.MenuItems>
+          <UserButton.Link
+            label={t("backToMainApp")}
+            labelIcon={<ArrowLeftRight className="w-4 h-4" />}
+            href={config.memberAppUrl}
+          />
+          <UserButton.Action label="manageAccount" />
+          <UserButton.Action label="signOut" />
+        </UserButton.MenuItems>
+      </UserButton>
     );
   }
 
@@ -42,13 +54,13 @@ export function AuthButton() {
       <Button variant="outline" size="sm" asChild className="gap-2">
         <a href={signInUrl}>
           <LogIn className="h-4 w-4" />
-          <span className="hidden sm:inline">Log In</span>
+          <span className="hidden sm:inline">{t("logIn")}</span>
         </a>
       </Button>
       <Button variant="default" size="sm" asChild className="gap-2">
         <a href={signUpUrl}>
           <UserPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">Sign Up</span>
+          <span className="hidden sm:inline">{t("signUp")}</span>
         </a>
       </Button>
     </div>

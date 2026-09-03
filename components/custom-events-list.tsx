@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { Search, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -13,6 +14,7 @@ interface CustomEventsListProps {
 }
 
 export function CustomEventsList({ events }: CustomEventsListProps) {
+  const tp = useTranslations("points");
   const [searchQuery, setSearchQuery] = React.useState("");
 
   const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
@@ -37,12 +39,12 @@ export function CustomEventsList({ events }: CustomEventsListProps) {
       {/* Search Filter */}
       <div className="flex items-center gap-2 flex-wrap">
         <div className="relative w-64">
-          <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+          <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search custom events..."
+            placeholder={tp("searchCustom")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-8 h-9 text-sm"
+            className="ps-8 h-9 text-sm"
           />
         </div>
 

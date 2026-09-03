@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/popover";
 
 interface CreatableComboboxProps {
+  id?: string;
   options: string[];
   value: string;
   onChange: (value: string) => void;
@@ -32,6 +33,7 @@ interface CreatableComboboxProps {
 }
 
 export function CreatableCombobox({
+  id,
   options,
   value,
   onChange,
@@ -85,14 +87,15 @@ export function CreatableCombobox({
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
+          id={id}
           variant="outline"
           role="combobox"
           aria-expanded={open}
           disabled={disabled || isLoading}
-          className={cn("w-full justify-between", className)}
+          className={cn("h-auto min-h-9 w-full justify-between whitespace-normal py-2 text-left", className)}
         >
-          {value || placeholder}
-          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+          <span className="break-words">{value || placeholder}</span>
+          <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
@@ -128,7 +131,7 @@ export function CreatableCombobox({
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "me-2 h-4 w-4",
                         value === option ? "opacity-100" : "opacity-0"
                       )}
                     />

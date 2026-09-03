@@ -32,8 +32,11 @@ import {
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
 import type { GroupedActions, LocationType, ApiError, CreateCustomPointsResponse, Member } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 export default function CreateCustomEventPage() {
+  const t = useTranslations("createCustomEvent");
+  const tl = useTranslations("eventLayout");
   const router = useRouter();
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -162,9 +165,9 @@ export default function CreateCustomEventPage() {
         if (!firstError.success) {
           if (shouldContactSupport(firstError.error)) {
             toast.error(
-              "Failed to create custom event. Please contact support.",
+              t("createFailedContactSupport"),
               {
-                description: `Error: ${firstError.error.message}`,
+                description: t("errorDetail", { message: firstError.error.message }),
                 duration: 10000,
               }
             );
@@ -173,11 +176,11 @@ export default function CreateCustomEventPage() {
           }
         }
       } else {
-        toast.success("Custom event created successfully!");
+        toast.success(t("createdSuccess"));
         router.push("/points");
       }
     } catch {
-      toast.error("An unexpected error occurred. Please contact support.");
+      toast.error(t("unexpectedError"));
     } finally {
       setIsSubmitting(false);
     }
@@ -190,8 +193,8 @@ export default function CreateCustomEventPage() {
           <div className="mb-4">
             <Button variant="ghost" size="sm" asChild>
               <Link href="/points" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4" />
-                Back to Points
+                <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+                {tl("backToPoints")}
               </Link>
             </Button>
           </div>
@@ -199,10 +202,10 @@ export default function CreateCustomEventPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <Trophy className="h-5 w-5 text-primary" />
             </div>
-            Create Custom Event
+            {t("title")}
           </CardTitle>
           <CardDescription>
-            Create a new custom event with department or member point details
+            {t("description")}
           </CardDescription>
         </CardHeader>
         <CardContent>

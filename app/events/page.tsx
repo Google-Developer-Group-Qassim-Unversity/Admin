@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { CalendarPlus, AlertCircle, Calendar } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -11,6 +12,7 @@ import { EventsListSkeleton } from "@/components/events-list-skeleton";
 import { getEvents } from "@/lib/api";
 
 export default function ManageEventsPage() {
+  const t = useTranslations("events");
   const [eventsResponse, setEventsResponse] = React.useState<Awaited<ReturnType<typeof getEvents>> | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
   const [semester, setSemester] = React.useState<string>("all");
@@ -31,15 +33,12 @@ export default function ManageEventsPage() {
       {/* Page Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Events</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage all your events
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
         </div>
         <Button asChild>
           <Link href="/events/create" className="flex items-center gap-2">
             <CalendarPlus className="h-4 w-4" />
-            Create Event
+            {t("create")}
           </Link>
         </Button>
       </div>
@@ -52,13 +51,11 @@ export default function ManageEventsPage() {
         <div className="flex justify-center">
           <Alert variant="destructive" className="max-w-2xl">
             <AlertCircle className="h-4 w-4" />
-            <AlertTitle>Failed to Load Events</AlertTitle>
+            <AlertTitle>{t("loadFailed")}</AlertTitle>
             <AlertDescription>
-              {eventsResponse.error.message || "An error occurred while fetching events. Please try refreshing the page."}
+              {eventsResponse.error.message || t("loadFailedDescription")}
               {eventsResponse.error.isServerError && (
-                <span className="block mt-1">
-                  The server may be temporarily unavailable. Please try again later.
-                </span>
+                <span className="block mt-1">{t("serverUnavailable")}</span>
               )}
             </AlertDescription>
           </Alert>
@@ -79,14 +76,14 @@ export default function ManageEventsPage() {
         <div className="flex justify-center">
           <Alert className="max-w-2xl">
             <Calendar className="h-4 w-4" />
-            <AlertTitle>No Events Found</AlertTitle>
+            <AlertTitle>{t("noneFound")}</AlertTitle>
             <AlertDescription>
-              No events match the selected semester filter.
+              {t("noneMatchSemester")}
               <div className="mt-4">
                 <Button asChild size="sm">
                   <Link href="/events/create" className="flex items-center gap-2">
                     <CalendarPlus className="h-4 w-4" />
-                    Create New Event
+                    {t("createNew")}
                   </Link>
                 </Button>
               </div>

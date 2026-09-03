@@ -1,5 +1,6 @@
 import * as React from "react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import type { Member } from "@/lib/api-types";
 
@@ -19,7 +20,9 @@ interface UseRecipientListOptions {
  * machine shared by direct email's recipient list and blast's guaranteed
  * recipients - the same shape under two different names today.
  */
-export function useRecipientList({ duplicateMessage = "That email is already in the list" }: UseRecipientListOptions = {}) {
+export function useRecipientList({ duplicateMessage }: UseRecipientListOptions = {}) {
+  const t = useTranslations("recipientList");
+  const resolvedDuplicateMessage = duplicateMessage ?? t("duplicateDefault");
   const [recipients, setRecipients] = React.useState<RecipientEntry[]>([]);
   const [manualName, setManualName] = React.useState("");
   const [manualEmail, setManualEmail] = React.useState("");
@@ -32,14 +35,14 @@ export function useRecipientList({ duplicateMessage = "That email is already in 
         .map((m) => ({ name: m.name, email: m.email, member_id: m.id }));
       return [...prev, ...additions];
     });
-    toast.success(`Added ${members.length} member${members.length !== 1 ? "s" : ""}`);
+    toast.success(t("addedMembers", { count: members.length }));
   };
 
   const addManual = () => {
     const email = manualEmail.trim();
     if (!email) return;
     if (recipients.some((r) => r.email.toLowerCase() === email.toLowerCase())) {
-      toast.error(duplicateMessage);
+      toast.error(resolvedDuplicateMessage);
       return;
     }
     setRecipients((prev) => [...prev, { name: manualName.trim() || email, email }]);

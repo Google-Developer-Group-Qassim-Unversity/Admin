@@ -1,11 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
 import { Home, CalendarPlus, ShieldCheck, Trophy, Users, Menu, Settings } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { LanguageToggle } from "@/components/language-toggle";
+import { getDirection, type Locale } from "@/i18n/config";
 import { AuthButton } from "@/components/auth-button";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,16 +20,20 @@ import {
 } from "@/components/ui/sheet";
 
 const navLinks = [
-  { href: "/", label: "Home", icon: Home },
-  { href: "/events", label: "Events", icon: CalendarPlus },
-  { href: "/points", label: "Points", icon: Trophy },
-  { href: "/manage-members", label: "Members", icon: Users },
-  { href: "/manage-admins", label: "Admins", icon: ShieldCheck },
-  { href: "/settings", label: "Settings", icon: Settings },
-];
+  { href: "/", key: "home", icon: Home },
+  { href: "/events", key: "events", icon: CalendarPlus },
+  { href: "/points", key: "points", icon: Trophy },
+  { href: "/manage-members", key: "members", icon: Users },
+  { href: "/manage-admins", key: "admins", icon: ShieldCheck },
+  { href: "/settings", key: "settings", icon: Settings },
+] as const;
 
 export function Navbar() {
   const [open, setOpen] = useState(false);
+  const t = useTranslations("nav");
+  // Radix's Sheet `side` is physical, so the drawer has to be told which
+  // edge is the trailing one - it always opens from the hamburger's side.
+  const side = getDirection(useLocale() as Locale) === "rtl" ? "left" : "right";
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -48,7 +55,7 @@ export function Navbar() {
                 className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
               >
                 <Icon className="h-4 w-4" />
-                <span>{link.label}</span>
+                <span>{t(link.key)}</span>
               </Link>
             );
           })}
@@ -57,6 +64,7 @@ export function Navbar() {
         {/* Right side - Theme toggle and User profile */}
         <div className="flex items-center gap-2">
           <div className="hidden md:flex items-center gap-2">
+            <LanguageToggle />
             <ThemeToggle />
             <AuthButton />
           </div>
@@ -66,12 +74,12 @@ export function Navbar() {
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
                 <Menu className="h-5 w-5" />
-                <span className="sr-only">Toggle menu</span>
+                <span className="sr-only">{t("toggleMenu")}</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[320px]">
+            <SheetContent side={side} className="w-[280px] sm:w-[320px]">
               <SheetHeader>
-                <SheetTitle>Menu</SheetTitle>
+                <SheetTitle>{t("menu")}</SheetTitle>
               </SheetHeader>
               <nav className="flex flex-col gap-1 mt-6">
                 {navLinks.map((link) => {
@@ -84,12 +92,13 @@ export function Navbar() {
                       className="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent rounded-md"
                     >
                       <Icon className="h-5 w-5" />
-                      <span>{link.label}</span>
+                      <span>{t(link.key)}</span>
                     </Link>
                   );
                 })}
               </nav>
               <div className="flex items-center gap-2 mt-6 pt-6 border-t">
+                <LanguageToggle />
                 <ThemeToggle />
                 <AuthButton />
               </div>

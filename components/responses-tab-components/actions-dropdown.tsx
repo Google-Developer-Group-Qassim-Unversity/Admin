@@ -9,6 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ChevronDown, Copy, CheckCheck, Users, Loader2, Mail } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface ActionsDropdownProps {
   onCopyAsTSV: () => void;
@@ -27,47 +28,49 @@ export function ActionsDropdown({
   filteredRowCount,
   isLoading = false,
 }: ActionsDropdownProps) {
+  const t = useTranslations("responses");
+  const tf = useTranslations("common.fields");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" size="sm">
-          Actions
-          <ChevronDown className="ml-1 h-4 w-4" />
+          {tf("actions")}
+          <ChevronDown className="ms-1 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-[180px]">
         <DropdownMenuItem onClick={onCopyAsTSV}>
-          <Copy className="mr-2 h-4 w-4" />
-          Copy as TSV
+          <Copy className="me-2 h-4 w-4" />
+          {t("copyAsTsv")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onCopyAcceptedEmails}>
-          <Mail className="mr-2 h-4 w-4" />
-          Copy Accepted Emails
+          <Mail className="me-2 h-4 w-4" />
+          {t("copyAcceptedEmails")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onAcceptAll} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {t("processing")}
             </>
           ) : (
             <>
-              <CheckCheck className="mr-2 h-4 w-4" />
-              Accept All ({filteredRowCount})
+              <CheckCheck className="me-2 h-4 w-4" />
+              {t("acceptAllCount", { count: filteredRowCount })}
             </>
           )}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onAcceptBulk} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {t("processing")}
             </>
           ) : (
             <>
-              <Users className="mr-2 h-4 w-4" />
-              Accept Bulk
+              <Users className="me-2 h-4 w-4" />
+              {t("acceptBulk")}
             </>
           )}
         </DropdownMenuItem>

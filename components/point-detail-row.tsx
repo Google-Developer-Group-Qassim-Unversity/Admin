@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Minus, Plus, Trash2, Lock, Building2, User, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -66,6 +67,7 @@ export function PointDetailRow({
   canRemove,
   onMemberCreated,
 }: PointDetailRowProps) {
+  const t = useTranslations("pointDetailRow");
   const userRole = useUserRole();
   const isPointsLocked = data.action_id !== null;
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
@@ -111,7 +113,7 @@ export function PointDetailRow({
     }
   };
 
-  const entityLabel = data.row_type === "department" ? "Department" : "Member";
+  const entityLabel = data.row_type === "department" ? t("department") : t("member");
   const entityIds = data.row_type === "department" ? data.departments_id : data.member_ids;
   const entityField = data.row_type === "department" ? "departments_id" : "member_ids";
 
@@ -124,10 +126,10 @@ export function PointDetailRow({
 
   const getMemberDisplayText = () => {
     const count = data.member_ids.length;
-    if (count === 0) return "Select members...";
-    if (count === 1) return selectedMemberNames[0] || "1 member";
+    if (count === 0) return t("selectMembers");
+    if (count === 1) return selectedMemberNames[0] || t("oneMember");
     if (count <= 3) return selectedMemberNames.join(", ");
-    return `${selectedMemberNames.slice(0, 2).join(", ")}, +${count - 2} more`;
+    return `${selectedMemberNames.slice(0, 2).join(", ")}, ${t("moreCount", { count: count - 2 })}`;
   };
 
   return (
@@ -154,14 +156,14 @@ export function PointDetailRow({
             >
               <MultiSelectTrigger className="h-9 w-full max-w-full" disabled={isCompositeAction}>
                 <MultiSelectValue
-                  placeholder={`Select ${entityLabel.toLowerCase()}s...`}
+                  placeholder={t("selectDepartments")}
                   overflowBehavior="cutoff"
                 />
               </MultiSelectTrigger>
               <MultiSelectContent
                 search={{
-                  placeholder: `Search ${entityLabel.toLowerCase()}s...`,
-                  emptyMessage: `No ${entityLabel.toLowerCase()}s found.`,
+                  placeholder: t("searchDepartments"),
+                  emptyMessage: t("noDepartmentsFound"),
                 }}
               >
                 <MultiSelectGroup>
@@ -182,12 +184,12 @@ export function PointDetailRow({
                 onClick={() => !isCompositeAction && setMemberDialogOpen(true)}
                 disabled={isCompositeAction}
               >
-                <Users className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
+                <Users className="h-4 w-4 me-2 shrink-0 text-muted-foreground" />
                 <span className={`truncate min-w-0 ${data.member_ids.length === 0 ? "text-muted-foreground" : ""}`}>
                   {getMemberDisplayText()}
                 </span>
                 {data.member_ids.length > 0 && (
-                  <span className="ml-auto text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
+                  <span className="ms-auto text-xs bg-primary/10 text-primary px-1.5 py-0.5 rounded">
                     {data.member_ids.length}
                   </span>
                 )}
@@ -207,7 +209,7 @@ export function PointDetailRow({
         {!isRestrictedMode && (
           <div className="space-y-1.5">
             <Label className="text-sm font-medium flex items-center gap-1">
-              Points
+              {t("points")}
               {isPointsLocked && (
                 <TooltipProvider>
                   <Tooltip>
@@ -215,7 +217,7 @@ export function PointDetailRow({
                       <Lock className="h-3 w-3 text-muted-foreground" />
                     </TooltipTrigger>
                     <TooltipContent>
-                      <p>Points locked to selected action&apos;s value</p>
+                      <p>{t("pointsLockedTooltip")}</p>
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -284,12 +286,12 @@ export function PointDetailRow({
           <Label className="text-sm font-medium text-muted-foreground">
             {isRestrictedMode ? (
               <>
-                Action <span className="text-destructive">*</span>
+                {t("action")} <span className="text-destructive">*</span>
               </>
             ) : (
               <>
-                Reason{" "}
-                <span className="text-xs font-normal">(optional)</span>
+                {t("reason")}{" "}
+                <span className="text-xs font-normal">{t("optional")}</span>
               </>
             )}
           </Label>
@@ -306,7 +308,7 @@ export function PointDetailRow({
 
         <div className="space-y-1.5 flex flex-col items-center">
           <Label className="text-sm font-medium text-transparent select-none">
-            Del
+            {t("delete")}
           </Label>
           <Button
             type="button"

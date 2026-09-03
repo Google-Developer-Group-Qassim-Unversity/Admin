@@ -20,6 +20,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Switch } from "@/components/ui/switch";
 import type { Semester } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
+import { useTranslations } from "next-intl";
 
 /** Semester codes run years ahead of the current term, so allow a wide dropdown range. */
 const CALENDAR_START = new Date(2020, 0);
@@ -51,6 +52,7 @@ interface DateFieldProps {
 }
 
 function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldProps) {
+  const t = useTranslations("semesterDialog");
   const [open, setOpen] = React.useState(false);
   const selected = parseIsoDate(value);
 
@@ -64,10 +66,10 @@ function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldPr
             type="button"
             variant="outline"
             aria-invalid={invalid}
-            className={cn("w-full justify-start text-left font-normal", !selected && "text-muted-foreground")}
+            className={cn("w-full justify-start text-start font-normal", !selected && "text-muted-foreground")}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
-            {selected ? format(selected, "PPP") : "Select date..."}
+            <CalendarIcon className="me-2 h-4 w-4" />
+            {selected ? format(selected, "PPP") : t("selectDate")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -127,6 +129,8 @@ export function SemesterDialog({
   onSubmit,
   isLoading = false,
 }: SemesterDialogProps) {
+  const t = useTranslations("semesterDialog");
+  const tc = useTranslations("common.actions");
   const isEditing = semester !== null;
   const [values, setValues] = React.useState<SemesterFormValues>(EMPTY_FORM);
   const [idInput, setIdInput] = React.useState("");
@@ -152,14 +156,14 @@ export function SemesterDialog({
   const parsedId = Number(idInput);
   const idError = (() => {
     if (isEditing || idInput.trim() === "") return null;
-    if (!Number.isInteger(parsedId) || parsedId <= 0) return "Code must be a positive whole number";
-    if (existingIds.includes(parsedId)) return `Semester ${parsedId} already exists`;
+    if (!Number.isInteger(parsedId) || parsedId <= 0) return t("codePositiveInteger");
+    if (existingIds.includes(parsedId)) return t("codeExists", { id: parsedId });
     return null;
   })();
 
   const dateError =
     values.start_date && values.end_date && values.end_date < values.start_date
-      ? "End date must be on or after the start date"
+      ? t("endAfterStart")
       : null;
 
   const canSubmit =
@@ -181,17 +185,16 @@ export function SemesterDialog({
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditing ? `Edit semester ${semester.id}` : "Add semester"}</DialogTitle>
+            <DialogTitle>{isEditing ? t("editTitle", { id: semester.id }) : t("addTitle")}</DialogTitle>
             <DialogDescription>
-              Events and points are counted into a semester by the date range below. Changes take effect
-              immediately.
+              {t("description")}
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="semester-id">Semester code</Label>
+                <Label htmlFor="semester-id">{t("semesterCode")}</Label>
                 <Input
                   id="semester-id"
                   inputMode="numeric"
@@ -202,14 +205,14 @@ export function SemesterDialog({
                   aria-invalid={!!idError}
                 />
                 {isEditing ? (
-                  <p className="text-xs text-muted-foreground">The code cannot be changed.</p>
+                  <p className="text-xs text-muted-foreground">{t("codeImmutable")}</p>
                 ) : (
                   idError && <p className="text-xs text-destructive">{idError}</p>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="semester-name">Label (optional)</Label>
+                <Label htmlFor="semester-name">{t("labelOptional")}</Label>
                 <Input
                   id="semester-name"
                   placeholder="Summer 2026"
@@ -222,14 +225,14 @@ export function SemesterDialog({
             <div className="grid grid-cols-2 gap-4">
               <DateField
                 id="semester-start"
-                label="Start date"
+                label={t("startDate")}
                 value={values.start_date}
                 onChange={(start_date) => setValues((v) => ({ ...v, start_date }))}
               />
 
               <DateField
                 id="semester-end"
-                label="End date"
+                label={t("endDate")}
                 value={values.end_date}
                 onChange={(end_date) => setValues((v) => ({ ...v, end_date }))}
                 minDate={parseIsoDate(values.start_date)}
@@ -238,14 +241,14 @@ export function SemesterDialog({
             </div>
             {dateError && <p className="text-xs text-destructive">{dateError}</p>}
             <p className="text-xs text-muted-foreground">
-              Both dates are inclusive — an event ending on the end date still counts for this semester.
+              {t("inclusiveDatesHint")}
             </p>
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
-                <Label htmlFor="semester-public">Publicly visible</Label>
+                <Label htmlFor="semester-public">{t("publiclyVisible")}</Label>
                 <p className="text-xs text-muted-foreground">
-                  Off means only super admins can see this semester&apos;s leaderboard.
+                  {t("publiclyVisibleHint")}
                 </p>
               </div>
               <Switch
@@ -258,9 +261,9 @@ export function SemesterDialog({
             {!isEditing && (
               <div className="flex items-center justify-between rounded-lg border p-3">
                 <div className="space-y-0.5">
-                  <Label htmlFor="semester-current">Set as current</Label>
+                  <Label htmlFor="semester-current">{t("setAsCurrent")}</Label>
                   <p className="text-xs text-muted-foreground">
-                    The default semester used when no semester is requested.
+                    {t("setAsCurrentHint")}
                   </p>
                 </div>
                 <Switch
@@ -274,10 +277,10 @@ export function SemesterDialog({
 
           <DialogFooter>
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-              Cancel
+              {tc("cancel")}
             </Button>
             <Button type="submit" disabled={!canSubmit}>
-              {isLoading ? "Saving..." : isEditing ? "Save changes" : "Add semester"}
+              {isLoading ? t("saving") : isEditing ? t("saveChanges") : t("addSemester")}
             </Button>
           </DialogFooter>
         </form>

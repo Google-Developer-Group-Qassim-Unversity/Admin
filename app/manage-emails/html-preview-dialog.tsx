@@ -2,6 +2,7 @@
 
 import { Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -20,9 +21,10 @@ interface HtmlPreviewDialogProps {
 }
 
 export function HtmlPreviewDialog({ open, onOpenChange, html, subject }: HtmlPreviewDialogProps) {
+  const t = useTranslations("manageEmails.htmlPreview");
   const handleCopy = () => {
     navigator.clipboard.writeText(html);
-    toast.success("HTML copied to clipboard");
+    toast.success(t("copied"));
   };
 
   const handleOpenTab = () => {
@@ -35,7 +37,7 @@ export function HtmlPreviewDialog({ open, onOpenChange, html, subject }: HtmlPre
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-fit! max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle>Email Preview</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           {subject && <DialogDescription>{subject}</DialogDescription>}
         </DialogHeader>
         <div className="border rounded-md overflow-hidden bg-muted/30">
@@ -49,12 +51,12 @@ export function HtmlPreviewDialog({ open, onOpenChange, html, subject }: HtmlPre
         </div>
         <div className="flex items-center gap-2 pt-3">
           <Button variant="outline" size="sm" onClick={handleCopy}>
-            <Copy className="h-3.5 w-3.5 mr-1.5" />
-            Copy HTML
+            <Copy className="h-3.5 w-3.5 me-1.5" />
+            {t("copyHtml")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleOpenTab}>
-            <ExternalLink className="h-3.5 w-3.5 mr-1.5" />
-            Open in new tab
+            <ExternalLink className="h-3.5 w-3.5 me-1.5" />
+            {t("openNewTab")}
           </Button>
         </div>
       </DialogContent>

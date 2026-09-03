@@ -5,6 +5,7 @@ import { Info, AlertTriangle } from "lucide-react";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { cn } from "@/lib/utils";
 import type { EventStatus, FormType } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 interface StatusAlertProps {
   eventStatus: EventStatus;
@@ -15,6 +16,7 @@ export function StatusAlert({
   eventStatus,
   formType,
 }: StatusAlertProps) {
+  const t = useTranslations("responses.statusAlert");
   const statusAlert = useMemo(() => {
     const requiresRegistration = formType === 'google' || formType === 'registration';
     
@@ -22,8 +24,8 @@ export function StatusAlert({
     if (eventStatus === 'draft' && requiresRegistration) {
       return {
         icon: Info,
-        title: 'Event Not Published',
-        description: 'This event requires registration but is still in draft status. Please publish the event to start collecting responses.',
+        title: t('notPublishedTitle'),
+        description: t('notPublishedDescription'),
         className: 'bg-blue-500/10 border-blue-500/30',
         iconClassName: 'text-blue-600',
         titleClassName: 'text-blue-700 dark:text-blue-400',
@@ -35,8 +37,8 @@ export function StatusAlert({
     if (eventStatus === 'active') {
       return {
         icon: AlertTriangle,
-        title: 'Event is Active',
-        description: 'The event is now active. Acceptance emails should be sent.',
+        title: t('activeTitle'),
+        description: t('activeDescription'),
         className: 'bg-amber-500/10 border-amber-500/30',
         iconClassName: 'text-amber-600',
         titleClassName: 'text-amber-700 dark:text-amber-400',
@@ -52,14 +54,14 @@ export function StatusAlert({
     // Closed or draft without registration
     return {
       icon: Info,
-      title: 'Responses Closed',
-      description: 'Responses are not being collected anymore.',
+      title: t('closedTitle'),
+      description: t('closedDescription'),
       className: 'bg-muted/50 border-muted',
       iconClassName: 'text-muted-foreground',
       titleClassName: '',
       descClassName: '',
     };
-  }, [eventStatus, formType]);
+  }, [eventStatus, formType, t]);
 
   // Don't show alert when status is 'open'
   if (!statusAlert) {
