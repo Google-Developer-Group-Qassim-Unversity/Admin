@@ -1,13 +1,12 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Figtree } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { QueryProvider } from "@/lib/query-provider";
 import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { config } from "@/lib/config";
 
 const figtree = Figtree({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -35,20 +34,17 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider
-      publishableKey={config.clerkPublishableKey}
-      dynamic
-    >
-      <html lang="en" className={figtree.variable} suppressHydrationWarning>
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+    <html lang="en" className={figtree.variable} suppressHydrationWarning>
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+      >
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
+          <ClerkProviderWrapper>
             <QueryProvider>
               <div className="relative min-h-screen flex flex-col">
                 <ConditionalNavbar />
@@ -56,9 +52,9 @@ export default function RootLayout({
               </div>
               <Toaster />
             </QueryProvider>
-          </ThemeProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+          </ClerkProviderWrapper>
+        </ThemeProvider>
+      </body>
+    </html>
   );
 }

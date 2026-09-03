@@ -3,7 +3,7 @@
 import { UserButton, useUser } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogIn, UserPlus } from "lucide-react";
+import { LogIn, UserPlus, ArrowLeftRight } from "lucide-react";
 import { config } from "@/lib/config";
 
 export function AuthButton() {
@@ -23,7 +23,17 @@ export function AuthButton() {
             avatarBox: "h-8 w-8",
           },
         }}
-      />
+      >
+        <UserButton.MenuItems>
+          <UserButton.Link
+            label="Back to Main App"
+            labelIcon={<ArrowLeftRight className="w-4 h-4" />}
+            href={config.memberAppUrl}
+          />
+          <UserButton.Action label="manageAccount" />
+          <UserButton.Action label="signOut" />
+        </UserButton.MenuItems>
+      </UserButton>
     );
   }
 
