@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { Building2, Globe } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ export function LocationToggle({
   disabled = false,
   className,
 }: LocationToggleProps) {
+  const t = useTranslations("locationToggle");
+
   return (
     <ToggleGroup
       type="single"
@@ -35,19 +38,19 @@ export function LocationToggle({
     >
       <ToggleGroupItem
         value="on-site"
-        aria-label="On-site location"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        aria-label={t("onsiteAria")}
+        className="flex items-center gap-2"
       >
         <Building2 className="h-4 w-4" />
-        On-site
+        {t("onsite")}
       </ToggleGroupItem>
       <ToggleGroupItem
         value="online"
-        aria-label="Online/Remote"
-        className="flex items-center gap-2 data-[state=on]:bg-primary data-[state=on]:text-primary-foreground"
+        aria-label={t("remoteAria")}
+        className="flex items-center gap-2"
       >
         <Globe className="h-4 w-4" />
-        Remote
+        {t("remote")}
       </ToggleGroupItem>
     </ToggleGroup>
   );

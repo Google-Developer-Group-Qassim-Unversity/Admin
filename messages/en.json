@@ -93,7 +93,8 @@
   },
   "auth": {
     "logIn": "Log In",
-    "signUp": "Sign Up"
+    "signUp": "Sign Up",
+    "backToMainApp": "Back to Main App"
   },
   "home": {
     "title": "Admin Dashboard",
@@ -226,13 +227,12 @@
       "department": "Department *",
       "departmentPlaceholder": "Select a department...",
       "departmentAction": "Department Action *",
-      "departmentActionPlaceholder": "Select a department action..."
+      "departmentActionPlaceholder": "Select a department action...",
+      "attendanceAccess": "Attendance Access"
     },
-    "official": {
-      "yes": "This is an official event",
-      "no": "This is not an official event",
-      "yesHint": "Event will be marked as official",
-      "noHint": "Event will be marked as unofficial/community event"
+    "registration": {
+      "requiredHint": "Members must register beforehand. Only registered members can attend and earn points.",
+      "notRequiredHint": "No registration needed. Anyone can attend this event and earn points."
     }
   },
   "closeEvent": {
@@ -1444,5 +1444,35 @@
     "department": "Department",
     "member": "Member",
     "custom": "Custom"
+  },
+  "locationToggle": {
+    "onsite": "On-site",
+    "remote": "Remote",
+    "onsiteAria": "On-site location",
+    "remoteAria": "Online/Remote"
+  },
+  "registrationToggle": {
+    "required": "Registration Required",
+    "open": "Open to Everyone",
+    "requiredAria": "Registration required",
+    "openAria": "Open to everyone"
+  },
+  "dateTimeRangePicker": {
+    "selectDateTime": "Select date and time",
+    "startTime": "Start Time",
+    "endTime": "End Time"
+  },
+  "meetingUrlItem": {
+    "savedToast": "Meeting link saved",
+    "removedToast": "Meeting link removed",
+    "saveFailed": "Failed to save meeting link",
+    "title": "Meeting Link",
+    "descriptionSaved": "Members see a join button on the event page",
+    "descriptionEmpty": "Paste a link, or just a Google Meet code like abc-defg-hij",
+    "placeholder": "https://meet.google.com/abc-defg-hij",
+    "ariaLabel": "Meeting link",
+    "save": "Save",
+    "openLink": "Open meeting link",
+    "removeLink": "Remove meeting link"
   }
 }

@@ -8,3 +8,6 @@ allowBuilds:
   msw: true
   sharp: true
   unrs-resolver: true
+
+overrides:
+  '@clerk/shared': '3.42.0'

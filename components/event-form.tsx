@@ -4,14 +4,16 @@ import * as React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Loader2, FileBadge, AlertCircle } from "lucide-react";
+import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { LocationToggle } from "@/components/ui/location-toggle";
+import { RegistrationToggle } from "@/components/ui/registration-toggle";
 import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import { DateTimeRangePicker } from "@/components/ui/datetime-range-picker";
 import { EventImageUpload } from "@/components/event-image-upload";
@@ -43,6 +45,8 @@ export const buildEventFormSchema = (t: (key: string) => string) =>
     startDate: z.date({ message: t("startDateRequired") }),
     endDate: z.date({ message: t("endDateRequired") }),
     is_official: z.boolean(),
+    /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
+    requireRegistration: z.boolean(),
     image_url: z.string().nullable(),
     department_id: z.number({ required_error: t("departmentRequired") }),
     composite_action: z.array(z.any()).length(2, t("compositeActionRequired")),
@@ -91,6 +95,7 @@ export function EventForm({
     formState: { errors },
   } = useForm<EventFormData>({
     resolver: zodResolver(schema),
+    mode: "onBlur",
     defaultValues: {
       event_id: initialData?.event_id ?? null,
       name: initialData?.name ?? "",
@@ -100,6 +105,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
       department_id: initialData?.department_id,
       composite_action: initialData?.composite_action,
@@ -179,17 +185,24 @@ export function EventForm({
         <Input
           id="name"
           placeholder={t("fields.namePlaceholder")}
+          aria-invalid={!!errors.name}
+          aria-describedby={errors.name ? "name-error" : undefined}
           {...register("name")}
           className={errors.name ? "border-destructive" : ""}
         />
         {errors.name && (
-          <p className="text-sm text-destructive">{errors.name.message}</p>
+          <p id="name-error" role="alert" className="text-sm text-destructive">
+            {errors.name.message}
+          </p>
         )}
       </div>
 
       {/* Description */}
       <div className="space-y-2">
-        <Label htmlFor="description">{tc("description")}</Label>
+        <div className="flex items-center gap-2">
+          <Label htmlFor="description">{tc("description")}</Label>
+          <Badge variant="secondary">{tc("optional")}</Badge>
+        </div>
         <Textarea
           id="description"
           placeholder={t("fields.descriptionPlaceholder")}
@@ -197,43 +210,46 @@ export function EventForm({
           dir="auto"
           {...register("description")}
         />
-        <p className="text-xs text-muted-foreground">
-          Leave empty if no description is needed
-        </p>
       </div>
 
-      {/* Location Type Toggle */}
-      <div className="space-y-2">
-        <Label className="mb-4">{t("fields.locationType")}</Label>
-        <Controller
-          name="location_type"
-          control={control}
-          render={({ field }) => (
-            <LocationToggle value={field.value} onChange={field.onChange} />
-          )}
-        />
-      </div>
+      {/* Location Type + Location - Side by Side */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {/* Location Type Toggle */}
+        <div className="space-y-2">
+          <Label>{t("fields.locationType")}</Label>
+          <Controller
+            name="location_type"
+            control={control}
+            render={({ field }) => (
+              <LocationToggle value={field.value} onChange={field.onChange} />
+            )}
+          />
+        </div>
 
-      {/* Location Selection */}
-      <div className="space-y-2">
-        <Label>{t("fields.location")}</Label>
-        <Controller
-          name="location"
-          control={control}
-          render={({ field }) => (
-            <CreatableCombobox
-              options={locationOptions}
-              value={field.value}
-              onChange={field.onChange}
-              placeholder={t("fields.locationPlaceholder")}
-              searchPlaceholder={te("filters.searchLocations")}
-              emptyMessage={t("fields.locationEmpty")}
-            />
+        {/* Location Selection */}
+        <div className="space-y-2">
+          <Label htmlFor="location">{t("fields.location")}</Label>
+          <Controller
+            name="location"
+            control={control}
+            render={({ field }) => (
+              <CreatableCombobox
+                id="location"
+                options={locationOptions}
+                value={field.value}
+                onChange={field.onChange}
+                placeholder={t("fields.locationPlaceholder")}
+                searchPlaceholder={te("filters.searchLocations")}
+                emptyMessage={t("fields.locationEmpty")}
+              />
+            )}
+          />
+          {errors.location && (
+            <p role="alert" className="text-sm text-destructive">
+              {errors.location.message}
+            </p>
           )}
-        />
-        {errors.location && (
-          <p className="text-sm text-destructive">{errors.location.message}</p>
-        )}
+        </div>
       </div>
 
       {/* Date & Time Range */}
@@ -262,46 +278,47 @@ export function EventForm({
           )}
         />
         {(errors.startDate || errors.endDate) && (
-          <p className="text-sm text-destructive">
+          <p role="alert" className="text-sm text-destructive">
             {errors.startDate?.message || errors.endDate?.message}
           </p>
         )}
       </div>
 
-      {/* Is Official */}
-      <div className="space-y-2">
-        <Label htmlFor="is_official">{t("fields.official")}</Label>
-        <div className="flex items-center gap-4 rounded-lg border p-4">
+      {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
+      {mode === "create" && (
+        <div className="space-y-2">
+          <Label>{t("fields.attendanceAccess")}</Label>
           <Controller
-            name="is_official"
+            name="requireRegistration"
             control={control}
             render={({ field }) => (
-              <Switch
-                id="is_official"
-                checked={field.value}
-                onCheckedChange={field.onChange}
-              />
+              <RegistrationToggle value={field.value} onChange={field.onChange} />
             )}
           />
-          <div className="space-y-0.5">
-            <Label
-              htmlFor="is_official"
-              className="text-base cursor-pointer flex items-center gap-2"
-            >
-              {watch("is_official") && (
-                <FileBadge className="h-4 w-4 text-amber-500" />
-              )}
-              {watch("is_official")
-                ? t("official.yes")
-                : t("official.no")}
-            </Label>
-            <p className="text-sm text-muted-foreground">
-              {watch("is_official")
-                ? t("official.yesHint")
-                : t("official.noHint")}
-            </p>
-          </div>
+          <p className="text-sm text-muted-foreground">
+            {watch("requireRegistration")
+              ? t("registration.requiredHint")
+              : t("registration.notRequiredHint")}
+          </p>
         </div>
+      )}
+
+      {/* Is Official */}
+      <div className="flex items-center gap-3">
+        <Controller
+          name="is_official"
+          control={control}
+          render={({ field }) => (
+            <Switch
+              id="is_official"
+              checked={field.value}
+              onCheckedChange={field.onChange}
+            />
+          )}
+        />
+        <Label htmlFor="is_official" className="cursor-pointer">
+          {t("fields.official")}
+        </Label>
       </div>
 
       {/* Department and Composite Action Selection - Side by Side */}
@@ -321,6 +338,8 @@ export function EventForm({
                >
                 <SelectTrigger
                   id="department_id"
+                  aria-invalid={!!errors.department_id}
+                  aria-describedby={errors.department_id ? "department-error" : undefined}
                   className={errors.department_id ? "border-destructive" : ""}
                 >
                   <SelectValue placeholder={t("fields.departmentPlaceholder")} />
@@ -336,7 +355,7 @@ export function EventForm({
             )}
           />
           {errors.department_id && (
-            <p className="text-sm text-destructive">
+            <p id="department-error" role="alert" className="text-sm text-destructive">
               {errors.department_id.message}
             </p>
           )}
@@ -355,6 +374,8 @@ export function EventForm({
               >
                 <SelectTrigger
                   id="composite_action"
+                  aria-invalid={!!errors.composite_action}
+                  aria-describedby={errors.composite_action ? "composite-action-error" : undefined}
                   className={errors.composite_action ? "border-destructive" : ""}
                 >
                   <SelectValue placeholder={t("fields.departmentActionPlaceholder")} />
@@ -370,7 +391,7 @@ export function EventForm({
             )}
           />
           {errors.composite_action && (
-            <p className="text-sm text-destructive">
+            <p id="composite-action-error" role="alert" className="text-sm text-destructive">
               {errors.composite_action.message}
             </p>
           )}

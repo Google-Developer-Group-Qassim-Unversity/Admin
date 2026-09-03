@@ -19,6 +19,8 @@ export interface Event {
   end_datetime: string;
   status: EventStatus;
   image_url: string | null;
+  /** Join link for remote events. Set from the "Google Form & Publish" tab. */
+  meeting_url: string | null;
   is_official: boolean;
   created_at: string;
 }

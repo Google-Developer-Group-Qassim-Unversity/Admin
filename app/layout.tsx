@@ -1,16 +1,14 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Figtree, IBM_Plex_Sans_Arabic } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import { arSA } from "@clerk/localizations";
 import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 
 import { ThemeProvider } from "@/components/theme-provider";
 import { DirectionProvider } from "@/components/direction-provider";
+import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { QueryProvider } from "@/lib/query-provider";
 import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
 import { Toaster } from "@/components/ui/sonner";
-import { config } from "@/lib/config";
 import { getDirection } from "@/i18n/config";
 import { getLocale } from "@/i18n/locale";
 
@@ -52,27 +50,23 @@ export default async function RootLayout({
   const dir = getDirection(locale);
 
   return (
-    <ClerkProvider
-      publishableKey={config.clerkPublishableKey}
-      dynamic
-      localization={locale === "ar" ? arSA : undefined}
+    <html
+      lang={locale}
+      dir={dir}
+      className={`${figtree.variable} ${plexArabic.variable}`}
+      suppressHydrationWarning
     >
-      <html
-        lang={locale}
-        dir={dir}
-        className={`${figtree.variable} ${plexArabic.variable}`}
-        suppressHydrationWarning
+      <body
+        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <body
-          className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-        >
-          <NextIntlClientProvider>
-            <ThemeProvider
-              attribute="class"
-              defaultTheme="system"
-              enableSystem
-              disableTransitionOnChange
-            >
+        <NextIntlClientProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ClerkProviderWrapper locale={locale}>
               <DirectionProvider dir={dir}>
                 <QueryProvider>
                   <div className="relative min-h-screen flex flex-col">
@@ -82,10 +76,10 @@ export default async function RootLayout({
                   <Toaster />
                 </QueryProvider>
               </DirectionProvider>
-            </ThemeProvider>
-          </NextIntlClientProvider>
-        </body>
-      </html>
-    </ClerkProvider>
+            </ClerkProviderWrapper>
+          </ThemeProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
   );
 }

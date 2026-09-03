@@ -93,7 +93,8 @@
   },
   "auth": {
     "logIn": "تسجيل الدخول",
-    "signUp": "إنشاء حساب"
+    "signUp": "إنشاء حساب",
+    "backToMainApp": "الرجوع للتطبيق الرئيسي"
   },
   "home": {
     "title": "لوحة التحكم",
@@ -226,13 +227,12 @@
       "department": "القسم *",
       "departmentPlaceholder": "اختر القسم...",
       "departmentAction": "إجراء القسم *",
-      "departmentActionPlaceholder": "اختر إجراء القسم..."
+      "departmentActionPlaceholder": "اختر إجراء القسم...",
+      "attendanceAccess": "آلية الحضور"
     },
-    "official": {
-      "yes": "هذي فعالية رسمية",
-      "no": "هذي مو فعالية رسمية",
-      "yesHint": "راح تنحفظ الفعالية كفعالية رسمية.",
-      "noHint": "راح تنحفظ كفعالية مجتمعية غير رسمية."
+    "registration": {
+      "requiredHint": "الأعضاء لازم يسجلون قبل الفعالية. بس المسجلين يقدرون يحضرون ويكسبون نقاط.",
+      "notRequiredHint": "ما يحتاج تسجيل. أي عضو يقدر يحضر الفعالية ويكسب نقاط."
     }
   },
   "closeEvent": {
@@ -1444,5 +1444,35 @@
     "department": "قسم",
     "member": "عضو",
     "custom": "مخصص"
+  },
+  "locationToggle": {
+    "onsite": "حضوري",
+    "remote": "عن بعد",
+    "onsiteAria": "فعالية حضورية",
+    "remoteAria": "فعالية عن بعد"
+  },
+  "registrationToggle": {
+    "required": "التسجيل مطلوب",
+    "open": "مفتوحة للجميع",
+    "requiredAria": "التسجيل مطلوب",
+    "openAria": "مفتوحة للجميع"
+  },
+  "dateTimeRangePicker": {
+    "selectDateTime": "اختر التاريخ والوقت",
+    "startTime": "وقت البداية",
+    "endTime": "وقت النهاية"
+  },
+  "meetingUrlItem": {
+    "savedToast": "تم حفظ رابط الاجتماع.",
+    "removedToast": "تم حذف رابط الاجتماع.",
+    "saveFailed": "تعذر حفظ رابط الاجتماع.",
+    "title": "رابط الاجتماع",
+    "descriptionSaved": "الأعضاء يشوفون زر انضمام في صفحة الفعالية",
+    "descriptionEmpty": "الصق رابط، أو بس كود Google Meet مثل abc-defg-hij",
+    "placeholder": "https://meet.google.com/abc-defg-hij",
+    "ariaLabel": "رابط الاجتماع",
+    "save": "حفظ",
+    "openLink": "فتح رابط الاجتماع",
+    "removeLink": "حذف رابط الاجتماع"
   }
 }

@@ -45,7 +45,7 @@ export default function CreateEventPage() {
           image_url: data.image_url || null,
           is_official: data.is_official ? 1 : 0,
         },
-        form_type: "registration" as const,
+        form_type: data.requireRegistration ? ("registration" as const) : ("none" as const),
         department_action_id: department_action_id,
         member_action_id: member_action_id,
         department_id: data.department_id,
