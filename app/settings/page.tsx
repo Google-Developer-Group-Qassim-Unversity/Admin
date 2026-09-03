@@ -10,27 +10,27 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResetLeaderboardCache } from "@/hooks/use-cache";
 import { RequireRole } from "@/hooks/use-rbac";
+import { useTranslations } from "next-intl";
 
 export default function SettingsPage() {
+  const t = useTranslations("settingsPage");
   const { getToken } = useAuth();
   const resetCache = useResetLeaderboardCache(getToken);
 
   const handleResetCache = async () => {
     try {
       await resetCache.mutateAsync();
-      toast.success("Leaderboard cache reset successfully");
+      toast.success(t("resetSuccess"));
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to reset leaderboard cache");
+      toast.error(error instanceof Error ? error.message : t("resetFailed"));
     }
   };
 
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground mt-2">
-          Manage application settings and maintenance tasks
-        </p>
+        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
       </div>
 
       <Card className="max-w-2xl">
@@ -39,18 +39,18 @@ export default function SettingsPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
               <Settings className="h-5 w-5 text-primary" />
             </div>
-            Cache Management
+            {t("cacheTitle")}
           </CardTitle>
           <CardDescription>
-            Reset the leaderboard app&apos;s data cache to force it to fetch fresh data from the backend
+            {t("cacheDescription")}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between rounded-lg border p-4">
             <div className="space-y-1">
-              <p className="text-sm font-medium leading-none">Reset leaderboard cache</p>
+              <p className="text-sm font-medium leading-none">{t("resetCache")}</p>
               <p className="text-sm text-muted-foreground">
-                Clears all cached data on the leaderboard app, causing it to re-fetch from the backend
+                {t("resetCacheHint")}
               </p>
             </div>
             <Button
@@ -58,8 +58,8 @@ export default function SettingsPage() {
               disabled={resetCache.isPending}
               variant="destructive"
             >
-              <RotateCcw className={`h-4 w-4 mr-2 ${resetCache.isPending ? "animate-spin" : ""}`} />
-              {resetCache.isPending ? "Resetting..." : "Reset Cache"}
+              <RotateCcw className={`h-4 w-4 me-2 ${resetCache.isPending ? "animate-spin" : ""}`} />
+              {resetCache.isPending ? t("resetting") : t("resetCacheButton")}
             </Button>
           </div>
         </CardContent>
@@ -72,24 +72,24 @@ export default function SettingsPage() {
               <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
                 <CalendarRange className="h-5 w-5 text-primary" />
               </div>
-              Semesters
+              {t("semestersTitle")}
             </CardTitle>
             <CardDescription>
-              Set the start and end dates of each semester, add new ones, and pick the default
+              {t("semestersDescription")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div className="space-y-1">
-                <p className="text-sm font-medium leading-none">Manage semesters</p>
+                <p className="text-sm font-medium leading-none">{t("manageSemesters")}</p>
                 <p className="text-sm text-muted-foreground">
-                  Changes apply immediately to the leaderboard and the events filter
+                  {t("manageSemestersHint")}
                 </p>
               </div>
               <Button asChild variant="outline">
                 <Link href="/settings/semesters">
-                  Open
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  {t("open")}
+                  <ChevronRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />
                 </Link>
               </Button>
             </div>

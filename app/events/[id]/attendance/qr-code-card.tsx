@@ -21,6 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
@@ -51,14 +52,7 @@ interface TokenResponse {
   attendanceUrl: string;
 }
 
-const EXPIRATION_OPTIONS = [
-  { value: '15', label: '15 minutes' },
-  { value: '30', label: '30 minutes' },
-  { value: '60', label: '1 hour' },
-  { value: '120', label: '2 hours' },
-  { value: '720', label: '12 hours' },
-  { value: '1440', label: '24 hours' },
-];
+const EXPIRATION_OPTIONS = ['15', '30', '60', '120', '720', '1440'] as const;
 
 function getTokenStorageKey(eventId: number): string {
   return `attendance-token-${eventId}`;
@@ -106,6 +100,7 @@ interface GuardToggleRowProps {
 }
 
 function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedChange }: GuardToggleRowProps) {
+  const t = useTranslations("attendance.qrCode");
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
       <div className="flex items-center gap-2">
@@ -118,7 +113,7 @@ function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedCha
             <TooltipTrigger asChild>
               <button type="button" className="text-muted-foreground hover:text-foreground">
                 <HelpCircle className="h-3.5 w-3.5" />
-                <span className="sr-only">What does this do?</span>
+                <span className="sr-only">{t('whatDoesThisDo')}</span>
               </button>
             </TooltipTrigger>
             <TooltipContent>
@@ -133,6 +128,7 @@ function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedCha
 }
 
 export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
+  const t = useTranslations("attendance.qrCode");
   const { getToken } = useAuth();
   const [expirationMinutes, setExpirationMinutes] = useState('15');
   const [requireAttendanceTimeWindow, setRequireAttendanceTimeWindow] = useState(true);
@@ -162,7 +158,7 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
     const diff = expiresAt - now;
 
     if (diff <= 0) {
-      setTimeRemaining('Expired');
+      setTimeRemaining(t('expired'));
       return;
     }
 
@@ -171,12 +167,13 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
     const seconds = Math.floor((diff % (1000 * 60)) / 1000);
 
     if (hours > 0) {
-      setTimeRemaining(`${hours}h ${minutes}m ${seconds}s`);
+      setTimeRemaining(t('timeParts.hms', { h: hours, m: minutes, s: seconds }));
     } else if (minutes > 0) {
-      setTimeRemaining(`${minutes}m ${seconds}s`);
+      setTimeRemaining(t('timeParts.ms', { m: minutes, s: seconds }));
     } else {
-      setTimeRemaining(`${seconds}s`);
+      setTimeRemaining(t('timeParts.s', { s: seconds }));
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tokenData?.expiresAt]);
 
   useEffect(() => {
@@ -210,20 +207,20 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Failed to generate token');
+        throw new Error(error.error || t('generateFailedGeneric'));
       }
 
       const data: TokenResponse = await response.json();
       setTokenData(data);
       saveToken(eventId, data);
-      toast.success('Attendance link generated successfully');
+      toast.success(t('tokenGenerated'));
 
       const qrDisplayUrl = `/qr-display?url=${encodeURIComponent(data.attendanceUrl)}`;
       window.open(qrDisplayUrl, '_blank');
     } catch (error) {
       console.error('Error generating token:', error);
-      toast.error('Failed to generate attendance link', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t('generateFailed'), {
+        description: error instanceof Error ? error.message : t('unknownError'),
       });
     } finally {
       setIsGenerating(false);
@@ -236,11 +233,11 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
     try {
       await navigator.clipboard.writeText(tokenData.attendanceUrl);
       setCopied(true);
-      toast.success('Link copied to clipboard');
+      toast.success(t('linkCopied'));
 
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      toast.error('Failed to copy link');
+      toast.error(t('copyFailed'));
     }
   };
 
@@ -251,14 +248,14 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
     window.open(qrDisplayUrl, '_blank');
   };
 
-  const isExpired = timeRemaining === 'Expired';
+  const isExpired = timeRemaining === t('expired');
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Attendance QR Code</CardTitle>
+        <CardTitle>{t('title')}</CardTitle>
         <CardDescription>
-          Generate a time-limited QR code for members to mark their attendance at this event.
+          {t('description')}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -284,8 +281,8 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
                 <QrCode className="h-16 w-16 mb-3 opacity-40" />
                 <p className="text-sm text-center px-4">
                   {isExpired
-                    ? 'QR code has expired. Generate a new one.'
-                    : 'Generate a QR code to start accepting attendance'}
+                    ? t('qrExpiredHint')
+                    : t('generateHint')}
                 </p>
               </div>
             )}
@@ -293,7 +290,7 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
             {tokenData && !isExpired && timeRemaining && (
               <div className="mt-4 flex items-center gap-2 text-sm">
                 <Timer className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">Expires in:</span>
+                <span className="text-muted-foreground">{t('expiresIn')}</span>
                 <span className="font-medium tabular-nums">{timeRemaining}</span>
               </div>
             )}
@@ -301,28 +298,28 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
             {isExpired && (
               <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
                 <Clock className="h-4 w-4" />
-                <span>This QR code has expired</span>
+                <span>{t('expiredNotice')}</span>
               </div>
             )}
           </div>
 
           <div className="flex flex-col gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Expiration Time</label>
+              <label className="text-sm font-medium">{t('expirationTime')}</label>
               <Select value={expirationMinutes} onValueChange={setExpirationMinutes}>
                 <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select expiration time" />
+                  <SelectValue placeholder={t('selectExpirationTime')} />
                 </SelectTrigger>
                 <SelectContent>
                   {EXPIRATION_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
+                    <SelectItem key={option} value={option}>
+                      {t(`expirationOptions.${option}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
-                The QR code will expire after the selected duration.
+                {t('expirationHint')}
               </p>
             </div>
 
@@ -331,7 +328,7 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
                 <Button type="button" variant="outline" className="w-full justify-between">
                   <span className="flex items-center gap-2">
                     <SlidersHorizontal className="h-4 w-4" />
-                    Advanced: Attendance Rules
+                    {t('advancedRules')}
                   </span>
                   {advancedOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
                 </Button>
@@ -340,24 +337,24 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
                 <GuardToggleRow
                   id="require-time-window"
                   icon={CalendarClock}
-                  label="Require attendance within event time window"
-                  helpText="When on, members can only mark attendance while the event is in progress. When off, attendance can be marked at any time, regardless of the event's start/end dates."
+                  label={t('timeWindow.label')}
+                  helpText={t('timeWindow.help')}
                   checked={requireAttendanceTimeWindow}
                   onCheckedChange={setRequireAttendanceTimeWindow}
                 />
                 <GuardToggleRow
                   id="require-registration"
                   icon={ClipboardCheck}
-                  label="Require prior event registration"
-                  helpText="When on, members must have a submitted and accepted form before they can mark attendance (only applies to registration/Google-form events). When off, anyone can mark attendance regardless of registration status."
+                  label={t('registration.label')}
+                  helpText={t('registration.help')}
                   checked={requireAttendanceRegistration}
                   onCheckedChange={setRequireAttendanceRegistration}
                 />
                 <GuardToggleRow
                   id="prevent-duplicate"
                   icon={CopyX}
-                  label="Prevent duplicate same-day attendance"
-                  helpText="When on, members can only mark attendance once per day. When off, members can mark attendance multiple times on the same day."
+                  label={t('duplicate.label')}
+                  helpText={t('duplicate.help')}
                   checked={preventDuplicateDailyAttendance}
                   onCheckedChange={setPreventDuplicateDailyAttendance}
                 />
@@ -368,17 +365,17 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
               {isGenerating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
-                  Generating...
+                  {t('generating')}
                 </>
               ) : tokenData ? (
                 <>
                   <RefreshCw className="h-4 w-4" />
-                  Regenerate QR Code
+                  {t('regenerate')}
                 </>
               ) : (
                 <>
                   <QrCode className="h-4 w-4" />
-                  Generate QR Code
+                  {t('generate')}
                 </>
               )}
             </Button>
@@ -389,25 +386,25 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
                   {copied ? (
                     <>
                       <Check className="h-4 w-4" />
-                      Copied!
+                      {t('copied')}
                     </>
                   ) : (
                     <>
                       <Copy className="h-4 w-4" />
-                      Copy Link
+                      {t('copyLink')}
                     </>
                   )}
                 </Button>
                 <Button variant="outline" onClick={handleOpenFullscreen} className="flex-1">
                   <ExternalLink className="h-4 w-4" />
-                  Open in Tab
+                  {t('openInTab')}
                 </Button>
               </div>
             )}
 
             {tokenData && !isExpired && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">Attendance Link</label>
+                <label className="text-sm font-medium">{t('attendanceLink')}</label>
                 <div className="p-3 bg-muted rounded-lg text-xs font-mono break-all text-muted-foreground">
                   {tokenData.attendanceUrl}
                 </div>

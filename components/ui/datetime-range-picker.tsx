@@ -186,12 +186,12 @@ export function DateTimeRangePicker({
           variant="outline"
           disabled={disabled}
           className={cn(
-            "w-full justify-start text-left font-normal",
+            "w-full justify-start text-start font-normal",
             !value.startDate && "text-muted-foreground",
             className
           )}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon className="me-2 h-4 w-4" />
           {getDisplayText()}
         </Button>
       </PopoverTrigger>

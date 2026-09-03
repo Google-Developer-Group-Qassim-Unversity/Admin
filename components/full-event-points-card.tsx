@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,6 +20,8 @@ interface FullEventPointsCardProps {
 }
 
 export function FullEventPointsCard({ event }: FullEventPointsCardProps) {
+  const t = useTranslations("events");
+  const tp = useTranslations("points");
   const formatStartDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
     return date.toLocaleDateString("en-US", {
@@ -69,14 +74,14 @@ export function FullEventPointsCard({ event }: FullEventPointsCardProps) {
           <Button
             asChild
             variant="link"
-            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-left whitespace-normal text-foreground hover:text-foreground"
+            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
           >
             <Link href={`/points/${event.id}`} className="line-clamp-2">
               {event.name}
             </Link>
           </Button>
           <Badge variant={getStatusVariant(event.status)}>
-            {event.status}
+            {t(`status.${event.status}`)}
           </Badge>
         </div>
 
@@ -96,17 +101,17 @@ export function FullEventPointsCard({ event }: FullEventPointsCardProps) {
         )}
 
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <span className="font-medium">Starts:</span>
+          <span className="font-medium">{t("card.starts")}</span>
           <span>{formatStartDate(event.start_datetime)}</span>
         </div>
       </CardContent>
 
       <CardFooter className="pt-3 gap-2">
         <Button asChild variant="outline" className="flex-1">
-          <Link href={`/events/${event.id}?from=points`}>View Event</Link>
+          <Link href={`/events/${event.id}?from=points`}>{tp("viewEvent")}</Link>
         </Button>
         <Button asChild className="flex-1">
-          <Link href={`/points/${event.id}`}>Edit Points</Link>
+          <Link href={`/points/${event.id}`}>{tp("editPoints")}</Link>
         </Button>
       </CardFooter>
     </Card>

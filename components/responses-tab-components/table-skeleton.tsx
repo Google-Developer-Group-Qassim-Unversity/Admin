@@ -1,6 +1,7 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslations } from "next-intl";
 import {
   Table,
   TableBody,
@@ -12,11 +13,12 @@ import {
 
 // Table skeleton component matching the table structure
 export function TableSkeleton() {
+  const t = useTranslations("responses.summary");
   return (
     <>
       {/* Summary Statistics Skeleton */}
       <div className="rounded-lg border p-6 mb-6">
-        <div className="text-sm text-muted-foreground">Summary</div>
+        <div className="text-sm text-muted-foreground">{t("title")}</div>
         <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 text-sm">
           {Array.from({ length: 3 }).map((_, i) => (
             <div key={i} className="p-2 rounded bg-muted/50">

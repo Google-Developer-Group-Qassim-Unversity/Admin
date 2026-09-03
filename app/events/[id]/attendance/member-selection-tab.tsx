@@ -15,6 +15,7 @@ import {
 
 import type { MemberSelectionTabProps } from "./types";
 import { DISPLAY_LIMIT } from "./types";
+import { useTranslations } from "next-intl";
 
 export function MemberSelectionTab({
   isLoading,
@@ -33,6 +34,7 @@ export function MemberSelectionTab({
   isRemoveMode = false,
   onCreateMember,
 }: MemberSelectionTabProps) {
+  const t = useTranslations("attendance.memberSelection");
   const showLimitHint =
     !isRemoveMode && totalAvailable > DISPLAY_LIMIT && searchQuery.trim() === "";
 
@@ -41,12 +43,12 @@ export function MemberSelectionTab({
       {isMultiDay && isRemoveMode && (
         <Select value={selectedDay} onValueChange={onDayChange}>
           <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Select day" />
+            <SelectValue placeholder={t("selectDay")} />
           </SelectTrigger>
           <SelectContent>
             {Array.from({ length: dayCount }, (_, i) => i + 1).map((day) => (
               <SelectItem key={day} value={String(day)}>
-                Day {day}
+                {t("day", { number: day })}
               </SelectItem>
             ))}
           </SelectContent>
@@ -57,28 +59,28 @@ export function MemberSelectionTab({
         <div className="flex-1 flex flex-col border rounded-lg">
           <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
             <span className="text-sm font-medium">
-              {isRemoveMode ? "Attended" : "Available"} ({totalAvailable})
+              {isRemoveMode ? t("attended") : t("available")} ({totalAvailable})
             </span>
             {!isRemoveMode && onCreateMember && (
               <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onCreateMember}>
                 <UserPlus className="h-3.5 w-3.5" />
-                Create
+                {t("create")}
               </Button>
             )}
           </div>
           <div className="px-3 py-2 border-b">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={t("search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 h-8 text-sm"
+                className="ps-8 h-8 text-sm"
               />
             </div>
             {showLimitHint && (
               <p className="text-xs text-muted-foreground mt-1.5">
-                Showing {DISPLAY_LIMIT} of {totalAvailable}. Use search to find more.
+                {t("limitHint", { shown: DISPLAY_LIMIT, total: totalAvailable })}
               </p>
             )}
           </div>
@@ -92,10 +94,10 @@ export function MemberSelectionTab({
             ) : availableMembers.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
                 {searchQuery.trim()
-                  ? "No members found"
+                  ? t("noMembersFound")
                   : isRemoveMode
-                    ? "No attended members for this day"
-                    : "No members available"}
+                    ? t("noAttendedForDay")
+                    : t("noMembersAvailable")}
               </div>
             ) : (
               <div className="divide-y">
@@ -109,7 +111,7 @@ export function MemberSelectionTab({
                       <p className="text-sm truncate">{member.name}</p>
                       <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 rtl:-scale-x-100" />
                   </div>
                 ))}
               </div>
@@ -119,17 +121,17 @@ export function MemberSelectionTab({
 
         <div className="flex-1 flex flex-col border rounded-lg">
           <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
-            <span className="text-sm font-medium">Selected ({selectedMembers.length})</span>
+            <span className="text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
             {selectedMembers.length > 0 && (
               <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onClearAll}>
-                Clear all
+                {t("clearAll")}
               </Button>
             )}
           </div>
           <div className="flex-1 overflow-y-auto min-h-0">
             {selectedMembers.length === 0 ? (
               <div className="p-4 text-center text-sm text-muted-foreground">
-                No members selected
+                {t("noneSelected")}
               </div>
             ) : (
               <div className="divide-y">

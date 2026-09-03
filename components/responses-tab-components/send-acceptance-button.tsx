@@ -2,6 +2,7 @@
 
 import { Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 interface SendAcceptanceButtonProps {
   onClick: () => void;
@@ -16,6 +17,7 @@ export function SendAcceptanceButton({
   isLoading = false,
   disabled = false,
 }: SendAcceptanceButtonProps) {
+  const t = useTranslations("responses");
   return (
     <Button
       variant="default"
@@ -23,8 +25,8 @@ export function SendAcceptanceButton({
       onClick={onClick}
       disabled={disabled || isLoading}
     >
-      <Mail className="mr-2 h-4 w-4" />
-      Send Acceptance Email{recipientCount > 0 ? ` (${recipientCount})` : ""}
+      <Mail className="me-2 h-4 w-4" />
+      {t("sendAcceptance", { count: recipientCount })}
     </Button>
   );
 }

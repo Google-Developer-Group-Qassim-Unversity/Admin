@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useTranslations } from "next-intl";
 import { format, setHours, setMinutes } from "date-fns";
 import { CalendarIcon, Plus, Building2, User } from "lucide-react";
 
@@ -75,9 +76,11 @@ export function CustomEventForm({
   isFullEvent = false,
   onMemberCreated,
 }: CustomEventFormProps) {
+  const t = useTranslations("customEventForm");
+  const tc = useTranslations("common.states");
   const userRole = useUserRole();
   const isRestrictedMode = userRole === "admin_points";
-  
+
   const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (mode === "create") {
@@ -219,26 +222,26 @@ export function CustomEventForm({
     const newErrors: Record<string, string> = {};
 
     if (!eventName.trim()) {
-      newErrors.eventName = "Event name is required";
+      newErrors.eventName = t("eventNameRequired");
     }
 
     if (!date) {
-      newErrors.date = "Date is required";
+      newErrors.date = t("dateRequired");
     }
 
     if (rows.length === 0) {
-      newErrors.rows = "At least one point detail is required";
+      newErrors.rows = t("rowsRequired");
     }
 
     rows.forEach((row, i) => {
       if (row.row_type === "department" && row.departments_id.length === 0) {
-        newErrors[`row_${i}_entity`] = `Row ${i + 1}: Department is required`;
+        newErrors[`row_${i}_entity`] = t("rowDepartmentRequired", { number: i + 1 });
       }
       if (row.row_type === "member" && row.member_ids.length === 0) {
-        newErrors[`row_${i}_entity`] = `Row ${i + 1}: Member is required`;
+        newErrors[`row_${i}_entity`] = t("rowMemberRequired", { number: i + 1 });
       }
       if (isRestrictedMode && row.action_id === null) {
-        newErrors[`row_${i}_action`] = `Row ${i + 1}: Action is required`;
+        newErrors[`row_${i}_action`] = t("rowActionRequired", { number: i + 1 });
       }
     });
 
@@ -266,16 +269,16 @@ export function CustomEventForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Event Information</h3>
+        <h3 className="text-lg font-semibold">{t("eventInformation")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
-            <Label htmlFor="event-name">Event Name</Label>
+            <Label htmlFor="event-name">{t("eventName")}</Label>
             {useSimpleInput ? (
               <Input
                 id="event-name"
                 value={eventName}
                 onChange={(e) => handleEventNameChange(e.target.value)}
-                placeholder="Enter event name..."
+                placeholder={t("eventNamePlaceholder")}
                 disabled={isSubmitting || isFullEvent}
               />
             ) : (
@@ -283,9 +286,9 @@ export function CustomEventForm({
                 options={eventNameOptions}
                 value={eventName}
                 onChange={handleEventNameChange}
-                placeholder="Select or create event..."
-                searchPlaceholder="Search events..."
-                emptyMessage="No matching events."
+                placeholder={t("selectOrCreateEvent")}
+                searchPlaceholder={t("searchEvents")}
+                emptyMessage={t("noMatchingEvents")}
                 disabled={isFullEvent}
               />
             )}
@@ -295,19 +298,19 @@ export function CustomEventForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label>Date</Label>
+            <Label>{t("date")}</Label>
             <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-start font-normal",
                     !date && "text-muted-foreground"
                   )}
                   disabled={isSubmitting || isFullEvent}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {displayDate ?? "Select date..."}
+                  <CalendarIcon className="me-2 h-4 w-4" />
+                  {displayDate ?? t("selectDate")}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -328,7 +331,7 @@ export function CustomEventForm({
           </div>
 
           <div className="space-y-1.5">
-            <Label htmlFor="is_visible">Event Visibility</Label>
+            <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
             <div className="flex items-center gap-4 rounded-lg border p-4">
               <Switch
                 id="is_visible"
@@ -338,12 +341,12 @@ export function CustomEventForm({
               />
               <div className="flex-1">
                 <p className="text-sm font-medium">
-                  {isVisible ? "Visible" : "Hidden"}
+                  {isVisible ? t("visible") : t("hidden")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isVisible 
-                    ? "This custom event will be visible in reports" 
-                    : "This custom event will be hidden from reports"}
+                  {isVisible
+                    ? t("visibleHint")
+                    : t("hiddenHint")}
                 </p>
               </div>
             </div>
@@ -355,7 +358,7 @@ export function CustomEventForm({
 
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">Point Details</h3>
+          <h3 className="text-lg font-semibold">{t("pointDetails")}</h3>
           <div className="relative">
             <Button
               type="button"
@@ -364,11 +367,11 @@ export function CustomEventForm({
               onClick={() => setShowTypeSelector(!showTypeSelector)}
               disabled={isSubmitting}
             >
-              <Plus className="h-4 w-4 mr-1" />
-              Add Row
+              <Plus className="h-4 w-4 me-1" />
+              {t("addRow")}
             </Button>
             {showTypeSelector && (
-              <div className="absolute right-0 mt-2 w-48 rounded-md border bg-popover shadow-lg z-10">
+              <div className="absolute end-0 mt-2 w-48 rounded-md border bg-popover shadow-lg z-10">
                 <div className="p-1">
                   <button
                     type="button"
@@ -376,7 +379,7 @@ export function CustomEventForm({
                     onClick={() => addRow("department")}
                   >
                     <Building2 className="h-4 w-4" />
-                    Department Row
+                    {t("departmentRow")}
                   </button>
                   <button
                     type="button"
@@ -384,7 +387,7 @@ export function CustomEventForm({
                     onClick={() => addRow("member")}
                   >
                     <User className="h-4 w-4" />
-                    Member Row
+                    {t("memberRow")}
                   </button>
                 </div>
               </div>
@@ -426,11 +429,11 @@ export function CustomEventForm({
         <Button type="submit" disabled={isSubmitting || (mode === "edit" && !isDirty)}>
           {isSubmitting
             ? mode === "create"
-              ? "Creating..."
-              : "Saving..."
+              ? tc("creating")
+              : tc("saving")
             : mode === "create"
-              ? "Create Custom Event"
-              : "Save Changes"}
+              ? t("createCustomEvent")
+              : t("saveChanges")}
         </Button>
       </div>
     </form>

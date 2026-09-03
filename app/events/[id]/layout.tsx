@@ -13,14 +13,15 @@ import { EventProvider } from "@/contexts/event-context";
 import { useEvent } from "@/hooks/use-event";
 import { saveRefreshToken } from "@/lib/google-token-storage";
 import { ApiRequestError } from "@/lib/api";
+import { useTranslations } from "next-intl";
 
 const TAB_ITEMS = [
-  { value: "info", label: "Event Info", icon: Info, path: "" },
-  { value: "manage", label: "Google Form & Publish", icon: Link2, path: "/manage" },
-  { value: "responses", label: "Manage Responses", icon: Users, path: "/responses" },
-  { value: "attendance", label: "Attendance", icon: ClipboardCheck, path: "/attendance" },
-  { value: "edit", label: "Edit Event", icon: Pencil, path: "/edit" },
-];
+  { value: "info", key: "info", icon: Info, path: "" },
+  { value: "manage", key: "manage", icon: Link2, path: "/manage" },
+  { value: "responses", key: "responses", icon: Users, path: "/responses" },
+  { value: "attendance", key: "attendance", icon: ClipboardCheck, path: "/attendance" },
+  { value: "edit", key: "edit", icon: Pencil, path: "/edit" },
+] as const;
 
 function TabSkeleton({ w }: { w: string }) {
   return (
@@ -32,6 +33,7 @@ function TabSkeleton({ w }: { w: string }) {
 }
 
 function EventLayoutContent({ children }: { children: React.ReactNode }) {
+  const t = useTranslations("eventLayout");
   const params = useParams();
   const searchParams = useSearchParams();
   const pathname = usePathname();
@@ -50,7 +52,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
   }, [searchParams]);
 
   const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
-  const backLabel = searchParams.get('from') === 'points' ? 'Back to Points' : 'Back to Events';
+  const backLabel = searchParams.get('from') === 'points' ? t('backToPoints') : t('backToEvents');
 
   const isActiveTab = (tabPath: string) => {
     if (tabPath === "") {
@@ -115,13 +117,13 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
                   <EmptyMedia variant="icon">
                     <CalendarX />
                   </EmptyMedia>
-                  <EmptyTitle>Event not found</EmptyTitle>
+                  <EmptyTitle>{t('eventNotFound')}</EmptyTitle>
                   <EmptyDescription>
-                    The event you&apos;re looking for doesn&apos;t exist or has been deleted.
+                    {t('eventNotFoundDescription')}
                   </EmptyDescription>
                 </EmptyHeader>
                 <Button asChild>
-                  <Link href="/events">Go back to Events</Link>
+                  <Link href="/events">{t('goBackToEvents')}</Link>
                 </Button>
               </Empty>
             </CardContent>
@@ -131,7 +133,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
     }
     return (
       <div className="text-center py-12 text-destructive">
-        Error: {error.message}
+        {t('errorPrefix', { message: error.message })}
       </div>
     );
   }
@@ -146,13 +148,13 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
                 <EmptyMedia variant="icon">
                   <CalendarX />
                 </EmptyMedia>
-                <EmptyTitle>Event not found</EmptyTitle>
+                <EmptyTitle>{t('eventNotFound')}</EmptyTitle>
                 <EmptyDescription>
-                  The event you&apos;re looking for doesn&apos;t exist or has been deleted.
+                  {t('eventNotFoundDescription')}
                 </EmptyDescription>
               </EmptyHeader>
               <Button asChild>
-                <Link href="/events">Go back to Events</Link>
+                <Link href="/events">{t('goBackToEvents')}</Link>
               </Button>
             </Empty>
           </CardContent>
@@ -166,7 +168,7 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
       <div className="space-y-6">
         <Button variant="ghost" size="sm" asChild>
           <Link href={backHref} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" />
+            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
             {backLabel}
           </Link>
         </Button>
@@ -190,9 +192,9 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
                     }`}
                   >
                     <tab.icon className="h-4 w-4" />
-                    {tab.label}
+                    {t(`tabs.${tab.key}`)}
                     {isActive && (
-                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-primary" />
                     )}
                   </Link>
                 );

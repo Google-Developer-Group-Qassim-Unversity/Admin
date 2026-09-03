@@ -18,6 +18,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { EnrichedEmailLog } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 import type { AcceptanceData, BlastData, CertificateData } from "./types";
 
@@ -47,38 +48,23 @@ function getBlastData(log: EnrichedEmailLog): BlastData | null {
 
 export const TYPE_CONFIG: Record<
   string,
-  { label: string; icon: React.ElementType; color: string; badgeClass: string }
+  { icon: React.ElementType; color: string; badgeClass: string }
 > = {
-  "event-certificate": {
-    label: "Event Certificate",
-    icon: Award,
-    color: "text-blue-500",
-    badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
-  },
-  "manual-certificate": {
-    label: "Manual Certificate",
-    icon: PenLine,
-    color: "text-purple-500",
-    badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
-  },
-  acceptance: {
-    label: "Acceptance",
-    icon: MailCheck,
-    color: "text-emerald-500",
-    badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
-  },
-  event_announcement: {
-    label: "Announcement",
-    icon: MailCheck,
-    color: "text-orange-500",
-    badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
-  },
-  blast: {
-    label: "Blast",
-    icon: Megaphone,
-    color: "text-pink-500",
-    badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20",
-  },
+  "event-certificate": { icon: Award, color: "text-blue-500", badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
+  "manual-certificate": { icon: PenLine, color: "text-purple-500", badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
+  acceptance: { icon: MailCheck, color: "text-emerald-500", badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
+  event_announcement: { icon: MailCheck, color: "text-orange-500", badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
+  blast: { icon: Megaphone, color: "text-pink-500", badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20" },
+};
+
+// Maps a raw email_type to the key under manageEmails.logRow.types (and
+// manageEmails.jobs.types, which shares the same taxonomy).
+export const TYPE_LABEL_KEY: Record<string, string> = {
+  "event-certificate": "eventCertificate",
+  "manual-certificate": "manualCertificate",
+  acceptance: "acceptance",
+  event_announcement: "announcement",
+  blast: "blast",
 };
 
 function RowIcon({ type }: { type: string }) {
@@ -93,10 +79,12 @@ function RowIcon({ type }: { type: string }) {
 }
 
 function TypeBadge({ type }: { type: string }) {
-  const cfg = TYPE_CONFIG[type] ?? { label: type, badgeClass: "" };
+  const t = useTranslations("manageEmails.logRow.types");
+  const cfg = TYPE_CONFIG[type] ?? { badgeClass: "" };
+  const labelKey = TYPE_LABEL_KEY[type];
   return (
     <Badge variant="outline" className={`text-[10px] px-1.5 py-0 h-4 shrink-0 ${cfg.badgeClass}`}>
-      {cfg.label}
+      {labelKey ? t(labelKey) : type}
     </Badge>
   );
 }
@@ -110,6 +98,7 @@ function EventNameWithTooltip({
   eventOfficial: boolean | undefined;
   snapshotEvent?: { name: string; date: string; official: boolean } | null;
 }) {
+  const t = useTranslations("manageEmails.logRow");
   if (!eventName) return null;
 
   const currentOfficial = eventOfficial ?? false;
@@ -136,33 +125,33 @@ function EventNameWithTooltip({
         </span>
       </TooltipTrigger>
       <TooltipContent side="top" className="max-w-xs">
-        <div className="space-y-1 text-xs text-left" dir="ltr">
+        <div className="space-y-1 text-xs text-start" dir="ltr">
           <p>
-            <span className="text-muted-foreground">Event:</span>{" "}
+            <span className="text-muted-foreground">{t("event")}</span>{" "}
             <span className="font-medium" dir="auto">{eventName}</span>
           </p>
           <p>
-            <span className="text-muted-foreground">Type:</span>{" "}
-            {currentOfficial ? "Official" : "Unofficial"}
+            <span className="text-muted-foreground">{t("type")}</span>{" "}
+            {currentOfficial ? t("official") : t("unofficial")}
           </p>
           {snapDate && (
             <p>
-              <span className="text-muted-foreground">Date:</span> {snapDate}
+              <span className="text-muted-foreground">{t("date")}</span> {snapDate}
             </p>
           )}
           {hasDiff && (
             <div className="border-t pt-1 mt-1">
-              <p className="text-amber-500 font-medium mb-0.5">Values at send time:</p>
+              <p className="text-amber-500 font-medium mb-0.5">{t("valuesAtSendTime")}</p>
               {nameChanged && (
                 <p>
-                  <span className="text-muted-foreground">Name:</span>{" "}
+                  <span className="text-muted-foreground">{t("name")}</span>{" "}
                   <span dir="auto">{snapName}</span>
                 </p>
               )}
               {officialChanged && (
                 <p>
-                  <span className="text-muted-foreground">Type:</span>{" "}
-                  {snapOfficial ? "Official" : "Unofficial"}
+                  <span className="text-muted-foreground">{t("type")}</span>{" "}
+                  {snapOfficial ? t("official") : t("unofficial")}
                 </p>
               )}
             </div>
@@ -174,9 +163,10 @@ function EventNameWithTooltip({
 }
 
 function MetaColumn({ log }: { log: EnrichedEmailLog }) {
+  const t = useTranslations("manageEmails.logRow");
   const sentAt = new Date(log.sent_at);
   return (
-    <div className="text-right shrink-0 space-y-1 min-w-[140px]">
+    <div className="text-end shrink-0 space-y-1 min-w-[140px]">
       <Tooltip>
         <TooltipTrigger asChild>
           <p className="text-[10px] text-muted-foreground cursor-default">
@@ -188,10 +178,10 @@ function MetaColumn({ log }: { log: EnrichedEmailLog }) {
         </TooltipContent>
       </Tooltip>
       <p className="text-[10px] text-muted-foreground/70" dir="auto">
-        sent by: {log.sender_name}
+        {t("sentBy", { name: log.sender_name ?? t("unknown") })}
       </p>
-      <p className="text-[10px] text-muted-foreground/70 truncate max-w-[160px] ml-auto">
-        from: {log.from_address}
+      <p className="text-[10px] text-muted-foreground/70 truncate max-w-[160px] ms-auto">
+        {t("fromAddress", { address: log.from_address })}
       </p>
       <TypeBadge type={log.email_type} />
     </div>
@@ -209,6 +199,7 @@ function MemberListDialog({
   members: Array<{ name: string | null; email: string }>;
   subject?: string;
 }) {
+  const t = useTranslations("manageEmails.logRow");
   const [query, setQuery] = React.useState("");
 
   React.useEffect(() => {
@@ -224,18 +215,18 @@ function MemberListDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg! max-h-[80vh] flex flex-col p-0 overflow-hidden">
         <DialogHeader className="px-6 pt-6 pb-2">
-          <DialogTitle>Recipients ({members.length})</DialogTitle>
+          <DialogTitle>{t("recipientsTitle", { count: members.length })}</DialogTitle>
           {subject && <DialogDescription>{subject}</DialogDescription>}
         </DialogHeader>
         {members.length > 10 && (
           <div className="px-6 pb-2">
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
               <Input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Search by name or email..."
-                className="h-8 pl-8 text-xs"
+                placeholder={t("searchByNameOrEmail")}
+                className="h-8 ps-8 text-xs"
               />
             </div>
           </div>
@@ -244,8 +235,8 @@ function MemberListDialog({
           <table className="w-full text-sm">
             <thead className="bg-muted/50 sticky top-0 z-10">
               <tr>
-                <th className="text-left py-2 px-4 font-medium text-xs text-muted-foreground">Name</th>
-                <th className="text-left py-2 px-4 font-medium text-xs text-muted-foreground">Email</th>
+                <th className="text-start py-2 px-4 font-medium text-xs text-muted-foreground">{t("columnName")}</th>
+                <th className="text-start py-2 px-4 font-medium text-xs text-muted-foreground">{t("columnEmail")}</th>
               </tr>
             </thead>
             <tbody>
@@ -258,7 +249,7 @@ function MemberListDialog({
               {filtered.length === 0 && (
                 <tr>
                   <td colSpan={2} className="py-6 text-center text-xs text-muted-foreground">
-                    No matches.
+                    {t("noMatches")}
                   </td>
                 </tr>
               )}
@@ -271,8 +262,9 @@ function MemberListDialog({
 }
 
 function CertificateRow({ log }: EmailLogRowProps) {
+  const t = useTranslations("manageEmails.logRow");
   const snapshot = getSnapshotData(log);
-  const memberName = log.member_name ?? snapshot?.member.name ?? "Unknown";
+  const memberName = log.member_name ?? snapshot?.member.name ?? t("unknown");
   const memberEmail = log.member_email ?? snapshot?.member.email ?? "";
   const eventName = log.event_name ?? snapshot?.event.name;
   const eventOfficial = log.event_is_official != null ? !!log.event_is_official : snapshot?.event.official;
@@ -285,7 +277,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1 text-sm">
-              <span className="text-muted-foreground/60 text-xs">Member:</span>
+              <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
               <span className="font-medium truncate">
                 {nameDiffers ? (
                   <Tooltip>
@@ -295,7 +287,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">Name at send time: {snapshot?.member.name}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
@@ -305,14 +297,14 @@ function CertificateRow({ log }: EmailLogRowProps) {
             </div>
             {memberEmail && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="text-muted-foreground/60">Email:</span>
+                <span className="text-muted-foreground/60">{t("email")}</span>
                 <span className="truncate">{memberEmail}</span>
               </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-1 text-xs">
-          <span className="text-muted-foreground/60">Event:</span>
+          <span className="text-muted-foreground/60">{t("event")}</span>
           <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={snapshot?.event} />
         </div>
       </div>
@@ -322,6 +314,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
 }
 
 function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
+  const t = useTranslations("manageEmails.logRow");
   const data = getAcceptanceData(log);
   const eventName = log.event_name ?? data?.event.name;
   const eventOfficial = log.event_is_official != null ? !!log.event_is_official : data?.event.official;
@@ -335,25 +328,25 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
         <RowIcon type={log.email_type} />
         <div className="flex-1 min-w-0 space-y-0.5">
           <div className="flex items-center gap-1 text-xs">
-          <span className="text-muted-foreground/60">Event:</span>
+          <span className="text-muted-foreground/60">{t("event")}</span>
           <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={data?.event} />
         </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
             {subject && (
               <span className="truncate max-w-[280px]">
-                <span className="text-muted-foreground/60">Subject line:</span>{" "}
+                <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
                 <span className="italic">&ldquo;{subject}&rdquo;</span>
               </span>
             )}
           </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <span>{log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}</span>
+            <span>{t("recipientCount", { count: log.recipient_count })}</span>
             {members.length > 0 && (
               <button
                 onClick={() => setMembersOpen(true)}
                 className="underline decoration-dotted underline-offset-2 cursor-pointer hover:text-foreground transition-colors"
               >
-                Members
+                {t("members")}
               </button>
             )}
             {data?.html_content && (
@@ -363,8 +356,8 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
                 className="h-5 px-1.5 text-[10px] shrink-0"
                 onClick={() => onViewHtml(data.html_content, data.subject ?? "")}
               >
-                <Eye className="h-3 w-3 mr-0.5" />
-                HTML
+                <Eye className="h-3 w-3 me-0.5" />
+                {t("html")}
               </Button>
             )}
           </div>
@@ -384,6 +377,7 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
 }
 
 function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
+  const t = useTranslations("manageEmails.logRow");
   const data = getBlastData(log);
   const subject = data?.subject;
   const recipients = data?.recipients ?? [];
@@ -398,14 +392,14 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
         <div className="flex-1 min-w-0 space-y-0.5">
           {subject && (
             <div className="text-xs text-muted-foreground truncate max-w-[320px]">
-              <span className="text-muted-foreground/60">Subject line:</span>{" "}
+              <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
               <span className="italic">&ldquo;{subject}&rdquo;</span>
             </div>
           )}
           {data && (
             <div className="text-xs text-muted-foreground">
-              <span className="text-muted-foreground/60">Ordered by:</span>{" "}
-              {data.order_by === "activity" ? "most recently active" : "alphabetical"}
+              <span className="text-muted-foreground/60">{t("orderedBy")}</span>{" "}
+              {data.order_by === "activity" ? t("mostRecentlyActive") : t("alphabetical")}
             </div>
           )}
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -414,17 +408,17 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
                 onClick={() => setRecipientsOpen(true)}
                 className="underline decoration-dotted underline-offset-2 cursor-pointer hover:text-foreground transition-colors"
               >
-                {log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}
+                {t("recipientCount", { count: log.recipient_count })}
               </button>
             ) : (
-              <span>{log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}</span>
+              <span>{t("recipientCount", { count: log.recipient_count })}</span>
             )}
             {guaranteed.length > 0 && (
               <button
                 onClick={() => setGuaranteedOpen(true)}
                 className="underline decoration-dotted underline-offset-2 cursor-pointer hover:text-foreground transition-colors"
               >
-                {guaranteed.length} guaranteed
+                {t("guaranteedCount", { count: guaranteed.length })}
               </button>
             )}
             {data?.html_content && (
@@ -434,8 +428,8 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
                 className="h-5 px-1.5 text-[10px] shrink-0"
                 onClick={() => onViewHtml(data.html_content, data.subject ?? "")}
               >
-                <Eye className="h-3 w-3 mr-0.5" />
-                HTML
+                <Eye className="h-3 w-3 me-0.5" />
+                {t("html")}
               </Button>
             )}
           </div>
@@ -458,6 +452,7 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
 }
 
 function ManualCertificateRow({ log }: EmailLogRowProps) {
+  const t = useTranslations("manageEmails.logRow");
   const snapshot = getSnapshotData(log);
   const memberName = log.member_name ?? snapshot?.member.name;
   const memberEmail = log.member_email ?? snapshot?.member.email;
@@ -473,7 +468,7 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
         <div className="min-w-0">
           {memberName ? (
             <div className="flex items-center gap-1 text-sm">
-              <span className="text-muted-foreground/60 text-xs">Member:</span>
+              <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
               <span className="font-medium truncate">
                 {nameDiffers ? (
                   <Tooltip>
@@ -483,7 +478,7 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">Name at send time: {snapshot?.member.name}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : (
@@ -492,25 +487,25 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
               </span>
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground italic">No member linked</p>
+            <p className="text-sm text-muted-foreground italic">{t("noMemberLinked")}</p>
           )}
           {memberEmail && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span className="text-muted-foreground/60">Email:</span>
+              <span className="text-muted-foreground/60">{t("email")}</span>
               <span className="truncate">{memberEmail}</span>
             </div>
           )}
         </div>
         {eventName ? (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">Event:</span>
+            <span className="text-muted-foreground/60">{t("event")}</span>
             <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={snapshot?.event} />
           </div>
         ) : (
-          <p className="text-xs text-muted-foreground italic">No event linked</p>
+          <p className="text-xs text-muted-foreground italic">{t("noEventLinked")}</p>
         )}
         {hasNoJoins && snapshot && (
-          <p className="text-[10px] text-muted-foreground/60">(from snapshot data)</p>
+          <p className="text-[10px] text-muted-foreground/60">{t("fromSnapshot")}</p>
         )}
       </div>
       <MetaColumn log={log} />
@@ -519,33 +514,34 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
 }
 
 function DefaultRow({ log }: EmailLogRowProps) {
+  const t = useTranslations("manageEmails.logRow");
   const eventName = log.event_name;
   const eventOfficial = log.event_is_official != null ? !!log.event_is_official : undefined;
   return (
     <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
       <RowIcon type={log.email_type} />
       <div className="flex-1 min-w-0 space-y-0.5">
-        <p className="text-sm font-medium">Email #{log.id}</p>
+        <p className="text-sm font-medium">{t("emailNumber", { id: log.id })}</p>
         {log.member_name && (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">Member:</span>
+            <span className="text-muted-foreground/60">{t("member")}</span>
             <span className="truncate">{log.member_name}</span>
           </div>
         )}
         {log.member_email && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="text-muted-foreground/60">Email:</span>
+            <span className="text-muted-foreground/60">{t("email")}</span>
             <span className="truncate">{log.member_email}</span>
           </div>
         )}
         {eventName && (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">Event:</span>
+            <span className="text-muted-foreground/60">{t("event")}</span>
             <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} />
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          {log.recipient_count} recipient{log.recipient_count !== 1 ? "s" : ""}
+          {t("recipientCount", { count: log.recipient_count })}
         </p>
       </div>
       <MetaColumn log={log} />

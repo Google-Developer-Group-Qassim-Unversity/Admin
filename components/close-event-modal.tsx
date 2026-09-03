@@ -1,5 +1,6 @@
 'use client';
 
+import { useTranslations } from "next-intl";
 import { DoorClosed, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -32,15 +33,19 @@ export function CloseEventModal({
 }: CloseEventModalProps) {
   const closeEvent = useCloseEvent(getToken);
 
+  const t = useTranslations("closeEvent");
+  const tc = useTranslations("common.actions");
+  const ts = useTranslations("common.states");
+
   const handleClose = async () => {
     try {
       await closeEvent.mutateAsync(event.id);
-      toast.success('Event closed successfully');
+      toast.success(t("success"));
       onOpenChange(false);
       onSuccess?.();
     } catch (error) {
-      toast.error('Failed to close event', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t("failed"), {
+        description: error instanceof Error ? error.message : t("unknownError"),
       });
     }
   };
@@ -49,9 +54,9 @@ export function CloseEventModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Close Event</DialogTitle>
+          <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
-            Are you sure you want to close this event? You can re-open it later.
+            {t("description")}
           </DialogDescription>
         </DialogHeader>
 
@@ -61,7 +66,7 @@ export function CloseEventModal({
             onClick={() => onOpenChange(false)}
             disabled={closeEvent.isPending}
           >
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             onClick={handleClose}
@@ -70,12 +75,12 @@ export function CloseEventModal({
             {closeEvent.isPending ? (
               <>
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Closing...
+                {ts("closing")}
               </>
             ) : (
               <>
                 <DoorClosed className="h-4 w-4" />
-                Close Event
+                {t("closeButton")}
               </>
             )}
           </Button>

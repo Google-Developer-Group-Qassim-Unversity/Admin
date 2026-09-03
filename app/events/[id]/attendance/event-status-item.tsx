@@ -15,6 +15,7 @@ import {
 import { CloseEventModal } from '@/components/close-event-modal';
 import { useOpenEvent } from '@/hooks/use-event';
 import type { Event } from '@/lib/api-types';
+import { useTranslations } from 'next-intl';
 
 interface EventStatusItemProps {
   event: Event;
@@ -24,17 +25,18 @@ interface EventStatusItemProps {
 }
 
 export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken }: EventStatusItemProps) {
+  const t = useTranslations('attendance.statusItem');
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
   const openEventMutation = useOpenEvent(getToken);
 
   const handleOpenEvent = async () => {
     try {
       await openEventMutation.mutateAsync(event.id);
-      toast.success('Event re-opened successfully');
+      toast.success(t('reopenSuccess'));
       onStatusChange();
     } catch (error) {
-      toast.error('Failed to open event', {
-        description: error instanceof Error ? error.message : 'Unknown error',
+      toast.error(t('reopenFailed'), {
+        description: error instanceof Error ? error.message : t('unknownError'),
       });
     }
   };
@@ -43,11 +45,11 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken
     <>
       <Item variant="outline">
         <ItemContent>
-          <ItemTitle>{isEventClosed ? 'Re-open Event' : 'Close Event'}</ItemTitle>
+          <ItemTitle>{isEventClosed ? t('reopenTitle') : t('closeTitle')}</ItemTitle>
           <ItemDescription>
             {isEventClosed
-              ? 'Re-open the event to resume accepting attendance.'
-              : 'When attendance is complete, close the event to finalize attendance records.'}
+              ? t('reopenDescription')
+              : t('closeDescription')}
           </ItemDescription>
         </ItemContent>
         <ItemActions>
@@ -60,19 +62,19 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken
               {openEventMutation.isPending ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin" />
-                  Opening...
+                  {t('opening')}
                 </>
               ) : (
                 <>
                   <DoorOpen className="h-4 w-4" />
-                  Open Event
+                  {t('openEvent')}
                 </>
               )}
             </Button>
           ) : (
             <Button variant="outline" onClick={() => setIsCloseModalOpen(true)}>
               <DoorClosed className="h-4 w-4" />
-              Close Event
+              {t('closeEvent')}
             </Button>
           )}
         </ItemActions>

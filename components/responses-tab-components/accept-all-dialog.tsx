@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 interface AcceptAllDialogProps {
   open: boolean;
@@ -27,6 +28,8 @@ export function AcceptAllDialog({
   submissionCount,
   isLoading = false,
 }: AcceptAllDialogProps) {
+  const t = useTranslations("responses");
+  const tc = useTranslations("common.actions");
   const handleOpenChange = (newOpen: boolean) => {
     // Prevent closing while request is in progress
     if (!isLoading) {
@@ -38,14 +41,14 @@ export function AcceptAllDialog({
     <AlertDialog open={open} onOpenChange={handleOpenChange}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Accept All Submissions?</AlertDialogTitle>
+          <AlertDialogTitle>{t("acceptAllTitle")}</AlertDialogTitle>
           <AlertDialogDescription>
-            Are you sure you want to accept all {submissionCount} filtered submission{submissionCount !== 1 ? "s" : ""}?
+            {t("acceptAllDescription", { count: submissionCount })}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isLoading}>
-            Cancel
+            {tc("cancel")}
           </AlertDialogCancel>
           <Button
             onClick={onSubmit}
@@ -53,11 +56,11 @@ export function AcceptAllDialog({
           >
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Processing...
+                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                {t("processing")}
               </>
             ) : (
-              "Accept All"
+              t("acceptAll")
             )}
           </Button>
         </AlertDialogFooter>

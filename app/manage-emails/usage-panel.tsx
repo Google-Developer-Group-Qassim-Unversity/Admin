@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
+import { useTranslations } from "next-intl";
 
 function AddressUsageRow({ value, label }: { value: number; label: string }) {
   return (
@@ -37,6 +38,7 @@ function TypeBar({ label, count, max }: { label: string; count: number; max: num
 }
 
 export function UsagePanel() {
+  const t = useTranslations("manageEmails.usage");
   const { getToken } = useAuth();
   const [stats, setStats] = React.useState<EmailDashboardStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -57,11 +59,11 @@ export function UsagePanel() {
   }, [getToken, refreshKey]);
 
   const typeLabels: Record<string, string> = {
-    "event-certificate": "Event Certificates",
-    "manual-certificate": "Manual Certificates",
-    acceptance: "Acceptance",
-    event_announcement: "Announcements",
-    blast: "Blast",
+    "event-certificate": t("types.eventCertificate"),
+    "manual-certificate": t("types.manualCertificate"),
+    acceptance: t("types.acceptance"),
+    event_announcement: t("types.announcement"),
+    blast: t("types.blast"),
   };
 
   const maxTypeCount = stats ? Math.max(...Object.values(stats.by_type), 1) : 1;
@@ -70,7 +72,7 @@ export function UsagePanel() {
     <Card size="sm">
       <CardHeader>
         <div className="flex items-center justify-between">
-          <CardTitle>Usage <span className="text-xs text-muted-foreground/50">·</span> <span className="text-muted-foreground font-normal text-xs">Last 24h</span></CardTitle>
+          <CardTitle>{t("title")} <span className="text-xs text-muted-foreground/50">·</span> <span className="text-muted-foreground font-normal text-xs">{t("last24h")}</span></CardTitle>
           <Button variant="ghost" size="icon-sm" onClick={() => setRefreshKey((k) => k + 1)} disabled={isLoading}>
             <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
           </Button>
@@ -93,25 +95,25 @@ export function UsagePanel() {
         ) : stats ? (
           <>
             <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">Sent per address · last 24h</p>
+              <p className="text-xs font-medium text-muted-foreground">{t("sentPerAddress")}</p>
               {Object.entries(stats.addresses).reverse().map(([addr, data]) => (
                 <AddressUsageRow key={addr} value={data.usage} label={addr} />
               ))}
             </div>
             <div className="pt-2">
-              <p className="text-xs font-medium mb-2">Usage by email type</p>
+              <p className="text-xs font-medium mb-2">{t("byType")}</p>
               <div className="space-y-2.5">
                 {Object.entries(stats.by_type).map(([type, count]) => (
                   <TypeBar key={type} label={typeLabels[type] ?? type} count={count} max={maxTypeCount} />
                 ))}
                 {Object.keys(stats.by_type).length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">No usage data</p>
+                  <p className="text-xs text-muted-foreground text-center py-2">{t("noData")}</p>
                 )}
               </div>
             </div>
             <div className="pt-1 border-t">
               <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>Total</span>
+                <span>{t("total")}</span>
                 <span className="font-medium text-foreground">{stats.total_24h}</span>
               </div>
             </div>

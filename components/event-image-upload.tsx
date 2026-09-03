@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import Image from "next/image";
 import { Loader2, Upload, X, ImageIcon } from "lucide-react";
@@ -27,6 +28,7 @@ interface EventImageUploadProps {
 }
 
 export function EventImageUpload({ onChange, error, getToken, initialValue }: EventImageUploadProps) {
+  const t = useTranslations("eventImage");
   const [uploadedFile, setUploadedFile] = React.useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = React.useState<string | null>(initialValue ?? null);
   const [isUploading, setIsUploading] = React.useState(false);
@@ -44,11 +46,11 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
       setUploadedFile(file);
       setExistingImageUrl(null); // Clear existing image when new one is uploaded
       onChange(result.data.url);
-      toast.success("Image uploaded successfully");
+      toast.success(t("uploaded"));
     } else {
       onChange(null);
       if (shouldContactSupport(result.error)) {
-        toast.error("Upload failed. Please contact support.");
+        toast.error(t("uploadFailed"));
       } else {
         toast.error(result.error.message);
       }
@@ -66,7 +68,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
 
   return (
     <div className="space-y-2">
-      <Label>Event Image</Label>
+      <Label>{t("label")}</Label>
       
       {/* Show existing image preview if no new file uploaded */}
       {existingImageUrl && !uploadedFile && displayImageUrl && (
@@ -75,7 +77,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
               <Image
                 src={displayImageUrl}
-                alt="Current event image"
+                alt={t("currentAlt")}
                 fill
                 className="object-cover"
               />
@@ -83,10 +85,10 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <ImageIcon className="h-4 w-4" />
-                <span className="truncate">Current image</span>
+                <span className="truncate">{t("current")}</span>
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                Upload a new image to replace
+                {t("replaceHint")}
               </p>
             </div>
             <Button
@@ -127,17 +129,17 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
               <>
                 <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Uploading image...
+                  {t("uploading")}
                 </p>
               </>
             ) : (
               <>
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Drag & drop an image here, or click to browse
+                  {t("dropHint")}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Max 5MB, images only
+                  {t("sizeHint")}
                 </p>
               </>
             )}
@@ -151,14 +153,14 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
               <>
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Uploading...
+                  {t("uploadingShort")}
                 </p>
               </>
             ) : (
               <>
                 <Upload className="h-6 w-6 text-muted-foreground" />
                 <p className="mt-1 text-xs text-muted-foreground">
-                  Drop new image here or click to browse
+                  {t("dropReplaceHint")}
                 </p>
               </>
             )}

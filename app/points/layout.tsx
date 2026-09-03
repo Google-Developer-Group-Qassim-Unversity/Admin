@@ -5,12 +5,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Trophy, CalendarPlus, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useTranslations } from "next-intl";
 
 export default function PointsLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const t = useTranslations("pointsLayout");
   const pathname = usePathname();
 
   const isCustomActive = pathname === "/points" || pathname === "/points/" || pathname === "/points/custom";
@@ -21,15 +23,13 @@ export default function PointsLayout({
     <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Manage Points</h1>
-          <p className="text-muted-foreground mt-2">
-            View and manage point events for departments and members
-          </p>
+          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
         </div>
         <Button asChild>
           <Link href="/points/create" className="flex items-center gap-2">
             <Trophy className="h-4 w-4" />
-            Create Custom Event
+            {t("createCustomEvent")}
           </Link>
         </Button>
       </div>
@@ -45,9 +45,9 @@ export default function PointsLayout({
             }`}
           >
             <Trophy className="h-4 w-4" />
-            Custom Events
+            {t("tabs.custom")}
             {isCustomActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              <span className="absolute bottom-0 inset-x-0 h-0.5 bg-primary" />
             )}
           </Link>
           <Link
@@ -59,9 +59,9 @@ export default function PointsLayout({
             }`}
           >
             <CalendarPlus className="h-4 w-4" />
-            Full Events
+            {t("tabs.full")}
             {isFullActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              <span className="absolute bottom-0 inset-x-0 h-0.5 bg-primary" />
             )}
           </Link>
           <Link
@@ -73,9 +73,9 @@ export default function PointsLayout({
             }`}
           >
             <Settings className="h-4 w-4" />
-            Manage Points
+            {t("tabs.manage")}
             {isManageActive && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary" />
+              <span className="absolute bottom-0 inset-x-0 h-0.5 bg-primary" />
             )}
           </Link>
         </div>

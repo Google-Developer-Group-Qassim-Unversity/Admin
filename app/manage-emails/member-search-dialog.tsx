@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getMembers } from "@/lib/api";
 import type { Member } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { useTranslations } from "next-intl";
 
 interface MemberSearchDialogProps {
   open: boolean;
@@ -30,6 +31,8 @@ interface MemberSearchDialogProps {
 const MAX_DISPLAY = 50;
 
 export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSearchDialogProps) {
+  const t = useTranslations("memberSearch");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
 
   const [members, setMembers] = React.useState<Member[]>([]);
@@ -47,11 +50,12 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
       if (response.success) {
         setMembers([...response.data].sort((a, b) => a.name.localeCompare(b.name)));
       } else {
-        toast.error("Failed to load members: " + response.error.message);
+        toast.error(t("loadFailed", { error: response.error.message }));
       }
       setIsLoading(false);
     }
     fetchMembers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, getToken, members.length]);
 
   React.useEffect(() => {
@@ -101,30 +105,28 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl! max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle>Pick Members</DialogTitle>
-          <DialogDescription>
-            Search and select members to add as certificate recipients. Their details will fill the form fields.
-          </DialogDescription>
+          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search by name, uni ID, or email..."
+              placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
+              className="ps-9"
               disabled={isLoading}
             />
           </div>
 
           <div className="border rounded-lg">
             <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
-              <h3 className="text-sm font-medium">Members</h3>
+              <h3 className="text-sm font-medium">{t("membersHeading")}</h3>
               {showLimitHint && (
                 <p className="text-xs text-muted-foreground">
-                  Showing {MAX_DISPLAY} results. Use search to find more.
+                  {t("limitHint", { max: MAX_DISPLAY })}
                 </p>
               )}
             </div>
@@ -143,7 +145,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                 </div>
               ) : displayMembers.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  {searchQuery.trim() ? "No members found." : "All members have been selected."}
+                  {searchQuery.trim() ? t("noneFound") : t("allSelected")}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -164,8 +166,8 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                         onClick={() => handleStage(member)}
                         className="shrink-0"
                       >
-                        <UserPlus className="h-3.5 w-3.5 mr-1" />
-                        Add
+                        <UserPlus className="h-3.5 w-3.5 me-1" />
+                        {t("add")}
                       </Button>
                     </div>
                   ))}
@@ -178,7 +180,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
             <div className="border rounded-lg">
               <div className="p-3 border-b bg-muted/50">
                 <h3 className="text-sm font-medium">
-                  Selected ({stagedMembers.length})
+                  {t("selectedHeading", { count: stagedMembers.length })}
                 </h3>
               </div>
               <div className="max-h-[160px] overflow-y-auto">
@@ -209,14 +211,14 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {tc("cancel")}
           </Button>
           <Button
             onClick={handleConfirm}
             disabled={stagedMembers.length === 0}
           >
-            <UserPlus className="mr-2 h-4 w-4" />
-            Add {stagedMembers.length > 0 ? stagedMembers.length : ""} Member{stagedMembers.length !== 1 ? "s" : ""}
+            <UserPlus className="me-2 h-4 w-4" />
+            {t("confirm", { count: stagedMembers.length })}
           </Button>
         </DialogFooter>
       </DialogContent>

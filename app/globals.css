@@ -48,6 +48,10 @@
 }
 
 :root {
+  /* Latin face first, Arabic face behind it: the browser falls through per
+     glyph, so Arabic content renders correctly in either locale. */
+  --font-sans: var(--font-latin), var(--font-arabic), ui-sans-serif, system-ui,
+    sans-serif;
   --background: oklch(1 0 0);
   --foreground: oklch(0.141 0.005 285.823);
   --card: oklch(1 0 0);

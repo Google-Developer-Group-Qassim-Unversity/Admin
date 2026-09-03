@@ -1,3 +1,6 @@
+"use client";
+
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,6 +18,7 @@ interface CustomEventCardProps {
   event: Event;
 }
 export function CustomEventCard({ event }: CustomEventCardProps) {
+  const tp = useTranslations("points");
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
     return date.toLocaleDateString("en-US", {
@@ -37,7 +41,7 @@ export function CustomEventCard({ event }: CustomEventCardProps) {
           <Button
             asChild
             variant="link"
-            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-left whitespace-normal text-foreground hover:text-foreground"
+            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
           >
             <Link href={`/points/${event.id}`} className="line-clamp-2">
               {event.name}
@@ -76,7 +80,7 @@ export function CustomEventCard({ event }: CustomEventCardProps) {
       {/* Actions */}
       <CardFooter className="pt-3">
         <Button asChild className="flex-1">
-          <Link href={`/points/${event.id}`}>Edit Points</Link>
+          <Link href={`/points/${event.id}`}>{tp("editPoints")}</Link>
         </Button>
       </CardFooter>
     </Card>

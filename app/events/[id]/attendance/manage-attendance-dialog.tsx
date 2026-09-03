@@ -29,6 +29,7 @@ import { BackfillTab } from "./backfill-tab";
 import { DaySelectDialog } from "./day-select-dialog";
 import { ConfirmDialog } from "./confirm-dialog";
 import { CertificateTab } from "./certificate-tab";
+import { useTranslations } from "next-intl";
 
 interface ManageAttendanceDialogProps {
   open: boolean;
@@ -49,6 +50,8 @@ export function ManageAttendanceDialog({
   eventStart,
   attendanceData = [],
 }: ManageAttendanceDialogProps) {
+  const t = useTranslations("attendance.manageDialog");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
 
   const [activeTab, setActiveTab] = React.useState<Tab>("mark");
@@ -75,10 +78,10 @@ export function ManageAttendanceDialog({
       const sorted = [...response.data].sort((a, b) => a.name.localeCompare(b.name));
       setAllMembers(sorted);
     } else {
-      toast.error("Failed to load members: " + response.error.message);
+      toast.error(t("loadMembersFailed", { error: response.error.message }));
     }
     setIsLoadingMembers(false);
-  }, [getToken]);
+  }, [getToken, t]);
 
   React.useEffect(() => {
     if (open && activeTab === "mark" && allMembers.length === 0) {
@@ -174,13 +177,9 @@ export function ManageAttendanceDialog({
       memberIds: ids,
       days: isMultiDay ? days : [1],
     });
-    toast.success(
-      `Marked attendance for ${result.success} member${result.success !== 1 ? "s" : ""}`
-    );
+    toast.success(t("markedSuccess", { count: result.success }));
     if (result.failed > 0) {
-      toast.warning(
-        `${result.failed} member${result.failed !== 1 ? "s" : ""} already had attendance or not found`
-      );
+      toast.warning(t("markedFailedWarning", { count: result.failed }));
     }
     setDaySelectDialogOpen(false);
     onOpenChange(false);
@@ -190,8 +189,8 @@ export function ManageAttendanceDialog({
     const memberNames = selectedMembers.map((m) => m.name);
     setConfirmDialog({
       open: true,
-      title: "Remove Attendance",
-      description: `You are about to remove attendance for ${selectedMemberIds.size} member${selectedMemberIds.size !== 1 ? "s" : ""} on Day ${selectedDay}. This action cannot be undone.`,
+      title: t("removeTitle"),
+      description: t("removeDescription", { count: selectedMemberIds.size, day: selectedDay }),
       items: memberNames,
       onConfirm: async () => {
         const ids = [...selectedMemberIds];
@@ -200,13 +199,9 @@ export function ManageAttendanceDialog({
           memberIds: ids,
           day: isMultiDay ? dayInt : 1,
         });
-        toast.success(
-          `Removed attendance for ${result.success} member${result.success !== 1 ? "s" : ""}`
-        );
+        toast.success(t("removedSuccess", { count: result.success }));
         if (result.failed > 0) {
-          toast.warning(
-            `${result.failed} member${result.failed !== 1 ? "s" : ""} had no attendance to remove`
-          );
+          toast.warning(t("removedFailedWarning", { count: result.failed }));
         }
         setConfirmDialog(null);
         onOpenChange(false);
@@ -235,20 +230,18 @@ export function ManageAttendanceDialog({
   const handleCopy = () => {
     setConfirmDialog({
       open: true,
-      title: "Copy Attendance",
-      description: `Copy attendance from Day ${copySourceDay} to Day ${copyTargetDay}. Members who already have attendance on the target day will be skipped.`,
-      items: [`${copyPreview.sourceCount} members from Day ${copySourceDay}`],
+      title: t("copyTitle"),
+      description: t("copyDescription", { source: copySourceDay, target: copyTargetDay }),
+      items: [t("copyPreviewItem", { count: copyPreview.sourceCount, day: copySourceDay })],
       onConfirm: async () => {
         const result = await copyMutation.mutateAsync({
           eventId,
           sourceDay: copySourceInt,
           targetDays: [copyTargetInt],
         });
-        toast.success(
-          `Copied ${result.copied} attendance record${result.copied !== 1 ? "s" : ""}`
-        );
+        toast.success(t("copiedSuccess", { count: result.copied }));
         if (result.skipped > 0) {
-          toast.info(`${result.skipped} already had attendance and were skipped`);
+          toast.info(t("copiedSkipped", { count: result.skipped }));
         }
         setConfirmDialog(null);
         onOpenChange(false);
@@ -261,11 +254,11 @@ export function ManageAttendanceDialog({
   };
 
   const tabs: { id: Tab; label: string; icon: React.ReactNode }[] = [
-    { id: "mark", label: "Mark", icon: <UserPlus className="h-4 w-4" /> },
-    { id: "remove", label: "Remove", icon: <UserMinus className="h-4 w-4" /> },
-    { id: "copy", label: "Copy", icon: <Copy className="h-4 w-4" /> },
-    { id: "backfill", label: "Backfill", icon: <Upload className="h-4 w-4" /> },
-    { id: "emails", label: "Emails", icon: <Mail className="h-4 w-4" /> },
+    { id: "mark", label: t("tabs.mark"), icon: <UserPlus className="h-4 w-4" /> },
+    { id: "remove", label: t("tabs.remove"), icon: <UserMinus className="h-4 w-4" /> },
+    { id: "copy", label: t("tabs.copy"), icon: <Copy className="h-4 w-4" /> },
+    { id: "backfill", label: t("tabs.backfill"), icon: <Upload className="h-4 w-4" /> },
+    { id: "emails", label: t("tabs.emails"), icon: <Mail className="h-4 w-4" /> },
   ];
 
   return (
@@ -273,9 +266,9 @@ export function ManageAttendanceDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-3xl! h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Manage Attendance</DialogTitle>
+            <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
-              Mark, remove, or copy attendance for this event
+              {t("description")}
             </DialogDescription>
           </DialogHeader>
 
@@ -372,7 +365,7 @@ export function ManageAttendanceDialog({
           {activeTab !== "backfill" && activeTab !== "emails" && (
             <div className="flex justify-end gap-2 pt-4 border-t">
               <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
-                Cancel
+                {tc("cancel")}
               </Button>
               {activeTab === "mark" && (
                 <Button
@@ -380,12 +373,11 @@ export function ManageAttendanceDialog({
                   disabled={selectedMemberIds.size === 0 || isSubmitting}
                 >
                   {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <UserPlus className="mr-2 h-4 w-4" />
+                    <UserPlus className="me-2 h-4 w-4" />
                   )}
-                  Mark {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
-                  {selectedMemberIds.size !== 1 ? "s" : ""}
+                  {t("markButton", { count: selectedMemberIds.size })}
                 </Button>
               )}
               {activeTab === "remove" && (
@@ -395,23 +387,22 @@ export function ManageAttendanceDialog({
                   disabled={selectedMemberIds.size === 0 || isSubmitting}
                 >
                   {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <UserMinus className="mr-2 h-4 w-4" />
+                    <UserMinus className="me-2 h-4 w-4" />
                   )}
-                  Remove {selectedMemberIds.size > 0 ? selectedMemberIds.size : ""} Member
-                  {selectedMemberIds.size !== 1 ? "s" : ""}
-                  {isMultiDay && ` for Day ${selectedDay}`}
+                  {t("removeButton", { count: selectedMemberIds.size })}
+                  {isMultiDay && t("forDay", { day: selectedDay })}
                 </Button>
               )}
               {activeTab === "copy" && (
                 <Button onClick={handleCopy} disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <Copy className="mr-2 h-4 w-4" />
+                    <Copy className="me-2 h-4 w-4" />
                   )}
-                  Copy Attendance
+                  {t("copyAttendance")}
                 </Button>
               )}
             </div>

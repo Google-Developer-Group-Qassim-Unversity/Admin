@@ -3,6 +3,7 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useEffect } from "react";
+import { useTranslations } from "next-intl";
 import { LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,6 +18,7 @@ export default function AccessDeniedPage() {
   const reason = searchParams.get("reason");
   const router = useRouter();
   const { user, isLoaded } = useUser();
+  const t = useTranslations("accessDenied");
 
   // Check if user has gained admin access - if so, redirect to dashboard
   // But don't redirect if the reason is "not_authorized" (user is logged in but lacks specific permission)
@@ -40,37 +42,32 @@ export default function AccessDeniedPage() {
     switch (reason) {
       case "not_admin":
         return {
-          title: "Admin Access Required",
-          description:
-            "Your account does not have administrator privileges. This dashboard is restricted to authorized administrators only.",
+          title: t("notAdmin.title"),
+          description: t("notAdmin.description"),
           showSignIn: false,
         };
       case "not_super_admin":
         return {
-          title: "Super Admin Access Required",
-          description:
-            "This page requires super administrator privileges. Only super admins can manage administrator roles.",
+          title: t("notSuperAdmin.title"),
+          description: t("notSuperAdmin.description"),
           showSignIn: false,
         };
       case "not_authorized":
         return {
-          title: "Insufficient Permissions",
-          description:
-            "You don't have the required permissions to access this page. Please contact an administrator if you believe this is an error.",
+          title: t("notAuthorized.title"),
+          description: t("notAuthorized.description"),
           showSignIn: false,
         };
       case "config":
         return {
-          title: "Configuration Error",
-          description:
-            "The application is not properly configured. Please contact the system administrator.",
+          title: t("config.title"),
+          description: t("config.description"),
           showSignIn: false,
         };
       default:
         return {
-          title: "Access Denied",
-          description:
-            "You must be signed in with an administrator account to access this dashboard.",
+          title: t("default.title"),
+          description: t("default.description"),
           showSignIn: true,
         };
     }
@@ -87,19 +84,18 @@ export default function AccessDeniedPage() {
             <Button asChild className="w-full gap-2">
               <a href={signInUrl}>
                 <LogIn className="h-4 w-4" />
-                Sign In with Admin Account
+                {t("signInButton")}
               </a>
             </Button>
           )}
           {reason === "not_admin" && (
             <p className="text-sm text-muted-foreground text-center">
-              If you believe you should have access, 
-              please contact albrrak773 or anyone else on the development team.
+              {t("notAdmin.hint")}
             </p>
           )}
           {reason === "not_super_admin" && (
             <p className="text-sm text-muted-foreground text-center">
-              If you need super admin access, please contact an existing super administrators.
+              {t("notSuperAdmin.hint")}
             </p>
           )}
         </CardContent>
