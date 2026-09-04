@@ -23,6 +23,17 @@ services:
         NEXT_PUBLIC_UPLOAD_SOURCE: ${NEXT_PUBLIC_UPLOAD_SOURCE}
     env_file:
       - .env.production
+    environment:
+      # The VPS has no outbound IPv6 route: IPv4 connects in ~350ms, IPv6
+      # fails instantly with ENETUNREACH (confirmed directly on the box).
+      # Node's autoSelectFamily (Happy Eyeballs, default since Node 19+)
+      # races both families itself regardless of DNS order and has a known
+      # premature-cancellation bug (nodejs/node#54359) that kills the
+      # working IPv4 attempt, producing a consistent ~250ms ETIMEDOUT on
+      # every Google API call (e.g. "Copy Form Template"). Disabling it and
+      # forcing IPv4-first DNS order fixes this - verified directly against
+      # the running container.
+      NODE_OPTIONS: "--dns-result-order=ipv4first --no-network-family-autoselection"
     restart: unless-stopped
     ports:
       - "127.0.0.1:3012:3000"
