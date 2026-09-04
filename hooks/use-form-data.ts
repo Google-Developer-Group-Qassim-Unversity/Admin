@@ -195,3 +195,17 @@ export function usePublishForm(eventId: number) {
     },
   });
 }
+
+export function useUnpublishForm(eventId: number) {
+  return useMutation({
+    mutationFn: async (formId: string) => {
+      const res = await fetch('/api/drive/unpublish', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ eventId, formId }),
+      });
+      if (!res.ok) throw new Error('Failed to unpublish Google Form');
+      return res.json();
+    },
+  });
+}

@@ -1162,7 +1162,13 @@
     "semestersDescription": "حدد تاريخ بداية ونهاية كل فصل، أضف فصول جديدة، واختر الافتراضي.",
     "manageSemesters": "إدارة الفصول الدراسية",
     "manageSemestersHint": "التغييرات تنطبق فورًا على لوحة الصدارة وفلتر الفعاليات.",
-    "open": "فتح"
+    "open": "فتح",
+    "templateFormTitle": "نموذج Google الأساسي",
+    "templateFormDescription": "النموذج الأصلي اللي تنسخ منه نماذج التسجيل لكل الفعاليات.",
+    "templateForm": "النموذج الأساسي",
+    "templateFormHint": "يفتح النموذج في Google Forms.",
+    "templateFormLoadFailed": "تعذر تحميل رابط النموذج الأساسي.",
+    "openTemplateForm": "فتح النموذج"
   },
   "semestersPage": {
     "title": "الفصول الدراسية",
@@ -1386,6 +1392,7 @@
     "attaching": "جاري الإرفاق...",
     "copyTemplate": "نسخ قالب النموذج",
     "connectGoogle": "الربط مع Google",
+    "enablePermissions": "فعّل صلاحيات Google",
     "disabledTooltip": "التسجيل معطل. فعّل التسجيل عشان تقدر تدير نماذج Google."
   },
   "publishItem": {
@@ -1406,7 +1413,9 @@
     "unpublishing": "جاري إلغاء النشر...",
     "publishing": "جاري النشر...",
     "unpublish": "إلغاء النشر",
-    "publish": "نشر"
+    "publish": "نشر",
+    "googleFormPublishFailed": "تم نشر الفعالية، بس تعذر نشر نموذج Google المرتبط فيها.",
+    "googleFormUnpublishFailed": "تم إلغاء نشر الفعالية، بس تعذر إلغاء نشر نموذج Google المرتبط فيها."
   },
   "memberSelectDialog": {
     "title": "اختيار الأعضاء",
