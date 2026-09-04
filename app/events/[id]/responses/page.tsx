@@ -15,6 +15,7 @@ import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
   getQuestionKeys,
+  getDuplicateQuestionKeys,
   createColumns,
   generateTSV,
   filterTableDataByStatus,
@@ -24,7 +25,7 @@ import {
   type StatusFilter,
 } from "@/lib/responses-utils";
 import { useAuth } from "@clerk/nextjs";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { normalizeArabic } from "@/lib/search-utils";
 import {
   useReactTable,
@@ -115,7 +116,9 @@ export default function EventResponsesPage() {
     uni_id: false,
     uni_level: false,
     uni_college: false,
+    gender: false,
   });
+  const appliedDuplicateDefaultsRef = useRef(false);
   const [globalFilter, setGlobalFilter] = useState("");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
@@ -186,6 +189,20 @@ export default function EventResponsesPage() {
   const tableData = useMemo(() => {
     return filterTableDataByStatus(allTableData, statusFilter);
   }, [allTableData, statusFilter]);
+
+  useEffect(() => {
+    if (appliedDuplicateDefaultsRef.current || questionKeys.length === 0) return;
+    appliedDuplicateDefaultsRef.current = true;
+
+    const duplicateKeys = getDuplicateQuestionKeys(allTableData, questionKeys);
+    if (duplicateKeys.length === 0) return;
+
+    setColumnVisibility((prev) => {
+      const next = { ...prev };
+      for (const key of duplicateKeys) next[key] = false;
+      return next;
+    });
+  }, [allTableData, questionKeys]);
 
   const columns = useMemo(
     () => createColumns(questionKeys),

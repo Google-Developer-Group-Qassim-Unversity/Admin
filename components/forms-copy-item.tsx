@@ -27,6 +27,7 @@ import { GoogleFormsIcon, GoogleIcon } from '@/lib/google-icons';
 import { MoreHorizontal, Loader2, ExternalLink, Trash2, Info } from 'lucide-react';
 import { getRefreshToken, hasRefreshToken } from '@/lib/google-token-storage';
 import { useCopyForm, useUnattachForm } from '@/hooks/use-form-data';
+import { useUser } from '@clerk/nextjs';
 import { toast } from 'sonner';
 import type { GoogleFormData } from '@/lib/api-types';
 
@@ -42,6 +43,10 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
   const t = useTranslations('formsCopyItem');
   const [imgError, setImgError] = useState(false);
   const hasSavedToken = hasRefreshToken();
+  const { user: clerkUser } = useUser();
+  const linkedGoogleEmail = clerkUser?.externalAccounts?.find(
+    (account) => account.provider === 'google'
+  )?.emailAddress;
 
   const copyForm = useCopyForm(eventId);
   const unattachForm = useUnattachForm(eventId);
@@ -62,6 +67,15 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
           toast.error(t('attachFailed'));
         },
       });
+    } else if (linkedGoogleEmail) {
+      // We already know the admin's Google identity via Clerk (a separate
+      // sign-in connection, no scopes shared with it) - pre-fill it so Google
+      // skips the account-chooser and goes straight to this app's own consent.
+      const params = new URLSearchParams({
+        eventId: String(eventId),
+        login_hint: linkedGoogleEmail,
+      });
+      window.location.href = `/api/auth/google?${params.toString()}`;
     } else {
       window.location.href = `/api/auth/google?eventId=${eventId}`;
     }
@@ -178,7 +192,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
                 <span className="me-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
                   <GoogleIcon className="h-4 w-4" />
                 </span>
-                {t('connectGoogle')}
+                {linkedGoogleEmail ? t('enablePermissions') : t('connectGoogle')}
               </>
             )}
           </Button>

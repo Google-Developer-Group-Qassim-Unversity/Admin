@@ -23,12 +23,12 @@ export async function GET(request: NextRequest) {
   try {
     const oauth2Client = getOAuth2Client();
     const { tokens } = await oauth2Client.getToken(code);
-    
+
     await setTokensInCookies(tokens);
-    
+
     // Parse eventId from state
     const eventId = state ? parseInt(state, 10) : null;
-    
+
     if (eventId && tokens.refresh_token) {
       const templateFileId = serverConfig.templateFormFileId;
       

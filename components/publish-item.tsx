@@ -18,6 +18,7 @@ import {
 import { Check, Upload, Loader2, ExternalLink, Lock, Copy } from 'lucide-react';
 import { useAuth } from '@clerk/nextjs';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
+import { usePublishForm, useUnpublishForm } from '@/hooks/use-form-data';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
 import { config } from '@/lib/config';
@@ -33,8 +34,14 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
   const { getToken } = useAuth();
   const publishEvent = usePublishEvent(getToken);
   const unpublishEvent = useUnpublishEvent(getToken);
+  const publishForm = usePublishForm(event.id);
+  const unpublishForm = useUnpublishForm(event.id);
 
-  const isLoading = publishEvent.isPending || unpublishEvent.isPending;
+  const isLoading =
+    publishEvent.isPending ||
+    unpublishEvent.isPending ||
+    publishForm.isPending ||
+    unpublishForm.isPending;
   const isPublished = event.status === 'open';
   const hasGoogleForm = formData?.googleFormId;
   // Disable publish/unpublish when event is active or closed
@@ -47,6 +54,15 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       onEventChange();
     } catch {
       toast.error(t('publishFailed'));
+      return;
+    }
+
+    if (hasGoogleForm) {
+      try {
+        await publishForm.mutateAsync(formData.googleFormId as string);
+      } catch {
+        toast.warning(t('googleFormPublishFailed'));
+      }
     }
   };
 
@@ -57,6 +73,15 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       onEventChange();
     } catch {
       toast.error(t('unpublishFailed'));
+      return;
+    }
+
+    if (hasGoogleForm) {
+      try {
+        await unpublishForm.mutateAsync(formData.googleFormId as string);
+      } catch {
+        toast.warning(t('googleFormUnpublishFailed'));
+      }
     }
   };
 

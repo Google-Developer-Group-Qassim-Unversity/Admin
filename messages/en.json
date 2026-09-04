@@ -1158,7 +1158,13 @@
     "semestersDescription": "Set the start and end dates of each semester, add new ones, and pick the default",
     "manageSemesters": "Manage semesters",
     "manageSemestersHint": "Changes apply immediately to the leaderboard and the events filter",
-    "open": "Open"
+    "open": "Open",
+    "templateFormTitle": "Template Google Form",
+    "templateFormDescription": "The original form every event's registration form is copied from",
+    "templateForm": "Template form",
+    "templateFormHint": "Opens the template in Google Forms",
+    "templateFormLoadFailed": "Failed to load the template form link",
+    "openTemplateForm": "Open template"
   },
   "semestersPage": {
     "title": "Semesters",
@@ -1382,6 +1388,7 @@
     "attaching": "Attaching Form...",
     "copyTemplate": "Copy Form Template",
     "connectGoogle": "Connect to Google",
+    "enablePermissions": "Enable Google Permissions",
     "disabledTooltip": "Registration is disabled. Enable registration to manage Google Forms."
   },
   "publishItem": {
@@ -1402,7 +1409,9 @@
     "unpublishing": "Unpublishing...",
     "publishing": "Publishing...",
     "unpublish": "Unpublish",
-    "publish": "Publish"
+    "publish": "Publish",
+    "googleFormPublishFailed": "Event published, but couldn't publish the linked Google Form.",
+    "googleFormUnpublishFailed": "Event unpublished, but couldn't unpublish the linked Google Form."
   },
   "memberSelectDialog": {
     "title": "Select Members",

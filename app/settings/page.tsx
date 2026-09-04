@@ -1,16 +1,71 @@
 "use client";
 
 import * as React from "react";
-import { CalendarRange, ChevronRight, RotateCcw, Settings } from "lucide-react";
+import { CalendarRange, ChevronRight, ExternalLink, FileText, Loader2, RotateCcw, Settings } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
+import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResetLeaderboardCache } from "@/hooks/use-cache";
 import { RequireRole } from "@/hooks/use-rbac";
 import { useTranslations } from "next-intl";
+
+function TemplateFormCard() {
+  const t = useTranslations("settingsPage");
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["settings", "template-form"],
+    queryFn: async () => {
+      const res = await fetch("/api/settings/template-form");
+      if (!res.ok) throw new Error("Failed to load template form link");
+      return res.json() as Promise<{ url: string }>;
+    },
+  });
+
+  return (
+    <Card className="max-w-2xl">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+            <FileText className="h-5 w-5 text-primary" />
+          </div>
+          {t("templateFormTitle")}
+        </CardTitle>
+        <CardDescription>
+          {t("templateFormDescription")}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between rounded-lg border p-4">
+          <div className="space-y-1">
+            <p className="text-sm font-medium leading-none">{t("templateForm")}</p>
+            <p className="text-sm text-muted-foreground">
+              {error ? t("templateFormLoadFailed") : t("templateFormHint")}
+            </p>
+          </div>
+          {data?.url ? (
+            <Button asChild variant="outline">
+              <a href={data.url} target="_blank" rel="noopener noreferrer">
+                {t("openTemplateForm")}
+                <ExternalLink className="h-4 w-4 ms-2" />
+              </a>
+            </Button>
+          ) : (
+            <Button variant="outline" disabled>
+              {isLoading ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                t("openTemplateForm")
+              )}
+            </Button>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 export default function SettingsPage() {
   const t = useTranslations("settingsPage");
@@ -95,6 +150,8 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+
+        <TemplateFormCard />
       </RequireRole>
     </div>
   );
