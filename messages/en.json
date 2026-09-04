@@ -1413,6 +1413,7 @@
     "closedLocked": "Event is closed - publish status cannot be changed",
     "openDescription": "Event is published and visible to members",
     "closedDescription": "Publish to make the event visible to members",
+    "googleFormNote": "This also publishes or unpublishes the event's attached Google Form.",
     "title": "Publish Event",
     "openEvent": "Open Event",
     "locked": "Locked",

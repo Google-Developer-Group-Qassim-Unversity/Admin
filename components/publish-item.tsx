@@ -113,7 +113,12 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       <ItemContent>
         <ItemTitle>{t('title')}</ItemTitle>
         <ItemDescription>
-          {getStatusDescription()}
+          <div className="flex flex-col gap-1">
+            <span>{getStatusDescription()}</span>
+            {hasGoogleForm && !isLocked && (
+              <span className="text-xs text-muted-foreground">{t('googleFormNote')}</span>
+            )}
+          </div>
         </ItemDescription>
       </ItemContent>
       <ItemActions>
