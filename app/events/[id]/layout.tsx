@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { useParams, useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX } from "lucide-react";
@@ -11,7 +10,6 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventProvider } from "@/contexts/event-context";
 import { useEvent } from "@/hooks/use-event";
-import { saveRefreshToken } from "@/lib/google-token-storage";
 import { ApiRequestError } from "@/lib/api";
 import { useTranslations } from "next-intl";
 
@@ -40,16 +38,6 @@ function EventLayoutContent({ children }: { children: React.ReactNode }) {
   const eventId = params.id as string;
 
   const { data: event, isLoading, error, refetch } = useEvent(eventId);
-
-  useEffect(() => {
-    const refreshToken = searchParams.get('save_refresh_token');
-    if (refreshToken) {
-      saveRefreshToken(refreshToken);
-      const url = new URL(window.location.href);
-      url.searchParams.delete('save_refresh_token');
-      window.history.replaceState({}, '', url);
-    }
-  }, [searchParams]);
 
   const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
   const backLabel = searchParams.get('from') === 'points' ? t('backToPoints') : t('backToEvents');

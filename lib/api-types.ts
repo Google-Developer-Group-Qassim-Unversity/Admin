@@ -103,9 +103,9 @@ export interface Form {
   event_id: number;
   form_type: FormType;
   google_form_id: string | null;
-  google_refresh_token: string | null;
   google_watch_id: string | null;
   google_responders_url: string | null;
+  admin_google_email: string | null;
   google_form_schema: JSON;
 }
 
@@ -113,9 +113,9 @@ export interface CreateFormPayload {
   event_id: number;
   form_type: FormType;
   google_form_id?: string | null;
-  google_refresh_token?: string | null;
   google_watch_id?: string | null;
   google_responders_url?: string | null;
+  admin_google_email?: string | null;
   google_form_schema?: JSON;
 }
 
@@ -123,10 +123,34 @@ export interface UpdateFormPayload {
   event_id: number;
   form_type: FormType;
   google_form_id: string | null;
-  google_refresh_token: string | null;
   google_watch_id: string | null;
   google_responders_url: string | null;
+  admin_google_email: string | null;
   google_form_schema?: JSON;
+}
+
+export interface AttachFormPayload {
+  admin_google_email: string;
+}
+
+// Loosely typed - structurally compatible with lib/googl-parser.ts's FormSchema/FormItem,
+// which only reads title/questionItem.question.questionId off of each item.
+export interface GoogleFormSchema {
+  formId?: string;
+  info?: { title?: string; documentTitle?: string; [key: string]: unknown };
+  items?: Array<{
+    title?: string;
+    questionItem?: {
+      question?: {
+        questionId?: string;
+        choiceQuestion?: { type?: string; options?: Array<{ value?: string }> };
+        textQuestion?: Record<string, unknown>;
+      };
+    };
+    [key: string]: unknown;
+  }>;
+  responderUri?: string;
+  [key: string]: unknown;
 }
 
 // Client-side Google Form data (camelCase mapping of Form)
@@ -134,8 +158,9 @@ export interface GoogleFormData {
   id?: number;
   formType: FormType;
   googleFormId: string | null;
-  googleRefreshToken?: string | null;
+  googleWatchId?: string | null;
   googleRespondersUrl?: string | null;
+  adminGoogleEmail?: string | null;
 }
 
 // =============================================================================
