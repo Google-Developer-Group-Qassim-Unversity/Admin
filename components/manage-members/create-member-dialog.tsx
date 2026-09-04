@@ -113,7 +113,20 @@ export function CreateMemberDialog({
         },
       });
     },
-    [name, email, phoneNumber, uniId, gender, createMutation, resetForm, onOpenChange, onSuccess, validate, t]
+    [
+      name,
+      email,
+      phoneNumber,
+      uniId,
+      gender,
+      createMutation,
+      resetForm,
+      onOpenChange,
+      onSuccess,
+      onCreatedMember,
+      validate,
+      t,
+    ]
   );
 
   return (
