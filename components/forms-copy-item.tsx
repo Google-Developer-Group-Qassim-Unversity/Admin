@@ -38,10 +38,12 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
   const t = useTranslations('formsCopyItem');
   const tCommon = useTranslations('common.actions');
   const { getToken } = useAuth();
-  // The server's admin_google_email is whoever the form was last shared with -
-  // not necessarily whoever is viewing this page. Only this browser's own
-  // localStorage-saved email means "I successfully requested access before",
-  // so the input defaults to that, never to the server's value.
+  // The server's admin_google_email is whoever the form was MOST RECENTLY shared
+  // with - a single value that gets silently overwritten every time a different
+  // admin requests access, even though earlier grants are never revoked. Whether
+  // *this* browser has access has to be checked against the full grant list
+  // (grantedEmails), not that one field, or every admin but the latest one sees a
+  // false "request access" prompt for access they already have.
   const savedEmail = getSavedGoogleEmail();
   const [email, setEmail] = useState(savedEmail || '');
   const [requestingDifferentEmail, setRequestingDifferentEmail] = useState(false);
@@ -53,11 +55,11 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
   const isLoading = attachForm.isPending || unattachForm.isPending;
   const hasExistingForm = !!formData?.googleFormId;
   const sharedWithEmail = formData?.adminGoogleEmail ?? null;
+  const grantedEmails = formData?.grantedEmails ?? [];
   const youHaveAccess =
     hasExistingForm &&
-    !!sharedWithEmail &&
     !!savedEmail &&
-    sharedWithEmail.toLowerCase() === savedEmail.toLowerCase();
+    grantedEmails.some((granted) => granted.toLowerCase() === savedEmail.toLowerCase());
   const showEmailInput = !youHaveAccess || requestingDifferentEmail;
   const fileId = formData?.googleFormId;
 
@@ -108,7 +110,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
             <div className="flex flex-col gap-1">
               <span>{t('attachedDescription')}</span>
               <span className="text-xs text-muted-foreground">{t('attachedEditHint')}</span>
-              <span className="text-xs text-muted-foreground">{t('sharedWith', { email: sharedWithEmail ?? '' })}</span>
+              <span className="text-xs text-muted-foreground">{t('sharedWith', { email: savedEmail ?? '' })}</span>
               <button
                 type="button"
                 className="text-xs text-muted-foreground underline underline-offset-2 text-start w-fit"

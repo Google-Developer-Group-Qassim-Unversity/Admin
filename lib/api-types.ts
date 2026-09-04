@@ -106,6 +106,7 @@ export interface Form {
   google_watch_id: string | null;
   google_responders_url: string | null;
   admin_google_email: string | null;
+  granted_emails: string[];
   google_form_schema: JSON;
 }
 
@@ -161,6 +162,7 @@ export interface GoogleFormData {
   googleWatchId?: string | null;
   googleRespondersUrl?: string | null;
   adminGoogleEmail?: string | null;
+  grantedEmails: string[];
 }
 
 // =============================================================================

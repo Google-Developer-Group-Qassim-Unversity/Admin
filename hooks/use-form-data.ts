@@ -35,6 +35,7 @@ export function useFormData(eventId: number) {
         googleWatchId: result.data.google_watch_id,
         googleRespondersUrl: result.data.google_responders_url,
         adminGoogleEmail: result.data.admin_google_email,
+        grantedEmails: result.data.granted_emails,
       };
     },
   });
