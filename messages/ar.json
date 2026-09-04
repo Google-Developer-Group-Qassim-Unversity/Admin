@@ -1049,10 +1049,14 @@
       "universityId": "الرقم الجامعي",
       "gender": "الجنس",
       "phone": "الجوال",
-      "status": "الحالة"
+      "status": "الحالة",
+      "lastActivity": "آخر نشاط",
+      "actions": "الإجراءات"
     },
     "authenticated": "موثق",
     "manual": "يدوي",
+    "noActivity": "ما فيه نشاط",
+    "viewMemberPage": "فتح صفحة العضو",
     "stats": {
       "total": "إجمالي الأعضاء",
       "authenticated": "موثقين",

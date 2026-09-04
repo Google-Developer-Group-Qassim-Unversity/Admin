@@ -23,7 +23,9 @@ import {
   ChevronRight,
   ChevronsLeft,
   ChevronsRight,
+  ExternalLink,
 } from "lucide-react";
+import { format } from "date-fns";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -59,6 +61,7 @@ import { useMembers } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
 import { useTranslations } from "next-intl";
+import { config } from "@/lib/config";
 
 const PAGE_SIZE_OPTIONS = [
   { value: "10", label: "10" },
@@ -134,6 +137,49 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
           <Badge variant="secondary">{t("manual")}</Badge>
         );
       },
+    },
+    {
+      accessorKey: "last_activity",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          className="-ms-4"
+        >
+          {t("columns.lastActivity")}
+          <ArrowUpDown className="ms-2 h-4 w-4" />
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const lastActivity = row.getValue<string | null | undefined>("last_activity");
+        return lastActivity ? (
+          <span className="text-sm">{format(new Date(lastActivity), "MMM d, yyyy")}</span>
+        ) : (
+          <span className="text-sm text-muted-foreground">{t("noActivity")}</span>
+        );
+      },
+      sortingFn: (rowA, rowB) => {
+        const a = rowA.getValue<string | null | undefined>("last_activity");
+        const b = rowB.getValue<string | null | undefined>("last_activity");
+        return (a ? new Date(a).getTime() : 0) - (b ? new Date(b).getTime() : 0);
+      },
+    },
+    {
+      id: "actions",
+      header: t("columns.actions"),
+      enableHiding: false,
+      cell: ({ row }) => (
+        <Button variant="outline" size="sm" asChild>
+          <a
+            href={`${config.memberAppUrl}/members/${row.original.id}`}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {t("viewMemberPage")}
+            <ExternalLink className="ms-2 h-4 w-4" />
+          </a>
+        </Button>
+      ),
     },
   ];
 }
@@ -311,7 +357,9 @@ export default function ManageMembersPage() {
                                 ? t("columns.email")
                                 : column.id === "gender"
                                   ? t("columns.gender")
-                                  : column.id.replace(/_/g, " ")}
+                                  : column.id === "last_activity"
+                                    ? t("columns.lastActivity")
+                                    : column.id.replace(/_/g, " ")}
                     </DropdownMenuCheckboxItem>
                   ))}
               </DropdownMenuContent>

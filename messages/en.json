@@ -1049,10 +1049,14 @@
       "universityId": "University ID",
       "gender": "Gender",
       "phone": "Phone",
-      "status": "Status"
+      "status": "Status",
+      "lastActivity": "Last Activity",
+      "actions": "Actions"
     },
     "authenticated": "Authenticated",
     "manual": "Manual",
+    "noActivity": "No activity",
+    "viewMemberPage": "View Member Page",
     "stats": {
       "total": "Total Members",
       "authenticated": "Authenticated",
