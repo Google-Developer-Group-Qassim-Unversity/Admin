@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "infisical run --env=dev --path=/admin-frontend -- ./node_modules/.bin/dotenv -e .env.local -o -- next start",
     "lint": "eslint",
+    "typecheck": "tsc --noEmit",
     "export-env": "infisical export --env=dev --path=/admin-frontend --format=dotenv --output-file=./.env.local"
   },
   "dependencies": {
