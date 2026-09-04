@@ -157,6 +157,7 @@ export interface Member {
   is_authenticated: number;
   created_at?: string;
   updated_at?: string;
+  last_activity?: string | null;
 }
 
 /**
