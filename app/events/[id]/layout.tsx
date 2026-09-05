@@ -10,7 +10,7 @@ import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventProvider } from "@/contexts/event-context";
 import { useEvent } from "@/hooks/use-event";
-import { ApiRequestError } from "@/lib/api";
+import { ApiRequestError } from "@/lib/api/errors";
 import { useTranslations } from "next-intl";
 
 const TAB_ITEMS = [

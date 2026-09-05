@@ -1162,7 +1162,13 @@
     "semestersDescription": "Set the start and end dates of each semester, add new ones, and pick the default",
     "manageSemesters": "Manage semesters",
     "manageSemestersHint": "Changes apply immediately to the leaderboard and the events filter",
-    "open": "Open"
+    "open": "Open",
+    "templateFormTitle": "Template Google Form",
+    "templateFormDescription": "The original form every event's registration form is copied from",
+    "templateForm": "Template form",
+    "templateFormHint": "Opens the template in Google Forms",
+    "templateFormLoadFailed": "Failed to load the template form link",
+    "openTemplateForm": "Open template"
   },
   "semestersPage": {
     "title": "Semesters",

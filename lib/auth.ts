@@ -31,6 +31,27 @@ export async function requireAdmin(): Promise<{
   return { userId, isAdmin: true };
 }
 
+export async function requireSuperAdmin(): Promise<{
+  userId: string;
+  isSuperAdmin: true;
+} | null> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const client = await clerkClient();
+  const user = await client.users.getUser(userId);
+  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
+
+  if (publicMetadata?.is_super_admin !== true) {
+    return null;
+  }
+
+  return { userId, isSuperAdmin: true };
+}
+
 export async function getAuthUser(): Promise<{
   userId: string;
   isAdmin: boolean;

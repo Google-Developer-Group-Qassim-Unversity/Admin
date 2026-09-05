@@ -16,7 +16,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Check, Upload, Loader2, ExternalLink, Lock, Copy } from 'lucide-react';
-import { useAuth } from '@clerk/nextjs';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
@@ -30,9 +29,8 @@ interface PublishItemProps {
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
   const t = useTranslations('publishItem');
-  const { getToken } = useAuth();
-  const publishEvent = usePublishEvent(getToken);
-  const unpublishEvent = useUnpublishEvent(getToken);
+  const publishEvent = usePublishEvent();
+  const unpublishEvent = useUnpublishEvent();
 
   const isLoading = publishEvent.isPending || unpublishEvent.isPending;
   const isPublished = event.status === 'open';
@@ -99,7 +97,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
   };
 
   return (
-    <Item 
+    <Item
       variant="outline"
       className={getItemClassName()}
     >
@@ -129,9 +127,9 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
                 <Copy className="h-4 w-4" />
               </Button>
               <Button variant="outline" size="sm" asChild>
-                <a 
+                <a
                   href={`${config.memberAppUrl}/events/${event.id}`}
-                  target="_blank" 
+                  target="_blank"
                   rel="noopener noreferrer"
                 >
                   {t('openEvent')}

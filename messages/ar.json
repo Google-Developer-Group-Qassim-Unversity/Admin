@@ -1162,7 +1162,13 @@
     "semestersDescription": "حدد تاريخ بداية ونهاية كل فصل، أضف فصول جديدة، واختر الافتراضي.",
     "manageSemesters": "إدارة الفصول الدراسية",
     "manageSemestersHint": "التغييرات تنطبق فورًا على لوحة الصدارة وفلتر الفعاليات.",
-    "open": "فتح"
+    "open": "فتح",
+    "templateFormTitle": "نموذج Google الأساسي",
+    "templateFormDescription": "النموذج الأصلي اللي تنسخ منه نماذج التسجيل لكل الفعاليات.",
+    "templateForm": "النموذج الأساسي",
+    "templateFormHint": "يفتح النموذج في Google Forms.",
+    "templateFormLoadFailed": "تعذر تحميل رابط النموذج الأساسي.",
+    "openTemplateForm": "فتح النموذج"
   },
   "semestersPage": {
     "title": "الفصول الدراسية",

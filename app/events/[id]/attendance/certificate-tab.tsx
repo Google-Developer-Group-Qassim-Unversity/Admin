@@ -7,7 +7,9 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { API_BASE_URL, getCertificateEligibleCount, sendEventCertificates } from "@/lib/api";
+import { useAuth } from "@clerk/nextjs";
+import { config } from "@/lib/config";
+import { useApi } from "@/lib/api/client";
 import { parseSSEStream } from "@/lib/sse";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { SendCustomEmailDialog } from "./send-custom-email-dialog";
@@ -19,10 +21,14 @@ type SubTab = "sent" | "not-sent";
 
 interface CertificateTabProps {
   eventId: number;
-  getToken: () => Promise<string | null>;
 }
 
-export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
+export function CertificateTab({ eventId }: CertificateTabProps) {
+  const api = useApi();
+  // The log stream is an EventSource-style fetch that needs the raw bearer
+  // token, and the two email dialogs below are on resources that have not
+  // migrated yet.
+  const { getToken } = useAuth();
   const t = useTranslations("attendance.certificateTab");
   const [subTab, setSubTab] = React.useState<SubTab>("sent");
   const [data, setData] = React.useState<CertificateEligibility | null>(null);
@@ -36,12 +42,15 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
 
   const loadData = React.useCallback(async () => {
     setIsLoading(true);
-    const result = await getCertificateEligibleCount(eventId, getToken);
-    if (result.success) {
-      setData(result.data);
+    try {
+      setData(await api.certificates.eligibleCount(eventId));
+    } catch {
+      // Leaves the previous count on screen; the send button reports its own
+      // failures, which is where an admin actually needs to see one.
+    } finally {
+      setIsLoading(false);
     }
-    setIsLoading(false);
-  }, [eventId, getToken]);
+  }, [api, eventId]);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -65,7 +74,7 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
 
     try {
       const res = await fetch(
-        `${API_BASE_URL}/emails/certificate-event/logs/stream/${eventId}`,
+        `${config.backendApiUrl}/emails/certificate-event/logs/stream/${eventId}`,
         {
           signal: ac.signal,
           headers: {
@@ -120,12 +129,9 @@ export function CertificateTab({ eventId, getToken }: CertificateTabProps) {
   const handleSend = async () => {
     setIsSending(true);
     try {
-      const result = await sendEventCertificates(eventId, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
+      const started = await api.certificates.sendForEvent(eventId);
       toast.success(t("generationInitiated"));
-      setActiveJob({ jobId: result.data.job_id, total: result.data.recipient_count });
+      setActiveJob({ jobId: started.job_id, total: started.recipient_count });
       setSubTab("sent");
       startStream();
       setTimeout(() => loadData(), 3000);

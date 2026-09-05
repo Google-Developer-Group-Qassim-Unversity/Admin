@@ -146,13 +146,23 @@ function Calendar({
           )
         },
         Chevron: ({ className, orientation, ...props }) => {
-          if (orientation === "left") {
+          // The default nav hardcodes a left chevron for the previous month and
+          // a right one for the next, but RTL swaps the buttons' sides, so the
+          // icons have to point the other way to keep pointing "back"/"forward".
+          const horizontal =
+            dir === "rtl" && orientation === "left"
+              ? "right"
+              : dir === "rtl" && orientation === "right"
+                ? "left"
+                : orientation
+
+          if (horizontal === "left") {
             return (
               <ChevronLeftIcon className={cn("size-4", className)} {...props} />
             )
           }
 
-          if (orientation === "right") {
+          if (horizontal === "right") {
             return (
               <ChevronRightIcon className={cn("size-4", className)} {...props} />
             )

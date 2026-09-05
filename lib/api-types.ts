@@ -443,6 +443,9 @@ export interface AttendanceResponse {
   attendance: AttendanceRecord[];
 }
 
+/** Which shape of attendance to ask for. "me" is the caller's own record. */
+export type AttendanceType = "count" | "detailed" | "me";
+
 export type CertificateLanguage = "ar" | "en";
 
 /** "google" sends via the default Gmail threshold-switching system; "ses" is the optional AWS SES path. */
@@ -483,6 +486,13 @@ export interface SendCertificatesResponse {
   message: string;
   recipient_count: number;
   job_id?: number | null;
+}
+
+/** Response from GET /emails/certificate-event/eligible-count/{event_id} */
+export interface CertificateEligibleCount {
+  eligible_count: number;
+  eligible_members: { id: number; name: string; email: string; gender: Gender }[];
+  sent_count: number;
 }
 
 // =============================================================================

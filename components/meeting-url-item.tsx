@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
 import { useTranslations } from 'next-intl';
 import { Check, ExternalLink, Loader2, Trash2, Video } from 'lucide-react';
 import { toast } from 'sonner';
@@ -26,8 +25,7 @@ interface MeetingUrlItemProps {
 export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
   const t = useTranslations('meetingUrlItem');
   const tc = useTranslations('common.states');
-  const { getToken } = useAuth();
-  const updateMeetingUrl = useUpdateEventMeetingUrl(getToken);
+  const updateMeetingUrl = useUpdateEventMeetingUrl();
   const savedUrl = event.meeting_url ?? '';
   const [value, setValue] = useState(savedUrl);
 

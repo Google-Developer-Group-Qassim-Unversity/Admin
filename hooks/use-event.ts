@@ -1,12 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getEvent, getEventDetails, getEvents, updateEvent, updateEventPartial, updateEventMeetingUrl, publishEvent, unpublishEvent, closeEventResponses, openEventResponses, closeEvent, sendEventCertificates, getActions, getDepartments, getEventAttendance, openEvent, markAttendanceManual, removeAttendanceManual, copyAttendance, deleteEvent, backfillAttendance, ApiRequestError } from '@/lib/api';
-import type { Event, UpdateEventPayload, BackfillMember } from '@/lib/api-types';
+import { useApi } from '@/lib/api/client';
+import type { Event, UpdateEventPayload, BackfillMember, AttendanceType } from '@/lib/api-types';
+import type { EventsFilters } from '@/lib/api/resources';
 
 // Query keys
 export const eventKeys = {
   all: ['events'] as const,
   lists: () => [...eventKeys.all, 'list'] as const,
-  list: (params?: { limit?: number; offset?: number }) => [...eventKeys.lists(), params] as const,
+  list: (filters?: EventsFilters) => [...eventKeys.lists(), filters] as const,
   details: () => [...eventKeys.all, 'detail'] as const,
   detail: (id: number | string) => [...eventKeys.details(), id] as const,
   fullDetails: () => [...eventKeys.all, 'fullDetail'] as const,
@@ -16,64 +17,55 @@ export const eventKeys = {
   attendance: (id: number | string, day: string, type?: string) => [...eventKeys.all, 'attendance', id, day, type] as const,
 };
 
-// Hooks
-export function useEvent(id: number | string) {
-  return useQuery({
-    queryKey: eventKeys.detail(id),
-    queryFn: async () => {
-      const result = await getEvent(id);
-      if (!result.success) {
-        throw new ApiRequestError(result.error);
-      }
-      return result.data;
-    },
-  });
-}
-
-export function useEvents() {
-  return useQuery({
-    queryKey: eventKeys.list(),
-    queryFn: async () => {
-      const result = await getEvents();
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-  });
-}
-
-export function useEventDetails(id: number | string, getToken: () => Promise<string | null>) {
-  return useQuery({
-    queryKey: eventKeys.fullDetail(id),
-    queryFn: async () => {
-      const result = await getEventDetails(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-  });
-}
-
-export function useUpdateEvent(getToken: () => Promise<string | null>) {
+/**
+ * Invalidate everything that shows an event after it changes.
+ *
+ * Eleven mutations below repeated these three lines. They are one unit: the
+ * detail cache gets the fresh row, the full-detail and list queries refetch.
+ */
+function useEventCacheUpdates() {
   const queryClient = useQueryClient();
 
+  return (id: number, event: Event) => {
+    queryClient.setQueryData(eventKeys.detail(id), event);
+    queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
+    queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+  };
+}
+
+// Hooks
+export function useEvent(id: number | string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: eventKeys.detail(id),
+    queryFn: () => api.events.get(id),
+  });
+}
+
+/** Every event, optionally narrowed by semester or date range. */
+export function useEvents(filters?: EventsFilters) {
+  const api = useApi();
+  return useQuery({
+    queryKey: eventKeys.list(filters),
+    queryFn: () => api.events.list(filters),
+  });
+}
+
+export function useEventDetails(id: number | string) {
+  const api = useApi();
+  return useQuery({
+    queryKey: eventKeys.fullDetail(id),
+    queryFn: () => api.events.details(id),
+  });
+}
+
+export function useUpdateEvent() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
+
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: UpdateEventPayload }) => {
-      const result = await updateEvent(id, data, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, { id }) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: ({ id, data }: { id: number; data: UpdateEventPayload }) => api.events.update(id, data),
+    onSuccess: (data, { id }) => onEventChanged(id, data),
   });
 }
 
@@ -81,24 +73,13 @@ export function useUpdateEvent(getToken: () => Promise<string | null>) {
  * Hook for partial event updates (e.g., status changes).
  * Uses PATCH instead of PUT.
  */
-export function useUpdateEventPartial(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useUpdateEventPartial() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: number; data: Partial<Event> }) => {
-      const result = await updateEventPartial(id, data, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, { id }) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: ({ id, data }: { id: number; data: Partial<Event> }) => api.events.updatePartial(id, data),
+    onSuccess: (data, { id }) => onEventChanged(id, data),
   });
 }
 
@@ -106,144 +87,84 @@ export function useUpdateEventPartial(getToken: () => Promise<string | null>) {
  * Hook for setting (or clearing) a remote event's join link via
  * PUT /events/[id]/meeting-url. Pass null to clear it.
  */
-export function useUpdateEventMeetingUrl(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useUpdateEventMeetingUrl() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async ({ id, meetingUrl }: { id: number; meetingUrl: string | null }) => {
-      const result = await updateEventMeetingUrl(id, meetingUrl, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, { id }) => {
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: ({ id, meetingUrl }: { id: number; meetingUrl: string | null }) =>
+      api.events.updateMeetingUrl(id, meetingUrl),
+    onSuccess: (data, { id }) => onEventChanged(id, data),
   });
 }
 
 export function useActions() {
+  const api = useApi();
   return useQuery({
     queryKey: eventKeys.actions(),
-    queryFn: async () => {
-      const result = await getActions();
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
+    queryFn: () => api.actions.list(),
   });
 }
 
 export function useDepartments() {
+  const api = useApi();
   return useQuery({
     queryKey: eventKeys.departments(),
-    queryFn: async () => {
-      const result = await getDepartments();
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
+    queryFn: () => api.departments.list(),
   });
 }
 
 /**
- * Hook for publishing an event via POST /events/[id]/publish.
+ * Hook for publishing an event via PUT /events/[id]/status.
  */
-export function usePublishEvent(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function usePublishEvent() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await publishEvent(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: (id: number) => api.eventStatus.publish(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
 /**
- * Hook for unpublishing an event via POST /events/[id]/unpublish.
+ * Hook for unpublishing an event, back to "draft".
  */
-export function useUnpublishEvent(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useUnpublishEvent() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await unpublishEvent(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: (id: number) => api.eventStatus.unpublish(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
 /**
- * Hook for closing event responses via POST /events/[id]/close.
+ * Hook for closing event responses.
  * Changes event status from "open" to "active".
  */
-export function useCloseEventResponses(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useCloseEventResponses() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await closeEventResponses(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: (id: number) => api.eventStatus.closeResponses(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
 /**
- * Hook for re-opening event responses via PUT /events/[id]/status.
+ * Hook for re-opening event responses.
  * Changes event status from "active" back to "open".
  */
-export function useOpenEventResponses(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useOpenEventResponses() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await openEventResponses(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: (id: number) => api.eventStatus.openResponses(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
@@ -251,24 +172,27 @@ export function useOpenEventResponses(getToken: () => Promise<string | null>) {
  * Hook for closing an event.
  * Changes event status to "closed".
  */
-export function useCloseEvent(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useCloseEvent() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await closeEvent(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      // Update the cache with the new data
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      // Invalidate details and list to refetch
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: (id: number) => api.eventStatus.close(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
+  });
+}
+
+/**
+ * Hook for re-opening a closed event.
+ * Changes event status from "closed" back to "active".
+ */
+export function useOpenEvent() {
+  const api = useApi();
+  const onEventChanged = useEventCacheUpdates();
+
+  return useMutation({
+    mutationFn: (id: number) => api.eventStatus.reopen(id),
+    onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
@@ -276,15 +200,10 @@ export function useCloseEvent(getToken: () => Promise<string | null>) {
  * Hook for sending event certificates.
  * Sends certificates to all attendees.
  */
-export function useSendCertificates(getToken: () => Promise<string | null>) {
+export function useSendCertificates() {
+  const api = useApi();
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await sendEventCertificates(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
+    mutationFn: (id: number) => api.certificates.sendForEvent(id),
   });
 }
 
@@ -296,94 +215,64 @@ export function useSendCertificates(getToken: () => Promise<string | null>) {
 export function useEventAttendance(
   eventId: number | string,
   day: string,
-  getToken: () => Promise<string | null>,
   enabled = true,
-  type: "count" | "detailed" | "me" = "detailed"
+  type: AttendanceType = "detailed"
 ) {
+  const api = useApi();
   return useQuery({
     queryKey: eventKeys.attendance(eventId, day, type),
-    queryFn: async () => {
-      const result = await getEventAttendance(Number(eventId), day, getToken, type);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
+    queryFn: () => api.attendance.forEvent(Number(eventId), day, type),
     enabled,
   });
 }
 
-/**
- * Hook for re-opening a closed event.
- * Changes event status from "closed" back to "active".
- */
-export function useOpenEvent(getToken: () => Promise<string | null>) {
+/** Refetch an event's attendance after it has been edited. */
+function useAttendanceInvalidation() {
   const queryClient = useQueryClient();
+  return (eventId: number) => queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
+}
+
+export function useMarkAttendanceManual() {
+  const api = useApi();
+  const onAttendanceChanged = useAttendanceInvalidation();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await openEvent(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (data, id) => {
-      queryClient.setQueryData(eventKeys.detail(id), data);
-      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
-      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
+    mutationFn: ({ eventId, memberIds, days }: { eventId: number; memberIds: number[]; days?: number[] }) =>
+      api.attendance.markManual(eventId, memberIds, days),
+    onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
   });
 }
 
-export function useMarkAttendanceManual(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useRemoveAttendanceManual() {
+  const api = useApi();
+  const onAttendanceChanged = useAttendanceInvalidation();
 
   return useMutation({
-    mutationFn: async ({ eventId, memberIds, days }: { eventId: number; memberIds: number[]; days?: number[] }) => {
-      const result = await markAttendanceManual(eventId, memberIds, days, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (_, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
-    },
+    mutationFn: ({ eventId, memberIds, day }: { eventId: number; memberIds: number[]; day?: number }) =>
+      api.attendance.removeManual(eventId, memberIds, day),
+    onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
   });
 }
 
-export function useRemoveAttendanceManual(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useCopyAttendance() {
+  const api = useApi();
+  const onAttendanceChanged = useAttendanceInvalidation();
 
   return useMutation({
-    mutationFn: async ({ eventId, memberIds, day }: { eventId: number; memberIds: number[]; day?: number }) => {
-      const result = await removeAttendanceManual(eventId, memberIds, day, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (_, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
-    },
+    mutationFn: ({ eventId, sourceDay, targetDays }: { eventId: number; sourceDay: number; targetDays: number[] }) =>
+      api.attendance.copy(eventId, sourceDay, targetDays),
+    onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
   });
 }
 
-export function useCopyAttendance(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
+export function useBackfillAttendance() {
+  const api = useApi();
+  const onAttendanceChanged = useAttendanceInvalidation();
 
   return useMutation({
-    mutationFn: async ({ eventId, sourceDay, targetDays }: { eventId: number; sourceDay: number; targetDays: number[] }) => {
-      const result = await copyAttendance(eventId, sourceDay, targetDays, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (_, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
-    },
+    mutationFn: ({ eventId, members, day }: { eventId: number; members: BackfillMember[]; day: number }) =>
+      api.attendance.backfill(eventId, members, day),
+    onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
   });
 }
 
@@ -391,38 +280,16 @@ export function useCopyAttendance(getToken: () => Promise<string | null>) {
  * Hook for deleting a draft event.
  * Only events with status "draft" can be deleted.
  */
-export function useDeleteEvent(getToken: () => Promise<string | null>) {
+export function useDeleteEvent() {
+  const api = useApi();
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (id: number) => {
-      const result = await deleteEvent(id, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
+    mutationFn: (id: number) => api.events.remove(id),
     onSuccess: (_, id) => {
       queryClient.removeQueries({ queryKey: eventKeys.detail(id) });
       queryClient.removeQueries({ queryKey: eventKeys.fullDetail(id) });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
-    },
-  });
-}
-
-export function useBackfillAttendance(getToken: () => Promise<string | null>) {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ eventId, members, day }: { eventId: number; members: BackfillMember[]; day: number }) => {
-      const result = await backfillAttendance(eventId, members, day, getToken);
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
-      return result.data;
-    },
-    onSuccess: (_, { eventId }) => {
-      queryClient.invalidateQueries({ queryKey: eventKeys.attendance(eventId, 'all') });
     },
   });
 }

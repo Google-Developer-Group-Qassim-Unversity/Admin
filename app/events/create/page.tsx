@@ -10,7 +10,8 @@ import { useAuth } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { EventForm, type EventFormData } from "@/components/event-form";
-import { createEvent, shouldContactSupport } from "@/lib/api";
+import { useApi } from "@/lib/api/client";
+import { shouldContactSupport } from "@/lib/api/errors";
 import { formatLocalDateTime } from "@/lib/utils";
 import type { LocationType } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
@@ -21,6 +22,9 @@ export default function CreateEventPage() {
   const te = useTranslations("events");
   const tl = useTranslations("eventLayout");
   const router = useRouter();
+  const api = useApi();
+  // Still needed by EventForm, which forwards it to the image upload - the
+  // uploads resource has not migrated to the api module yet.
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
@@ -51,23 +55,19 @@ export default function CreateEventPage() {
         department_id: data.department_id,
       };
 
-      const result = await createEvent(payload, getToken);
-
-      if (result.success) {
-        toast.success(t("createdSuccess"));
-        router.push(`/events/${result.data.id}`);
+      const created = await api.events.create(payload);
+      toast.success(t("createdSuccess"));
+      router.push(`/events/${created.id}`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : tc("unexpectedError");
+      if (shouldContactSupport(error)) {
+        toast.error(t("createFailedContactSupport"), {
+          description: tc("errorDetail", { message }),
+          duration: 10000,
+        });
       } else {
-        if (shouldContactSupport(result.error)) {
-          toast.error(t("createFailedContactSupport"), {
-            description: tc("errorDetail", { message: result.error.message }),
-            duration: 10000,
-          });
-        } else {
-          toast.error(result.error.message);
-        }
+        toast.error(message);
       }
-    } catch {
-      toast.error(tc("unexpectedError"));
     } finally {
       setIsSubmitting(false);
     }

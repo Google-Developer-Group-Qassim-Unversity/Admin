@@ -101,6 +101,44 @@ export function getQuestionKeys(
   return Object.keys(firstValid.parsedAnswers);
 }
 
+// Member fields a Google Form question column commonly re-asks
+const DUPLICATE_CANDIDATE_FIELDS = ["name", "email", "uni_id", "gender"] as const;
+
+function normalizeForComparison(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
+  const normalized = String(value).trim().toLowerCase().replace(/\s+/g, " ");
+  return normalized === "" ? null : normalized;
+}
+
+// Detect Google question columns whose answers just repeat a member field
+// (e.g. a "what's your name" question when we already have submission.member.name),
+// so the responses table can hide them by default without hardcoding per-form
+// question text - titles are the form's own (often Arabic) wording and vary per form.
+export function getDuplicateQuestionKeys(
+  rows: TableRowData[],
+  questionKeys: string[]
+): string[] {
+  const MIN_SAMPLES = 3;
+  const MATCH_THRESHOLD = 0.8;
+
+  return questionKeys.filter((key) =>
+    DUPLICATE_CANDIDATE_FIELDS.some((field) => {
+      let compared = 0;
+      let matched = 0;
+
+      for (const row of rows) {
+        const fieldValue = normalizeForComparison(row[field]);
+        const questionValue = normalizeForComparison(row[key]);
+        if (fieldValue === null || questionValue === null) continue;
+        compared += 1;
+        if (fieldValue === questionValue) matched += 1;
+      }
+
+      return compared >= MIN_SAMPLES && matched / compared >= MATCH_THRESHOLD;
+    })
+  );
+}
+
 // Helper function to create a header with dropdown menu for sorting and hiding.
 // `titleKey` looks up responsesTable.{titleKey} unless `isLiteral` is set, which
 // is used for dynamic Google Form question columns - their titles are the
