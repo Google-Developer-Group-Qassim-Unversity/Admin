@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { GoogleFormData, FormType } from '@/lib/api-types';
-import { getFormByEventId, updateForm } from '@/lib/api';
+import { getFormByEventId, updateForm, attachForm, unattachForm, getFormSchema } from '@/lib/api';
+
+type GetTokenFn = () => Promise<string | null>;
 
 // Query keys
 export const formKeys = {
@@ -8,25 +10,10 @@ export const formKeys = {
   byEvent: (eventId: number) => [...formKeys.all, 'event', eventId] as const,
 };
 
-export const authKeys = {
-  status: (eventId: number) => ['auth', 'status', eventId] as const,
-};
-
 export const formSchemaKeys = {
   all: ['formSchemas'] as const,
-  byFormId: (formId: string) => [...formSchemaKeys.all, formId] as const,
+  byFormId: (formId: number) => [...formSchemaKeys.all, formId] as const,
 };
-
-// Types
-interface GoogleUser {
-  name?: string;
-  email?: string;
-  picture?: string;
-}
-
-interface AuthStatusResponse {
-  user: GoogleUser | null;
-}
 
 // Hooks
 export function useFormData(eventId: number) {
@@ -34,89 +21,78 @@ export function useFormData(eventId: number) {
     queryKey: formKeys.byEvent(eventId),
     queryFn: async (): Promise<GoogleFormData | null> => {
       const result = await getFormByEventId(eventId);
-      
+
       if (!result.success) {
         // No form exists for this event (404) - this is expected
         if (result.error.status === 404) return null;
         throw new Error(result.error.message);
       }
-      
+
       return {
         id: result.data.id,
         formType: result.data.form_type,
         googleFormId: result.data.google_form_id,
-        googleRefreshToken: result.data.google_refresh_token,
+        googleWatchId: result.data.google_watch_id,
         googleRespondersUrl: result.data.google_responders_url,
+        adminGoogleEmail: result.data.admin_google_email,
+        grantedEmails: result.data.granted_emails,
       };
     },
   });
 }
 
-export function useFormSchema(formId: string | null | undefined) {
+export function useFormSchema(formId: number | null | undefined, getToken?: GetTokenFn) {
   return useQuery({
-    queryKey: formSchemaKeys.byFormId(formId || ''),
+    queryKey: formSchemaKeys.byFormId(formId ?? 0),
     queryFn: async () => {
       if (!formId) {
         throw new Error('Form ID is required');
       }
-      
-      const res = await fetch(`/api/drive/form-schema/${formId}`);
-      if (!res.ok) {
-        throw new Error('Failed to fetch form schema');
+
+      const result = await getFormSchema(formId, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
       }
-      
-      const data = await res.json();
-      return data.schema;
+
+      return result.data;
     },
     enabled: !!formId,
   });
 }
 
-export function useGoogleAuthStatus(eventId: number) {
-  return useQuery({
-    queryKey: authKeys.status(eventId),
-    queryFn: async (): Promise<GoogleUser | null> => {
-      const res = await fetch(`/api/auth/status?eventId=${eventId}`);
-      if (!res.ok) throw new Error('Failed to check auth status');
-      
-      const data: AuthStatusResponse = await res.json();
-      return data.user || null;
-    },
-  });
-}
-
-export function useCopyForm(eventId: number) {
+/**
+ * Copies the template form under the club's own Google account and invites
+ * `adminGoogleEmail` as an editor. Idempotent: calling it again for the same
+ * event with a different email re-invites without re-copying the form - this
+ * is what "request access for a different email" uses.
+ */
+export function useAttachForm(eventId: number, getToken?: GetTokenFn) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (refreshToken: string) => {
-      const res = await fetch('/api/drive/copy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, refreshToken }),
-      });
-      if (!res.ok) throw new Error('Failed to attach form');
-      return res.json();
+    mutationFn: async (adminGoogleEmail: string) => {
+      const result = await attachForm(eventId, adminGoogleEmail, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
-      queryClient.invalidateQueries({ queryKey: authKeys.status(eventId) });
     },
   });
 }
 
-export function useUnattachForm(eventId: number) {
+export function useUnattachForm(eventId: number, getToken?: GetTokenFn) {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async () => {
-      const res = await fetch('/api/drive/unattach', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId }),
-      });
-      if (!res.ok) throw new Error('Failed to un-attach form');
-      return res.json();
+      const result = await unattachForm(eventId, getToken);
+      if (!result.success) {
+        throw new Error(result.error.message);
+      }
+      return result.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
@@ -133,11 +109,11 @@ export function useUpdateFormType(eventId: number, getToken: () => Promise<strin
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ 
-      formData, 
-      requireRegistration 
-    }: { 
-      formData: GoogleFormData; 
+    mutationFn: async ({
+      formData,
+      requireRegistration
+    }: {
+      formData: GoogleFormData;
       requireRegistration: boolean;
     }) => {
       if (!formData.id) {
@@ -165,9 +141,9 @@ export function useUpdateFormType(eventId: number, getToken: () => Promise<strin
         form_type: targetFormType,
         // Preserve all Google form data regardless of toggle state
         google_form_id: formData.googleFormId,
-        google_refresh_token: formData.googleRefreshToken ?? null,
+        google_watch_id: formData.googleWatchId ?? null,
         google_responders_url: formData.googleRespondersUrl ?? null,
-        google_watch_id: null, // Keep watch_id handling separate
+        admin_google_email: formData.adminGoogleEmail ?? null,
       }, getToken);
 
       if (!result.success) {
@@ -178,34 +154,6 @@ export function useUpdateFormType(eventId: number, getToken: () => Promise<strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
-    },
-  });
-}
-
-export function usePublishForm(eventId: number) {
-  return useMutation({
-    mutationFn: async (formId: string) => {
-      const res = await fetch('/api/drive/publish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, formId }),
-      });
-      if (!res.ok) throw new Error('Failed to publish Google Form');
-      return res.json();
-    },
-  });
-}
-
-export function useUnpublishForm(eventId: number) {
-  return useMutation({
-    mutationFn: async (formId: string) => {
-      const res = await fetch('/api/drive/unpublish', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ eventId, formId }),
-      });
-      if (!res.ok) throw new Error('Failed to unpublish Google Form');
-      return res.json();
     },
   });
 }

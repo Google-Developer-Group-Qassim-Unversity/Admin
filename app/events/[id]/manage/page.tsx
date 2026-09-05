@@ -16,7 +16,7 @@ import {
   ItemTitle,
 } from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
-import { useFormData, useGoogleAuthStatus, useUpdateFormType } from '@/hooks/use-form-data';
+import { useFormData, useUpdateFormType } from '@/hooks/use-form-data';
 import { useEventContext } from '@/contexts/event-context';
 import { useTranslations } from 'next-intl';
 
@@ -25,7 +25,6 @@ export default function EventManagePage() {
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const { data: formData = null, refetch: refetchForm } = useFormData(event?.id ?? 0);
-  const { data: user = null, refetch: refetchAuth } = useGoogleAuthStatus(event?.id ?? 0);
   const updateFormType = useUpdateFormType(event?.id ?? 0, getToken);
 
   if (!event) {
@@ -36,7 +35,7 @@ export default function EventManagePage() {
   const isFormTypeNone = formData?.formType === 'none';
 
   const handleFormChange = async () => {
-    await Promise.all([refetchForm(), refetchAuth()]);
+    await refetchForm();
     refetch?.();
   };
 
@@ -94,11 +93,10 @@ export default function EventManagePage() {
           </ItemActions>
         </Item>
 
-        <FormsCopyItem 
+        <FormsCopyItem
           eventId={event.id}
           formData={formData}
           onFormChange={handleFormChange}
-          user={user}
           disabled={isFormTypeNone}
         />
         {event.location_type === 'online' && (

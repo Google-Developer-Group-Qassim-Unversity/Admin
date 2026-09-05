@@ -39,6 +39,8 @@ import type {
   UploadResponse,
   Form,
   UpdateFormPayload,
+  AttachFormPayload,
+  GoogleFormSchema,
   Submission,
   AcceptSubmissionPayload,
   ActionsResponse,
@@ -414,6 +416,33 @@ export async function updateForm(
     method: "PUT",
     body: JSON.stringify(payload),
   }, getToken);
+}
+
+export async function attachForm(
+  eventId: number,
+  adminGoogleEmail: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>(`/forms/${eventId}/attach`, {
+    method: "POST",
+    body: JSON.stringify({ admin_google_email: adminGoogleEmail } satisfies AttachFormPayload),
+  }, getToken);
+}
+
+export async function unattachForm(
+  eventId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<Form>> {
+  return apiFetch<Form>(`/forms/${eventId}/unattach`, {
+    method: "POST",
+  }, getToken);
+}
+
+export async function getFormSchema(
+  formId: number,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<GoogleFormSchema>> {
+  return apiFetch<GoogleFormSchema>(`/forms/${formId}/schema`, {}, getToken);
 }
 
 // =============================================================================

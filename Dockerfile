@@ -46,13 +46,9 @@ COPY . .
 # never used here -> only supplied at container runtime via env_file, so give
 # the build harmless placeholders instead of baking real secrets into the image.
 ENV CLERK_SECRET_KEY=build-placeholder \
-    GOOGLE_CLIENT_ID=build-placeholder \
-    GOOGLE_CLIENT_SECRET=build-placeholder \
-    GOOGLE_REDIRECT_URL=build-placeholder \
-    GOOGLE_FORMS_TOPIC_NAME=build-placeholder \
-    TEMPLATE_FORM_FILE_ID=build-placeholder \
     ATTENDANCE_JWT_SECRET=build-placeholder \
-    SHEET_PROCESSOR_EXPORT_JWT_SECRET=build-placeholder
+    SHEET_PROCESSOR_EXPORT_JWT_SECRET=build-placeholder \
+    TEMPLATE_FORM_FILE_ID=build-placeholder
 
 ENV NEXT_TELEMETRY_DISABLED=1
 RUN pnpm build

@@ -2,19 +2,10 @@
 
 import { useTranslations } from 'next-intl';
 import { useState } from 'react';
-import Image from 'next/image';
+import { useAuth } from '@clerk/nextjs';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from '@/components/ui/popover';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
 import {
   Item,
   ItemActions,
@@ -23,11 +14,16 @@ import {
   ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
-import { GoogleFormsIcon, GoogleIcon } from '@/lib/google-icons';
-import { MoreHorizontal, Loader2, ExternalLink, Trash2, Info } from 'lucide-react';
-import { getRefreshToken, hasRefreshToken } from '@/lib/google-token-storage';
-import { useCopyForm, useUnattachForm } from '@/hooks/use-form-data';
-import { useUser } from '@clerk/nextjs';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { GoogleFormsIcon } from '@/lib/google-icons';
+import { MoreHorizontal, Loader2, ExternalLink, Trash2 } from 'lucide-react';
+import { getSavedGoogleEmail, saveGoogleEmail } from '@/lib/google-email-storage';
+import { useAttachForm, useUnattachForm } from '@/hooks/use-form-data';
+import { RemoveGoogleFormDialog } from '@/components/remove-google-form-dialog';
 import { toast } from 'sonner';
 import type { GoogleFormData } from '@/lib/api-types';
 
@@ -35,131 +31,170 @@ interface FormsCopyItemProps {
   eventId: number;
   formData: GoogleFormData | null;
   onFormChange: () => void;
-  user?: { name?: string; email?: string; picture?: string } | null;
   disabled?: boolean;
 }
 
-export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled = false }: FormsCopyItemProps) {
+export function FormsCopyItem({ eventId, formData, onFormChange, disabled = false }: FormsCopyItemProps) {
   const t = useTranslations('formsCopyItem');
-  const [imgError, setImgError] = useState(false);
-  const hasSavedToken = hasRefreshToken();
-  const { user: clerkUser } = useUser();
-  const linkedGoogleEmail = clerkUser?.externalAccounts?.find(
-    (account) => account.provider === 'google'
-  )?.emailAddress;
+  const tCommon = useTranslations('common.actions');
+  const { getToken } = useAuth();
+  // The server's admin_google_email is whoever the form was MOST RECENTLY shared
+  // with - a single value that gets silently overwritten every time a different
+  // admin requests access, even though earlier grants are never revoked. Whether
+  // *this* browser has access has to be checked against the full grant list
+  // (grantedEmails), not that one field, or every admin but the latest one sees a
+  // false "request access" prompt for access they already have.
+  const savedEmail = getSavedGoogleEmail();
+  const [email, setEmail] = useState(savedEmail || '');
+  const [requestingDifferentEmail, setRequestingDifferentEmail] = useState(false);
+  const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
-  const copyForm = useCopyForm(eventId);
-  const unattachForm = useUnattachForm(eventId);
+  const attachForm = useAttachForm(eventId, getToken);
+  const unattachForm = useUnattachForm(eventId, getToken);
 
-  const isLoading = copyForm.isPending || unattachForm.isPending;
-  const isCopied = !!formData?.googleFormId;
+  const isLoading = attachForm.isPending || unattachForm.isPending;
+  const hasExistingForm = !!formData?.googleFormId;
+  const sharedWithEmail = formData?.adminGoogleEmail ?? null;
+  const grantedEmails = formData?.grantedEmails ?? [];
+  const youHaveAccess =
+    hasExistingForm &&
+    !!savedEmail &&
+    grantedEmails.some((granted) => granted.toLowerCase() === savedEmail.toLowerCase());
+  const showEmailInput = !youHaveAccess || requestingDifferentEmail;
   const fileId = formData?.googleFormId;
 
-  const handleConnect = () => {
-    const refreshToken = getRefreshToken();
-    if (refreshToken) {
-      copyForm.mutate(refreshToken, {
-        onSuccess: () => {
-          toast.success(t('attachedSuccess'));
-          onFormChange();
-        },
-        onError: () => {
-          toast.error(t('attachFailed'));
-        },
-      });
-    } else if (linkedGoogleEmail) {
-      // We already know the admin's Google identity via Clerk (a separate
-      // sign-in connection, no scopes shared with it) - pre-fill it so Google
-      // skips the account-chooser and goes straight to this app's own consent.
-      const params = new URLSearchParams({
-        eventId: String(eventId),
-        login_hint: linkedGoogleEmail,
-      });
-      window.location.href = `/api/auth/google?${params.toString()}`;
-    } else {
-      window.location.href = `/api/auth/google?eventId=${eventId}`;
-    }
+  const handleRequestAccess = (e: React.FormEvent) => {
+    e.preventDefault();
+    const trimmedEmail = email.trim();
+    if (!trimmedEmail) return;
+
+    saveGoogleEmail(trimmedEmail);
+    attachForm.mutate(trimmedEmail, {
+      onSuccess: () => {
+        toast.success(t('attachedSuccess'));
+        setRequestingDifferentEmail(false);
+        onFormChange();
+      },
+      onError: () => {
+        toast.error(t('attachFailed'));
+      },
+    });
   };
 
   const handleUnattach = () => {
     unattachForm.mutate(undefined, {
-      onSuccess: () => onFormChange(),
+      onSuccess: () => {
+        setConfirmRemoveOpen(false);
+        onFormChange();
+      },
       onError: () => toast.error(t('unattachFailed')),
     });
   };
 
   const itemContent = (
-    <Item 
+    <Item
       variant="outline"
-      className={`${isCopied ? 'bg-green-500/10 border-green-500/30' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`${youHaveAccess && !showEmailInput ? 'bg-green-500/10 border-green-500/30' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
       <ItemMedia variant="image">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${isCopied ? 'bg-green-500/20' : 'bg-muted'}`}>
-          <GoogleFormsIcon className={`w-6 h-6 ${isCopied ? 'text-green-500' : ''}`} />
+        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${youHaveAccess && !showEmailInput ? 'bg-green-500/20' : 'bg-muted'}`}>
+          <GoogleFormsIcon className={`w-6 h-6 ${youHaveAccess && !showEmailInput ? 'text-green-500' : ''}`} />
         </div>
       </ItemMedia>
       <ItemContent>
         <ItemTitle>
-          {isCopied ? t('attached') : t('attachForm')}
+          {youHaveAccess && !showEmailInput ? t('attached') : t('attachForm')}
         </ItemTitle>
         <ItemDescription className="max-w-100">
-          {isCopied ? (
+          {youHaveAccess && !showEmailInput ? (
             <div className="flex flex-col gap-1">
               <span>{t('attachedDescription')}</span>
               <span className="text-xs text-muted-foreground">{t('attachedEditHint')}</span>
+              <span className="text-xs text-muted-foreground">{t('sharedWith', { email: savedEmail ?? '' })}</span>
+              <button
+                type="button"
+                className="text-xs text-muted-foreground underline underline-offset-2 text-start w-fit"
+                onClick={() => setRequestingDifferentEmail(true)}
+              >
+                {t('requestDifferentEmail')}
+              </button>
             </div>
           ) : (
-            t('connectDescription')
+            <div className="flex flex-col gap-1">
+              <span>{hasExistingForm ? t('requestAccessDescription') : t('createDescription')}</span>
+              {hasExistingForm && sharedWithEmail && (
+                <span className="text-xs text-muted-foreground">{t('sharedWith', { email: sharedWithEmail })}</span>
+              )}
+            </div>
           )}
         </ItemDescription>
       </ItemContent>
       <ItemActions>
-        {isCopied ? (
+        {showEmailInput ? (
+          <form onSubmit={handleRequestAccess} className="flex items-center gap-2">
+            <Input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder={t('emailPlaceholder')}
+              disabled={isLoading || disabled}
+              className="h-9 w-56"
+            />
+            <Button type="submit" disabled={isLoading || disabled || !email.trim()}>
+              {attachForm.isPending ? (
+                <>
+                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  {hasExistingForm ? t('requestingAccess') : t('creatingForm')}
+                </>
+              ) : hasExistingForm ? (
+                t('requestAccess')
+              ) : (
+                t('createForm')
+              )}
+            </Button>
+            {youHaveAccess && requestingDifferentEmail && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                disabled={isLoading}
+                onClick={() => {
+                  setEmail(savedEmail || '');
+                  setRequestingDifferentEmail(false);
+                }}
+              >
+                {tCommon('cancel')}
+              </Button>
+            )}
+            {hasExistingForm && (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button type="button" variant="outline" size="icon" disabled={isLoading || disabled}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
+                    <Trash2 className="me-2 h-4 w-4" />
+                    {t('unattach')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
+          </form>
+        ) : (
           <div className="flex items-center gap-1">
             <Button variant="outline" size="sm" asChild disabled={disabled}>
-              <a 
-                href={`https://docs.google.com/forms/d/${fileId}/edit`} 
-                target="_blank" 
+              <a
+                href={`https://docs.google.com/forms/d/${fileId}/edit`}
+                target="_blank"
                 rel="noopener noreferrer"
               >
                 {t('openForm')}
                 <ExternalLink className="ms-2 h-4 w-4" />
               </a>
             </Button>
-            {user && (
-              <Popover>
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon" disabled={disabled}>
-                    <Info className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-64">
-                  <div className="flex items-center gap-3">
-                    {user.picture && !imgError ? (
-                      <Image
-                        src={user.picture}
-                        alt={user.name || 'User'}
-                        width={40}
-                        height={40}
-                        className="rounded-full object-cover"
-                        onError={() => setImgError(true)}
-                      />
-                    ) : (
-                      <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
-                        <GoogleIcon className="w-5 h-5" />
-                      </div>
-                    )}
-                    <div className="flex flex-col min-w-0">
-                      <span className="font-medium text-sm truncate">{user.name}</span>
-                      <span className="text-xs text-muted-foreground truncate">{user.email}</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {t('formOwnerHint')}
-                  </p>
-                </PopoverContent>
-              </Popover>
-            )}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="outline" size="icon" disabled={isLoading || disabled}>
@@ -171,49 +206,49 @@ export function FormsCopyItem({ eventId, formData, onFormChange, user, disabled 
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={handleUnattach} variant="destructive">
+                <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
                   <Trash2 className="me-2 h-4 w-4" />
                   {t('unattach')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>
-        ) : (
-          <Button onClick={handleConnect} disabled={isLoading || disabled}>
-            {isLoading ? (
-              <>
-                <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                {t('attaching')}
-              </>
-            ) : hasSavedToken ? (
-              t('copyTemplate')
-            ) : (
-              <>
-                <span className="me-2 flex h-5 w-5 items-center justify-center rounded bg-white p-0.5">
-                  <GoogleIcon className="h-4 w-4" />
-                </span>
-                {linkedGoogleEmail ? t('enablePermissions') : t('connectGoogle')}
-              </>
-            )}
-          </Button>
         )}
       </ItemActions>
     </Item>
   );
 
+  const removeDialog = (
+    <RemoveGoogleFormDialog
+      sharedWithEmail={sharedWithEmail}
+      open={confirmRemoveOpen}
+      onOpenChange={setConfirmRemoveOpen}
+      onConfirm={handleUnattach}
+      isLoading={unattachForm.isPending}
+    />
+  );
+
   // Wrap in tooltip when disabled to explain why
   if (disabled) {
     return (
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <div className="cursor-not-allowed">{itemContent}</div>
-        </TooltipTrigger>
-        <TooltipContent>
-          <p>{t('disabledTooltip')}</p>
-        </TooltipContent>
-      </Tooltip>
+      <>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-not-allowed">{itemContent}</div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{t('disabledTooltip')}</p>
+          </TooltipContent>
+        </Tooltip>
+        {removeDialog}
+      </>
     );
   }
 
-  return itemContent;
+  return (
+    <>
+      {itemContent}
+      {removeDialog}
+    </>
+  );
 }
