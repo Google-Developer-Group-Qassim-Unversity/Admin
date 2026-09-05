@@ -65,9 +65,9 @@ export function ManageAttendanceDialog({
   const [confirmDialog, setConfirmDialog] = React.useState<ConfirmDialogState | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
 
-  const markMutation = useMarkAttendanceManual(getToken);
-  const removeMutation = useRemoveAttendanceManual(getToken);
-  const copyMutation = useCopyAttendance(getToken);
+  const markMutation = useMarkAttendanceManual();
+  const removeMutation = useRemoveAttendanceManual();
+  const copyMutation = useCopyAttendance();
 
   const isSubmitting = markMutation.isPending || removeMutation.isPending || copyMutation.isPending;
 
@@ -350,15 +350,11 @@ export function ManageAttendanceDialog({
                 onDayChange={setBackfillDay}
                 onBackfillComplete={handleBackfillComplete}
                 eventId={eventId}
-                getToken={getToken}
               />
             )}
 
             {activeTab === "emails" && (
-              <CertificateTab
-                eventId={eventId}
-                getToken={getToken}
-              />
+              <CertificateTab eventId={eventId} />
             )}
           </div>
 

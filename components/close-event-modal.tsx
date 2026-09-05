@@ -21,7 +21,6 @@ interface CloseEventModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: () => void;
-  getToken: () => Promise<string | null>;
 }
 
 export function CloseEventModal({
@@ -29,9 +28,8 @@ export function CloseEventModal({
   open,
   onOpenChange,
   onSuccess,
-  getToken,
 }: CloseEventModalProps) {
-  const closeEvent = useCloseEvent(getToken);
+  const closeEvent = useCloseEvent();
 
   const t = useTranslations("closeEvent");
   const tc = useTranslations("common.actions");

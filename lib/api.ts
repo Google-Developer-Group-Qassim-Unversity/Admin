@@ -1,11 +1,8 @@
 import { format } from "date-fns";
 import { config } from "./config";
 import type {
-  ApiError,
   ApiResponse,
   Event,
-  EventStatus,
-  CreateEventPayload,
   UpdateEventPayload,
   EventDetails,
   UploadResponse,
@@ -21,7 +18,6 @@ import type {
   ReorderActionsPayload,
   Department,
   Member,
-  Gender,
   MemberWithRole,
   MemberRole,
   ManualMemberCreateRequest,
@@ -33,15 +29,12 @@ import type {
   CreateCustomPointsResponse,
   UpdateCustomPointDetailPayload,
   CustomAction,
-  AttendanceResponse,
   CustomEventMember,
   CreateCustomMemberPayload,
   UpdateCustomMemberPointDetailPayload,
   CertificateMember,
   ManualCertificateRequest,
   ManualCertificateResponse,
-  BackfillMember,
-  BackfillResponse,
   AcceptanceBlastResponse,
   TestAcceptanceBlastResponse,
   EmailAttachmentInfo,
@@ -65,26 +58,14 @@ import type {
   Semester,
   CreateSemesterPayload,
   UpdateSemesterPayload,
-  SendCertificatesResponse,
   EmailJobModel,
   EmailJobStatus,
 } from "./api-types";
 
-export class ApiRequestError extends Error {
-  status: number;
-  isValidationError: boolean;
-  isServerError: boolean;
-  isNotFound: boolean;
-
-  constructor(error: ApiError) {
-    super(error.message);
-    this.name = "ApiRequestError";
-    this.status = error.status;
-    this.isValidationError = error.isValidationError ?? false;
-    this.isServerError = error.isServerError ?? false;
-    this.isNotFound = error.isNotFound ?? false;
-  }
-}
+// Re-exported, not redefined. Two classes would mean two identities, and
+// `error instanceof ApiRequestError` in QueryProvider would quietly stop
+// matching anything thrown by the migrated resources in `lib/api/`.
+export { ApiRequestError, shouldContactSupport } from "@/lib/api/errors";
 
 export const API_BASE_URL = config.backendApiUrl;
 
@@ -262,25 +243,11 @@ export async function getEvents(filters?: EventsFilters): Promise<ApiResponse<Ev
   return apiFetch<Event[]>(`/events/${query}`);
 }
 
-export async function getEvent(id: number | string): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}`);
-}
-
 export async function getEventDetails(
   id: number | string,
   getToken?: GetTokenFn
 ): Promise<ApiResponse<EventDetails>> {
   return apiFetch<EventDetails>(`/events/${id}/details`, {}, getToken);
-}
-
-export async function createEvent(
-  payload: CreateEventPayload,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>("/events", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
 }
 
 export async function updateEvent(
@@ -292,95 +259,6 @@ export async function updateEvent(
     method: "PUT",
     body: JSON.stringify(payload),
   }, getToken);
-}
-
-export async function updateEventPartial(
-  id: number,
-  payload: Partial<Event>,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}`, {
-    method: "PATCH",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function updateEventMeetingUrl(
-  id: number,
-  meetingUrl: string | null,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}/meeting-url`, {
-    method: "PUT",
-    body: JSON.stringify({ meeting_url: meetingUrl }),
-  }, getToken);
-}
-
-export async function updateEventStatus(
-  id: number,
-  status: EventStatus,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return apiFetch<Event>(`/events/${id}/status`, {
-    method: "PUT",
-    body: JSON.stringify({ status }),
-  }, getToken);
-}
-
-// Convenience wrappers for common status transitions
-export async function publishEvent(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "open", getToken);
-}
-
-export async function unpublishEvent(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "draft", getToken);
-}
-
-export async function closeEventResponses(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "active", getToken);
-}
-
-export async function openEventResponses(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "open", getToken);
-}
-
-export async function closeEvent(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "closed", getToken);
-}
-
-export async function sendEventCertificates(
-  event_id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<SendCertificatesResponse>> {
-  return apiFetch<SendCertificatesResponse>(`/emails/${event_id}`, {
-    method: "POST",
-  }, getToken);
-}
-
-export async function getCertificateEligibleCount(
-  eventId: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<{ eligible_count: number; eligible_members: { id: number; name: string; email: string; gender: Gender }[]; sent_count: number }>> {
-  return apiFetch<{ eligible_count: number; eligible_members: { id: number; name: string; email: string; gender: Gender }[]; sent_count: number }>(
-    `/emails/certificate-event/eligible-count/${eventId}`,
-    {},
-    getToken
-  );
 }
 
 export async function getCertificateEvents(getToken?: GetTokenFn): Promise<ApiResponse<Event[]>> {
@@ -423,107 +301,6 @@ export async function sendCustomEmailTest(
   return apiFetch<CustomEmailTestResponse>(`/emails/custom/${eventId}/test`, {
     method: "POST",
     body: JSON.stringify(payload),
-  }, getToken);
-}
-
-/**
- * Fetch attendance records for an event.
- * @param day - Day filter: "1", "2", ..., "all", or "exclusive_all"
- * @param type - Attendance type: "count", "detailed", or "me" (defaults to "detailed")
- */
-export async function getEventAttendance(
-  id: number,
-  day: string,
-  getToken?: GetTokenFn,
-  type: "count" | "detailed" | "me" = "detailed"
-): Promise<ApiResponse<AttendanceResponse>> {
-  return apiFetch<AttendanceResponse>(
-    `/attendance/${id}?type=${type}&day=${encodeURIComponent(day)}`,
-    { method: "GET" },
-    getToken
-  );
-}
-
-export async function markAttendanceManual(
-  eventId: number,
-  memberIds: number[],
-  days?: number[],
-  getToken?: GetTokenFn
-): Promise<ApiResponse<{ success: number; failed: number }>> {
-  return apiFetch<{ success: number; failed: number }>(
-    `/attendance/${eventId}/manual`,
-    {
-      method: "POST",
-      body: JSON.stringify({ member_ids: memberIds, days }),
-    },
-    getToken
-  );
-}
-
-export async function removeAttendanceManual(
-  eventId: number,
-  memberIds: number[],
-  day?: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<{ success: number; failed: number }>> {
-  return apiFetch<{ success: number; failed: number }>(
-    `/attendance/${eventId}/manual`,
-    {
-      method: "DELETE",
-      body: JSON.stringify({ member_ids: memberIds, day }),
-    },
-    getToken
-  );
-}
-
-export async function copyAttendance(
-  eventId: number,
-  sourceDay: number,
-  targetDays: number[],
-  getToken?: GetTokenFn
-): Promise<ApiResponse<{ copied: number; skipped: number }>> {
-  return apiFetch<{ copied: number; skipped: number }>(
-    `/attendance/${eventId}/copy`,
-    {
-      method: "POST",
-      body: JSON.stringify({ source_day: sourceDay, target_days: targetDays }),
-    },
-    getToken
-  );
-}
-
-export async function backfillAttendance(
-  eventId: number,
-  members: BackfillMember[],
-  day: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<BackfillResponse>> {
-  return apiFetch<BackfillResponse>(
-    `/attendance/${eventId}/backfill`,
-    {
-      method: "POST",
-      body: JSON.stringify({ members, day }),
-    },
-    getToken
-  );
-}
-
-/**
- * Re-open a closed event by setting its status back to "active".
- */
-export async function openEvent(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Event>> {
-  return updateEventStatus(id, "active", getToken);
-}
-
-export async function deleteEvent(
-  id: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<{ detail: string }>> {
-  return apiFetch<{ detail: string }>(`/events/${id}`, {
-    method: "DELETE",
   }, getToken);
 }
 
@@ -853,14 +630,6 @@ export async function generateAttendanceToken(
 }
 
 // =============================================================================
-// Helper to check if error requires user to contact support
-// =============================================================================
-
-export function shouldContactSupport(error: ApiError): boolean {
-  return error.isValidationError === true || error.isServerError === true;
-}
-
-// =============================================================================
 // Members API
 // =============================================================================
 
@@ -1098,8 +867,6 @@ export type CacheResetResponse = {
 export async function resetLeaderboardCache(getToken?: GetTokenFn): Promise<ApiResponse<CacheResetResponse>> {
   return apiFetch<CacheResetResponse>("/cache/reset", { method: "POST" }, getToken);
 }
-
-
 
 // =============================================================================
 // Semesters API

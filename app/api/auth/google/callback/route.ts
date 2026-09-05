@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { getOAuth2Client, setTokensInCookies, copyDriveFile, registerFormWatch, deleteDriveFile } from '@/lib/google-api';
-import { getFormByEventId, updateForm } from '@/lib/api';
+import { serverApi } from '@/lib/api/server';
 import { serverConfig } from '@/lib/config-server';
 
 export async function GET(request: NextRequest) {
-  const { getToken } = await auth();
   const searchParams = request.nextUrl.searchParams;
   const code = searchParams.get('code');
   const error = searchParams.get('error');
@@ -34,13 +32,8 @@ export async function GET(request: NextRequest) {
       
       try {
         // Step 1: Get the existing form for this event (it always exists since events auto-create forms)
-        const formResult = await getFormByEventId(eventId);
-        
-        if (!formResult.success) {
-          throw new Error('Failed to get form for event');
-        }
-        
-        const formId = formResult.data.id;
+        const api = await serverApi();
+        const formId = (await api.forms.forEvent(eventId)).id;
         
         // Step 2: Copy the form template
         const copyResult = await copyDriveFile(templateFileId, eventId);
@@ -81,18 +74,14 @@ export async function GET(request: NextRequest) {
           console.error('Error fetching form schema:', formError);
         }
         
-        const updateResult = await updateForm(formId, {
+        await api.forms.update(formId, {
           event_id: eventId,
           form_type: 'google',
           google_form_id: copyResult.id,
           google_refresh_token: tokens.refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
-        }, getToken);
-        
-        if (!updateResult.success) {
-          console.error('Failed to update form in backend:', updateResult.error.message);
-        }
+        });
       } catch (copyError) {
         console.error('Error during form setup:', copyError);
         return NextResponse.redirect(new URL(`/events/${eventId}?error=form_setup_failed`, request.url));

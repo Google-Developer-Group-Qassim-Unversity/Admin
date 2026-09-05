@@ -40,7 +40,8 @@ import {
   type ExportTokenRow,
   type ExportTokenPayload,
 } from "@/lib/export-token";
-import { backfillAttendance } from "@/lib/api";
+import { useAuth } from "@clerk/nextjs";
+import { useApi } from "@/lib/api/client";
 import type { BackfillMember } from "@/lib/api-types";
 import type { BackfillSummary } from "./types";
 import { useTranslations } from "next-intl";
@@ -51,7 +52,6 @@ interface BackfillTabProps {
   onDayChange: (day: string) => void;
   onBackfillComplete: () => void;
   eventId: number;
-  getToken: () => Promise<string | null>;
 }
 
 function transformRowToMember(row: ExportTokenRow): BackfillMember {
@@ -72,9 +72,11 @@ export function BackfillTab({
   onDayChange,
   onBackfillComplete,
   eventId,
-  getToken,
 }: BackfillTabProps) {
   const t = useTranslations("attendance.backfill");
+  const api = useApi();
+  // The verify-token route below needs the raw bearer token, not a request.
+  const { getToken } = useAuth();
   const [token, setToken] = React.useState("");
   const [isVerifying, setIsVerifying] = React.useState(false);
   const [verifyError, setVerifyError] = React.useState<string | null>(null);
@@ -172,18 +174,14 @@ export function BackfillTab({
 
     try {
       const members = verifiedRows.map(transformRowToMember);
-      const result = await backfillAttendance(eventId, members, day, getToken);
-
-      if (!result.success) {
-        throw new Error(result.error.message);
-      }
+      const summary = await api.attendance.backfill(eventId, members, day);
 
       setSummaryDialog({
-        created_count: result.data.created_count,
-        existing_count: result.data.existing_count,
-        marked_count: result.data.marked_count,
-        already_attended_count: result.data.already_attended_count,
-        attendance_date: result.data.attendance_date,
+        created_count: summary.created_count,
+        existing_count: summary.existing_count,
+        marked_count: summary.marked_count,
+        already_attended_count: summary.already_attended_count,
+        attendance_date: summary.attendance_date,
       });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("backfillFailed"));

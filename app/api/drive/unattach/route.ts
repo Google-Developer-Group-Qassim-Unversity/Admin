@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { clearTokensFromCookies, getTokensFromCookies, getOAuth2Client, deleteFormWatch } from '@/lib/google-api';
-import { updateForm, getFormByEventId } from '@/lib/api';
+import { serverApi } from '@/lib/api/server';
 
 export async function POST(request: NextRequest) {
-  const { getToken } = await auth();
   try {
     const body = await request.json();
     const eventId = body.eventId ? parseInt(body.eventId, 10) : null;
@@ -14,13 +12,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Step 1: Get form data to retrieve watch ID and form ID
-    const formResult = await getFormByEventId(eventId);
+    const api = await serverApi();
+    const currentForm = await api.forms.forEvent(eventId).catch(() => null);
     
     // Step 2: Delete the watch if form exists and has google_form_id and google_watch_id
-    if (formResult.success && formResult.data.google_form_id && formResult.data.google_watch_id) {
+    if (currentForm?.google_form_id && currentForm.google_watch_id) {
       try {
-        await deleteFormWatch(formResult.data.google_form_id, formResult.data.google_watch_id, eventId);
-        console.log(`Watch ${formResult.data.google_watch_id} deleted successfully`);
+        await deleteFormWatch(currentForm.google_form_id, currentForm.google_watch_id, eventId);
+        console.log(`Watch ${currentForm.google_watch_id} deleted successfully`);
       } catch (watchError) {
         console.error('Error deleting watch:', watchError);
         // Continue with cleanup even if watch deletion fails
@@ -32,21 +31,16 @@ export async function POST(request: NextRequest) {
     await clearTokensFromCookies();
     
     // Step 4: Update form in backend: clear google_form_id, refresh_token, and set form_type to "none"
-    if (formResult.success) {
+    if (currentForm) {
       try {
-        const currentForm = formResult.data;
-        const updateResult = await updateForm(currentForm.id, {
+        await api.forms.update(currentForm.id, {
           event_id: currentForm.event_id,
           form_type: 'registration',
           google_form_id: null,
           google_refresh_token: null,
           google_watch_id: null,
           google_responders_url: null,
-        }, getToken);
-        
-        if (!updateResult.success) {
-          console.error('Failed to update form in backend:', updateResult.error.message);
-        }
+        });
       } catch (backendError) {
         console.error('Error updating backend:', backendError);
       }

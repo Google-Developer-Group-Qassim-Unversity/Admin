@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { EventForm, type EventFormData } from "@/components/event-form";
 import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDeleteEvent } from "@/hooks/use-event";
-import { shouldContactSupport } from "@/lib/api";
+import { shouldContactSupport } from "@/lib/api/errors";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import type { LocationType, EventAction, Action } from "@/lib/api-types";
@@ -31,6 +31,8 @@ export default function EventEditPage() {
   const t = useTranslations("editEvent");
   const tc = useTranslations("common.actions");
   const { event, refetch } = useEventContext();
+  // Still needed by EventForm, which forwards it to the image upload - the
+  // uploads resource has not migrated to the api module yet.
   const { getToken } = useAuth();
   const router = useRouter();
 
@@ -38,14 +40,14 @@ export default function EventEditPage() {
     data: eventDetails, 
     isLoading: isLoadingDetails, 
     error: detailsError 
-  } = useEventDetails(event?.id ?? 0, getToken);
+  } = useEventDetails(event?.id ?? 0);
   
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
   
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
   
-  const updateEventMutation = useUpdateEvent(getToken);
-  const deleteEventMutation = useDeleteEvent(getToken);
+  const updateEventMutation = useUpdateEvent();
+  const deleteEventMutation = useDeleteEvent();
 
   const findCompositeAction = React.useCallback(
     (eventActions: [EventAction, EventAction]): Action[] | undefined => {
@@ -131,14 +133,12 @@ export default function EventEditPage() {
       refetch?.();
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : t("unknownError");
-      
-      const apiError = { 
-        message: errorMessage, 
-        status: 0, 
-        isServerError: true 
-      };
-      
-      if (shouldContactSupport(apiError)) {
+
+      // This used to build an `apiError` literal with `isServerError: true`
+      // hardcoded, because the mutation threw a plain Error and the real status
+      // was gone - so this branch was always taken and the else below was dead.
+      // The API throws ApiRequestError now, so the status is the real one.
+      if (shouldContactSupport(error)) {
         toast.error(t("updateFailedContactSupport"), {
           description: t("errorDetail", { message: errorMessage }),
           duration: 10000,

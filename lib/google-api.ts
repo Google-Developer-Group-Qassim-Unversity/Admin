@@ -1,6 +1,6 @@
 import { google, Auth } from 'googleapis';
 import { cookies } from 'next/headers';
-import { getFormByEventId } from '@/lib/api';
+import { serverApi } from '@/lib/api/server';
 import { serverConfig } from '@/lib/config-server';
 
 type Credentials = Auth.Credentials;
@@ -73,11 +73,9 @@ export async function clearTokensFromCookies() {
 // Get refresh token from backend for a specific event
 export async function getRefreshTokenFromBackend(eventId: number): Promise<string | null> {
   try {
-    const result = await getFormByEventId(eventId);
-    if (!result.success) {
-      return null;
-    }
-    return result.data.google_refresh_token || null;
+    const api = await serverApi();
+    const form = await api.forms.forEvent(eventId);
+    return form.google_refresh_token || null;
   } catch (error) {
     console.error('Error fetching refresh token from backend:', error);
     return null;

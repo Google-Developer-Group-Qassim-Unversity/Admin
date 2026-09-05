@@ -1,7 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
 
 import { useEventAttendance } from '@/hooks/use-event';
 import { useEventContext } from '@/contexts/event-context';
@@ -14,7 +13,6 @@ import { ManageAttendanceDialog } from './manage-attendance-dialog';
 
 export default function EventAttendancePage() {
   const { event, refetch } = useEventContext();
-  const { getToken } = useAuth();
   const [selectedDay, setSelectedDay] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
@@ -24,7 +22,7 @@ export default function EventAttendancePage() {
     isLoading: isLoadingAttendance,
     isFetching: isFetchingAttendance,
     refetch: refetchAttendance,
-  } = useEventAttendance(event?.id ?? 0, selectedDay, getToken, true);
+  } = useEventAttendance(event?.id ?? 0, selectedDay, true);
 
   if (!event) {
     return null;
@@ -43,7 +41,6 @@ export default function EventAttendancePage() {
           event={event}
           isEventClosed={isEventClosed}
           onStatusChange={() => refetch?.()}
-          getToken={getToken}
         />
       </QRCodeCard>
 
