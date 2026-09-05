@@ -1,3 +1,34 @@
+/**
+ * The un-migrated half of the API layer.
+ *
+ * Everything here is a one-line wrapper holding a URL, and most take an
+ * optional `getToken` the caller has to remember to pass - forgetting it
+ * type-checks cleanly and 403s at runtime. `lib/api/` replaces that: the token
+ * comes from the module, not from the caller.
+ *
+ * **The invariant: anything still taking `getToken` is on a resource that has
+ * not migrated yet.** So if you are threading `getToken` into a new hook or a
+ * new component prop, stop - migrate the resource instead. If you are not,
+ * nothing in a caller should mention a token at all.
+ *
+ * Migrated so far: events, their status transitions, attendance, certificates,
+ * actions, departments, forms. Still here: points, emails, members, semesters,
+ * submissions, uploads.
+ *
+ * To move the next one:
+ *
+ * 1. Add its endpoints to `createApi` in `lib/api/resources.ts` - a URL and a
+ *    payload shape each, no token and no error handling.
+ * 2. Point its callers at `useApi()` (client) or `serverApi()` (server) and
+ *    delete the `getToken` parameters and props the change strands. The calls
+ *    throw `ApiRequestError` now, so `if (!result.success)` unwrapping becomes
+ *    a try/catch, or nothing at all inside a react-query hook.
+ * 3. Delete the wrappers here once nothing imports them. `pnpm run typecheck`
+ *    finds every call site you missed; there are no tests to fall back on.
+ *
+ * `ApiRequestError` and `shouldContactSupport` are re-exported below so callers
+ * on either side of the migration can keep importing them from here.
+ */
 import { format } from "date-fns";
 import { config } from "./config";
 import type {

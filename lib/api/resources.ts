@@ -34,8 +34,10 @@ export interface EventsFilters {
  * adding an endpoint is one line rather than a new exported function with its
  * own optional `getToken` parameter to forget.
  *
- * Resources are migrated a group at a time; anything still exported from
- * `lib/api.ts` has not moved yet.
+ * Resources are migrated a group at a time. Anything still exported from
+ * `lib/api.ts` has not moved yet, and the invariant that tells you which is
+ * which is: a caller still holding a `getToken` is on an un-migrated resource.
+ * See that file's header for how to move the next one.
  */
 export function createApi(request: Requester) {
   const events = {
