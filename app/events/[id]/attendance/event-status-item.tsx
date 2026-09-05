@@ -21,13 +21,12 @@ interface EventStatusItemProps {
   event: Event;
   isEventClosed: boolean;
   onStatusChange: () => void;
-  getToken: () => Promise<string | null>;
 }
 
-export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken }: EventStatusItemProps) {
+export function EventStatusItem({ event, isEventClosed, onStatusChange }: EventStatusItemProps) {
   const t = useTranslations('attendance.statusItem');
   const [isCloseModalOpen, setIsCloseModalOpen] = useState(false);
-  const openEventMutation = useOpenEvent(getToken);
+  const openEventMutation = useOpenEvent();
 
   const handleOpenEvent = async () => {
     try {
@@ -85,7 +84,6 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange, getToken
         open={isCloseModalOpen}
         onOpenChange={setIsCloseModalOpen}
         onSuccess={onStatusChange}
-        getToken={getToken}
       />
     </>
   );

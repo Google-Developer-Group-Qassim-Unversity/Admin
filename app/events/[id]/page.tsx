@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { useAuth } from "@clerk/nextjs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -16,12 +15,10 @@ export default function EventInfoPage() {
   const t = useTranslations("eventInfo");
   const te = useTranslations("events");
   const { event } = useEventContext();
-  const { getToken } = useAuth();
 
   const { data: attendanceData } = useEventAttendance(
     event?.id ?? 0,
     "all",
-    getToken,
     !!event,
     "count"
   );

@@ -96,8 +96,8 @@ export default function EventResponsesPage() {
   const { data: formData, isLoading: formDataLoading } = useFormData(event?.id ?? 0);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.googleFormId || null);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
-  const closeResponsesMutation = useCloseEventResponses(getToken);
-  const openResponsesMutation = useOpenEventResponses(getToken);
+  const closeResponsesMutation = useCloseEventResponses();
+  const openResponsesMutation = useOpenEventResponses();
   const sendAcceptanceMutation = useSendAcceptance(getToken);
   const sendAcceptanceTestMutation = useSendAcceptanceTest(getToken);
 

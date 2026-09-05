@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 import { google } from 'googleapis';
 import { copyDriveFile, deleteDriveFile, registerFormWatch, getOAuth2Client } from '@/lib/google-api';
-import { updateForm, getFormByEventId } from '@/lib/api';
+import { serverApi } from '@/lib/api/server';
 import { serverConfig } from '@/lib/config-server';
 
 export async function POST(request: NextRequest) {
-  const { getToken } = await auth();
   try {
     const body = await request.json().catch(() => ({}));
     const eventId = body.eventId ? parseInt(body.eventId, 10) : null;
@@ -77,10 +75,10 @@ export async function POST(request: NextRequest) {
     }
     
     // Step 3: Fetch current form data to get full object for update to DB
-    const formResult = await getFormByEventId(eventId);
-    if (formResult.success && formId) {
+    if (formId) {
       try {
-        const currentForm = formResult.data;
+        const api = await serverApi();
+        const currentForm = await api.forms.forEvent(eventId);
         
         // Get the form schema and responder URI from Google Forms API
         let respondersLink = null;
@@ -97,18 +95,14 @@ export async function POST(request: NextRequest) {
         }
         console.log('Responder URI for form', formId, ':', respondersLink);
         
-        const updateResult = await updateForm(currentForm.id, {
+        await api.forms.update(currentForm.id, {
           event_id: currentForm.event_id,
           form_type: 'google',
           google_form_id: formId,
           google_refresh_token: refreshToken || currentForm.google_refresh_token,
           google_watch_id: watchId || null,
           google_responders_url: respondersLink,
-        }, getToken);
-        
-        if (!updateResult.success) {
-          console.error('Failed to update form in backend:', updateResult.error.message);
-        }
+        });
       } catch (backendError) {
         console.error('Error updating backend:', backendError);
       }

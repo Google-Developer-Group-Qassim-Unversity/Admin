@@ -16,7 +16,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Check, Upload, Loader2, ExternalLink, Lock, Copy } from 'lucide-react';
-import { useAuth } from '@clerk/nextjs';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { usePublishForm, useUnpublishForm } from '@/hooks/use-form-data';
 import { toast } from 'sonner';
@@ -31,9 +30,8 @@ interface PublishItemProps {
 
 export function PublishItem({ event, formData, onEventChange }: PublishItemProps) {
   const t = useTranslations('publishItem');
-  const { getToken } = useAuth();
-  const publishEvent = usePublishEvent(getToken);
-  const unpublishEvent = useUnpublishEvent(getToken);
+  const publishEvent = usePublishEvent();
+  const unpublishEvent = useUnpublishEvent();
   const publishForm = usePublishForm(event.id);
   const unpublishForm = useUnpublishForm(event.id);
 
