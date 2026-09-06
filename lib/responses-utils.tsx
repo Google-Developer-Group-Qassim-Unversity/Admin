@@ -609,19 +609,19 @@ export function getToggleSelectedPayload(
 
 /**
  * Get API payload for "Accept Bulk" action
- * Accepts all submissions matching the provided Uni IDs
+ * Accepts all submissions matching the provided emails
  * Returns the payload array and count of matched submissions
  */
 export function getBulkAcceptPayload(
   allRows: TableRowData[],
-  uniIds: string[]
+  emails: string[]
 ): { payload: Array<{ submission_id: number; is_accepted: boolean }>; acceptedCount: number } {
-  const uniIdSet = new Set(uniIds.map((id) => id.trim().toLowerCase()));
+  const emailSet = new Set(emails.map((email) => email.trim().toLowerCase()));
   const payload: Array<{ submission_id: number; is_accepted: boolean }> = [];
 
   for (const row of allRows) {
-    const rowUniId = String(row.uni_id || "").trim().toLowerCase();
-    if (uniIdSet.has(rowUniId)) {
+    const rowEmail = String(row.email || "").trim().toLowerCase();
+    if (emailSet.has(rowEmail)) {
       payload.push({
         submission_id: row.submission_id,
         is_accepted: true,

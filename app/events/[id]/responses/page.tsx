@@ -314,17 +314,17 @@ export default function EventResponsesPage() {
     }
   };
 
-  const handleAcceptBulk = async (uniIds: string[]) => {
-    const { payload, acceptedCount } = getBulkAcceptPayload(allTableData, uniIds);
-    
+  const handleAcceptBulk = async (emails: string[]) => {
+    const { payload, acceptedCount } = getBulkAcceptPayload(allTableData, emails);
+
     if (acceptedCount === 0) {
-      toast.warning(t("noMatchingUniIds"));
+      toast.warning(t("noMatchingEmails"));
       return;
     }
-    
+
     try {
       await acceptSubmissionsMutation.mutateAsync(payload);
-      toast.success(t("acceptedByUniId", { count: acceptedCount }));
+      toast.success(t("acceptedByEmail", { count: acceptedCount }));
       setBulkAcceptDialogOpen(false);
     } catch (error) {
       console.error("Failed to accept submissions:", error);
