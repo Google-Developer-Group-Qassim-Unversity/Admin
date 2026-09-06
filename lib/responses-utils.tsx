@@ -102,12 +102,38 @@ export function getQuestionKeys(
 }
 
 // Member fields a Google Form question column commonly re-asks
-const DUPLICATE_CANDIDATE_FIELDS = ["name", "email", "uni_id", "gender"] as const;
+const DUPLICATE_CANDIDATE_FIELDS = ["name", "email", "uni_id", "gender", "uni_college"] as const;
 
 function normalizeForComparison(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   const normalized = String(value).trim().toLowerCase().replace(/\s+/g, " ");
   return normalized === "" ? null : normalized;
+}
+
+// Keyword shortcut for the club's own template, which always asks the same
+// handful of questions re-stating member fields we already show (full name,
+// personal email, uni id, department). The value-based check below needs a
+// few submissions before it can tell two columns apart statistically, which
+// leaves an early event's very first responses showing redundant columns -
+// this catches the known wording immediately regardless of sample size.
+function titleIndicatesField(
+  title: string,
+  field: (typeof DUPLICATE_CANDIDATE_FIELDS)[number]
+): boolean {
+  switch (field) {
+    case "name":
+      return title.includes("اسم") && title.includes("كامل");
+    case "uni_id":
+      return title.includes("رقم") && title.includes("جامعي");
+    case "email":
+      return (title.includes("ايميل") || title.includes("بريد")) && title.includes("شخصي");
+    case "gender":
+      return title.includes("جنس");
+    case "uni_college":
+      return title.includes("قسم");
+    default:
+      return false;
+  }
 }
 
 // Detect Google question columns whose answers just repeat a member field
@@ -123,6 +149,8 @@ export function getDuplicateQuestionKeys(
 
   return questionKeys.filter((key) =>
     DUPLICATE_CANDIDATE_FIELDS.some((field) => {
+      if (titleIndicatesField(key, field)) return true;
+
       let compared = 0;
       let matched = 0;
 
@@ -581,19 +609,19 @@ export function getToggleSelectedPayload(
 
 /**
  * Get API payload for "Accept Bulk" action
- * Accepts all submissions matching the provided Uni IDs
+ * Accepts all submissions matching the provided emails
  * Returns the payload array and count of matched submissions
  */
 export function getBulkAcceptPayload(
   allRows: TableRowData[],
-  uniIds: string[]
+  emails: string[]
 ): { payload: Array<{ submission_id: number; is_accepted: boolean }>; acceptedCount: number } {
-  const uniIdSet = new Set(uniIds.map((id) => id.trim().toLowerCase()));
+  const emailSet = new Set(emails.map((email) => email.trim().toLowerCase()));
   const payload: Array<{ submission_id: number; is_accepted: boolean }> = [];
 
   for (const row of allRows) {
-    const rowUniId = String(row.uni_id || "").trim().toLowerCase();
-    if (uniIdSet.has(rowUniId)) {
+    const rowEmail = String(row.email || "").trim().toLowerCase();
+    if (emailSet.has(rowEmail)) {
       payload.push({
         submission_id: row.submission_id,
         is_accepted: true,

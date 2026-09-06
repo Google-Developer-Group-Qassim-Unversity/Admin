@@ -18,7 +18,7 @@ import { useTranslations } from "next-intl";
 interface BulkAcceptDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (uniIds: string[]) => void;
+  onSubmit: (emails: string[]) => void;
   isLoading?: boolean;
 }
 
@@ -30,7 +30,7 @@ export function BulkAcceptDialog({
 }: BulkAcceptDialogProps) {
   const t = useTranslations("responses");
   const tc = useTranslations("common.actions");
-  const [uniIdsText, setUniIdsText] = useState("");
+  const [emailsText, setEmailsText] = useState("");
   const [dialogKey, setDialogKey] = useState(0);
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -38,28 +38,28 @@ export function BulkAcceptDialog({
     if (isLoading && !newOpen) {
       return;
     }
-    
+
     // Reset textarea when dialog opens
     if (newOpen && !open) {
-      setUniIdsText("");
+      setEmailsText("");
       setDialogKey((prev) => prev + 1);
     }
-    
+
     onOpenChange(newOpen);
   };
 
   const handleSubmit = async () => {
-    // Parse Uni IDs from textarea (split by newlines, commas, or spaces)
-    const uniIds = uniIdsText
+    // Parse emails from textarea (split by newlines, commas, or spaces)
+    const emails = emailsText
       .split(/[\n,\s]+/)
-      .map((id) => id.trim())
-      .filter((id) => id.length > 0);
+      .map((email) => email.trim())
+      .filter((email) => email.length > 0);
 
-    if (uniIds.length === 0) {
+    if (emails.length === 0) {
       return;
     }
 
-    await onSubmit(uniIds);
+    await onSubmit(emails);
   };
 
   return (
@@ -72,25 +72,25 @@ export function BulkAcceptDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-2">
-          <Label htmlFor="uni-ids">{t("uniIds")}</Label>
+          <Label htmlFor="bulk-accept-emails">{t("emails")}</Label>
           <Textarea
-            id="uni-ids"
-            placeholder={t("uniIdsPlaceholder")}
-            value={uniIdsText}
-            onChange={(e) => setUniIdsText(e.target.value)}
+            id="bulk-accept-emails"
+            placeholder={t("emailsPlaceholder")}
+            value={emailsText}
+            onChange={(e) => setEmailsText(e.target.value)}
             className="min-h-[150px] font-mono text-sm"
             disabled={isLoading}
           />
         </div>
         <DialogFooter>
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => handleOpenChange(false)}
             disabled={isLoading}
           >
             {tc("cancel")}
           </Button>
-          <Button onClick={handleSubmit} disabled={!uniIdsText.trim() || isLoading}>
+          <Button onClick={handleSubmit} disabled={!emailsText.trim() || isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="me-2 h-4 w-4 animate-spin" />
