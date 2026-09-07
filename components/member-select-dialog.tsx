@@ -66,7 +66,7 @@ export function MemberSelectDialog({
     return sortedMembers.filter((m) => !pendingSelectedIds.has(m.id));
   }, [sortedMembers, pendingSelectedIds]);
 
-  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["label", "uni_id"], {
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["label", "uni_id", "email"], {
     limit: DISPLAY_LIMIT,
   });
 
