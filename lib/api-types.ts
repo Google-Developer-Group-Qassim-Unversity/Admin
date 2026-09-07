@@ -522,8 +522,12 @@ export interface BackfillResponse {
 // =============================================================================
 
 export interface AcceptanceBlastResponse {
-  sent_count: number;
+  message: string;
+  /** Recipients claimed and handed to the background job, not recipients delivered to. */
+  recipient_count: number;
   emails: string[];
+  /** null when there was nobody left to invite, so no job was created. */
+  job_id: number | null;
 }
 
 export interface TestAcceptanceBlastResponse {
@@ -648,7 +652,8 @@ export type EmailJobType =
   | "manual-certificate"
   | "custom-email"
   | "direct-email"
-  | "blast";
+  | "blast"
+  | "acceptance";
 
 export interface EmailJobModel {
   id: number;

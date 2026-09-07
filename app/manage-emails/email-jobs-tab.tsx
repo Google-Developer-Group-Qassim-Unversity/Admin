@@ -10,6 +10,7 @@ import {
   Clock,
   Loader2,
   Mail,
+  MailCheck,
   Megaphone,
   PenLine,
   Send,
@@ -30,6 +31,7 @@ const TYPE_CONFIG: Record<EmailJobType, { icon: React.ElementType; badgeClass: s
   "custom-email": { icon: Mail, badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
   "direct-email": { icon: Send, badgeClass: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20" },
   blast: { icon: Megaphone, badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20" },
+  acceptance: { icon: MailCheck, badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" },
 };
 
 // Maps a job type to the key under manageEmails.jobs.types.
@@ -39,6 +41,7 @@ const TYPE_LABEL_KEY: Record<EmailJobType, string> = {
   "custom-email": "customEmail",
   "direct-email": "directEmail",
   blast: "blast",
+  acceptance: "acceptance",
 };
 
 const STATUS_CONFIG: Record<
