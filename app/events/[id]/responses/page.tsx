@@ -390,12 +390,16 @@ export default function EventResponsesPage() {
 
   const handleSendAcceptance = async (subject: string, htmlContent: string) => {
     try {
-      await sendAcceptanceMutation.mutateAsync({
+      // The backend queues the send and returns immediately, so this reports
+      // what was queued rather than what was delivered - and it reports the
+      // count the backend actually claimed, not the one this page had counted,
+      // which can differ if somebody accepted a response in the meantime.
+      const queued = await sendAcceptanceMutation.mutateAsync({
         eventId: event.id,
         subject,
         htmlContent,
       });
-      toast.success(t("acceptanceSentCount", { count: acceptedNotInvited }));
+      toast.success(t("acceptanceQueuedCount", { count: queued.recipient_count }));
       setSendAcceptanceDialogOpen(false);
     } catch (error) {
       console.error("Failed to send acceptance emails:", error);
