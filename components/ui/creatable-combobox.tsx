@@ -4,6 +4,7 @@ import * as React from "react";
 import { Check, ChevronsUpDown, Plus } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { normalizeArabic } from "@/lib/search-utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -47,17 +48,17 @@ export function CreatableCombobox({
   const [open, setOpen] = React.useState(false);
   const [searchValue, setSearchValue] = React.useState("");
 
-  // Normalize search value for comparison
-  const normalizedSearch = searchValue.trim().toLowerCase();
+  // Normalize search value for comparison (folds Arabic alef/ta-marbuta variants)
+  const normalizedSearch = normalizeArabic(searchValue.trim());
 
-  // Check if current search matches any existing option (case-insensitive)
+  // Check if current search matches any existing option
   const matchingOptions = options.filter((option) =>
-    option.toLowerCase().includes(normalizedSearch)
+    normalizeArabic(option).includes(normalizedSearch)
   );
 
   // Check if exact match exists
   const exactMatchExists = options.some(
-    (option) => option.toLowerCase() === normalizedSearch
+    (option) => normalizeArabic(option) === normalizedSearch
   );
 
   // Show create option if search has value and no exact match exists

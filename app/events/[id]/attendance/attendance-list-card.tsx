@@ -25,7 +25,10 @@ import {
 
 import type { AttendanceRecord } from '@/lib/api-types';
 import { getDayNumberFromEffectiveDate } from './utils';
+import { useFuzzySearch } from '@/lib/search-utils';
 import { useTranslations } from 'next-intl';
+
+const emptyAttendance: AttendanceRecord[] = [];
 
 interface AttendanceListCardProps {
   eventStart: Date;
@@ -73,16 +76,11 @@ export function AttendanceListCard({
     return options;
   }, [dayCount, isMultiDay, t]);
 
-  const filteredAttendance = useMemo(() => {
-    if (!attendanceData) return [];
-    if (!searchQuery.trim()) return attendanceData;
-
-    const queryWords = searchQuery.trim().toLowerCase().split(/\s+/);
-    return attendanceData.filter((record) => {
-      const name = record.Member.name.toLowerCase();
-      return queryWords.every((word) => name.includes(word));
-    });
-  }, [attendanceData, searchQuery]);
+  const filteredAttendance = useFuzzySearch(
+    attendanceData ?? emptyAttendance,
+    searchQuery,
+    ['Member.name', 'Member.uni_id', 'Member.email'],
+  );
 
   return (
     <Card>

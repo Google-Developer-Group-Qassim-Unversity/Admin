@@ -18,6 +18,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { EnrichedEmailLog } from "@/lib/api-types";
+import { normalizeArabic } from "@/lib/search-utils";
 import { useTranslations } from "next-intl";
 
 import type { AcceptanceData, BlastData, CertificateData } from "./types";
@@ -206,9 +207,12 @@ function MemberListDialog({
     if (!open) setQuery("");
   }, [open]);
 
-  const q = query.trim().toLowerCase();
-  const filtered = q
-    ? members.filter((m) => (m.name ?? "").toLowerCase().includes(q) || m.email.toLowerCase().includes(q))
+  const words = query.trim().split(/\s+/).map(normalizeArabic).filter(Boolean);
+  const filtered = words.length
+    ? members.filter((m) => {
+        const haystack = `${normalizeArabic(m.name ?? "")} ${normalizeArabic(m.email)}`;
+        return words.every((word) => haystack.includes(word));
+      })
     : members;
 
   return (

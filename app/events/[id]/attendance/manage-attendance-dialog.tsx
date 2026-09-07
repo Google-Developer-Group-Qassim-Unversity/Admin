@@ -127,7 +127,7 @@ export function ManageAttendanceDialog({
     return sourceMembers.filter((m) => !selectedMemberIds.has(m.id));
   }, [sourceMembers, selectedMemberIds]);
 
-  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id"], {
+  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id", "email"], {
     limit: activeTab === "remove" ? undefined : DISPLAY_LIMIT,
   });
 
