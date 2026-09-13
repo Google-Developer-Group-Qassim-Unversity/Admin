@@ -1428,7 +1428,14 @@
     "unpublishing": "جاري إلغاء النشر...",
     "publishing": "جاري النشر...",
     "unpublish": "إلغاء النشر",
-    "publish": "نشر"
+    "publish": "نشر",
+    "qrCodeTitle": "رمز QR للفعالية",
+    "qrCodeDescription": "امسح أو شارك رمز QR هذا لفتح صفحة الفعالية.",
+    "copyQrCode": "نسخ صورة QR",
+    "downloadQrCode": "تحميل صورة QR",
+    "qrCopied": "تم نسخ رمز QR.",
+    "qrCopyFailed": "تعذر نسخ رمز QR. حاول مرة ثانية.",
+    "qrDownloadFailed": "تعذر تحميل رمز QR. حاول مرة ثانية."
   },
   "memberSelectDialog": {
     "title": "اختيار الأعضاء",

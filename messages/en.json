@@ -1428,7 +1428,14 @@
     "unpublishing": "Unpublishing...",
     "publishing": "Publishing...",
     "unpublish": "Unpublish",
-    "publish": "Publish"
+    "publish": "Publish",
+    "qrCodeTitle": "Event QR Code",
+    "qrCodeDescription": "Scan or share this QR code to open the event page.",
+    "copyQrCode": "Copy QR Image",
+    "downloadQrCode": "Download QR Image",
+    "qrCopied": "QR code copied to clipboard.",
+    "qrCopyFailed": "Failed to copy QR code. Please try again.",
+    "qrDownloadFailed": "Failed to download QR code. Please try again."
   },
   "memberSelectDialog": {
     "title": "Select Members",
