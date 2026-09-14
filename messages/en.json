@@ -207,7 +207,7 @@
     "clubStructure": {
       "title": "Club Structure",
       "description": "View and manage departments, club membership, and leadership",
-      "button": "Open Club Structure"
+      "button": "Manage Club Structure"
     },
     "title": "Admin Dashboard",
     "subtitle": "Manage events, participants, and scores",
