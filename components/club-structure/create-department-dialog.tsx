@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { DepartmentForm } from "@/components/club-structure/department-form";
 import { useClubMutation } from "@/hooks/use-club-structure";
 import type { DepartmentSettings } from "@/lib/club-structure-types";
+import { useClubError } from "@/components/club-structure/use-club-error";
 
 export function CreateDepartmentDialog({
   onClose,
@@ -17,14 +18,17 @@ export function CreateDepartmentDialog({
 }) {
   const t = useTranslations("clubStructure");
   const common = useTranslations("common");
+  const describeError = useClubError();
   const mutation = useClubMutation((api, settings: DepartmentSettings) => api.createDepartment(settings));
   async function create(settings: DepartmentSettings) {
     try {
       const department = await mutation.mutateAsync(settings);
       toast.success(t("departmentCreated"));
       onCreated(department.id);
+      return true;
     } catch {
       /* The form stays open with its entered values. */
+      return false;
     }
   }
   return (
@@ -34,21 +38,21 @@ export function CreateDepartmentDialog({
         if (!open && !mutation.isPending) onClose();
       }}
     >
-      <DialogContent className="max-h-[90dvh] overflow-y-auto sm:max-w-md" showCloseButton={!mutation.isPending}>
-        <DialogHeader>
+      <DialogContent
+        className="max-h-[90dvh] overflow-y-auto sm:max-w-md"
+        showCloseButton={!mutation.isPending}
+        closeLabel={common("actions.close")}
+      >
+        <DialogHeader className="pe-6">
           <DialogTitle>{t("newDepartment")}</DialogTitle>
           <DialogDescription>{t("createDescription")}</DialogDescription>
         </DialogHeader>
         {mutation.error && (
           <p role="alert" className="text-sm text-destructive">
-            {mutation.error.message}
+            {describeError(mutation.error, true)}
           </p>
         )}
-        <DepartmentForm
-          pending={mutation.isPending}
-          submitLabel={t("createDepartment")}
-          onSubmit={(values) => void create(values)}
-        />
+        <DepartmentForm pending={mutation.isPending} submitLabel={t("createDepartment")} onSubmit={create} />
         <Button variant="outline" disabled={mutation.isPending} onClick={onClose}>
           {common("actions.cancel")}
         </Button>

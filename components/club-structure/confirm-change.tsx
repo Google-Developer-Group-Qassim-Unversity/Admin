@@ -3,6 +3,7 @@
 import { useTranslations } from "next-intl";
 import {
   AlertDialog,
+  AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
   AlertDialogFooter,
@@ -16,6 +17,7 @@ export function ConfirmChange({
   description,
   pending,
   error,
+  disabled = false,
   onConfirm,
   onClose,
 }: {
@@ -23,6 +25,7 @@ export function ConfirmChange({
   description: string;
   pending: boolean;
   error?: string;
+  disabled?: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }) {
@@ -34,7 +37,7 @@ export function ConfirmChange({
         if (!open && !pending) onClose();
       }}
     >
-      <AlertDialogContent>
+      <AlertDialogContent className="max-h-[90dvh] overflow-y-auto wrap-anywhere">
         <AlertDialogHeader>
           <AlertDialogTitle>{title}</AlertDialogTitle>
           <AlertDialogDescription>{description}</AlertDialogDescription>
@@ -45,10 +48,10 @@ export function ConfirmChange({
           </p>
         )}
         <AlertDialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={pending}>
+          <AlertDialogCancel onClick={onClose} disabled={pending}>
             {t("actions.cancel")}
-          </Button>
-          <Button onClick={onConfirm} disabled={pending || !!error}>
+          </AlertDialogCancel>
+          <Button onClick={onConfirm} disabled={pending || disabled || !!error}>
             {pending ? t("states.saving") : t("actions.confirm")}
           </Button>
         </AlertDialogFooter>

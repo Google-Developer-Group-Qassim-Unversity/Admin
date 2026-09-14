@@ -8,7 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { DepartmentForm } from "@/components/club-structure/department-form";
@@ -16,6 +15,8 @@ import { ClubMemberPicker } from "@/components/club-structure/member-picker";
 import { SeatCard } from "@/components/club-structure/seat-card";
 import {
   DepartmentIcon,
+  ClubLoading,
+  ClubRefresh,
   DepartmentTypeBadge,
   MemberAvatar,
   QueryError,
@@ -24,17 +25,22 @@ import {
 } from "@/components/club-structure/shared";
 import { useClubDepartment, useClubMutation, useClubRoster } from "@/hooks/use-club-structure";
 import type { ClubAssignment, ClubDepartment, DepartmentSettings } from "@/lib/club-structure-types";
+import { normalizeArabic } from "@/lib/search-utils";
+import { useClubError } from "@/components/club-structure/use-club-error";
 
 function DepartmentRoster({
   department,
   assignments,
   canEdit,
+  disabled,
 }: {
   department: ClubDepartment;
   assignments: ClubAssignment[];
   canEdit: boolean;
+  disabled: boolean;
 }) {
   const t = useTranslations("clubStructure");
+  const describeError = useClubError();
   const [search, setSearch] = useState("");
   const [picker, setPicker] = useState(false);
   const [removing, setRemoving] = useState<ClubAssignment | null>(null);
@@ -43,10 +49,11 @@ function DepartmentRoster({
     api.removeMember(department.id, assignment.member_id, assignment.id),
   );
   const visible = assignments.filter((assignment) =>
-    assignment.member.name.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()),
+    normalizeArabic(assignment.member.name).includes(normalizeArabic(search.trim())),
   );
 
   async function addMember(id: number) {
+    if (disabled) return;
     try {
       await add.mutateAsync(id);
       toast.success(t("memberAdded"));
@@ -55,7 +62,7 @@ function DepartmentRoster({
     }
   }
   async function removeMember() {
-    if (!removing) return;
+    if (!removing || disabled) return;
     try {
       await remove.mutateAsync(removing);
       setRemoving(null);
@@ -67,8 +74,9 @@ function DepartmentRoster({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Input
+          className="min-w-0 flex-1 basis-40"
           aria-label={t("searchMembers")}
           placeholder={t("searchMembers")}
           value={search}
@@ -77,7 +85,8 @@ function DepartmentRoster({
         {canEdit && (
           <Button
             size="sm"
-            disabled={add.isPending}
+            disabled={disabled || add.isPending || remove.isPending}
+            className="min-h-10 sm:min-h-0"
             onClick={() => {
               add.reset();
               setPicker(true);
@@ -90,7 +99,7 @@ function DepartmentRoster({
       </div>
       {add.error && (
         <p role="alert" className="text-sm text-destructive">
-          {add.error.message}
+          {describeError(add.error, true)}
         </p>
       )}
       {add.isPending && (
@@ -105,7 +114,7 @@ function DepartmentRoster({
             <li key={assignment.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50">
               <MemberAvatar name={assignment.member.name} />
               <div className="min-w-0 flex-1">
-                <p className="break-words text-sm font-medium" dir="auto">
+                <p className="wrap-anywhere text-sm font-medium" dir="auto">
                   {assignment.member.name}
                 </p>
                 <RoleBadge role={assignment.role} />
@@ -114,8 +123,8 @@ function DepartmentRoster({
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="text-destructive"
-                  disabled={remove.isPending}
+                  className="min-h-10 shrink-0 text-destructive sm:min-h-0"
+                  disabled={disabled || remove.isPending || add.isPending}
                   aria-label={t("removeMemberNamed", { name: assignment.member.name })}
                   onClick={() => {
                     remove.reset();
@@ -129,9 +138,14 @@ function DepartmentRoster({
           ))}
         </ul>
       ) : (
-        <p className="py-10 text-center text-sm text-muted-foreground">
-          {t(search.trim() ? "noMembersFound" : "noRosterMembers")}
-        </p>
+        <div className="space-y-3 py-10 text-center text-sm text-muted-foreground">
+          <p>{t(search.trim() ? "noMembersFound" : "noRosterMembers")}</p>
+          {search.trim() && (
+            <Button variant="outline" size="sm" onClick={() => setSearch("")}>
+              {t("clearSearch")}
+            </Button>
+          )}
+        </div>
       )}
       {picker && canEdit && (
         <ClubMemberPicker
@@ -146,7 +160,8 @@ function DepartmentRoster({
           title={t("removeConfirm", { name: removing.member.name })}
           description={t("removeHint")}
           pending={remove.isPending}
-          error={remove.error ? `${remove.error.message} ${t("reviewBeforeRetry")}` : undefined}
+          disabled={disabled}
+          error={remove.error ? `${describeError(remove.error, true)} ${t("reviewBeforeRetry")}` : undefined}
           onConfirm={() => void removeMember()}
           onClose={() => {
             setRemoving(null);
@@ -158,24 +173,37 @@ function DepartmentRoster({
   );
 }
 
-function DepartmentSettingsPanel({ department, canEdit }: { department: ClubDepartment; canEdit: boolean }) {
+function DepartmentSettingsPanel({
+  department,
+  canEdit,
+  disabled,
+}: {
+  department: ClubDepartment;
+  canEdit: boolean;
+  disabled: boolean;
+}) {
   const t = useTranslations("clubStructure");
-  const [changingStatus, setChangingStatus] = useState(false);
+  const describeError = useClubError();
+  // Capture the intended status: a refresh must not reverse an open confirmation.
+  const [nextActive, setNextActive] = useState<boolean | null>(null);
   const update = useClubMutation((api, settings: DepartmentSettings) => api.updateDepartment(department.id, settings));
   const status = useClubMutation((api, active: boolean) => api.setActive(department.id, active));
   async function save(settings: DepartmentSettings) {
     try {
       await update.mutateAsync(settings);
       toast.success(t("settingsSaved"));
+      return true;
     } catch {
       /* Preserve the form on error. */
+      return false;
     }
   }
   async function changeStatus() {
+    if (nextActive === null || disabled) return;
     try {
-      await status.mutateAsync(!department.active);
-      setChangingStatus(false);
-      toast.success(t(department.active ? "departmentArchived" : "departmentRestored"));
+      await status.mutateAsync(nextActive);
+      setNextActive(null);
+      toast.success(t(nextActive ? "departmentRestored" : "departmentArchived"));
     } catch {
       /* Keep the confirmation open. */
     }
@@ -184,16 +212,16 @@ function DepartmentSettingsPanel({ department, canEdit }: { department: ClubDepa
     <div className="space-y-6">
       {update.error && (
         <p role="alert" className="text-sm text-destructive">
-          {update.error.message}
+          {describeError(update.error, true)}
         </p>
       )}
       <DepartmentForm
-        key={`${department.id}-${department.updated_at}`}
         initial={department}
-        pending={update.isPending}
+        pending={update.isPending || status.isPending}
         readOnly={!canEdit}
+        disabled={disabled}
         submitLabel={t("saveChanges")}
-        onSubmit={(settings) => void save(settings)}
+        onSubmit={save}
       />
       {canEdit && (
         <div className="space-y-3 border-t pt-5">
@@ -201,10 +229,10 @@ function DepartmentSettingsPanel({ department, canEdit }: { department: ClubDepa
           <Button
             className="w-full"
             variant="outline"
-            disabled={update.isPending || status.isPending}
+            disabled={disabled || update.isPending || status.isPending}
             onClick={() => {
               status.reset();
-              setChangingStatus(true);
+              setNextActive(!department.active);
             }}
           >
             {t(department.active ? "archiveDepartment" : "restoreDepartment")}
@@ -212,15 +240,16 @@ function DepartmentSettingsPanel({ department, canEdit }: { department: ClubDepa
           <p className="text-xs leading-relaxed text-muted-foreground">{t("archiveHint")}</p>
         </div>
       )}
-      {changingStatus && canEdit && (
+      {nextActive !== null && canEdit && (
         <ConfirmChange
-          title={t(department.active ? "archiveDepartment" : "restoreDepartment")}
-          description={t(department.active ? "archiveHint" : "restoreHint")}
+          title={t(nextActive ? "restoreDepartment" : "archiveDepartment")}
+          description={t(nextActive ? "restoreHint" : "archiveHint")}
           pending={status.isPending}
-          error={status.error?.message}
+          disabled={disabled}
+          error={describeError(status.error, true)}
           onConfirm={() => void changeStatus()}
           onClose={() => {
-            setChangingStatus(false);
+            setNextActive(null);
             status.reset();
           }}
         />
@@ -231,6 +260,8 @@ function DepartmentSettingsPanel({ department, canEdit }: { department: ClubDepa
 
 export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit: boolean; onClose: () => void }) {
   const t = useTranslations("clubStructure");
+  const common = useTranslations("common");
+  const [tab, setTab] = useState("roster");
   const locale = useLocale();
   const name = useDepartmentName();
   const department = useClubDepartment(id);
@@ -246,12 +277,16 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
         if (!open) onClose();
       }}
     >
-      <SheetContent side={locale === "ar" ? "left" : "right"} className="w-full! sm:max-w-[480px]! gap-0">
+      <SheetContent
+        side={locale === "ar" ? "left" : "right"}
+        className="w-full! sm:max-w-[480px]! gap-0"
+        closeLabel={common("actions.close")}
+      >
         <SheetHeader className="border-b p-6 pe-12">
           <div className="flex items-center gap-3">
             {current && <DepartmentIcon {...current} />}
             <div className="min-w-0 space-y-1">
-              <SheetTitle className="break-words">{current ? name(current) : t("department")}</SheetTitle>
+              <SheetTitle className="wrap-anywhere">{current ? name(current) : t("department")}</SheetTitle>
               <SheetDescription>{t("drawerDescription")}</SheetDescription>
               {current && (
                 <div className="flex flex-wrap gap-2">
@@ -261,19 +296,27 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
               )}
             </div>
           </div>
+          <div className="mt-3">
+            <ClubRefresh />
+          </div>
         </SheetHeader>
         {department.isPending && (
           <div className="p-6">
-            <Skeleton className="h-48" />
+            <ClubLoading />
           </div>
         )}
         {department.error && (
           <div className="p-6">
-            <QueryError error={department.error} retry={() => void department.refetch()} />
+            <QueryError error={department.error} retry={() => void department.refetch()} stale={!!current} />
           </div>
         )}
-        {current && !department.error && (
-          <Tabs defaultValue="roster" className="min-h-0 flex-1 gap-0" dir={locale === "ar" ? "rtl" : "ltr"}>
+        {current && (
+          <Tabs
+            value={tab}
+            onValueChange={setTab}
+            className="min-h-0 flex-1 gap-0"
+            dir={locale === "ar" ? "rtl" : "ltr"}
+          >
             <TabsList variant="line" className="w-full shrink-0 rounded-none border-b px-6 py-3">
               <TabsTrigger value="roster">{t("roster")}</TabsTrigger>
               {current.leadership_enabled && <TabsTrigger value="leadership">{t("leadership")}</TabsTrigger>}
@@ -282,23 +325,28 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
             {!current.active && (
               <p className="border-b bg-muted/40 px-6 py-3 text-xs text-muted-foreground">{t("archivedRosterHint")}</p>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
               <TabsContent value="roster">
-                {roster.isPending ? (
-                  <Skeleton className="h-48" />
-                ) : roster.error ? (
-                  <QueryError error={roster.error} retry={() => void roster.refetch()} />
-                ) : (
-                  <DepartmentRoster department={current} assignments={assignments} canEdit={canChangeRoster} />
+                {roster.isPending && <ClubLoading />}
+                {roster.error && (
+                  <QueryError error={roster.error} retry={() => void roster.refetch()} stale={!!roster.data} />
+                )}
+                {roster.data && (
+                  <DepartmentRoster
+                    department={current}
+                    assignments={assignments}
+                    canEdit={canChangeRoster}
+                    disabled={!!department.error || !!roster.error}
+                  />
                 )}
               </TabsContent>
               {current.leadership_enabled && (
                 <TabsContent value="leadership" className="space-y-4">
-                  {roster.isPending ? (
-                    <Skeleton className="h-48" />
-                  ) : roster.error ? (
-                    <QueryError error={roster.error} retry={() => void roster.refetch()} />
-                  ) : (
+                  {roster.isPending && <ClubLoading />}
+                  {roster.error && (
+                    <QueryError error={roster.error} retry={() => void roster.refetch()} stale={!!roster.data} />
+                  )}
+                  {roster.data && (
                     <>
                       {(["leader", "deputy"] as const).map((role) => (
                         <SeatCard
@@ -306,6 +354,7 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
                           seat={{ departmentId: id, role }}
                           assignment={assignments.find((assignment) => assignment.role === role) ?? null}
                           canEdit={canChangeRoster}
+                          disabled={!!department.error || !!roster.error}
                           excludedIds={assignments
                             .filter((assignment) => assignment.role !== "member")
                             .map((assignment) => assignment.member_id)}
@@ -318,8 +367,8 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
                   )}
                 </TabsContent>
               )}
-              <TabsContent value="settings">
-                <DepartmentSettingsPanel department={current} canEdit={canEdit} />
+              <TabsContent value="settings" forceMount className={tab !== "settings" ? "hidden" : undefined}>
+                <DepartmentSettingsPanel department={current} canEdit={canEdit} disabled={!!department.error} />
               </TabsContent>
             </div>
           </Tabs>

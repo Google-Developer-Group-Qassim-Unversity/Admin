@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { MemberSelectDialog } from "@/components/member-select-dialog";
 import { useMembers } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
+import { useClubError } from "@/components/club-structure/use-club-error";
 
 const EMPTY_IDS: number[] = [];
 
@@ -20,6 +21,7 @@ export function ClubMemberPicker({
   onClose: () => void;
 }) {
   const t = useTranslations("clubStructure");
+  const describeError = useClubError();
   const members = useMembers();
   const options = useMemo(
     () =>
@@ -42,7 +44,9 @@ export function ClubMemberPicker({
       memberOptions={options}
       selectedIds={EMPTY_IDS}
       isLoading={members.isPending}
-      error={members.error?.message}
+      error={describeError(members.error)}
+      emptyMessage={t("noEligibleMembers")}
+      applyLabel={t("selectMember")}
       onRetry={() => void members.refetch()}
       onSelectionChange={(ids) => {
         const member = members.data?.find((item) => item.id === ids[0]);

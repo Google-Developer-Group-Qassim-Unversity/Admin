@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label";
 import { DEPARTMENT_COLORS, DEPARTMENT_ICONS, DepartmentIcon } from "@/components/club-structure/shared";
 import type { DepartmentSettings } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
+import { useFormDirty } from "@/lib/use-form-dirty";
 
 const EMPTY_SETTINGS: DepartmentSettings = {
   name: "",
@@ -21,37 +22,53 @@ export function DepartmentForm({
   initial = EMPTY_SETTINGS,
   pending,
   readOnly = false,
+  disabled = false,
   submitLabel,
   onSubmit,
 }: {
   initial?: DepartmentSettings;
   pending: boolean;
   readOnly?: boolean;
+  disabled?: boolean;
   submitLabel: string;
-  onSubmit: (settings: DepartmentSettings) => void;
+  onSubmit: (settings: DepartmentSettings) => Promise<boolean>;
 }) {
   const t = useTranslations("clubStructure");
   const common = useTranslations("common");
   const id = useId();
-  const [values, setValues] = useState<DepartmentSettings>(() => ({
+  const saved: DepartmentSettings = {
     name: initial.name,
     ar_name: initial.ar_name,
     type: initial.type,
     color: initial.color,
     icon: initial.icon,
-  }));
+  };
+  const [draft, setDraft] = useState<{ base: DepartmentSettings; values: DepartmentSettings } | null>(null);
+  const values = draft?.values ?? saved;
+  const dirty = useFormDirty(saved, values);
+  const sourceChanged = useFormDirty(draft?.base ?? saved, saved) && draft !== null;
+  const setValues = (values: DepartmentSettings) => setDraft({ base: draft?.base ?? saved, values });
   const valid = !!values.name.trim() && !!values.ar_name.trim() && /^#[\da-f]{6}$/i.test(values.color);
 
   return (
     <form
-      onSubmit={(event) => {
+      onSubmit={async (event) => {
         event.preventDefault();
-        if (!valid || pending || readOnly) return;
-        onSubmit({ ...values, name: values.name.trim(), ar_name: values.ar_name.trim() });
+        if (!valid || pending || readOnly || disabled || sourceChanged || !dirty) return;
+        const saved = await onSubmit({ ...values, name: values.name.trim(), ar_name: values.ar_name.trim() });
+        if (saved) setDraft(null);
       }}
       className="space-y-5"
     >
-      <fieldset disabled={pending || readOnly} className="space-y-5">
+      {sourceChanged && !pending && (
+        <div role="alert" className="space-y-2 rounded-lg border bg-muted/50 p-3 text-sm">
+          <p>{t("settingsChanged")}</p>
+          <Button type="button" variant="outline" size="sm" onClick={() => setDraft(null)}>
+            {t("reloadSettings")}
+          </Button>
+        </div>
+      )}
+      <fieldset disabled={pending || readOnly || disabled} className="space-y-5">
         <div className="space-y-2">
           <Label htmlFor={`${id}-name`}>{t("englishName")}</Label>
           <Input
@@ -62,6 +79,7 @@ export function DepartmentForm({
             value={values.name}
             onChange={(event) => setValues({ ...values, name: event.target.value })}
           />
+          {draft && !values.name.trim() && <p className="text-xs text-destructive">{t("nameRequired")}</p>}
         </div>
         <div className="space-y-2">
           <Label htmlFor={`${id}-ar-name`}>{t("arabicName")}</Label>
@@ -73,6 +91,7 @@ export function DepartmentForm({
             value={values.ar_name}
             onChange={(event) => setValues({ ...values, ar_name: event.target.value })}
           />
+          {draft && !values.ar_name.trim() && <p className="text-xs text-destructive">{t("arabicNameRequired")}</p>}
         </div>
         <fieldset className="space-y-2">
           <legend className="mb-2 text-sm font-medium">{t("type")}</legend>
@@ -102,7 +121,7 @@ export function DepartmentForm({
                 aria-pressed={values.color.toLowerCase() === color}
                 onClick={() => setValues({ ...values, color })}
                 className={cn(
-                  "size-8 rounded-full border focus-visible:outline-ring",
+                  "size-10 rounded-full border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:size-8",
                   values.color.toLowerCase() === color && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
                 )}
                 style={{ backgroundColor: color }}
@@ -129,7 +148,10 @@ export function DepartmentForm({
                 type="button"
                 aria-label={t("selectIcon", { icon })}
                 aria-pressed={values.icon === icon}
-                className={cn("rounded-lg border", values.icon === icon && "ring-2 ring-primary")}
+                className={cn(
+                  "rounded-lg border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  values.icon === icon && "ring-2 ring-primary",
+                )}
                 onClick={() => setValues({ ...values, icon })}
               >
                 <DepartmentIcon icon={icon} color={values.color} />
@@ -139,9 +161,16 @@ export function DepartmentForm({
         </fieldset>
       </fieldset>
       {!readOnly && (
-        <Button type="submit" className="w-full" disabled={!valid || pending}>
-          {pending ? common("states.saving") : submitLabel}
-        </Button>
+        <div className="space-y-2">
+          <Button type="submit" className="w-full" disabled={!valid || pending || disabled || sourceChanged || !dirty}>
+            {pending ? common("states.saving") : submitLabel}
+          </Button>
+          {dirty && (
+            <Button type="button" variant="ghost" className="w-full" disabled={pending} onClick={() => setDraft(null)}>
+              {common("actions.reset")}
+            </Button>
+          )}
+        </div>
       )}
     </form>
   );

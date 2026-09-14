@@ -1,12 +1,16 @@
 "use client";
 
-import { Users } from "lucide-react";
+import { RefreshCw, Users } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ClubDepartment, ClubRole } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useClubError } from "@/components/club-structure/use-club-error";
+import { useIsFetching, useIsMutating } from "@tanstack/react-query";
+import { clubStructureKeys, useRefreshClubStructure } from "@/hooks/use-club-structure";
 
 export const DEPARTMENT_COLORS = [
   "#3b82f6",
@@ -93,17 +97,59 @@ export function RoleBadge({ role }: { role: ClubRole }) {
   );
 }
 
-export function QueryError({ error, retry }: { error: Error; retry: () => void }) {
+export function QueryError({ error, retry, stale = false }: { error: Error; retry: () => void; stale?: boolean }) {
   const t = useTranslations("common");
+  const club = useTranslations("clubStructure");
+  const describeError = useClubError();
   return (
     <Alert variant="destructive">
       <AlertTitle>{t("errors.loadFailed")}</AlertTitle>
       <AlertDescription>
-        <p>{error.message}</p>
+        <p>{describeError(error)}</p>
+        {stale && <p>{club("staleDataHint")}</p>}
         <Button variant="outline" size="sm" onClick={retry}>
           {t("actions.retry")}
         </Button>
       </AlertDescription>
     </Alert>
+  );
+}
+
+export function ClubLoading({ overview = false }: { overview?: boolean }) {
+  const t = useTranslations("clubStructure");
+  return (
+    <div role="status" aria-label={t("loading")} className="space-y-5">
+      <span className="sr-only">{t("loading")}</span>
+      <div aria-hidden="true" className={cn("grid gap-4", overview && "grid-cols-2 lg:grid-cols-4")}>
+        {Array.from({ length: overview ? 4 : 3 }, (_, index) => (
+          <Skeleton key={index} className={overview ? "h-20" : "h-14"} />
+        ))}
+      </div>
+      {overview && (
+        <div aria-hidden="true" className="grid gap-4 sm:grid-cols-2">
+          <Skeleton className="h-28" />
+          <Skeleton className="h-28" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function ClubRefresh() {
+  const t = useTranslations("clubStructure");
+  const fetching = useIsFetching({ queryKey: clubStructureKeys.all }) > 0;
+  const saving = useIsMutating({ mutationKey: clubStructureKeys.all }) > 0;
+  const refresh = useRefreshClubStructure();
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      aria-label={t(fetching ? "refreshing" : "refresh")}
+      disabled={fetching || saving}
+      onClick={() => void refresh()}
+    >
+      <RefreshCw aria-hidden="true" className={cn("size-4", fetching && "animate-spin motion-reduce:animate-none")} />
+      <span role="status">{t(fetching ? "refreshing" : "refresh")}</span>
+    </Button>
   );
 }
