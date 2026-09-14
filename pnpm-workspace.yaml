@@ -5,6 +5,7 @@ allowBuilds:
   # native postinstalls, so decline them rather than build binaries.
   '@parcel/watcher': false
   '@swc/core': false
+  esbuild: true
   msw: true
   sharp: true
   unrs-resolver: true
