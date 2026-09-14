@@ -199,7 +199,7 @@ export default function ManageMembersPage() {
     phone_number: false,
   });
 
-  const { data: members, isLoading, error, refetch } = useMembers(getToken);
+  const { data: members, isLoading, error, refetch } = useMembers();
 
   const filteredMembers = useFuzzySearch(members ?? [], searchQuery, ["name", "email", "uni_id", "phone_number"]);
 

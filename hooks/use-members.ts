@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { getMembers, createMemberManual, batchCreateMembers, ApiRequestError } from '@/lib/api';
+import { createMemberManual, batchCreateMembers } from '@/lib/api';
+import { useApi } from '@/lib/api/client';
 import type { ManualMemberCreateRequest, BatchCreateMemberItem } from '@/lib/api-types';
 
 export const memberKeys = {
@@ -7,16 +8,12 @@ export const memberKeys = {
   list: () => [...memberKeys.all, 'list'] as const,
 };
 
-export function useMembers(getToken: () => Promise<string | null>) {
+export function useMembers(enabled = true) {
+  const api = useApi();
   return useQuery({
     queryKey: memberKeys.list(),
-    queryFn: async () => {
-      const result = await getMembers(getToken);
-      if (!result.success) {
-        throw new ApiRequestError(result.error);
-      }
-      return result.data;
-    },
+    queryFn: () => api.members.list(),
+    enabled,
   });
 }
 

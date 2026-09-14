@@ -1,4 +1,4 @@
-import { CalendarPlus, Trophy, ShieldCheck, Mail, Users, Settings } from "lucide-react";
+import { CalendarPlus, Trophy, ShieldCheck, Mail, Users, Settings, Network } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { ModuleCard } from "@/components/module-card";
@@ -7,6 +7,7 @@ const modules = [
   { key: "events", icon: CalendarPlus, href: "/events" },
   { key: "points", icon: Trophy, href: "/points" },
   { key: "members", icon: Users, href: "/manage-members" },
+  { key: "clubStructure", icon: Network, href: "/club-structure" },
   { key: "emails", icon: Mail, href: "/manage-emails" },
   { key: "admins", icon: ShieldCheck, href: "/manage-admins" },
   { key: "settings", icon: Settings, href: "/settings" },

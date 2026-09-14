@@ -28,6 +28,13 @@ interface MemberSelectDialogProps {
   selectedIds: number[];
   onSelectionChange: (ids: number[]) => void;
   onMemberCreated?: (member: Member) => void;
+  maxSelections?: number;
+  allowCreate?: boolean;
+  title?: string;
+  description?: string;
+  isLoading?: boolean;
+  error?: string;
+  onRetry?: () => void;
 }
 
 const DISPLAY_LIMIT = 50;
@@ -39,6 +46,13 @@ export function MemberSelectDialog({
   selectedIds,
   onSelectionChange,
   onMemberCreated,
+  maxSelections,
+  allowCreate = true,
+  title,
+  description,
+  isLoading = false,
+  error,
+  onRetry,
 }: MemberSelectDialogProps) {
   const t = useTranslations("memberSelectDialog");
   const tc = useTranslations("common.actions");
@@ -75,7 +89,11 @@ export function MemberSelectDialog({
   const totalAvailable = searchQuery.trim() ? fuzzyResults.length : unselectedMembers.length;
 
   const handleAddMember = (id: number) => {
-    setPendingSelectedIds((prev) => new Set(prev).add(id));
+    setPendingSelectedIds((prev) => {
+      if (maxSelections === 1) return new Set([id]);
+      if (maxSelections !== undefined && prev.size >= maxSelections) return prev;
+      return new Set(prev).add(id);
+    });
   };
 
   const handleRemoveMember = (id: number) => {
@@ -106,25 +124,33 @@ export function MemberSelectDialog({
   return (
     <>
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl! max-h-[90vh] md:max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-3xl! max-h-[90vh] md:max-h-[80vh] flex flex-col overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{t("title")}</DialogTitle>
+          <DialogTitle>{title ?? t("title")}</DialogTitle>
           <DialogDescription>
-            {t("description")}
+            {description ?? t("description")}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4">
+        {isLoading && <p role="status">{t("loading")}</p>}
+        {error && (
+          <div role="alert" className="space-y-2 text-sm text-destructive">
+            <p>{error}</p>
+            {onRetry && <Button variant="outline" onClick={onRetry}>{tc("retry")}</Button>}
+          </div>
+        )}
+
+        {!isLoading && !error && <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-4">
           {/* Available Members Column */}
           <div className="flex-1 flex flex-col border rounded-lg">
             <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
               <span className="text-sm font-medium">
                 {t("available", { count: totalAvailable })}
               </span>
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsCreateDialogOpen(true)}>
+              {allowCreate && <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={() => setIsCreateDialogOpen(true)}>
                 <UserPlus className="h-3.5 w-3.5" />
                 {t("create")}
-              </Button>
+              </Button>}
             </div>
             <div className="px-3 py-2 border-b">
               <div className="relative">
@@ -150,9 +176,10 @@ export function MemberSelectDialog({
               ) : (
                 <div className="divide-y">
                   {availableMembers.map((member) => (
-                    <div
+                    <button
+                      type="button"
                       key={member.id}
-                      className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50 cursor-pointer"
+                      className="flex w-full items-center gap-2 px-3 py-2 text-start hover:bg-muted/50 focus-visible:outline-ring cursor-pointer"
                       onClick={() => handleAddMember(member.id)}
                     >
                       <div className="h-4 w-4 border rounded shrink-0" />
@@ -160,7 +187,7 @@ export function MemberSelectDialog({
                         <p className="text-sm truncate">{member.label}</p>
                         <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
                       </div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               )}
@@ -203,6 +230,7 @@ export function MemberSelectDialog({
                         variant="ghost"
                         size="icon-sm"
                         className="shrink-0"
+                        aria-label={`${tc("remove")} ${member.label}`}
                         onClick={() => handleRemoveMember(member.id)}
                       >
                         <X className="h-4 w-4" />
@@ -215,23 +243,24 @@ export function MemberSelectDialog({
           </div>
         </div>
 
+        }
         <DialogFooter>
           <Button variant="outline" onClick={handleCancel}>
             {tc("cancel")}
           </Button>
-          <Button onClick={handleApply} disabled={pendingSelectedIds.size === 0}>
+          <Button onClick={handleApply} disabled={isLoading || !!error || pendingSelectedIds.size === 0}>
             {t("apply", { count: pendingSelectedIds.size })}
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
 
-    <CreateMemberDialog
+    {allowCreate && <CreateMemberDialog
       open={isCreateDialogOpen}
       onOpenChange={setIsCreateDialogOpen}
       onCreatedMember={handleMemberCreated}
       getToken={getToken}
-    />
+    />}
     </>
   );
 }

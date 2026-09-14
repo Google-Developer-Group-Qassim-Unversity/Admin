@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import Image from "next/image";
-import { Home, CalendarPlus, ShieldCheck, Trophy, Users, Menu, Settings } from "lucide-react";
+import { Home, CalendarPlus, ShieldCheck, Trophy, Users, Menu, Settings, Network } from "lucide-react";
 
 import { ThemeToggle } from "@/components/theme-toggle";
 import { LanguageToggle } from "@/components/language-toggle";
@@ -24,6 +24,7 @@ const navLinks = [
   { href: "/events", key: "events", icon: CalendarPlus },
   { href: "/points", key: "points", icon: Trophy },
   { href: "/manage-members", key: "members", icon: Users },
+  { href: "/club-structure", key: "clubStructure", icon: Network },
   { href: "/manage-admins", key: "admins", icon: ShieldCheck },
   { href: "/settings", key: "settings", icon: Settings },
 ] as const;
@@ -45,7 +46,7 @@ export function Navbar() {
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-6">
+        <nav className="hidden xl:flex items-center gap-4">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -63,7 +64,7 @@ export function Navbar() {
 
         {/* Right side - Theme toggle and User profile */}
         <div className="flex items-center gap-2">
-          <div className="hidden md:flex items-center gap-2">
+          <div className="hidden xl:flex items-center gap-2">
             <LanguageToggle />
             <ThemeToggle />
             <AuthButton />
@@ -72,7 +73,7 @@ export function Navbar() {
           {/* Mobile Menu */}
           <Sheet open={open} onOpenChange={setOpen}>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="xl:hidden">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">{t("toggleMenu")}</span>
               </Button>
