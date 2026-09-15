@@ -53,7 +53,7 @@ export function DepartmentCard({
             </div>
           ))
         ) : (
-          <p className="text-xs leading-relaxed text-muted-foreground">{t("boardRosterHint")}</p>
+          <p className="text-xs leading-relaxed text-muted-foreground">{t("departmentRosterHint", { name: name(department) })}</p>
         )}
       </div>
       <div className="flex items-center justify-between gap-2 border-t pt-3">

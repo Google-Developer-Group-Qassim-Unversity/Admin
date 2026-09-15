@@ -30,7 +30,12 @@ const bundle = await build({
   write: false,
   format: "esm",
   jsx: "automatic",
-  alias: { "@": frontend, "@clerk/nextjs": path.join(frontend, "tests/club-structure/clerk.jsx") },
+  alias: {
+    "@": frontend,
+    "@clerk/nextjs": path.join(frontend, "tests/club-structure/clerk.jsx"),
+    "next/link": path.join(frontend, "tests/club-structure/navigation.jsx"),
+    "next/navigation": path.join(frontend, "tests/club-structure/navigation.jsx"),
+  },
   define: {
     "process.env": JSON.stringify({
       NODE_ENV: "development",
@@ -84,9 +89,45 @@ try {
     return response.json();
   };
   const putSeat = (url, member, expected) =>
-    api.put(url, { data: { member_id: member, expected_assignment_id: expected } });
+    api.put(url, {
+      data: { member_id: member, expected_assignment_id: expected },
+    });
   const click = (name) => page.getByRole("button", { name, exact: true }).click();
+  const openCreate = async (ar = false) => {
+    await page.getByRole("link", { name: ar ? "قسم جديد" : "New Department", exact: true }).click();
+    await expect(page).toHaveURL(/\/club-structure\/create(?:\?|$)/);
+    await expect(page.locator("form")).toBeVisible();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
+  };
+  const backToOverview = async (ar = false) => {
+    await page.getByRole("link", { name: ar ? "رجوع" : "Back", exact: true }).click();
+    await expect(page.getByRole("button", { name: ar ? "تحديث" : "Refresh", exact: true })).toBeEnabled();
+  };
   const tab = (name) => page.getByRole("tab", { name, exact: true }).click();
+  const settledTabs = async () => {
+    const triggers = page.getByRole("dialog").getByRole("tab");
+    for (const trigger of await triggers.all()) {
+      if ((await trigger.getAttribute("aria-selected")) === "false") {
+        await expect(trigger).toHaveCSS("border-bottom-color", "rgba(0, 0, 0, 0)");
+      }
+    }
+  };
+  const checkDrawerTabAlignment = async () => {
+    const list = page.getByRole("dialog").getByRole("tablist");
+    const bounds = await list.boundingBox();
+    const tabs = await list.getByRole("tab").all();
+    for (const item of tabs) {
+      const tabBounds = await item.boundingBox();
+      assert.ok(
+        Math.abs(tabBounds.y + tabBounds.height - bounds.y - bounds.height) <= 1,
+        "Underline aligns with the divider",
+      );
+      assert.ok(
+        Math.abs(tabBounds.width - bounds.width / tabs.length) <= 1,
+        "Each tab spans an equal share of the divider",
+      );
+    }
+  };
   const choose = async (name) => {
     const picker = page.getByRole("dialog").last();
     await picker
@@ -102,25 +143,73 @@ try {
   const open = async (query = "") => {
     await page.goto(baseURL + "/" + query);
     await expect(
-      page.getByRole("button", { name: query.includes("locale=ar") ? "تحديث" : "Refresh", exact: true }),
+      page.getByRole("button", {
+        name: query.includes("locale=ar") ? "تحديث" : "Refresh",
+        exact: true,
+      }),
     ).toBeEnabled();
   };
   await open();
   await expect(page.locator("dl dd")).toHaveCount(4);
+  const statusTabs = page.getByRole("tablist", { name: "Department status" });
+  await expect(statusTabs.getByRole("tab")).toHaveCount(2);
+  await expect(statusTabs.locator('[data-state="active"]')).toHaveCSS("border-bottom-width", "2px");
+  assert.equal(
+    await statusTabs.locator('[data-state="active"]').evaluate((el) => getComputedStyle(el).borderBottomColor),
+    await page
+      .getByRole("link", { name: "New Department", exact: true })
+      .evaluate((el) => getComputedStyle(el).backgroundColor),
+  );
+  await statusTabs.getByRole("tab", { name: /^Archived/ }).click();
+  await expect(statusTabs.getByRole("tab", { name: /^Archived/ })).toHaveAttribute("aria-selected", "true");
+  await statusTabs.getByRole("tab", { name: /^Active/ }).click();
   await expect(page.getByRole("region", { name: /^President · Seat/ })).toHaveCount(2);
+  await expect(
+    page.getByText(
+      `Manage ${refs.prefix} Board membership from the roster. This department does not have leader or deputy roles.`,
+      { exact: true },
+    ),
+  ).toBeVisible();
   await click("Manage " + refs.prefix + " Board");
   await expect(page.getByRole("tab", { name: "Leadership", exact: true })).toHaveCount(0);
+  await checkDrawerTabAlignment();
   await click("Close");
-  await click("New Department");
+  await openCreate();
   await page.getByLabel("English name", { exact: true }).fill(departmentName);
   await page.getByLabel("Arabic name", { exact: true }).fill("مختبر النادي");
-  await click("Specialized");
+  const departmentType = page.getByRole("radiogroup", { name: "Type", exact: true });
+  await expect(departmentType.getByRole("radio", { name: "Administrative", exact: true })).toBeChecked();
+  const specializedType = departmentType.getByRole("radio", { name: "Specialized", exact: true });
+  await specializedType.click();
+  await specializedType.click();
+  await expect(specializedType).toBeChecked();
+  await departmentType.getByRole("radio", { name: "Administrative", exact: true }).click();
+  await page.keyboard.press("ArrowRight");
+  await expect(specializedType).toBeFocused();
+  await page.keyboard.press("Space");
+  await expect(specializedType).toBeChecked();
+  const iconOptions = page.getByRole("button", { name: /^Select icon / });
+  await expect(iconOptions).toHaveCount(21);
+  for (const option of await iconOptions.all()) {
+    await expect(option.locator("svg")).toHaveCount(1);
+    await expect(option).toHaveText("");
+  }
+  await expect(page.locator("form").getByText(/Lucide/)).toHaveCount(0);
+  await click("Select icon Development");
+  await expect(page.getByRole("button", { name: "Select icon Development", exact: true })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await page.screenshot({
+    path: path.join(artifacts, "create-department-en-dark.png"),
+  });
   await click("Create Department");
   await expect(page.getByRole("heading", { name: departmentName, exact: true })).toBeVisible();
   await expect(page.getByText("This department has no members yet.", { exact: true })).toBeVisible();
   const overview = await read("/club-structure");
   const department = overview.departments.find((d) => d.name === departmentName);
   assert.equal(department.type, "practical");
+  assert.equal(department.icon, "code2");
   const deptPath = `/club-structure/departments/${department.id}`;
   assert.equal(Math.round((await page.locator('[data-slot="sheet-content"]').boundingBox()).width), 480);
   for (const person of [alice, bob]) {
@@ -218,8 +307,15 @@ try {
 
   await tab("Settings");
   await page.getByLabel("English name", { exact: true }).fill(departmentName + " Updated");
+  await click("Select icon Partnerships");
   await click("Save Changes");
-  await expect(page.getByRole("heading", { name: departmentName + " Updated", exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", {
+      name: departmentName + " Updated",
+      exact: true,
+    }),
+  ).toBeVisible();
+  assert.equal((await read(deptPath)).icon, "handshake");
   roster = await read(deptPath + "/roster");
   for (let cycle = 0; cycle < 2; cycle++) {
     await click("Archive Department");
@@ -236,32 +332,115 @@ try {
     assert.deepEqual(await read(deptPath + "/roster"), roster);
   }
   await click("Close");
-  await page.screenshot({ path: path.join(artifacts, "desktop.png"), fullPage: true });
+  await page.screenshot({
+    path: path.join(artifacts, "desktop.png"),
+    fullPage: true,
+  });
   console.log(
     "PASS: repeated archive/restore preserves exact assignments and blocks both browser and direct API roster edits",
   );
 
   for (const role of ["admin", "admin_points"]) {
     await open("?role=" + role);
-    await expect(page.getByRole("button", { name: "New Department", exact: true })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "New Department", exact: true })).toHaveCount(0);
     await click("View " + departmentName + " Updated");
     await tab("Settings");
     await expect(page.getByLabel("English name", { exact: true })).toBeDisabled();
-    const forbidden = await api.post(deptPath + "/archive", { headers: { Authorization: `Bearer browser-${role}` } });
+    for (const option of await page.getByRole("radiogroup", { name: "Type", exact: true }).getByRole("radio").all()) {
+      await expect(option).toBeDisabled();
+    }
+    const forbidden = await api.post(deptPath + "/archive", {
+      headers: { Authorization: `Bearer browser-${role}` },
+    });
     assert.equal(forbidden.status(), 403);
+    await page.goto(baseURL + "/club-structure/create?role=" + role);
+    await expect(page.locator("form")).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Create Department", exact: true })).toHaveCount(0);
   }
   for (const role of ["member", "invalid"]) {
-    const denied = await api.get("/club-structure", { headers: { Authorization: `Bearer browser-${role}` } });
+    const denied = await api.get("/club-structure", {
+      headers: { Authorization: `Bearer browser-${role}` },
+    });
     assert.equal(denied.status(), role === "member" ? 403 : 401);
   }
   console.log("PASS: real guards enforce read-only admin/points roles and deny member/invalid identities");
+
+  await open("?locale=ar&theme=dark");
+  await page.screenshot({ path: path.join(artifacts, "overview-ar-desktop.png"), fullPage: true });
+  await openCreate(true);
+  const createCard = page.locator('[data-slot="card"]');
+  await expect(createCard).toHaveCSS("max-width", "672px");
+  await expect(createCard).toHaveCSS("position", "static");
+  assert.ok(await createCard.evaluate((el) => el.scrollHeight <= el.clientHeight), "No internal form scrollbar");
+  assert.equal(
+    await createCard.evaluate((el) => getComputedStyle(el).backgroundColor),
+    await createCard.evaluate((el) => getComputedStyle(el).getPropertyValue("--card").trim()),
+    "Create page uses the same Card background as Create Event",
+  );
+  await page.screenshot({ path: path.join(artifacts, "create-ar-desktop.png"), fullPage: true });
+  await backToOverview(true);
 
   for (const locale of ["en", "ar"])
     for (const theme of ["light", "dark"]) {
       await page.setViewportSize({ width: 320, height: 640 });
       await open(`?locale=${locale}&theme=${theme}`);
       const ar = locale === "ar";
+      await page.screenshot({
+        path: path.join(artifacts, `overview-${locale}-${theme}.png`),
+        fullPage: true,
+      });
+      await openCreate(ar);
+      const createForm = page.locator("form");
+      const createIcons = createForm.getByRole("button", {
+        name: ar ? /^اختيار الأيقونة / : /^Select icon /,
+      });
+      await expect(createIcons).toHaveCount(21);
+      for (const option of await createIcons.all()) await expect(option).toHaveText("");
+      await expect(createForm.getByText(/Lucide/)).toHaveCount(0);
+      const typeToggle = createForm.getByRole("radiogroup", { name: ar ? "النوع" : "Type", exact: true });
+      await expect(typeToggle.getByRole("radio")).toHaveCount(2);
+      for (const option of await typeToggle.getByRole("radio").all()) {
+        await expect(option).toBeEnabled();
+        await expect(option.locator("svg")).toHaveCount(1);
+      }
+      const administrative = typeToggle.getByRole("radio", { name: ar ? "إداري" : "Administrative", exact: true });
+      const practical = typeToggle.getByRole("radio", { name: ar ? "تخصصي" : "Specialized", exact: true });
+      await administrative.click();
+      await page.keyboard.press(ar ? "ArrowLeft" : "ArrowRight");
+      await expect(practical).toBeFocused();
+      await page.keyboard.press("Space");
+      await expect(practical).toBeChecked();
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
+      const createBounds = await page.locator('[data-slot="card"]').boundingBox();
+      assert.ok(createBounds.x >= 0 && createBounds.x + createBounds.width <= 321);
+      await page.screenshot({
+        path: path.join(artifacts, `create-${locale}-${theme}.png`),
+        fullPage: true,
+      });
+      const submitCreate = createForm.getByRole("button", {
+        name: ar ? "أنشئ القسم" : "Create Department",
+        exact: true,
+      });
+      await submitCreate.scrollIntoViewIfNeeded();
+      await expect(submitCreate).toBeInViewport();
+      await backToOverview(ar);
       await click(ar ? "إدارة مختبر النادي" : "Manage " + departmentName + " Updated");
+      const drawerTabs = page.getByRole("dialog").getByRole("tab");
+      await expect(drawerTabs).toHaveCount(3);
+      await checkDrawerTabAlignment();
+      for (const item of await drawerTabs.all()) await expect(item.locator("svg")).toHaveCount(1);
+      await tab(ar ? "الإعدادات" : "Settings");
+      await settledTabs();
+      await expect(
+        page.getByRole("dialog").getByRole("button", {
+          name: ar ? "اختيار الأيقونة الشراكات" : "Select icon Partnerships",
+          exact: true,
+        }),
+      ).toHaveAttribute("aria-pressed", "true");
+      await page.screenshot({
+        path: path.join(artifacts, `settings-${locale}-${theme}.png`),
+      });
+      await tab(ar ? "الأعضاء" : "Roster");
       await expect(page.locator('[data-slot="sheet-content"]')).toHaveAttribute("data-side", ar ? "left" : "right");
       await click(ar ? "إضافة عضو" : "Add member");
       await expect(page.getByRole("dialog").last().getByText(dana.name, { exact: true })).toBeVisible();
@@ -269,7 +448,9 @@ try {
       const dialog = page.getByRole("dialog").last();
       const bounds = await dialog.boundingBox();
       assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 321 && bounds.y >= 0 && bounds.y + bounds.height <= 641);
-      await page.screenshot({ path: path.join(artifacts, `picker-${locale}-${theme}.png`) });
+      await page.screenshot({
+        path: path.join(artifacts, `picker-${locale}-${theme}.png`),
+      });
     }
   console.log(
     "PASS: Figma-derived page/drawer flows, 480px desktop drawer, English/Arabic mobile and light/dark themes",

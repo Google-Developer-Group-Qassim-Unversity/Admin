@@ -3,6 +3,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { QueryProvider } from "@/lib/query-provider";
 import { DirectionProvider } from "@/components/direction-provider";
 import Page from "@/app/club-structure/page";
+import CreateDepartmentPage from "@/app/club-structure/create/page";
 import en from "@/messages/en.json";
 import ar from "@/messages/ar.json";
 
@@ -17,7 +18,7 @@ createRoot(document.getElementById("root")).render(
     <DirectionProvider dir={dir}>
       <QueryProvider>
         <main className="mx-auto max-w-7xl p-6">
-          <Page />
+          {location.pathname === "/club-structure/create" ? <CreateDepartmentPage /> : <Page />}
         </main>
       </QueryProvider>
     </DirectionProvider>

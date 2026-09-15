@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { Plus } from "lucide-react";
+import { Crown, Settings, UserPlus, Users } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { ClubTabsList, ClubTabsTrigger } from "@/components/club-structure/club-tabs";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { DepartmentForm } from "@/components/club-structure/department-form";
 import { ClubMemberPicker } from "@/components/club-structure/member-picker";
@@ -92,7 +93,7 @@ function DepartmentRoster({
               setPicker(true);
             }}
           >
-            <Plus className="size-4" />
+            <UserPlus className="size-4" />
             {t("addMember")}
           </Button>
         )}
@@ -125,7 +126,9 @@ function DepartmentRoster({
                   size="sm"
                   className="min-h-10 shrink-0 text-destructive sm:min-h-0"
                   disabled={disabled || remove.isPending || add.isPending}
-                  aria-label={t("removeMemberNamed", { name: assignment.member.name })}
+                  aria-label={t("removeMemberNamed", {
+                    name: assignment.member.name,
+                  })}
                   onClick={() => {
                     remove.reset();
                     setRemoving(assignment);
@@ -317,11 +320,22 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
             className="min-h-0 flex-1 gap-0"
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
-            <TabsList variant="line" className="w-full shrink-0 rounded-none border-b px-6 py-3">
-              <TabsTrigger value="roster">{t("roster")}</TabsTrigger>
-              {current.leadership_enabled && <TabsTrigger value="leadership">{t("leadership")}</TabsTrigger>}
-              <TabsTrigger value="settings">{t("settings")}</TabsTrigger>
-            </TabsList>
+            <ClubTabsList className="shrink-0 gap-0">
+              <ClubTabsTrigger value="roster" className="flex-1">
+                <Users aria-hidden="true" />
+                {t("roster")}
+              </ClubTabsTrigger>
+              {current.leadership_enabled && (
+                <ClubTabsTrigger value="leadership" className="flex-1">
+                  <Crown aria-hidden="true" />
+                  {t("leadership")}
+                </ClubTabsTrigger>
+              )}
+              <ClubTabsTrigger value="settings" className="flex-1">
+                <Settings aria-hidden="true" />
+                {t("settings")}
+              </ClubTabsTrigger>
+            </ClubTabsList>
             {!current.active && (
               <p className="border-b bg-muted/40 px-6 py-3 text-xs text-muted-foreground">{t("archivedRosterHint")}</p>
             )}

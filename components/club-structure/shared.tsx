@@ -1,6 +1,7 @@
 "use client";
 
-import { RefreshCw, Users } from "lucide-react";
+import { Building2, Plus, RefreshCw } from "lucide-react";
+import { DEPARTMENT_ICON_COMPONENTS } from "@/lib/department-icons";
 import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -23,7 +24,14 @@ export const DEPARTMENT_COLORS = [
   "#06b6d4",
   "#14b8a6",
 ];
-export const DEPARTMENT_ICONS = ["users", "◈", "⬡", "◇", "◎", "△", "□", "○", "◉", "⬢"];
+export function DepartmentPlusIcon({ className }: { className?: string }) {
+  return (
+    <span aria-hidden="true" className={cn("relative inline-flex size-4 shrink-0", className)}>
+      <Building2 className="size-full" />
+      <Plus className="absolute -bottom-1 -end-1 size-2.5 rounded-sm bg-inherit" strokeWidth={3} />
+    </span>
+  );
+}
 
 export function useDepartmentName() {
   const locale = useLocale();
@@ -32,13 +40,16 @@ export function useDepartmentName() {
 }
 
 export function DepartmentIcon({ icon, color }: Pick<ClubDepartment, "icon" | "color">) {
+  const Icon = Object.hasOwn(DEPARTMENT_ICON_COMPONENTS, icon.toLowerCase())
+    ? DEPARTMENT_ICON_COMPONENTS[icon.toLowerCase()]
+    : DEPARTMENT_ICON_COMPONENTS.users;
   return (
     <span
       aria-hidden="true"
       className="flex size-10 shrink-0 items-center justify-center rounded-lg text-lg"
       style={{ backgroundColor: `${color}22`, color }}
     >
-      {icon === "users" ? <Users className="size-5" /> : <span className="max-w-full truncate">{icon}</span>}
+      <Icon className="size-5" />
     </span>
   );
 }
