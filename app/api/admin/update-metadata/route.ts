@@ -25,11 +25,11 @@ export async function POST(request: NextRequest) {
 
     // Parse request body
     const body = await request.json();
-    const { clerkUserId, uni_id, role } = body;
+    const { clerkUserId, uni_id, email, role } = body;
 
-    if ((!clerkUserId && !uni_id) || !role) {
+    if ((!clerkUserId && !uni_id && !email) || !role) {
       return NextResponse.json(
-        { error: "clerkUserId (or legacy uni_id) and role are required" },
+        { error: "clerkUserId (or legacy uni_id/email) and role are required" },
         { status: 400 }
       );
     }
@@ -44,7 +44,18 @@ export async function POST(request: NextRequest) {
     // haven't re-authenticated since) only have their uni_id-derived email to
     // go on.
     if (!targetUser && uni_id) {
-      const email = `${uni_id}@qu.edu.sa`;
+      const uniEmail = `${uni_id}@qu.edu.sa`;
+      const users = await client.users.getUserList({
+        emailAddress: [uniEmail],
+      });
+      targetUser = users.data?.[0] ?? null;
+    }
+
+    // Second fallback: members added by an admin before their first sign-in
+    // have no clerk_user_id and, if they don't use a uni_id, no derivable
+    // @qu.edu.sa address either - fall back to the member's actual stored
+    // email (e.g. a personal gmail address).
+    if (!targetUser && email) {
       const users = await client.users.getUserList({
         emailAddress: [email],
       });
