@@ -189,7 +189,14 @@
     "card": {
       "noImage": "No image",
       "starts": "Starts:"
-    }
+    },
+    "showingRange": "Showing {from}-{to} of {count, plural, one {# event} other {# events}}",
+    "page": "Page {current} of {total}",
+    "rows": "Per page:",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "searchName": "Search events by name",
+    "noneMatch": "No events match your filters."
   },
   "eventForm": {
     "validation": {

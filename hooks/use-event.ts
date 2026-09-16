@@ -1,6 +1,6 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
-import type { Event, UpdateEventPayload, BackfillMember, AttendanceType } from '@/lib/api-types';
+import type { Event, UpdateEventPayload, BackfillMember, AttendanceType, EventsPageParams } from '@/lib/api-types';
 import type { EventsFilters } from '@/lib/api/resources';
 
 // Query keys
@@ -48,6 +48,20 @@ export function useEvents(filters?: EventsFilters) {
   return useQuery({
     queryKey: eventKeys.list(filters),
     queryFn: () => api.events.list(filters),
+  });
+}
+
+/**
+ * One server-rendered page of events for the admin list. The database does the
+ * paging, semester/status filtering and name search; `keepPreviousData` keeps
+ * the current page on screen while the next loads.
+ */
+export function useEventsPaginated(params: EventsPageParams) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.lists(), 'paginated', params],
+    queryFn: () => api.events.listPaginated(params),
+    placeholderData: keepPreviousData,
   });
 }
 

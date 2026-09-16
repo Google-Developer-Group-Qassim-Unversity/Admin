@@ -171,6 +171,39 @@ export interface GoogleFormData {
 
 export type Gender = "Male" | "Female";
 
+export interface Paginated<T> {
+  items: T[];
+  total: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}
+
+export interface MemberStats {
+  total: number;
+  authenticated: number;
+  manual: number;
+  male: number;
+  female: number;
+}
+
+export interface MembersPageParams {
+  page: number;
+  pageSize: number;
+  search?: string;
+  sortBy?: string;
+  order?: "asc" | "desc";
+}
+
+export interface EventsPageParams {
+  page: number;
+  pageSize: number;
+  semester?: string;
+  status?: "draft" | "open" | "active" | "closed";
+  search?: string;
+  excludeCustom?: boolean;
+}
+
 export interface Member {
   id: number;
   name: string;
