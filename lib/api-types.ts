@@ -479,6 +479,14 @@ export interface AttendanceResponse {
 /** Which shape of attendance to ask for. "me" is the caller's own record. */
 export type AttendanceType = "count" | "detailed" | "me";
 
+/** Response from POST /attendance/{id}/scan */
+export interface ScanAttendanceResponse {
+  status: "marked" | "already_marked";
+  member_id: number;
+  member_name: string;
+  uni_id: string | null;
+}
+
 export type CertificateLanguage = "ar" | "en";
 
 /** "google" sends via the default Gmail threshold-switching system; "ses" is the optional AWS SES path. */

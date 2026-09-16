@@ -7,6 +7,7 @@ import {
   Clock,
   Copy,
   QrCode,
+  Camera,
   RefreshCw,
   Check,
   Timer,
@@ -24,7 +25,7 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -45,6 +46,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import { cn } from '@/lib/utils';
+
+import { CameraScanPanel } from './camera-scan-panel';
 
 interface TokenResponse {
   token: string;
@@ -87,6 +91,8 @@ function saveToken(eventId: number, tokenData: TokenResponse): void {
 
 interface QRCodeCardProps {
   eventId: number;
+  isMultiDay: boolean;
+  dayCount: number;
   children?: React.ReactNode;
 }
 
@@ -127,9 +133,11 @@ function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedCha
   );
 }
 
-export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
+export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCardProps) {
   const t = useTranslations("attendance.qrCode");
   const { getToken } = useAuth();
+  const [mode, setMode] = useState<'qr' | 'camera'>('qr');
+  const [scanDay, setScanDay] = useState('1');
   const [expirationMinutes, setExpirationMinutes] = useState('15');
   const [requireAttendanceTimeWindow, setRequireAttendanceTimeWindow] = useState(true);
   const [requireAttendanceRegistration, setRequireAttendanceRegistration] = useState(true);
@@ -257,9 +265,45 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
         <CardDescription>
           {t('description')}
         </CardDescription>
+        <CardAction>
+          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+            <button
+              type="button"
+              onClick={() => setMode('qr')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                mode === 'qr' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <QrCode className="h-4 w-4" />
+              {t('modeQr')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('camera')}
+              className={cn(
+                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
+                mode === 'camera' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+              )}
+            >
+              <Camera className="h-4 w-4" />
+              {t('modeCamera')}
+            </button>
+          </div>
+        </CardAction>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          {mode === 'camera' ? (
+            <CameraScanPanel
+              eventId={eventId}
+              isMultiDay={isMultiDay}
+              selectedDay={scanDay}
+              onDayChange={setScanDay}
+              dayCount={dayCount}
+            />
+          ) : (
+          <>
           <div className="flex flex-col items-center justify-center">
             {tokenData && !isExpired ? (
               <div className="p-4 bg-white rounded-xl shadow-sm">
@@ -411,6 +455,8 @@ export function QRCodeCard({ eventId, children }: QRCodeCardProps) {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
 
         {children && <div className="mt-8 pt-8 border-t">{children}</div>}
