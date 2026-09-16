@@ -1,9 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Search, X, UserPlus } from "lucide-react";
-import { toast } from "sonner";
-import { useAuth } from "@clerk/nextjs";
+import { Search, X, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +15,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { getMembers } from "@/lib/api";
+import { useMembersPaginated } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
-import { useFuzzySearch } from "@/lib/search-utils";
 import { useTranslations } from "next-intl";
 
 interface MemberSearchDialogProps {
@@ -28,66 +25,60 @@ interface MemberSearchDialogProps {
   onConfirm: (members: Member[]) => void;
 }
 
-const MAX_DISPLAY = 50;
+const PAGE_SIZE = 50;
+
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
 
 export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSearchDialogProps) {
   const t = useTranslations("memberSearch");
   const tc = useTranslations("common.actions");
-  const { getToken } = useAuth();
 
-  const [members, setMembers] = React.useState<Member[]>([]);
-  const [isLoading, setIsLoading] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
-  const [stagedIds, setStagedIds] = React.useState<Set<number>>(new Set());
+  const [page, setPage] = React.useState(1);
+  // Full Member objects, so a staged member survives paging and searching away.
+  const [staged, setStaged] = React.useState<Map<number, Member>>(new Map());
 
-  React.useEffect(() => {
-    async function fetchMembers() {
-      if (!open) return;
-      if (members.length > 0) return;
-
-      setIsLoading(true);
-      const response = await getMembers(getToken);
-      if (response.success) {
-        setMembers([...response.data].sort((a, b) => a.name.localeCompare(b.name)));
-      } else {
-        toast.error(t("loadFailed", { error: response.error.message }));
-      }
-      setIsLoading(false);
-    }
-    fetchMembers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, getToken, members.length]);
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
 
   React.useEffect(() => {
     if (!open) {
-      setStagedIds(new Set());
+      setStaged(new Map());
       setSearchQuery("");
+      setPage(1);
     }
   }, [open]);
 
-  const unselectedMembers = React.useMemo(
-    () => members.filter((m) => !stagedIds.has(m.id)),
-    [members, stagedIds],
+  // A new search is a new result set - back to page one.
+  React.useEffect(() => {
+    setPage(1);
+  }, [debouncedSearch]);
+
+  // The database does the searching and paging; the dialog only fetches while open.
+  const query = useMembersPaginated(
+    { page, pageSize: PAGE_SIZE, search: debouncedSearch || undefined, sortBy: "name", order: "asc" },
+    open,
   );
 
-  const fuzzyResults = useFuzzySearch(unselectedMembers, searchQuery, ["name", "uni_id", "email"], {
-    limit: MAX_DISPLAY,
-  });
+  const items = query.data?.items ?? [];
+  const totalPages = query.data?.total_pages ?? 0;
 
-  const displayMembers = searchQuery.trim() ? fuzzyResults : unselectedMembers.slice(0, MAX_DISPLAY);
-
-  const stagedMembers = React.useMemo(
-    () => members.filter((m) => stagedIds.has(m.id)),
-    [members, stagedIds],
-  );
+  const displayMembers = items.filter((m) => !staged.has(m.id));
+  const stagedMembers = [...staged.values()];
 
   const handleStage = (member: Member) => {
-    setStagedIds((prev) => new Set(prev).add(member.id));
+    setStaged((prev) => new Map(prev).set(member.id, member));
   };
 
   const handleUnstage = (memberId: number) => {
-    setStagedIds((prev) => {
-      const next = new Set(prev);
+    setStaged((prev) => {
+      const next = new Map(prev);
       next.delete(memberId);
       return next;
     });
@@ -98,8 +89,6 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
     onConfirm(stagedMembers);
     onOpenChange(false);
   };
-
-  const showLimitHint = !searchQuery.trim() && members.length - stagedIds.size > MAX_DISPLAY;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -117,21 +106,20 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="ps-9"
-              disabled={isLoading}
             />
           </div>
 
           <div className="border rounded-lg">
             <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
               <h3 className="text-sm font-medium">{t("membersHeading")}</h3>
-              {showLimitHint && (
-                <p className="text-xs text-muted-foreground">
-                  {t("limitHint", { max: MAX_DISPLAY })}
-                </p>
-              )}
+              <p className="text-xs text-muted-foreground">{t("searchAllHint")}</p>
             </div>
-            <div className="h-[200px] overflow-y-auto">
-              {isLoading ? (
+            <div
+              className={`h-[200px] overflow-y-auto transition-opacity ${
+                query.isPlaceholderData ? "opacity-60" : ""
+              }`}
+            >
+              {query.isPending ? (
                 <div className="space-y-2 p-3">
                   {[...Array(4)].map((_, i) => (
                     <div key={i} className="flex items-center justify-between">
@@ -145,7 +133,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                 </div>
               ) : displayMembers.length === 0 ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
-                  {searchQuery.trim() ? t("noneFound") : t("allSelected")}
+                  {debouncedSearch ? t("noneFound") : t("allSelected")}
                 </div>
               ) : (
                 <div className="divide-y">
@@ -174,6 +162,31 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                 </div>
               )}
             </div>
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between border-t px-3 py-2">
+                <span className="text-xs text-muted-foreground">
+                  {t("pageOf", { page, total: totalPages })}
+                </span>
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    disabled={page <= 1 || query.isFetching}
+                    onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="icon-sm"
+                    disabled={page >= totalPages || query.isFetching}
+                    onClick={() => setPage((p) => p + 1)}
+                  >
+                    <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
+                  </Button>
+                </div>
+              </div>
+            )}
           </div>
 
           {stagedMembers.length > 0 && (
@@ -194,11 +207,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                         <p className="text-sm font-medium truncate">{member.name}</p>
                         <p className="text-xs text-muted-foreground">{member.uni_id}</p>
                       </div>
-                      <Button
-                        size="icon-sm"
-                        variant="ghost"
-                        onClick={() => handleUnstage(member.id)}
-                      >
+                      <Button size="icon-sm" variant="ghost" onClick={() => handleUnstage(member.id)}>
                         <X className="h-4 w-4" />
                       </Button>
                     </div>
@@ -213,10 +222,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             {tc("cancel")}
           </Button>
-          <Button
-            onClick={handleConfirm}
-            disabled={stagedMembers.length === 0}
-          >
+          <Button onClick={handleConfirm} disabled={stagedMembers.length === 0}>
             <UserPlus className="me-2 h-4 w-4" />
             {t("confirm", { count: stagedMembers.length })}
           </Button>

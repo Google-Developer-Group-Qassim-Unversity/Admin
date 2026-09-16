@@ -15,12 +15,13 @@ export const memberKeys = {
  * rows on screen while the next page loads, so paging and typing never flash an
  * empty table. Search, sort and paging all happen in the database.
  */
-export function useMembersPaginated(params: MembersPageParams) {
+export function useMembersPaginated(params: MembersPageParams, enabled = true) {
   const api = useApi();
   return useQuery({
     queryKey: memberKeys.paginated(params),
     queryFn: () => api.members.listPaginated(params),
     placeholderData: keepPreviousData,
+    enabled,
   });
 }
 
