@@ -321,17 +321,17 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             <ClubTabsList className="shrink-0 gap-0">
-              <ClubTabsTrigger value="roster" className="flex-1">
+              <ClubTabsTrigger value="roster" className="min-w-0 flex-1 basis-0">
                 <Users aria-hidden="true" />
                 {t("roster")}
               </ClubTabsTrigger>
               {current.leadership_enabled && (
-                <ClubTabsTrigger value="leadership" className="flex-1">
+                <ClubTabsTrigger value="leadership" className="min-w-0 flex-1 basis-0">
                   <Crown aria-hidden="true" />
                   {t("leadership")}
                 </ClubTabsTrigger>
               )}
-              <ClubTabsTrigger value="settings" className="flex-1">
+              <ClubTabsTrigger value="settings" className="min-w-0 flex-1 basis-0">
                 <Settings aria-hidden="true" />
                 {t("settings")}
               </ClubTabsTrigger>
