@@ -13,7 +13,12 @@ import type {
   Event,
   EventDetails,
   EventStatus,
+  EventsPageParams,
   Form,
+  Member,
+  MemberStats,
+  MembersPageParams,
+  Paginated,
   SendCertificatesResponse,
   UpdateEventPayload,
   UpdateFormPayload,
@@ -47,6 +52,18 @@ export function createApi(request: Requester) {
           semester: filters?.semester === "all" ? undefined : filters?.semester,
           start_date: filters?.startDate ? format(filters.startDate, "yyyy-MM-dd") : undefined,
           end_date: filters?.endDate ? format(filters.endDate, "yyyy-MM-dd") : undefined,
+        },
+      }),
+
+    listPaginated: (params: EventsPageParams) =>
+      request.json<Paginated<Event>>("/events/paginated", {
+        query: {
+          page: params.page,
+          page_size: params.pageSize,
+          semester: params.semester && params.semester !== "all" ? params.semester : undefined,
+          status: params.status,
+          search: params.search?.trim() ? params.search.trim() : undefined,
+          exclude_custom: params.excludeCustom ? true : undefined,
         },
       }),
 
@@ -141,7 +158,22 @@ export function createApi(request: Requester) {
       request.json<Form>(`/forms/${formId}/`, { method: "PUT", body: payload }),
   };
 
-  return { events, eventStatus, attendance, certificates, actions, departments, forms };
+  const members = {
+    listPaginated: (params: MembersPageParams) =>
+      request.json<Paginated<Member>>("/members/paginated", {
+        query: {
+          page: params.page,
+          page_size: params.pageSize,
+          search: params.search?.trim() ? params.search.trim() : undefined,
+          sort_by: params.sortBy,
+          order: params.order,
+        },
+      }),
+
+    stats: () => request.json<MemberStats>("/members/stats"),
+  };
+
+  return { events, eventStatus, attendance, certificates, actions, departments, forms, members };
 }
 
 export type Api = ReturnType<typeof createApi>;

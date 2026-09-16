@@ -189,7 +189,14 @@
     "card": {
       "noImage": "لا توجد صورة",
       "starts": "يبدأ:"
-    }
+    },
+    "showingRange": "عرض {from}-{to} من {count, plural, zero {# فعالية} one {# فعالية} two {# فعاليتين} few {# فعاليات} many {# فعالية} other {# فعالية}}",
+    "page": "صفحة {current} من {total}",
+    "rows": "لكل صفحة:",
+    "statusFilter": "الحالة",
+    "allStatuses": "كل الحالات",
+    "searchName": "ابحث عن الفعاليات بالاسم",
+    "noneMatch": "لا توجد فعاليات مطابقة للتصفية."
   },
   "eventForm": {
     "validation": {
