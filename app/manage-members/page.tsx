@@ -15,6 +15,7 @@ import {
   ArrowUpDown,
   AlertCircle,
   UserPlus,
+  Users,
   Upload,
   Search,
   Columns3,
@@ -53,6 +54,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { PageHeader } from "@/components/page-header";
 import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 import { BatchImportDialog } from "@/components/manage-members/batch-import-dialog";
 
@@ -252,22 +254,16 @@ export default function ManageMembersPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
-            <Upload className="h-4 w-4 me-2" />
-            {t("batchImport")}
-          </Button>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            <UserPlus className="h-4 w-4 me-2" />
-            {createMemberT("createMember")}
-          </Button>
-        </div>
-      </div>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Users}>
+        <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
+          <Upload className="h-4 w-4 me-2" />
+          {t("batchImport")}
+        </Button>
+        <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <UserPlus className="h-4 w-4 me-2" />
+          {createMemberT("createMember")}
+        </Button>
+      </PageHeader>
 
       {stats && (
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">

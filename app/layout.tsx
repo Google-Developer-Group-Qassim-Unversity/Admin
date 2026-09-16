@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Figtree, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist, Geist_Mono, Manrope, Outfit, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 
@@ -7,14 +7,27 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { DirectionProvider } from "@/components/direction-provider";
 import { ClerkProviderWrapper } from "@/components/clerk-provider-wrapper";
 import { QueryProvider } from "@/lib/query-provider";
-import { ConditionalNavbar, ConditionalWrapper } from "@/components/conditional-navbar";
+import { AppShell } from "@/components/app-shell";
 import { Toaster } from "@/components/ui/sonner";
 import { getDirection } from "@/i18n/config";
 import { getLocale } from "@/i18n/locale";
 
-const figtree = Figtree({ subsets: ["latin"], variable: "--font-latin" });
+// Manrope carries the UI text, Outfit the display sizes - headings, figures,
+// the numbers on the dashboard tiles. Outfit is the closest open face to
+// Google Sans, which is not licensed for use outside Google's own products.
+const manrope = Manrope({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-latin",
+});
 
-// Figtree and Geist carry no Arabic glyphs. This sits behind them in the stack
+const outfit = Outfit({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-display-latin",
+});
+
+// Manrope, Outfit and Geist carry no Arabic glyphs. This sits behind them in the stack
 // so Arabic renders properly in either locale - member names and event titles
 // are often Arabic even while the UI is in English.
 const plexArabic = IBM_Plex_Sans_Arabic({
@@ -53,7 +66,7 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${figtree.variable} ${plexArabic.variable}`}
+      className={`${manrope.variable} ${outfit.variable} ${plexArabic.variable}`}
       suppressHydrationWarning
     >
       <body
@@ -69,10 +82,7 @@ export default async function RootLayout({
             <ClerkProviderWrapper locale={locale}>
               <DirectionProvider dir={dir}>
                 <QueryProvider>
-                  <div className="relative min-h-screen flex flex-col">
-                    <ConditionalNavbar />
-                    <ConditionalWrapper>{children}</ConditionalWrapper>
-                  </div>
+                  <AppShell>{children}</AppShell>
                   <Toaster />
                 </QueryProvider>
               </DirectionProvider>

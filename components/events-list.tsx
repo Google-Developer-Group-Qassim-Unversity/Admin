@@ -3,7 +3,10 @@
 import * as React from "react";
 import { useTranslations } from "next-intl";
 
+import { LayoutGrid, Rows3 } from "lucide-react";
+
 import { EventCard } from "@/components/event-card";
+import { EventsTable } from "@/components/events-table";
 import { EventFilters } from "@/components/event-filters";
 import type { Event, LocationType } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
@@ -20,6 +23,9 @@ export function EventsList({
   onSemesterChange, 
 }: EventsListProps) {
   const t = useTranslations("events");
+  // The table is the default: it is the view that shows what each event is
+  // waiting for. Cards stay for browsing by poster.
+  const [view, setView] = React.useState<"table" | "cards">("table");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [locationTypes, setLocationTypes] = React.useState<LocationType[]>([]);
   const [selectedLocations, setSelectedLocations] = React.useState<string[]>([]);
@@ -83,15 +89,49 @@ export function EventsList({
         onSemesterChange={onSemesterChange}
       />
 
-      {filteredEvents.length > 0 ? (
+      <div className="flex items-center gap-2">
+        <span className="text-muted-foreground text-xs">
+          {t("showing", { count: filteredEvents.length })}
+        </span>
+        <div className="border-border ms-auto flex items-center gap-0.5 rounded-lg border p-0.5">
+          <button
+            type="button"
+            onClick={() => setView("table")}
+            aria-pressed={view === "table"}
+            title={t("view.table")}
+            className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
+              view === "table" ? "bg-muted text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <Rows3 className="h-4 w-4" />
+            <span className="sr-only">{t("view.table")}</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setView("cards")}
+            aria-pressed={view === "cards"}
+            title={t("view.cards")}
+            className={`flex h-7 w-8 items-center justify-center rounded-md transition-colors ${
+              view === "cards" ? "bg-muted text-foreground" : "text-muted-foreground"
+            }`}
+          >
+            <LayoutGrid className="h-4 w-4" />
+            <span className="sr-only">{t("view.cards")}</span>
+          </button>
+        </div>
+      </div>
+
+      {filteredEvents.length === 0 ? (
+        <div className="text-muted-foreground py-12 text-center">
+          {t("noneMatchFilters")}
+        </div>
+      ) : view === "table" ? (
+        <EventsTable events={filteredEvents} />
+      ) : (
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}
-        </div>
-      ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          {t("noneMatchFilters")}
         </div>
       )}
     </div>

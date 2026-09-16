@@ -6,6 +6,7 @@ import {
   CalendarPlus,
   AlertCircle,
   Calendar,
+  CalendarDays,
   Search,
   ChevronLeft,
   ChevronRight,
@@ -20,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EventCard } from "@/components/event-card";
+import { PageHeader } from "@/components/page-header";
 import { useEventsPaginated } from "@/hooks/use-event";
 import { useSemesterOptions } from "@/hooks/use-semesters";
 import { ApiRequestError } from "@/lib/api/errors";
@@ -74,16 +76,14 @@ export default function ManageEventsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={CalendarDays}>
         <Button asChild>
           <Link href="/events/create" className="flex items-center gap-2">
             <CalendarPlus className="h-4 w-4" />
             {t("create")}
           </Link>
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Filter bar: search + semester + status */}
       <div className="flex flex-wrap items-center gap-2">
