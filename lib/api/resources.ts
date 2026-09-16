@@ -23,6 +23,15 @@ import type {
   UpdateEventPayload,
   UpdateFormPayload,
 } from "@/lib/api-types";
+import type {
+  ClubAssignment,
+  ClubDepartment,
+  ClubOverview,
+  DepartmentSettings,
+  LeadershipRole,
+  PresidentSlot,
+  ReplaceClubAssignment,
+} from "@/lib/club-structure-types";
 
 export interface EventsFilters {
   semester?: string;
@@ -173,7 +182,36 @@ export function createApi(request: Requester) {
     stats: () => request.json<MemberStats>("/members/stats"),
   };
 
-  return { events, eventStatus, attendance, certificates, actions, departments, forms, members };
+  const clubStructure = {
+    overview: (includeArchived = false) =>
+      request.json<ClubOverview>("/club-structure", { query: { include_archived: includeArchived } }),
+    department: (id: number) => request.json<ClubDepartment>(`/club-structure/departments/${id}`),
+    roster: (id: number) => request.json<ClubAssignment[]>(`/club-structure/departments/${id}/roster`),
+    createDepartment: (body: DepartmentSettings) =>
+      request.json<ClubDepartment>("/club-structure/departments", { method: "POST", body }),
+    updateDepartment: (id: number, body: DepartmentSettings) =>
+      request.json<ClubDepartment>(`/club-structure/departments/${id}`, { method: "PUT", body }),
+    setActive: (id: number, active: boolean) =>
+      request.json<ClubDepartment>(`/club-structure/departments/${id}/${active ? "restore" : "archive"}`, {
+        method: "POST",
+      }),
+    addMember: (id: number, memberId: number) =>
+      request.json<ClubAssignment>(`/club-structure/departments/${id}/members`, {
+        method: "POST", body: { member_id: memberId },
+      }),
+    removeMember: (id: number, memberId: number, expectedAssignmentId: number) =>
+      request.json<ClubAssignment>(`/club-structure/departments/${id}/members/${memberId}`, {
+        method: "DELETE", query: { expected_assignment_id: expectedAssignmentId },
+      }),
+    replaceLeadership: (id: number, role: LeadershipRole, body: ReplaceClubAssignment) =>
+      request.json<ClubAssignment | null>(`/club-structure/departments/${id}/leadership/${role}`, {
+        method: "PUT", body,
+      }),
+    replacePresident: (slot: PresidentSlot, body: ReplaceClubAssignment) =>
+      request.json<ClubAssignment | null>(`/club-structure/presidents/${slot}`, { method: "PUT", body }),
+  };
+
+  return { events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure };
 }
 
 export type Api = ReturnType<typeof createApi>;

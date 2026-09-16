@@ -9,6 +9,7 @@ import {
   LayoutDashboard,
   Mail,
   Menu,
+  Network,
   Search,
   Settings,
   ShieldCheck,
@@ -55,6 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
     key: "people",
     items: [
       { href: "/manage-members", key: "members", icon: Users },
+      { href: "/club-structure", key: "clubStructure", icon: Network },
       { href: "/manage-admins", key: "admins", icon: ShieldCheck },
     ],
   },
