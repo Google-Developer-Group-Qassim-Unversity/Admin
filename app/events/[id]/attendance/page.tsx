@@ -36,7 +36,7 @@ export default function EventAttendancePage() {
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
-      <QRCodeCard eventId={event.id}>
+      <QRCodeCard eventId={event.id} isMultiDay={isMultiDay} dayCount={dayCount}>
         <EventStatusItem
           event={event}
           isEventClosed={isEventClosed}

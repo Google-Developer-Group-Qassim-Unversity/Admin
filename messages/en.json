@@ -886,6 +886,8 @@
       "allReceived": "All attendees have received certificates."
     },
     "qrCode": {
+      "modeQr": "QR Code",
+      "modeCamera": "Camera",
       "expirationOptions": {
         "15": "15 minutes",
         "30": "30 minutes",
@@ -963,6 +965,21 @@
       "removeButton": "{count, plural, =0 {Remove Members} one {Remove # Member} other {Remove # Members}}",
       "forDay": " for Day {day}",
       "copyAttendance": "Copy Attendance"
+    },
+    "scan": {
+      "hint": "Point the camera at a member's wallet QR code",
+      "startCamera": "Start Camera",
+      "stopCamera": "Stop Camera",
+      "cameraStartFailed": "Could not start camera: {error}",
+      "notFound": "Not a valid wallet QR code",
+      "mute": "Mute sound",
+      "unmute": "Unmute sound",
+      "noScansYet": "No scans yet",
+      "scanCount": "{count, plural, one {# scan} other {# scans}}",
+      "day": "Day {number}",
+      "markedLabel": "Checked in",
+      "alreadyMarkedLabel": "Already checked in",
+      "invalidLabel": "Invalid QR"
     },
     "backfill": {
       "pasteTokenFirst": "Please paste an export token",

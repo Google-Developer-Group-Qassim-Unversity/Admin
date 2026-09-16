@@ -19,6 +19,7 @@ import type {
   MemberStats,
   MembersPageParams,
   Paginated,
+  ScanAttendanceResponse,
   SendCertificatesResponse,
   UpdateEventPayload,
   UpdateFormPayload,
@@ -141,6 +142,12 @@ export function createApi(request: Requester) {
       request.json<BackfillResponse>(`/attendance/${eventId}/backfill`, {
         method: "POST",
         body: { members, day },
+      }),
+
+    scan: (eventId: number, uuid: string, day?: number) =>
+      request.json<ScanAttendanceResponse>(`/attendance/${eventId}/scan`, {
+        method: "POST",
+        body: { uuid, day },
       }),
   };
 

@@ -268,6 +268,17 @@ export function useRemoveAttendanceManual() {
   });
 }
 
+export function useScanAttendance() {
+  const api = useApi();
+  const onAttendanceChanged = useAttendanceInvalidation();
+
+  return useMutation({
+    mutationFn: ({ eventId, uuid, day }: { eventId: number; uuid: string; day?: number }) =>
+      api.attendance.scan(eventId, uuid, day),
+    onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
+  });
+}
+
 export function useCopyAttendance() {
   const api = useApi();
   const onAttendanceChanged = useAttendanceInvalidation();

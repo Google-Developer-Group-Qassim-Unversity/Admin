@@ -886,6 +886,8 @@
       "allReceived": "كل الحاضرين استلموا شهاداتهم."
     },
     "qrCode": {
+      "modeQr": "رمز QR",
+      "modeCamera": "الكاميرا",
       "expirationOptions": {
         "15": "15 دقيقة",
         "30": "30 دقيقة",
@@ -963,6 +965,21 @@
       "removeButton": "{count, plural, =0 {حذف الأعضاء} one {حذف عضو وحد} two {حذف عضوين} few {حذف # أعضاء} many {حذف # عضو} other {حذف # عضو}}",
       "forDay": " لليوم {day}",
       "copyAttendance": "نسخ الحضور"
+    },
+    "scan": {
+      "hint": "وجّه الكاميرا نحو رمز QR في محفظة العضو",
+      "startCamera": "تشغيل الكاميرا",
+      "stopCamera": "إيقاف الكاميرا",
+      "cameraStartFailed": "تعذر تشغيل الكاميرا: {error}",
+      "notFound": "رمز QR غير صالح",
+      "mute": "كتم الصوت",
+      "unmute": "تفعيل الصوت",
+      "noScansYet": "ما فيه عمليات مسح بعد",
+      "scanCount": "{count, plural, =0 {} one {مسح وحد} two {مسحين} few {# مسحات} many {# مسح} other {# مسح}}",
+      "day": "اليوم {number}",
+      "markedLabel": "تم التسجيل",
+      "alreadyMarkedLabel": "مسجل من قبل",
+      "invalidLabel": "رمز غير صالح"
     },
     "backfill": {
       "pasteTokenFirst": "يرجى لصق رمز التصدير",
