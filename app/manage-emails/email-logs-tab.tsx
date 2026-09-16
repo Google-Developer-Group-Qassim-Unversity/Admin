@@ -21,10 +21,14 @@ interface EmailLogsTabProps {
   onLogsLoaded?: (logs: EnrichedEmailLog[]) => void;
 }
 
+const LOGS_PAGE_SIZE = 100;
+
 export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
   const t = useTranslations("manageEmails.logsTab");
+  const tp = useTranslations("manageEmails.pagination");
   const { getToken } = useAuth();
   const [logs, setLogs] = React.useState<EnrichedEmailLog[]>([]);
+  const [page, setPage] = React.useState(1);
   const [filters, setFilters] = React.useState<EmailLogFilters>({});
   const [isLive, setIsLive] = React.useState(true);
   const [isStreaming, setIsStreaming] = React.useState(false);
@@ -53,10 +57,12 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
   const handleFiltersChange = React.useCallback((newFilters: EmailLogFilters) => {
     setFilters(newFilters);
     setLogs([]);
+    setPage(1);
   }, []);
 
   const handleLiveToggle = React.useCallback((live: boolean) => {
     setIsLive(live);
+    setPage(1);
     if (live) {
       setFilters((prev) => ({ ...prev, start_date: undefined, end_date: undefined }));
       setLogs([]);
@@ -68,7 +74,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
 
     async function loadInitial() {
       setIsLoading(true);
-      const result = await getEmailLogsEnriched(filters, 0, 200, getToken);
+      const result = await getEmailLogsEnriched(filters, (page - 1) * LOGS_PAGE_SIZE, LOGS_PAGE_SIZE, getToken);
       if (!cancelled && result.success) {
         setLogs(result.data);
         onLogsLoaded?.(result.data);
@@ -144,7 +150,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         abortRef.current.abort();
       }
     };
-  }, [filters, isLive, getToken, onLogsLoaded, markNew]);
+  }, [filters, isLive, page, getToken, onLogsLoaded, markNew]);
 
   const handleViewHtml = (html: string, subject: string) => {
     setHtmlPreview({ open: true, html, subject });
@@ -166,7 +172,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         onLiveToggle={handleLiveToggle}
       />
 
-      <div className="rounded-lg border bg-muted/30">
+      <div className="rounded-lg border bg-card">
         <div className="flex items-center justify-between px-3 py-2 border-b">
           <div className="flex items-center gap-2">
             <span className="text-xs text-muted-foreground">
@@ -221,6 +227,31 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
             </div>
           )}
         </ScrollArea>
+        {!isLive && (
+          <div className="flex items-center justify-between border-t px-3 py-2">
+            <span className="text-xs text-muted-foreground">{tp("page", { page })}</span>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={page <= 1 || isLoading}
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+              >
+                {tp("prev")}
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs"
+                disabled={logs.length < LOGS_PAGE_SIZE || isLoading}
+                onClick={() => setPage((p) => p + 1)}
+              >
+                {tp("next")}
+              </Button>
+            </div>
+          </div>
+        )}
       </div>
 
       <HtmlPreviewDialog

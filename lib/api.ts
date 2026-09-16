@@ -596,11 +596,12 @@ export async function getEmailJob(
 }
 
 export async function listEmailJobs(
-  params?: { limit?: number; status?: EmailJobStatus },
+  params?: { limit?: number; offset?: number; status?: EmailJobStatus },
   getToken?: GetTokenFn
 ): Promise<ApiResponse<EmailJobModel[]>> {
   const query = new URLSearchParams();
   if (params?.limit) query.set("limit", String(params.limit));
+  if (params?.offset) query.set("offset", String(params.offset));
   if (params?.status) query.set("status", params.status);
   const qs = query.toString();
   return apiFetch<EmailJobModel[]>(`/emails/jobs${qs ? `?${qs}` : ""}`, {}, getToken);

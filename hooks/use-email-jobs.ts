@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { getEmailJob, listEmailJobs, listUnfinishedEmailJobs } from "@/lib/api";
 import type { EmailJobStatus } from "@/lib/api-types";
 
@@ -8,7 +8,8 @@ const UNFINISHED_POLL_INTERVAL_MS = 15000;
 
 export const emailJobKeys = {
   all: ["email-jobs"] as const,
-  list: (params?: { limit?: number; status?: EmailJobStatus }) => [...emailJobKeys.all, "list", params] as const,
+  list: (params?: { limit?: number; offset?: number; status?: EmailJobStatus }) =>
+    [...emailJobKeys.all, "list", params] as const,
   unfinished: () => [...emailJobKeys.all, "unfinished"] as const,
   detail: (jobId: number) => [...emailJobKeys.all, "detail", jobId] as const,
 };
@@ -33,7 +34,7 @@ export function useEmailJob(jobId: number | null | undefined, getToken: () => Pr
 }
 
 export function useEmailJobs(
-  params: { limit?: number; status?: EmailJobStatus },
+  params: { limit?: number; offset?: number; status?: EmailJobStatus },
   getToken: () => Promise<string | null>
 ) {
   return useQuery({
@@ -45,6 +46,7 @@ export function useEmailJobs(
       }
       return result.data;
     },
+    placeholderData: keepPreviousData,
   });
 }
 

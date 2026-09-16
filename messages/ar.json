@@ -620,6 +620,11 @@
       "matched": "مطابقة",
       "unmatched": "غير مطابقة",
       "failedToQueue": "{count, plural, one {فشلت إضافة # للطابور} two {فشلت إضافة # للطابور} few {فشلت إضافة # للطابور} many {فشلت إضافة # للطابور} other {فشلت إضافة # للطابور}}"
+    },
+    "pagination": {
+      "prev": "السابق",
+      "next": "التالي",
+      "page": "صفحة {page}"
     }
   },
   "memberSearch": {
@@ -633,7 +638,11 @@
     "allSelected": "كل الأعضاء متحددين.",
     "add": "إضافة",
     "selectedHeading": "المحددين ({count})",
-    "confirm": "{count, plural, =0 {إضافة أعضاء} one {إضافة عضو} two {إضافة عضوين} few {إضافة # أعضاء} many {إضافة # عضو} other {إضافة # عضو}}"
+    "confirm": "{count, plural, =0 {إضافة أعضاء} one {إضافة عضو} two {إضافة عضوين} few {إضافة # أعضاء} many {إضافة # عضو} other {إضافة # عضو}}",
+    "prev": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {page} من {total}",
+    "searchAllHint": "ابحث في كل الأعضاء"
   },
   "jobStatus": {
     "nouns": {

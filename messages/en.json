@@ -620,6 +620,11 @@
       "matched": "Matched",
       "unmatched": "Unmatched",
       "failedToQueue": "{count, plural, one {# Failed to queue} other {# Failed to queue}}"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {page}"
     }
   },
   "memberSearch": {
@@ -633,7 +638,11 @@
     "allSelected": "All members have been selected.",
     "add": "Add",
     "selectedHeading": "Selected ({count})",
-    "confirm": "{count, plural, =0 {Add Members} one {Add Member} other {Add # Members}}"
+    "confirm": "{count, plural, =0 {Add Members} one {Add Member} other {Add # Members}}",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "searchAllHint": "Search across all members"
   },
   "jobStatus": {
     "nouns": {

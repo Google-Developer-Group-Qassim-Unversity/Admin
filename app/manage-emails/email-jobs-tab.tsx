@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -93,13 +94,26 @@ function JobRow({ job }: { job: EmailJobModel }) {
   );
 }
 
+const JOBS_PAGE_SIZE = 50;
+
 export function EmailJobsTab() {
   const t = useTranslations("manageEmails.jobs");
+  const tp = useTranslations("manageEmails.pagination");
   const { getToken } = useAuth();
   const [statusFilter, setStatusFilter] = React.useState<EmailJobStatus | "all">("all");
+  const [page, setPage] = React.useState(1);
+
+  // A new filter is a new result set - start back at page one.
+  React.useEffect(() => {
+    setPage(1);
+  }, [statusFilter]);
 
   const jobsQuery = useEmailJobs(
-    { limit: 100, status: statusFilter === "all" ? undefined : statusFilter },
+    {
+      limit: JOBS_PAGE_SIZE,
+      offset: (page - 1) * JOBS_PAGE_SIZE,
+      status: statusFilter === "all" ? undefined : statusFilter,
+    },
     getToken
   );
   const unfinishedQuery = useUnfinishedEmailJobs(getToken);
@@ -140,7 +154,7 @@ export function EmailJobsTab() {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-muted/30">
+      <div className="rounded-lg border bg-card">
         <ScrollArea className="h-[480px]">
           {jobsQuery.isLoading ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
@@ -159,6 +173,29 @@ export function EmailJobsTab() {
             </div>
           )}
         </ScrollArea>
+        <div className="flex items-center justify-between border-t px-3 py-2">
+          <span className="text-xs text-muted-foreground">{tp("page", { page })}</span>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={page <= 1 || jobsQuery.isFetching}
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+            >
+              {tp("prev")}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs"
+              disabled={jobs.length < JOBS_PAGE_SIZE || jobsQuery.isFetching}
+              onClick={() => setPage((p) => p + 1)}
+            >
+              {tp("next")}
+            </Button>
+          </div>
+        </div>
       </div>
     </div>
   );
