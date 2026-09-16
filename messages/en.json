@@ -215,7 +215,16 @@
     "admins": "Admins",
     "settings": "Settings",
     "menu": "Menu",
-    "toggleMenu": "Toggle menu"
+    "toggleMenu": "Toggle menu",
+    "emails": "Emails",
+    "consoleLabel": "Admin console",
+    "searchPlaceholder": "Search events, members, pages…",
+    "groups": {
+      "operate": "Operate",
+      "people": "People",
+      "engage": "Engage",
+      "system": "System"
+    }
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -326,7 +335,41 @@
     "card": {
       "noImage": "No image",
       "starts": "Starts:"
-    }
+    },
+    "showingRange": "Showing {from}-{to} of {count, plural, one {# event} other {# events}}",
+    "page": "Page {current} of {total}",
+    "rows": "Per page:",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "searchName": "Search events by name",
+    "noneMatch": "No events match your filters.",
+    "official": "Official",
+    "unofficial": "Internal",
+    "showing": "{count, plural, one {# event} other {# events}}",
+    "view": {
+      "table": "Table view",
+      "cards": "Card view"
+    },
+    "columns": {
+      "event": "Event",
+      "status": "Status",
+      "when": "When",
+      "where": "Where",
+      "next": "Next step"
+    },
+    "when": {
+      "today": "today",
+      "inDays": "{days, plural, one {tomorrow} other {in # days}}",
+      "agoDays": "{days, plural, one {yesterday} other {# days ago}}"
+    },
+    "nextStep": {
+      "publish": "Attach form & publish",
+      "review": "Review registrations",
+      "attend": "Take attendance",
+      "close": "Close & award points",
+      "done": "Nothing to do"
+    },
+    "subtitle": "Create, publish, and track every event."
   },
   "eventForm": {
     "validation": {
@@ -714,6 +757,11 @@
       "matched": "Matched",
       "unmatched": "Unmatched",
       "failedToQueue": "{count, plural, one {# Failed to queue} other {# Failed to queue}}"
+    },
+    "pagination": {
+      "prev": "Previous",
+      "next": "Next",
+      "page": "Page {page}"
     }
   },
   "memberSearch": {
@@ -727,7 +775,11 @@
     "allSelected": "All members have been selected.",
     "add": "Add",
     "selectedHeading": "Selected ({count})",
-    "confirm": "{count, plural, =0 {Add Members} one {Add Member} other {Add # Members}}"
+    "confirm": "{count, plural, =0 {Add Members} one {Add Member} other {Add # Members}}",
+    "prev": "Previous",
+    "next": "Next",
+    "pageOf": "Page {page} of {total}",
+    "searchAllHint": "Search across all members"
   },
   "jobStatus": {
     "nouns": {
@@ -1053,7 +1105,9 @@
     "loadingEvents": "Loading events...",
     "noneYetTitle": "No Custom Events Yet",
     "noneYetDescription": "Get started by creating your first custom point event.",
-    "createFirst": "Create Your First Custom Event"
+    "createFirst": "Create Your First Custom Event",
+    "title": "Points",
+    "subtitle": "Award and manage points for custom, non-attendance activities."
   },
   "fullEvents": {
     "title": "Full Events Points",
@@ -1565,7 +1619,14 @@
     "unpublishing": "Unpublishing...",
     "publishing": "Publishing...",
     "unpublish": "Unpublish",
-    "publish": "Publish"
+    "publish": "Publish",
+    "qrCodeTitle": "Event QR Code",
+    "qrCodeDescription": "Scan or share this QR code to open the event page.",
+    "copyQrCode": "Copy QR Image",
+    "downloadQrCode": "Download QR Image",
+    "qrCopied": "QR code copied to clipboard.",
+    "qrCopyFailed": "Failed to copy QR code. Please try again.",
+    "qrDownloadFailed": "Failed to download QR code. Please try again."
   },
   "memberSelectDialog": {
     "loading": "Loading members…",
@@ -1639,5 +1700,62 @@
     "save": "Save",
     "openLink": "Open meeting link",
     "removeLink": "Remove meeting link"
+  },
+  "palette": {
+    "title": "Command palette",
+    "description": "Jump to a page, an event, or start something new.",
+    "placeholder": "Type a command or search…",
+    "empty": "Nothing matches that.",
+    "actions": "Actions",
+    "goTo": "Go to",
+    "events": "Events",
+    "newEvent": "Create an event",
+    "grantPoints": "Grant custom points",
+    "addMember": "Add a member",
+    "resetCache": "Rebuild the leaderboard"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "summaryLoading": "Checking what needs you…",
+    "summary": "{live, plural, =0 {Nothing is running right now.} one {One event is running right now.} other {# events are running right now.}} {open, plural, =0 {No registrations are open.} one {One more is open for registration.} other {# more are open for registration.}}",
+    "newEvent": "New event",
+    "allEvents": "All events",
+    "attention": "Needs your attention",
+    "pipeline": "Event pipeline",
+    "eventCount": "{count, plural, one {# event} other {# events}}",
+    "allClearTitle": "Nothing waiting on you",
+    "allClearBody": "No overdue events, stale drafts or unsent certificates. Enjoy it.",
+    "tiles": {
+      "open": "Open for registration",
+      "openHint": "Members can still sign up",
+      "live": "Running now",
+      "liveNone": "Nothing is live",
+      "members": "Members",
+      "membersHint": "{verified} verified · {pending} pending",
+      "emails": "Emails sent (24h)",
+      "emailsHint": "Across every provider"
+    },
+    "queue": {
+      "overdue": {
+        "title": "Attendance never closed",
+        "detail": "ended {days, plural, one {# day} other {# days}} ago, points not awarded",
+        "action": "Close event"
+      },
+      "draft": {
+        "title": "Draft has never been published",
+        "detail": "created {days, plural, one {# day} other {# days}} ago",
+        "action": "Finish setup"
+      },
+      "closingSoon": {
+        "title": "Starts soon — review the registrations",
+        "detail": "{days, plural, =0 {starts today} one {starts tomorrow} other {starts in # days}}",
+        "action": "Review"
+      },
+      "certificates": {
+        "title": "{count, plural, one {# certificate} other {# certificates}} ready to send",
+        "detail": "closed {days, plural, one {# day} other {# days}} ago",
+        "action": "Send"
+      }
+    }
   }
 }

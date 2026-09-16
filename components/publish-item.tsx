@@ -15,11 +15,12 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Check, Upload, Loader2, ExternalLink, Lock, Copy } from 'lucide-react';
+import { Check, Upload, Loader2, ExternalLink, Lock, Copy, QrCode } from 'lucide-react';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
 import { config } from '@/lib/config';
+import { EventQrCodeDialog } from '@/components/event-qr-code-dialog';
 
 interface PublishItemProps {
   event: Event;
@@ -126,6 +127,15 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
               <Button variant="outline" size="sm" onClick={handleCopyLink}>
                 <Copy className="h-4 w-4" />
               </Button>
+              <EventQrCodeDialog
+                url={`${config.memberAppUrl}/events/${event.id}`}
+                eventName={event.name}
+                trigger={
+                  <Button variant="outline" size="sm">
+                    <QrCode className="h-4 w-4" />
+                  </Button>
+                }
+              />
               <Button variant="outline" size="sm" asChild>
                 <a
                   href={`${config.memberAppUrl}/events/${event.id}`}

@@ -1,19 +1,49 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { createMemberManual, batchCreateMembers } from '@/lib/api';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
-import type { ManualMemberCreateRequest, BatchCreateMemberItem } from '@/lib/api-types';
+import { getMembers, createMemberManual, batchCreateMembers, ApiRequestError } from '@/lib/api';
+import type { ManualMemberCreateRequest, BatchCreateMemberItem, MembersPageParams } from '@/lib/api-types';
 
 export const memberKeys = {
   all: ['members'] as const,
   list: () => [...memberKeys.all, 'list'] as const,
+  paginated: (params: MembersPageParams) => [...memberKeys.all, 'paginated', params] as const,
+  stats: () => [...memberKeys.all, 'stats'] as const,
 };
 
-export function useMembers(enabled = true) {
+/**
+ * One server-rendered page of members. `keepPreviousData` holds the current
+ * rows on screen while the next page loads, so paging and typing never flash an
+ * empty table. Search, sort and paging all happen in the database.
+ */
+export function useMembersPaginated(params: MembersPageParams, enabled = true) {
   const api = useApi();
   return useQuery({
-    queryKey: memberKeys.list(),
-    queryFn: () => api.members.list(),
+    queryKey: memberKeys.paginated(params),
+    queryFn: () => api.members.listPaginated(params),
+    placeholderData: keepPreviousData,
     enabled,
+  });
+}
+
+/** Whole-table member counts for the page cards - one cheap grouped query. */
+export function useMemberStats() {
+  const api = useApi();
+  return useQuery({
+    queryKey: memberKeys.stats(),
+    queryFn: () => api.members.stats(),
+  });
+}
+
+export function useMembers(getToken: () => Promise<string | null>) {
+  return useQuery({
+    queryKey: memberKeys.list(),
+    queryFn: async () => {
+      const result = await getMembers(getToken);
+      if (!result.success) {
+        throw new ApiRequestError(result.error);
+      }
+      return result.data;
+    },
   });
 }
 

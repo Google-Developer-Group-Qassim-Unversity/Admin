@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useAuth } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { MemberSelectDialog } from "@/components/member-select-dialog";
 import { useMembers } from "@/hooks/use-members";
@@ -22,7 +23,8 @@ export function ClubMemberPicker({
 }) {
   const t = useTranslations("clubStructure");
   const describeError = useClubError();
-  const members = useMembers();
+  const { getToken } = useAuth();
+  const members = useMembers(getToken);
   const options = useMemo(
     () =>
       (members.data ?? [])

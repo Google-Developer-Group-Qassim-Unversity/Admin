@@ -215,7 +215,16 @@
     "admins": "المشرفين",
     "settings": "الإعدادات",
     "menu": "القائمة",
-    "toggleMenu": "فتح القائمة"
+    "toggleMenu": "فتح القائمة",
+    "emails": "البريد",
+    "consoleLabel": "لوحة الإدارة",
+    "searchPlaceholder": "ابحث عن فعالية أو عضو أو صفحة…",
+    "groups": {
+      "operate": "التشغيل",
+      "people": "الأشخاص",
+      "engage": "التواصل",
+      "system": "النظام"
+    }
   },
   "theme": {
     "toggle": "تغيير المظهر",
@@ -326,7 +335,41 @@
     "card": {
       "noImage": "لا توجد صورة",
       "starts": "يبدأ:"
-    }
+    },
+    "showingRange": "عرض {from}-{to} من {count, plural, zero {# فعالية} one {# فعالية} two {# فعاليتين} few {# فعاليات} many {# فعالية} other {# فعالية}}",
+    "page": "صفحة {current} من {total}",
+    "rows": "لكل صفحة:",
+    "statusFilter": "الحالة",
+    "allStatuses": "كل الحالات",
+    "searchName": "ابحث عن الفعاليات بالاسم",
+    "noneMatch": "لا توجد فعاليات مطابقة للتصفية.",
+    "official": "رسمية",
+    "unofficial": "داخلية",
+    "showing": "{count, plural, one {فعالية وحدة} other {# فعالية}}",
+    "view": {
+      "table": "عرض جدول",
+      "cards": "عرض بطاقات"
+    },
+    "columns": {
+      "event": "الفعالية",
+      "status": "الحالة",
+      "when": "متى",
+      "where": "وين",
+      "next": "الخطوة الجاية"
+    },
+    "when": {
+      "today": "اليوم",
+      "inDays": "{days, plural, one {بكرة} other {بعد # أيام}}",
+      "agoDays": "{days, plural, one {أمس} other {قبل # أيام}}"
+    },
+    "nextStep": {
+      "publish": "أرفق النموذج وانشر",
+      "review": "راجع التسجيلات",
+      "attend": "سجّل الحضور",
+      "close": "اقفل وامنح النقاط",
+      "done": "ما فيه شيء"
+    },
+    "subtitle": "أنشئ الفعاليات وانشرها وتابعها."
   },
   "eventForm": {
     "validation": {
@@ -714,6 +757,11 @@
       "matched": "مطابقة",
       "unmatched": "غير مطابقة",
       "failedToQueue": "{count, plural, one {فشلت إضافة # للطابور} two {فشلت إضافة # للطابور} few {فشلت إضافة # للطابور} many {فشلت إضافة # للطابور} other {فشلت إضافة # للطابور}}"
+    },
+    "pagination": {
+      "prev": "السابق",
+      "next": "التالي",
+      "page": "صفحة {page}"
     }
   },
   "memberSearch": {
@@ -727,7 +775,11 @@
     "allSelected": "كل الأعضاء متحددين.",
     "add": "إضافة",
     "selectedHeading": "المحددين ({count})",
-    "confirm": "{count, plural, =0 {إضافة أعضاء} one {إضافة عضو} two {إضافة عضوين} few {إضافة # أعضاء} many {إضافة # عضو} other {إضافة # عضو}}"
+    "confirm": "{count, plural, =0 {إضافة أعضاء} one {إضافة عضو} two {إضافة عضوين} few {إضافة # أعضاء} many {إضافة # عضو} other {إضافة # عضو}}",
+    "prev": "السابق",
+    "next": "التالي",
+    "pageOf": "صفحة {page} من {total}",
+    "searchAllHint": "ابحث في كل الأعضاء"
   },
   "jobStatus": {
     "nouns": {
@@ -1053,7 +1105,9 @@
     "loadingEvents": "جاري تحميل الفعاليات...",
     "noneYetTitle": "ما فيه فعاليات مخصصة بعد",
     "noneYetDescription": "ابدأ بإنشاء أول فعالية نقاط مخصصة.",
-    "createFirst": "أنشئ أول فعالية مخصصة"
+    "createFirst": "أنشئ أول فعالية مخصصة",
+    "title": "النقاط",
+    "subtitle": "امنح وأدر النقاط للأنشطة المخصصة غير المرتبطة بالحضور."
   },
   "fullEvents": {
     "title": "نقاط الفعاليات الكاملة",
@@ -1565,7 +1619,14 @@
     "unpublishing": "جاري إلغاء النشر...",
     "publishing": "جاري النشر...",
     "unpublish": "إلغاء النشر",
-    "publish": "نشر"
+    "publish": "نشر",
+    "qrCodeTitle": "رمز QR للفعالية",
+    "qrCodeDescription": "امسح أو شارك رمز QR هذا لفتح صفحة الفعالية.",
+    "copyQrCode": "نسخ صورة QR",
+    "downloadQrCode": "تحميل صورة QR",
+    "qrCopied": "تم نسخ رمز QR.",
+    "qrCopyFailed": "تعذر نسخ رمز QR. حاول مرة ثانية.",
+    "qrDownloadFailed": "تعذر تحميل رمز QR. حاول مرة ثانية."
   },
   "memberSelectDialog": {
     "loading": "جارٍ تحميل الأعضاء…",
@@ -1639,5 +1700,62 @@
     "save": "حفظ",
     "openLink": "فتح رابط الاجتماع",
     "removeLink": "حذف رابط الاجتماع"
+  },
+  "palette": {
+    "title": "لوحة الأوامر",
+    "description": "انتقل إلى صفحة أو فعالية، أو ابدأ شيئًا جديدًا.",
+    "placeholder": "اكتب أمرًا أو ابحث…",
+    "empty": "ما فيه نتائج مطابقة.",
+    "actions": "إجراءات",
+    "goTo": "انتقل إلى",
+    "events": "الفعاليات",
+    "newEvent": "إنشاء فعالية",
+    "grantPoints": "منح نقاط مخصصة",
+    "addMember": "إضافة عضو",
+    "resetCache": "إعادة بناء لوحة الصدارة"
+  },
+  "dashboard": {
+    "title": "لوحة التحكم",
+    "summaryLoading": "نشوف وش يحتاج منك…",
+    "summary": "{live, plural, =0 {ما فيه فعالية شغالة الحين.} one {فيه فعالية وحدة شغالة الحين.} other {فيه # فعاليات شغالة الحين.}} {open, plural, =0 {وما فيه تسجيل مفتوح.} one {وفيه وحدة ثانية التسجيل فيها مفتوح.} other {وفيه # ثانية التسجيل فيها مفتوح.}}",
+    "newEvent": "فعالية جديدة",
+    "allEvents": "كل الفعاليات",
+    "attention": "يحتاج انتباهك",
+    "pipeline": "مسار الفعاليات",
+    "eventCount": "{count, plural, one {فعالية وحدة} other {# فعالية}}",
+    "allClearTitle": "ما فيه شيء ينتظرك",
+    "allClearBody": "ما فيه فعاليات متأخرة ولا مسودات معلّقة ولا شهادات ما انرسلت. استمتع.",
+    "tiles": {
+      "open": "التسجيل مفتوح",
+      "openHint": "الأعضاء يقدرون يسجلون",
+      "live": "شغالة الحين",
+      "liveNone": "ما فيه شيء شغال",
+      "members": "الأعضاء",
+      "membersHint": "{verified} موثّق · {pending} بانتظار التوثيق",
+      "emails": "الرسائل المرسلة (٢٤ ساعة)",
+      "emailsHint": "من كل المزوّدين"
+    },
+    "queue": {
+      "overdue": {
+        "title": "الحضور ما انقفل",
+        "detail": "انتهت قبل {days, plural, one {يوم} other {# أيام}} والنقاط ما انمنحت",
+        "action": "اقفل الفعالية"
+      },
+      "draft": {
+        "title": "مسودة ما اننشرت أبدًا",
+        "detail": "انكتبت قبل {days, plural, one {يوم} other {# أيام}}",
+        "action": "أكمل الإعداد"
+      },
+      "closingSoon": {
+        "title": "تبدأ قريب — راجع التسجيلات",
+        "detail": "{days, plural, =0 {تبدأ اليوم} one {تبدأ بكرة} other {تبدأ بعد # أيام}}",
+        "action": "راجع"
+      },
+      "certificates": {
+        "title": "{count, plural, one {شهادة وحدة} other {# شهادة}} جاهزة للإرسال",
+        "detail": "انقفلت قبل {days, plural, one {يوم} other {# أيام}}",
+        "action": "أرسل"
+      }
+    }
   }
 }

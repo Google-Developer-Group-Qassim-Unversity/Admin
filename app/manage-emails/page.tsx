@@ -4,6 +4,7 @@ import * as React from "react";
 import { ListChecks, Mail, MailPlus, Megaphone, Send } from "lucide-react";
 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/page-header";
 import { useTranslations } from "next-intl";
 
 import { EmailLogsTab } from "./email-logs-tab";
@@ -20,15 +21,7 @@ export default function ManageEmailsPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-3">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10">
-          <Mail className="h-5 w-5 text-primary" />
-        </div>
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-      </div>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Mail} />
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <div>

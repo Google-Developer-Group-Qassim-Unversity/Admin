@@ -8,6 +8,7 @@ import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 
 import { Button } from "@/components/ui/button";
+import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResetLeaderboardCache } from "@/hooks/use-cache";
 import { RequireRole } from "@/hooks/use-rbac";
@@ -83,10 +84,7 @@ export default function SettingsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-      </div>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Settings} />
 
       <Card className="max-w-2xl">
         <CardHeader>
