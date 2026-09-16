@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import { useAuth, useUser } from "@clerk/nextjs";
-import { AlertCircle, UserPlus } from "lucide-react";
+import { AlertCircle, UserPlus, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/page-header";
 import { AddAdminDialog } from "@/components/manage-admins/add-admin-dialog";
 import { AdminListTable } from "@/components/manage-admins/admin-list-table";
 import { RevokeAdminDialog } from "@/components/manage-admins/revoke-admin-dialog";
@@ -176,17 +177,12 @@ export default function ManageAdminsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-        </div>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={ShieldCheck}>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <UserPlus className="h-4 w-4 me-2" />
           {t("addAdmin")}
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Loading State */}
       {isLoading && (

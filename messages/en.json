@@ -83,7 +83,16 @@
     "admins": "Admins",
     "settings": "Settings",
     "menu": "Menu",
-    "toggleMenu": "Toggle menu"
+    "toggleMenu": "Toggle menu",
+    "emails": "Emails",
+    "consoleLabel": "Admin console",
+    "searchPlaceholder": "Search events, members, pages…",
+    "groups": {
+      "operate": "Operate",
+      "people": "People",
+      "engage": "Engage",
+      "system": "System"
+    }
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -189,7 +198,34 @@
     "card": {
       "noImage": "No image",
       "starts": "Starts:"
-    }
+    },
+    "official": "Official",
+    "unofficial": "Internal",
+    "showing": "{count, plural, one {# event} other {# events}}",
+    "view": {
+      "table": "Table view",
+      "cards": "Card view"
+    },
+    "columns": {
+      "event": "Event",
+      "status": "Status",
+      "when": "When",
+      "where": "Where",
+      "next": "Next step"
+    },
+    "when": {
+      "today": "today",
+      "inDays": "{days, plural, one {tomorrow} other {in # days}}",
+      "agoDays": "{days, plural, one {yesterday} other {# days ago}}"
+    },
+    "nextStep": {
+      "publish": "Attach form & publish",
+      "review": "Review registrations",
+      "attend": "Take attendance",
+      "close": "Close & award points",
+      "done": "Nothing to do"
+    },
+    "subtitle": "Create, publish, and track every event."
   },
   "eventForm": {
     "validation": {
@@ -916,7 +952,9 @@
     "loadingEvents": "Loading events...",
     "noneYetTitle": "No Custom Events Yet",
     "noneYetDescription": "Get started by creating your first custom point event.",
-    "createFirst": "Create Your First Custom Event"
+    "createFirst": "Create Your First Custom Event",
+    "title": "Points",
+    "subtitle": "Award and manage points for custom, non-attendance activities."
   },
   "fullEvents": {
     "title": "Full Events Points",
@@ -1500,5 +1538,62 @@
     "save": "Save",
     "openLink": "Open meeting link",
     "removeLink": "Remove meeting link"
+  },
+  "palette": {
+    "title": "Command palette",
+    "description": "Jump to a page, an event, or start something new.",
+    "placeholder": "Type a command or search…",
+    "empty": "Nothing matches that.",
+    "actions": "Actions",
+    "goTo": "Go to",
+    "events": "Events",
+    "newEvent": "Create an event",
+    "grantPoints": "Grant custom points",
+    "addMember": "Add a member",
+    "resetCache": "Rebuild the leaderboard"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "summaryLoading": "Checking what needs you…",
+    "summary": "{live, plural, =0 {Nothing is running right now.} one {One event is running right now.} other {# events are running right now.}} {open, plural, =0 {No registrations are open.} one {One more is open for registration.} other {# more are open for registration.}}",
+    "newEvent": "New event",
+    "allEvents": "All events",
+    "attention": "Needs your attention",
+    "pipeline": "Event pipeline",
+    "eventCount": "{count, plural, one {# event} other {# events}}",
+    "allClearTitle": "Nothing waiting on you",
+    "allClearBody": "No overdue events, stale drafts or unsent certificates. Enjoy it.",
+    "tiles": {
+      "open": "Open for registration",
+      "openHint": "Members can still sign up",
+      "live": "Running now",
+      "liveNone": "Nothing is live",
+      "members": "Members",
+      "membersHint": "{verified} verified · {pending} pending",
+      "emails": "Emails sent (24h)",
+      "emailsHint": "Across every provider"
+    },
+    "queue": {
+      "overdue": {
+        "title": "Attendance never closed",
+        "detail": "ended {days, plural, one {# day} other {# days}} ago, points not awarded",
+        "action": "Close event"
+      },
+      "draft": {
+        "title": "Draft has never been published",
+        "detail": "created {days, plural, one {# day} other {# days}} ago",
+        "action": "Finish setup"
+      },
+      "closingSoon": {
+        "title": "Starts soon — review the registrations",
+        "detail": "{days, plural, =0 {starts today} one {starts tomorrow} other {starts in # days}}",
+        "action": "Review"
+      },
+      "certificates": {
+        "title": "{count, plural, one {# certificate} other {# certificates}} ready to send",
+        "detail": "closed {days, plural, one {# day} other {# days}} ago",
+        "action": "Send"
+      }
+    }
   }
 }

@@ -8,6 +8,7 @@ import { Trophy, AlertCircle, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { CustomEventsList } from "@/components/custom-events-list";
+import { PageHeader } from "@/components/page-header";
 import { getEvents } from "@/lib/api";
 import type { Event } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
@@ -87,5 +88,10 @@ export default function PointsPage() {
     );
   }
 
-  return <CustomEventsList events={customEvents} />;
+  return (
+    <div className="space-y-6">
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Trophy} />
+      <CustomEventsList events={customEvents} />
+    </div>
+  );
 }

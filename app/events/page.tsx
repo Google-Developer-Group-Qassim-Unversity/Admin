@@ -2,12 +2,13 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { CalendarPlus, AlertCircle, Calendar } from "lucide-react";
+import { CalendarPlus, AlertCircle, Calendar, CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { EventsList } from "@/components/events-list";
+import { PageHeader } from "@/components/page-header";
 import { EventsListSkeleton } from "@/components/events-list-skeleton";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useEvents } from "@/hooks/use-event";
@@ -21,18 +22,14 @@ export default function ManageEventsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Page Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-        </div>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={CalendarDays}>
         <Button asChild>
           <Link href="/events/create" className="flex items-center gap-2">
             <CalendarPlus className="h-4 w-4" />
             {t("create")}
           </Link>
         </Button>
-      </div>
+      </PageHeader>
 
       {/* Loading State */}
       {isPending && <EventsListSkeleton />}
