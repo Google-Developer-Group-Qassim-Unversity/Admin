@@ -2,11 +2,10 @@
 
 import * as React from "react";
 import { useAuth } from "@clerk/nextjs";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useReactTable,
   getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   flexRender,
   type SortingState,
   type VisibilityState,
@@ -59,9 +58,8 @@ import { PageHeader } from "@/components/page-header";
 import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 import { BatchImportDialog } from "@/components/manage-members/batch-import-dialog";
 
-import { useMembers } from "@/hooks/use-members";
+import { useMembersPaginated, useMemberStats, memberKeys } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
-import { useFuzzySearch } from "@/lib/search-utils";
 import { useTranslations } from "next-intl";
 import { config } from "@/lib/config";
 
@@ -186,60 +184,73 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
   ];
 }
 
+function useDebouncedValue<T>(value: T, delayMs: number): T {
+  const [debounced, setDebounced] = React.useState(value);
+  React.useEffect(() => {
+    const id = setTimeout(() => setDebounced(value), delayMs);
+    return () => clearTimeout(id);
+  }, [value, delayMs]);
+  return debounced;
+}
+
 export default function ManageMembersPage() {
   const t = useTranslations("manageMembersPage");
   const tc = useTranslations("common.errors");
   const createMemberT = useTranslations("createMember");
   const { getToken } = useAuth();
+  const queryClient = useQueryClient();
   const columns = React.useMemo(() => buildColumns(t), [t]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isBatchDialogOpen, setIsBatchDialogOpen] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");
   const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({
-    phone_number: false,
+  const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({ phone_number: false });
+  const [pagination, setPagination] = React.useState({ pageIndex: 0, pageSize: 50 });
+
+  const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
+  const sort = sorting[0];
+
+  // The database does the searching, sorting and paging now, so any change to
+  // the query means a fresh request. Snap back to the first page whenever that
+  // query shape changes - otherwise a new search could strand you on a page 7
+  // that no longer exists.
+  React.useEffect(() => {
+    setPagination((p) => (p.pageIndex === 0 ? p : { ...p, pageIndex: 0 }));
+  }, [debouncedSearch, sorting, pagination.pageSize]);
+
+  const { data, isPending, isError, error, isPlaceholderData } = useMembersPaginated({
+    page: pagination.pageIndex + 1,
+    pageSize: pagination.pageSize,
+    search: debouncedSearch || undefined,
+    sortBy: sort?.id,
+    order: sort ? (sort.desc ? "desc" : "asc") : undefined,
   });
+  const { data: stats } = useMemberStats();
 
-  const { data: members, isLoading, error, refetch } = useMembers(getToken);
-
-  const filteredMembers = useFuzzySearch(members ?? [], searchQuery, ["name", "email", "uni_id", "phone_number"]);
+  const rows = data?.items ?? [];
+  const total = data?.total ?? 0;
+  const pageCount = data?.total_pages ?? 0;
 
   const table = useReactTable({
-    data: filteredMembers,
+    data: rows,
     columns,
-    state: {
-      sorting,
-      columnVisibility,
-    },
+    pageCount,
+    state: { sorting, columnVisibility, pagination },
+    manualPagination: true,
+    manualSorting: true,
     onSortingChange: setSorting,
     onColumnVisibilityChange: setColumnVisibility,
+    onPaginationChange: setPagination,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    initialState: {
-      pagination: {
-        pageSize: 50,
-      },
-    },
   });
 
   const handleRefetch = React.useCallback(() => {
-    refetch();
-  }, [refetch]);
+    queryClient.invalidateQueries({ queryKey: memberKeys.all });
+  }, [queryClient]);
 
-  const totalRows = filteredMembers.length;
-  const totalCount = members?.length ?? 0;
-
-  const stats = React.useMemo(() => {
-    if (!members) return null;
-    const total = members.length;
-    const authenticated = members.filter((m) => m.is_authenticated).length;
-    const manual = total - authenticated;
-    const male = members.filter((m) => m.gender === "Male").length;
-    const female = members.filter((m) => m.gender === "Female").length;
-    return { total, authenticated, manual, male, female };
-  }, [members]);
+  const from = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
+  const to = Math.min((pagination.pageIndex + 1) * pagination.pageSize, total);
 
   return (
     <div className="space-y-6">
@@ -254,124 +265,110 @@ export default function ManageMembersPage() {
         </Button>
       </PageHeader>
 
-      {isLoading && (
-        <div className="space-y-4">
-          <Skeleton className="h-[400px] w-full" />
+      {stats && (
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+          <Card size="sm">
+            <CardContent className="pt-4 pb-4 px-4">
+              <div className="text-2xl font-bold">{stats.total}</div>
+              <div className="text-xs text-muted-foreground">{t("stats.total")}</div>
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardContent className="pt-4 pb-4 px-4">
+              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.authenticated}</div>
+              <div className="text-xs text-muted-foreground">{t("stats.authenticated")}</div>
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardContent className="pt-4 pb-4 px-4">
+              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.manual}</div>
+              <div className="text-xs text-muted-foreground">{t("stats.manual")}</div>
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardContent className="pt-4 pb-4 px-4">
+              <div className="text-2xl font-bold">{stats.male}</div>
+              <div className="text-xs text-muted-foreground">{t("stats.male")}</div>
+            </CardContent>
+          </Card>
+          <Card size="sm">
+            <CardContent className="pt-4 pb-4 px-4">
+              <div className="text-2xl font-bold">{stats.female}</div>
+              <div className="text-xs text-muted-foreground">{t("stats.female")}</div>
+            </CardContent>
+          </Card>
         </div>
       )}
 
-      {!isLoading && error && (
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative max-w-sm flex-1 min-w-[200px]">
+          <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder={t("searchPlaceholder")}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="ps-8"
+          />
+        </div>
+
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              <Columns3 className="me-1 h-4 w-4" />
+              {t("columnsMenu")}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {table
+              .getAllColumns()
+              .filter((column) => column.getCanHide())
+              .map((column) => (
+                <DropdownMenuCheckboxItem
+                  key={column.id}
+                  className="capitalize"
+                  checked={column.getIsVisible()}
+                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                >
+                  {column.id === "is_authenticated"
+                    ? t("columns.status")
+                    : column.id === "uni_id"
+                      ? t("columns.universityId")
+                      : column.id === "phone_number"
+                        ? t("columns.phone")
+                        : column.id === "name"
+                          ? t("columns.name")
+                          : column.id === "email"
+                            ? t("columns.email")
+                            : column.id === "gender"
+                              ? t("columns.gender")
+                              : column.id === "last_activity"
+                                ? t("columns.lastActivity")
+                                : column.id.replace(/_/g, " ")}
+                </DropdownMenuCheckboxItem>
+              ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+
+        <div className="flex-1" />
+
+        <div className="text-sm text-muted-foreground">
+          {t("memberCount", { count: total })}
+          {debouncedSearch.length > 0 && stats && t("filteredFromTotal", { total: stats.total })}
+        </div>
+      </div>
+
+      {isError ? (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>{t("loadFailed")}</AlertTitle>
           <AlertDescription>
-            {error.message}
-            {error.message.includes("403") && (
-              <span className="block mt-1">
-                {tc("noPermission")}
-              </span>
-            )}
+            {error?.message}
+            {error?.message?.includes("403") && <span className="block mt-1">{tc("noPermission")}</span>}
           </AlertDescription>
         </Alert>
-      )}
-
-      {!isLoading && !error && (
+      ) : (
         <>
-          {stats && (
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-              <Card size="sm">
-                <CardContent className="pt-4 pb-4 px-4">
-                  <div className="text-2xl font-bold">{stats.total}</div>
-                  <div className="text-xs text-muted-foreground">{t("stats.total")}</div>
-                </CardContent>
-              </Card>
-              <Card size="sm">
-                <CardContent className="pt-4 pb-4 px-4">
-                  <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.authenticated}</div>
-                  <div className="text-xs text-muted-foreground">{t("stats.authenticated")}</div>
-                </CardContent>
-              </Card>
-              <Card size="sm">
-                <CardContent className="pt-4 pb-4 px-4">
-                  <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.manual}</div>
-                  <div className="text-xs text-muted-foreground">{t("stats.manual")}</div>
-                </CardContent>
-              </Card>
-              <Card size="sm">
-                <CardContent className="pt-4 pb-4 px-4">
-                  <div className="text-2xl font-bold">{stats.male}</div>
-                  <div className="text-xs text-muted-foreground">{t("stats.male")}</div>
-                </CardContent>
-              </Card>
-              <Card size="sm">
-                <CardContent className="pt-4 pb-4 px-4">
-                  <div className="text-2xl font-bold">{stats.female}</div>
-                  <div className="text-xs text-muted-foreground">{t("stats.female")}</div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          <div className="flex flex-wrap items-center gap-4">
-<div className="relative max-w-sm flex-1 min-w-[200px]">
-              <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder={t("searchPlaceholder")}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-8"
-              />
-            </div>
-
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm">
-                  <Columns3 className="me-1 h-4 w-4" />
-                  {t("columnsMenu")}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48">
-                {table
-                  .getAllColumns()
-                  .filter((column) => column.getCanHide())
-                  .map((column) => (
-                    <DropdownMenuCheckboxItem
-                      key={column.id}
-                      className="capitalize"
-                      checked={column.getIsVisible()}
-                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                    >
-                      {column.id === "is_authenticated"
-                        ? t("columns.status")
-                        : column.id === "uni_id"
-                          ? t("columns.universityId")
-                          : column.id === "phone_number"
-                            ? t("columns.phone")
-                            : column.id === "name"
-                              ? t("columns.name")
-                              : column.id === "email"
-                                ? t("columns.email")
-                                : column.id === "gender"
-                                  ? t("columns.gender")
-                                  : column.id === "last_activity"
-                                    ? t("columns.lastActivity")
-                                    : column.id.replace(/_/g, " ")}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-
-            <div className="flex-1" />
-
-            <div className="text-sm text-muted-foreground">
-              {t("memberCount", { count: totalRows })}
-              {searchQuery.trim().length > 0 && t("filteredFromTotal", { total: totalCount })}
-            </div>
-
-            
-          </div>
-
-          <div className="rounded-lg border">
+          <div className={`rounded-lg border transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -387,7 +384,15 @@ export default function ManageMembersPage() {
                 ))}
               </TableHeader>
               <TableBody>
-                {table.getRowModel().rows?.length ? (
+                {isPending ? (
+                  Array.from({ length: 8 }).map((_, i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={columns.length}>
+                        <Skeleton className="h-6 w-full" />
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : rows.length ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
@@ -400,7 +405,7 @@ export default function ManageMembersPage() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                      {searchQuery.trim().length > 0 ? t("noneMatchSearch") : t("noneFound")}
+                      {debouncedSearch.length > 0 ? t("noneMatchSearch") : t("noneFound")}
                     </TableCell>
                   </TableRow>
                 )}
@@ -411,23 +416,13 @@ export default function ManageMembersPage() {
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
             <div className="flex items-center gap-4">
               <div className="text-sm text-muted-foreground">
-                {t("showingRange", {
-                  from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1,
-                  to: Math.min(
-                    (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-                    totalRows
-                  ),
-                  count: totalRows,
-                })}
+                {t("showingRange", { from, to, count: total })}
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">{t("rows")}</span>
                 <Select
-                  value={String(table.getState().pagination.pageSize)}
-                  onValueChange={(value) => {
-                    table.setPageSize(Number(value));
-                    table.setPageIndex(0);
-                  }}
+                  value={String(pagination.pageSize)}
+                  onValueChange={(value) => setPagination((p) => ({ ...p, pageSize: Number(value), pageIndex: 0 }))}
                 >
                   <SelectTrigger className="w-[70px]" size="sm">
                     <SelectValue />
@@ -443,39 +438,19 @@ export default function ManageMembersPage() {
               </div>
             </div>
             <div className="flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={() => table.setPageIndex(0)}
-                disabled={!table.getCanPreviousPage()}
-              >
+              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
                 <ChevronsLeft className="h-4 w-4" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
+              <Button variant="outline" size="icon-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
                 <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
               </Button>
               <span className="px-3 text-sm">
-                {t("page", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
+                {t("page", { current: pagination.pageIndex + 1, total: Math.max(pageCount, 1) })}
               </span>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={() => table.nextPage()}
-                disabled={!table.getCanNextPage()}
-              >
+              <Button variant="outline" size="icon-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                 <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
               </Button>
-              <Button
-                variant="outline"
-                size="icon-sm"
-                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-                disabled={!table.getCanNextPage()}
-              >
+              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
                 <ChevronsRight className="h-4 w-4" />
               </Button>
             </div>

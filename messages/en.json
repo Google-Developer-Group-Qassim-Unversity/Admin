@@ -199,6 +199,13 @@
       "noImage": "No image",
       "starts": "Starts:"
     },
+    "showingRange": "Showing {from}-{to} of {count, plural, one {# event} other {# events}}",
+    "page": "Page {current} of {total}",
+    "rows": "Per page:",
+    "statusFilter": "Status",
+    "allStatuses": "All statuses",
+    "searchName": "Search events by name",
+    "noneMatch": "No events match your filters.",
     "official": "Official",
     "unofficial": "Internal",
     "showing": "{count, plural, one {# event} other {# events}}",
@@ -1466,7 +1473,14 @@
     "unpublishing": "Unpublishing...",
     "publishing": "Publishing...",
     "unpublish": "Unpublish",
-    "publish": "Publish"
+    "publish": "Publish",
+    "qrCodeTitle": "Event QR Code",
+    "qrCodeDescription": "Scan or share this QR code to open the event page.",
+    "copyQrCode": "Copy QR Image",
+    "downloadQrCode": "Download QR Image",
+    "qrCopied": "QR code copied to clipboard.",
+    "qrCopyFailed": "Failed to copy QR code. Please try again.",
+    "qrDownloadFailed": "Failed to download QR code. Please try again."
   },
   "memberSelectDialog": {
     "title": "Select Members",

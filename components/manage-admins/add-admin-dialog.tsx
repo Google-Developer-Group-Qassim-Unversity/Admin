@@ -133,6 +133,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
           body: JSON.stringify({
             clerkUserId: member.clerk_user_id,
             uni_id: member.uni_id,
+            email: member.email,
             role: role,
           }),
         });
@@ -144,6 +145,8 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
           } else {
             toast.error(t("metadataFailed", { name: member.name }));
           }
+          failCount++;
+          continue;
         }
 
         successCount++;
