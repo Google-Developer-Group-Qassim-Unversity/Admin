@@ -136,6 +136,18 @@ try {
       .click();
     await picker.getByRole("button", { name: "Select member", exact: true }).click();
   };
+  const chooseMembers = async (names) => {
+    const picker = page.getByRole("dialog").last();
+    for (const name of names) {
+      await picker
+        .getByRole("button")
+        .filter({ has: page.getByText(name, { exact: true }) })
+        .click();
+    }
+    await expect(picker.getByText(`Selected (${names.length})`, { exact: true })).toBeVisible();
+    const memberLabel = names.length === 1 ? "member" : "members";
+    await picker.getByRole("button", { name: `Add ${names.length} ${memberLabel}`, exact: true }).click();
+  };
   const confirm = async () => {
     await click("Confirm");
     await expect(page.getByRole("alertdialog")).toHaveCount(0);
@@ -212,9 +224,9 @@ try {
   assert.equal(department.icon, "code2");
   const deptPath = `/club-structure/departments/${department.id}`;
   assert.equal(Math.round((await page.locator('[data-slot="sheet-content"]').boundingBox()).width), 480);
+  await click("Add member");
+  await chooseMembers([alice.name, bob.name]);
   for (const person of [alice, bob]) {
-    await click("Add member");
-    await choose(person.name);
     await expect(page.getByRole("button", { name: "Remove " + person.name, exact: true })).toBeEnabled();
   }
   await tab("Leadership");
@@ -256,7 +268,7 @@ try {
   await click("Close");
   await click("Manage " + refs.prefix + " Board");
   await click("Add member");
-  await choose(carol.name);
+  await chooseMembers([carol.name]);
   await expect(page.getByRole("button", { name: "Remove " + carol.name, exact: true })).toBeEnabled();
   await click("Close");
   for (const [slot, person] of [

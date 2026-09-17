@@ -13,12 +13,14 @@ const EMPTY_IDS: number[] = [];
 export function ClubMemberPicker({
   title,
   excludedIds,
+  multiple = false,
   onSelect,
   onClose,
 }: {
   title: string;
   excludedIds: number[];
-  onSelect: (member: Pick<Member, "id" | "name">) => void;
+  multiple?: boolean;
+  onSelect: (members: Pick<Member, "id" | "name">[]) => void;
   onClose: () => void;
 }) {
   const t = useTranslations("clubStructure");
@@ -40,19 +42,21 @@ export function ClubMemberPicker({
         if (!open) onClose();
       }}
       title={title}
-      description={t("chooseMember")}
-      maxSelections={1}
+      description={t(multiple ? "chooseMembers" : "chooseMember")}
+      maxSelections={multiple ? undefined : 1}
       allowCreate={false}
       memberOptions={options}
       selectedIds={EMPTY_IDS}
       isLoading={members.isPending}
       error={describeError(members.error)}
       emptyMessage={t("noEligibleMembers")}
-      applyLabel={t("selectMember")}
+      applyLabel={multiple ? (count) => t("addMembers", { count }) : t("selectMember")}
       onRetry={() => void members.refetch()}
       onSelectionChange={(ids) => {
-        const member = members.data?.find((item) => item.id === ids[0]);
-        if (member) onSelect(member);
+        const selected = ids
+          .map((id) => members.data?.find((item) => item.id === id))
+          .filter((member): member is Member => member !== undefined);
+        if (selected.length) onSelect(selected);
       }}
     />
   );

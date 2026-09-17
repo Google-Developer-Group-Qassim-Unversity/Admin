@@ -45,7 +45,7 @@ function DepartmentRoster({
   const [search, setSearch] = useState("");
   const [picker, setPicker] = useState(false);
   const [removing, setRemoving] = useState<ClubAssignment | null>(null);
-  const add = useClubMutation((api, memberId: number) => api.addMember(department.id, memberId));
+  const add = useClubMutation((api, memberIds: number[]) => api.addMembers(department.id, memberIds));
   const remove = useClubMutation((api, assignment: ClubAssignment) =>
     api.removeMember(department.id, assignment.member_id, assignment.id),
   );
@@ -53,11 +53,11 @@ function DepartmentRoster({
     normalizeArabic(assignment.member.name).includes(normalizeArabic(search.trim())),
   );
 
-  async function addMember(id: number) {
+  async function addMembers(ids: number[]) {
     if (disabled) return;
     try {
-      await add.mutateAsync(id);
-      toast.success(t("memberAdded"));
+      await add.mutateAsync(ids);
+      toast.success(t("membersAdded", { count: ids.length }));
     } catch {
       /* Display below the toolbar. */
     }
@@ -105,7 +105,7 @@ function DepartmentRoster({
       )}
       {add.isPending && (
         <p role="status" className="text-sm text-muted-foreground">
-          {t("addingMember")}
+          {t("addingMembers", { count: add.variables?.length ?? 0 })}
         </p>
       )}
       <p className="text-xs text-muted-foreground">{t("memberCount", { count: assignments.length })}</p>
@@ -154,8 +154,9 @@ function DepartmentRoster({
         <ClubMemberPicker
           title={t("addMember")}
           excludedIds={assignments.map((assignment) => assignment.member_id)}
+          multiple
           onClose={() => setPicker(false)}
-          onSelect={(member) => void addMember(member.id)}
+          onSelect={(members) => void addMembers(members.map((member) => member.id))}
         />
       )}
       {removing && canEdit && (

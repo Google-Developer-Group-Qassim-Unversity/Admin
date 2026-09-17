@@ -36,7 +36,7 @@ interface MemberSelectDialogProps {
   error?: string;
   onRetry?: () => void;
   emptyMessage?: string;
-  applyLabel?: string;
+  applyLabel?: string | ((count: number) => string);
 }
 
 const DISPLAY_LIMIT = 50;
@@ -279,7 +279,9 @@ export function MemberSelectDialog({
               {tc("cancel")}
             </Button>
             <Button onClick={handleApply} disabled={isLoading || !!error || selectedMembers.length === 0}>
-              {applyLabel ?? t("apply", { count: selectedMembers.length })}
+              {typeof applyLabel === "function"
+                ? applyLabel(selectedMembers.length)
+                : (applyLabel ?? t("apply", { count: selectedMembers.length }))}
             </Button>
           </DialogFooter>
         </DialogContent>

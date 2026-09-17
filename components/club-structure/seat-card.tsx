@@ -100,7 +100,8 @@ export function SeatCard({
           title={title}
           excludedIds={[...excludedIds, ...(picker.previous ? [picker.previous.member_id] : [])]}
           onClose={() => setPicker(null)}
-          onSelect={(member) => {
+          onSelect={([member]) => {
+            if (!member) return;
             mutation.reset();
             setChange({ member, previous: picker.previous });
           }}

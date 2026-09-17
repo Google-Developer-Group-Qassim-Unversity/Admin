@@ -206,6 +206,10 @@ export function createApi(request: Requester) {
       request.json<ClubAssignment>(`/club-structure/departments/${id}/members`, {
         method: "POST", body: { member_id: memberId },
       }),
+    addMembers: (id: number, memberIds: number[]) =>
+      request.json<ClubAssignment[]>(`/club-structure/departments/${id}/members/batch`, {
+        method: "POST", body: { member_ids: memberIds },
+      }),
     removeMember: (id: number, memberId: number, expectedAssignmentId: number) =>
       request.json<ClubAssignment>(`/club-structure/departments/${id}/members/${memberId}`, {
         method: "DELETE", query: { expected_assignment_id: expectedAssignmentId },
