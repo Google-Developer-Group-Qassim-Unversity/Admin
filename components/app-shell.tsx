@@ -93,6 +93,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm transition-colors ${
