@@ -145,7 +145,7 @@ export default function ManageEventsPage() {
           </Alert>
         </div>
       ) : isPending ? (
-        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-40 w-full rounded-lg" />
           ))}
@@ -170,7 +170,7 @@ export default function ManageEventsPage() {
         </div>
       ) : (
         <div
-          className={`grid gap-3 grid-cols-[repeat(auto-fill,minmax(240px,1fr))] transition-opacity ${
+          className={`grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))] transition-opacity ${
             isPlaceholderData ? "opacity-60" : ""
           }`}
         >

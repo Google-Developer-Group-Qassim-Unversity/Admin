@@ -15,7 +15,7 @@ export function EventsListSkeleton() {
       </div>
 
       {/* Events Grid Skeleton */}
-      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(240px,1fr))]">
+      <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
         {Array.from({ length: 8 }).map((_, index) => (
           <EventCardSkeleton key={index} />
         ))}
@@ -28,7 +28,7 @@ function EventCardSkeleton() {
   return (
     <Card className="overflow-hidden flex flex-col h-full">
       {/* Event Image Skeleton */}
-      <Skeleton className="w-full h-60" />
+      <Skeleton className="w-full h-80" />
 
       {/* Event Details Skeleton */}
       <CardHeader className="flex-1 pb-3">

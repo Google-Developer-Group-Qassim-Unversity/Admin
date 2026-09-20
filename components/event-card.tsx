@@ -57,7 +57,7 @@ export function EventCard({ event }: EventCardProps) {
       {/* Event Image: every box gets the same height, so a missing image or a
           short one lines up with the tallest card; the image itself is shown
           whole (object-contain) on the muted background, never cropped */}
-      <div className="relative w-full h-60 bg-muted">
+      <div className="relative w-full h-80 bg-muted">
         {imageUrl ? (
           <Image
             src={imageUrl}
