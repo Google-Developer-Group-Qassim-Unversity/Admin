@@ -54,15 +54,17 @@ export function EventCard({ event }: EventCardProps) {
 
   return (
     <Card className="overflow-hidden flex flex-col h-full">
-      {/* Event Image */}
-      <div className="relative w-full aspect-3/4 bg-muted">
+      {/* Event Image: every box gets the same height, so a missing image or a
+          short one lines up with the tallest card; the image itself is shown
+          whole (object-contain) on the muted background, never cropped */}
+      <div className="relative w-full h-60 bg-muted">
         {imageUrl ? (
           <Image
             src={imageUrl}
             alt={event.name}
             fill
             sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="object-cover"
+            className="object-contain"
             priority={false}
           />
         ) : (
@@ -73,12 +75,12 @@ export function EventCard({ event }: EventCardProps) {
       </div>
 
       {/* Event Details */}
-      <CardHeader className="flex-1 pb-3">
-        <div className="flex items-start justify-between gap-2 mb-2">
+      <CardHeader className="flex-1 px-4 pb-2">
+        <div className="flex items-start justify-between gap-2 mb-1">
           <Button
             asChild
             variant="link"
-            className="font-semibold text-lg h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
+            className="font-semibold text-base h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
           >
             <Link href={`/events/${event.id}`} className="line-clamp-2">
               {event.name}
@@ -96,7 +98,7 @@ export function EventCard({ event }: EventCardProps) {
         )}
       </CardHeader>
 
-      <CardContent className="pb-3 space-y-2">
+      <CardContent className="px-4 pb-2 space-y-1.5">
         {/* Location */}
         {event.location_type !== "none" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -115,11 +117,11 @@ export function EventCard({ event }: EventCardProps) {
       </CardContent>
 
       {/* Actions */}
-      <CardFooter className="pt-3 gap-2">
-        <Button asChild variant="outline" className="flex-1">
+      <CardFooter className="px-4 pb-3 gap-2">
+        <Button asChild variant="outline" className="flex-1 h-8">
           <Link href={`/events/${event.id}/edit`}>{tc("edit")}</Link>
         </Button>
-        <Button asChild className="flex-1">
+        <Button asChild className="flex-1 h-8">
           <Link href={`/events/${event.id}`}>{tc("manage")}</Link>
         </Button>
       </CardFooter>
