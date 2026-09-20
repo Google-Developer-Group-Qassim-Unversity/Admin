@@ -449,9 +449,30 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
             {tokenData && !isExpired && (
               <div className="space-y-2">
                 <label className="text-sm font-medium">{t('attendanceLink')}</label>
-                <div className="p-3 bg-muted rounded-lg text-xs font-mono break-all text-muted-foreground">
+                {/* Click-to-copy, and `select-none` on purpose: hand-selecting this
+                    wrapped URL is how truncated links get shared, and a link that
+                    loses even one character no longer validates. */}
+                <button
+                  type="button"
+                  onClick={handleCopyLink}
+                  aria-label={t('copyLink')}
+                  className="block w-full select-none rounded-lg bg-muted p-3 text-start font-mono text-xs break-all text-muted-foreground transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                >
                   {tokenData.attendanceUrl}
-                </div>
+                  <span className="mt-2 flex items-center gap-1.5 font-sans text-xs text-muted-foreground/80">
+                    {copied ? (
+                      <>
+                        <Check className="h-3.5 w-3.5" />
+                        {t('linkCopied')}
+                      </>
+                    ) : (
+                      <>
+                        <Copy className="h-3.5 w-3.5" />
+                        {t('clickToCopy')}
+                      </>
+                    )}
+                  </span>
+                </button>
               </div>
             )}
           </div>
