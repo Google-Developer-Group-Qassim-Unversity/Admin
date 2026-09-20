@@ -930,6 +930,7 @@
       "generate": "Generate QR Code",
       "copied": "Copied!",
       "copyLink": "Copy Link",
+      "clickToCopy": "Click to copy",
       "openInTab": "Open in Tab",
       "attendanceLink": "Attendance Link",
       "tokenGenerated": "Attendance link generated successfully",

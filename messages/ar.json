@@ -930,6 +930,7 @@
       "generate": "إنشاء رمز QR",
       "copied": "تم النسخ!",
       "copyLink": "نسخ الرابط",
+      "clickToCopy": "اضغط عشان تنسخ الرابط",
       "openInTab": "فتح في تبويب",
       "attendanceLink": "رابط الحضور",
       "tokenGenerated": "تم إنشاء رابط الحضور.",
