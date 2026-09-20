@@ -86,9 +86,6 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
     <div className="flex flex-col gap-5">
       {NAV_GROUPS.map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
-          <div className="text-muted-foreground/70 px-3 pb-1.5 text-[10.5px] font-semibold tracking-[0.08em] uppercase">
-            {t(`groups.${group.key}`)}
-          </div>
           {group.items.map((item) => {
             const Icon = item.icon;
             const active = isActive(pathname, item.href);
