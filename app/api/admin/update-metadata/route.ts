@@ -3,18 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    // Verify super admin authentication
-    const { userId } = await auth();
+    // Verify super admin authentication off the session JWT's "metadata"
+    // claim (Clerk Dashboard > Sessions > customize session token) instead of
+    // a live clerkClient().users.getUser() call.
+    const { userId, sessionClaims } = await auth();
     if (!userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const client = await clerkClient();
-    const currentUser = await client.users.getUser(userId);
-    const publicMetadata = currentUser.publicMetadata as
-      | { is_super_admin?: boolean }
-      | undefined;
-    const isSuperAdmin = publicMetadata?.is_super_admin === true;
+    const isSuperAdmin = sessionClaims?.metadata?.is_super_admin === true;
 
     if (!isSuperAdmin) {
       return NextResponse.json(
@@ -22,6 +19,8 @@ export async function POST(request: NextRequest) {
         { status: 403 }
       );
     }
+
+    const client = await clerkClient();
 
     // Parse request body
     const body = await request.json();
@@ -98,6 +97,20 @@ export async function POST(request: NextRequest) {
     await client.users.updateUser(targetUser.id, {
       publicMetadata: existingMetadata,
     });
+
+    // Role checks elsewhere now read the session JWT's publicMetadata claim,
+    // which self-refreshes within Clerk's session token lifetime (~60s) - fine
+    // for a grant, but a revoke should not leave a window of continued
+    // access. Force it immediately by ending the target's active sessions.
+    if (role === "none") {
+      const { data: sessions } = await client.sessions.getSessionList({
+        userId: targetUser.id,
+        status: "active",
+      });
+      await Promise.all(
+        sessions.map((session) => client.sessions.revokeSession(session.id))
+      );
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

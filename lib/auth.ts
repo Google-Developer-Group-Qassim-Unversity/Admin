@@ -1,4 +1,4 @@
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 
 type AdminMetadata = {
   is_admin?: boolean;
@@ -10,21 +10,22 @@ function isAdminFromMetadata(metadata: AdminMetadata | undefined): boolean {
   return metadata?.is_admin === true || metadata?.is_super_admin === true || metadata?.is_admin_points === true;
 }
 
+// Role flags are read off the session JWT's "metadata" claim (configured in
+// Clerk Dashboard > Sessions > customize session token to mirror
+// publicMetadata) rather than a live clerkClient().users.getUser() call,
+// which used to run on every request.
+
 export async function requireAdmin(): Promise<{
   userId: string;
   isAdmin: true;
 } | null> {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return null;
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
-
-  if (!isAdminFromMetadata(publicMetadata)) {
+  if (!isAdminFromMetadata(sessionClaims?.metadata)) {
     return null;
   }
 
@@ -35,17 +36,13 @@ export async function requireSuperAdmin(): Promise<{
   userId: string;
   isSuperAdmin: true;
 } | null> {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return null;
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
-
-  if (publicMetadata?.is_super_admin !== true) {
+  if (sessionClaims?.metadata?.is_super_admin !== true) {
     return null;
   }
 
@@ -56,15 +53,11 @@ export async function getAuthUser(): Promise<{
   userId: string;
   isAdmin: boolean;
 } | null> {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
 
   if (!userId) {
     return null;
   }
 
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as AdminMetadata | undefined;
-
-  return { userId, isAdmin: isAdminFromMetadata(publicMetadata) };
+  return { userId, isAdmin: isAdminFromMetadata(sessionClaims?.metadata) };
 }

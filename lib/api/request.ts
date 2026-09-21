@@ -11,6 +11,16 @@ export interface RequestOptions {
   body?: unknown;
   /** Nullish entries are dropped rather than sent as "undefined". */
   query?: Record<string, QueryValue>;
+  /**
+   * Opt this GET into Next's server Data Cache for this many seconds. Omit it
+   * (the default) to leave the request exactly as Next treats it today - no
+   * Data Cache entry, no cross-caller correctness risk. Only pass this for a
+   * read whose response is the same for every admin who could call it; a
+   * per-caller read must never set this.
+   */
+  revalidate?: number;
+  /** Data Cache tags for on-demand invalidation. Only meaningful with `revalidate`. */
+  tags?: string[];
 }
 
 /**
@@ -114,6 +124,9 @@ export function createRequester(getToken: GetToken): Requester {
         method: options.method ?? "GET",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
         body: options.body === undefined ? undefined : JSON.stringify(options.body),
+        // Only set when a call site opts in (see RequestOptions.revalidate) -
+        // otherwise leave `fetch` exactly as Next treats it by default today.
+        next: options.revalidate === undefined ? undefined : { revalidate: options.revalidate, tags: options.tags },
       });
       return await toResult<T>(response);
     } catch (error) {

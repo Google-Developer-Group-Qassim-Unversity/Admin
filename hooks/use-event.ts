@@ -1,7 +1,7 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
 import type { Event, UpdateEventPayload, BackfillMember, AttendanceType, EventsPageParams } from '@/lib/api-types';
-import type { EventsFilters } from '@/lib/api/resources';
+import type { Api, EventsFilters } from '@/lib/api/resources';
 
 // Query keys
 export const eventKeys = {
@@ -33,13 +33,25 @@ function useEventCacheUpdates() {
   };
 }
 
-// Hooks
-export function useEvent(id: number | string) {
-  const api = useApi();
-  return useQuery({
+// Query option factories - the same definition prefetched server-side
+// (`serverApi()`) and read client-side (`useApi()`), so the two can never
+// drift onto different query keys and silently miss hydration.
+export const eventQuery = (api: Api, id: number | string) =>
+  queryOptions({
     queryKey: eventKeys.detail(id),
     queryFn: () => api.events.get(id),
   });
+
+export const eventsPaginatedQuery = (api: Api, params: EventsPageParams) =>
+  queryOptions({
+    queryKey: [...eventKeys.lists(), 'paginated', params],
+    queryFn: () => api.events.listPaginated(params),
+  });
+
+// Hooks
+export function useEvent(id: number | string) {
+  const api = useApi();
+  return useQuery(eventQuery(api, id));
 }
 
 /** Every event, optionally narrowed by semester or date range. */
@@ -59,8 +71,7 @@ export function useEvents(filters?: EventsFilters) {
 export function useEventsPaginated(params: EventsPageParams) {
   const api = useApi();
   return useQuery({
-    queryKey: [...eventKeys.lists(), 'paginated', params],
-    queryFn: () => api.events.listPaginated(params),
+    ...eventsPaginatedQuery(api, params),
     placeholderData: keepPreviousData,
   });
 }

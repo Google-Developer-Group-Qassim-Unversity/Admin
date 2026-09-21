@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
-import { auth, clerkClient } from '@clerk/nextjs/server';
+import { auth } from '@clerk/nextjs/server';
 import { config } from '@/lib/config';
 import { serverConfig } from '@/lib/config-server';
 
@@ -14,17 +14,14 @@ interface TokenPayload {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId } = await auth();
+  const { userId, sessionClaims } = await auth();
   if (!userId) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
     );
   }
-  const client = await clerkClient();
-  const user = await client.users.getUser(userId);
-  const publicMetadata = user.publicMetadata as { is_admin?: boolean } | undefined;
-  const isAdmin = publicMetadata?.is_admin === true;
+  const isAdmin = sessionClaims?.metadata?.is_admin === true;
   if (!isAdmin) {
     return NextResponse.json(
       { error: 'Unauthorized' },
