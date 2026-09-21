@@ -1,5 +1,3 @@
-"use client";
-
 import { queryOptions, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import { useApi } from "@/lib/api/client";
@@ -39,6 +37,13 @@ export function useRefreshClubStructure() {
 // (`serverApi()`) and read client-side (`useApi()`). The route is gated to
 // admin/admin_points/super_admin in middleware, so a server-side prefetch
 // never needs the client-only `role !== "none"` check below.
+//
+// This module must not carry a "use client" directive: the server page
+// imports this factory, and a client-module export reaches a server component
+// as a client reference that throws when called ("Attempted to call
+// clubOverviewQuery() from the server but clubOverviewQuery is on the client").
+// Hooks are only ever called from client components anyway, exactly like
+// `use-event.ts` and `use-members.ts`.
 export const clubOverviewQuery = (api: Api, includeArchived: boolean) =>
   queryOptions({
     ...clubQueryOptions,
