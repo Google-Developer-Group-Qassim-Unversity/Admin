@@ -1,7 +1,8 @@
-import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
 import { getMembers, createMemberManual, batchCreateMembers, ApiRequestError } from '@/lib/api';
 import type { ManualMemberCreateRequest, BatchCreateMemberItem, MembersPageParams } from '@/lib/api-types';
+import type { Api } from '@/lib/api/resources';
 
 export const memberKeys = {
   all: ['members'] as const,
@@ -9,6 +10,21 @@ export const memberKeys = {
   paginated: (params: MembersPageParams) => [...memberKeys.all, 'paginated', params] as const,
   stats: () => [...memberKeys.all, 'stats'] as const,
 };
+
+// Query option factories - the same definition prefetched server-side
+// (`serverApi()`) and read client-side (`useApi()`), so the two can never
+// drift onto different query keys and silently miss hydration.
+export const membersPaginatedQuery = (api: Api, params: MembersPageParams) =>
+  queryOptions({
+    queryKey: memberKeys.paginated(params),
+    queryFn: () => api.members.listPaginated(params),
+  });
+
+export const memberStatsQuery = (api: Api) =>
+  queryOptions({
+    queryKey: memberKeys.stats(),
+    queryFn: () => api.members.stats(),
+  });
 
 /**
  * One server-rendered page of members. `keepPreviousData` holds the current
@@ -18,8 +34,7 @@ export const memberKeys = {
 export function useMembersPaginated(params: MembersPageParams, enabled = true) {
   const api = useApi();
   return useQuery({
-    queryKey: memberKeys.paginated(params),
-    queryFn: () => api.members.listPaginated(params),
+    ...membersPaginatedQuery(api, params),
     placeholderData: keepPreviousData,
     enabled,
   });
@@ -28,10 +43,7 @@ export function useMembersPaginated(params: MembersPageParams, enabled = true) {
 /** Whole-table member counts for the page cards - one cheap grouped query. */
 export function useMemberStats() {
   const api = useApi();
-  return useQuery({
-    queryKey: memberKeys.stats(),
-    queryFn: () => api.members.stats(),
-  });
+  return useQuery(memberStatsQuery(api));
 }
 
 export function useMembers(getToken: () => Promise<string | null>) {

@@ -41,6 +41,18 @@ export interface EventsFilters {
 }
 
 /**
+ * How long a shared read (same response for every admin who could call it)
+ * sits in Next's server Data Cache. Short enough that a write from one admin
+ * reads back as current for another within a few seconds; long enough that a
+ * burst of navigations doesn't re-hit the backend for each one. Client-side
+ * freshness for the *acting* admin is a separate layer - see
+ * `hooks/use-event.ts`'s `useEventCacheUpdates`/`useClubMutation`'s
+ * `invalidateQueries`, which give them an instant view of their own writes
+ * regardless of this TTL.
+ */
+const CACHE_TTL = 15;
+
+/**
  * The endpoints this app calls, grouped by what they are about.
  *
  * Migrated from the flat list of one-line wrappers in `lib/api.ts`. Each entry
@@ -63,6 +75,8 @@ export function createApi(request: Requester) {
           start_date: filters?.startDate ? format(filters.startDate, "yyyy-MM-dd") : undefined,
           end_date: filters?.endDate ? format(filters.endDate, "yyyy-MM-dd") : undefined,
         },
+        revalidate: CACHE_TTL,
+        tags: ["events"],
       }),
 
     listPaginated: (params: EventsPageParams) =>
@@ -75,11 +89,14 @@ export function createApi(request: Requester) {
           search: params.search?.trim() ? params.search.trim() : undefined,
           exclude_custom: params.excludeCustom ? true : undefined,
         },
+        revalidate: CACHE_TTL,
+        tags: ["events"],
       }),
 
-    get: (id: number | string) => request.json<Event>(`/events/${id}`),
+    get: (id: number | string) => request.json<Event>(`/events/${id}`, { revalidate: CACHE_TTL, tags: ["events", `event-${id}`] }),
 
-    details: (id: number | string) => request.json<EventDetails>(`/events/${id}/details`),
+    details: (id: number | string) =>
+      request.json<EventDetails>(`/events/${id}/details`, { revalidate: CACHE_TTL, tags: ["events", `event-${id}`] }),
 
     create: (payload: CreateEventPayload) => request.json<Event>("/events", { method: "POST", body: payload }),
 
@@ -164,7 +181,7 @@ export function createApi(request: Requester) {
   };
 
   const departments = {
-    list: () => request.json<Department[]>("/departments"),
+    list: () => request.json<Department[]>("/departments", { revalidate: CACHE_TTL, tags: ["departments"] }),
   };
 
   const forms = {
@@ -184,16 +201,24 @@ export function createApi(request: Requester) {
           sort_by: params.sortBy,
           order: params.order,
         },
+        revalidate: CACHE_TTL,
+        tags: ["members"],
       }),
 
-    stats: () => request.json<MemberStats>("/members/stats"),
+    stats: () => request.json<MemberStats>("/members/stats", { revalidate: CACHE_TTL, tags: ["members"] }),
   };
 
   const clubStructure = {
     overview: (includeArchived = false) =>
-      request.json<ClubOverview>("/club-structure", { query: { include_archived: includeArchived } }),
-    department: (id: number) => request.json<ClubDepartment>(`/club-structure/departments/${id}`),
-    roster: (id: number) => request.json<ClubAssignment[]>(`/club-structure/departments/${id}/roster`),
+      request.json<ClubOverview>("/club-structure", {
+        query: { include_archived: includeArchived },
+        revalidate: CACHE_TTL,
+        tags: ["club-structure"],
+      }),
+    department: (id: number) =>
+      request.json<ClubDepartment>(`/club-structure/departments/${id}`, { revalidate: CACHE_TTL, tags: ["club-structure"] }),
+    roster: (id: number) =>
+      request.json<ClubAssignment[]>(`/club-structure/departments/${id}/roster`, { revalidate: CACHE_TTL, tags: ["club-structure"] }),
     createDepartment: (body: DepartmentSettings) =>
       request.json<ClubDepartment>("/club-structure/departments", { method: "POST", body }),
     updateDepartment: (id: number, body: DepartmentSettings) =>
