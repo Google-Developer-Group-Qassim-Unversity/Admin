@@ -128,7 +128,7 @@ export function EventsList({
       ) : view === "table" ? (
         <EventsTable events={filteredEvents} />
       ) : (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
           {filteredEvents.map((event) => (
             <EventCard key={event.id} event={event} />
           ))}

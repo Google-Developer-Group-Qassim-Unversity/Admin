@@ -145,9 +145,9 @@ export function EventsContent() {
           </Alert>
         </div>
       ) : isPending ? (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-48 w-full rounded-lg" />
+            <Skeleton key={i} className="h-40 w-full rounded-lg" />
           ))}
         </div>
       ) : events.length === 0 ? (
@@ -170,7 +170,7 @@ export function EventsContent() {
         </div>
       ) : (
         <div
-          className={`grid gap-4 transition-opacity sm:grid-cols-2 xl:grid-cols-3 ${
+          className={`grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))] transition-opacity ${
             isPlaceholderData ? "opacity-60" : ""
           }`}
         >
