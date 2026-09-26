@@ -1,8 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useAuth } from "@clerk/nextjs";
-import { AlertCircle, AlertTriangle, CalendarPlus, CheckCircle2, EyeOff, Pencil, Star, Trash2 } from "lucide-react";
+import { AlertCircle, CalendarPlus, CheckCircle2, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -21,15 +20,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { SemesterDialog, type SemesterFormValues } from "@/components/manage-semesters/semester-dialog";
-import {
-  useCreateSemester,
-  useDeleteSemester,
-  useSemesters,
-  useSetCurrentSemester,
-  useUpdateSemester,
-} from "@/hooks/use-semesters";
-import type { Semester } from "@/lib/api-types";
+import { SemesterDialog } from "@/components/manage-semesters/semester-dialog";
+import { useCreateSemester, useDeleteSemester, useSemesters, useUpdateSemester } from "@/hooks/use-semesters";
+import type { Semester, SemesterInput } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 
 const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -39,39 +32,19 @@ function formatDate(isoDate: string) {
   return DATE_FORMAT.format(new Date(`${isoDate}T00:00:00Z`));
 }
 
-/** Semesters whose date ranges intersect - their events would be counted twice. */
-function findOverlappingIds(semesters: Semester[]): Set<number> {
-  const overlapping = new Set<number>();
-  for (let i = 0; i < semesters.length; i++) {
-    for (let j = i + 1; j < semesters.length; j++) {
-      const a = semesters[i];
-      const b = semesters[j];
-      if (a.start_date <= b.end_date && b.start_date <= a.end_date) {
-        overlapping.add(a.id);
-        overlapping.add(b.id);
-      }
-    }
-  }
-  return overlapping;
-}
-
 export default function ManageSemestersPage() {
   const t = useTranslations("semestersPage");
   const tc = useTranslations("common.actions");
-  const { getToken } = useAuth();
-
-  const { data: semesters, isLoading, error } = useSemesters(getToken);
-  const createSemester = useCreateSemester(getToken);
-  const updateSemester = useUpdateSemester(getToken);
-  const setCurrent = useSetCurrentSemester(getToken);
-  const deleteSemester = useDeleteSemester(getToken);
+  const { data: semesters, isLoading, error } = useSemesters();
+  const createSemester = useCreateSemester();
+  const updateSemester = useUpdateSemester();
+  const deleteSemester = useDeleteSemester();
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Semester | null>(null);
   const [pendingDelete, setPendingDelete] = React.useState<Semester | null>(null);
 
   const rows = semesters ?? [];
-  const overlappingIds = findOverlappingIds(rows);
   const isSaving = createSemester.isPending || updateSemester.isPending;
 
   const openAdd = () => {
@@ -84,30 +57,12 @@ export default function ManageSemestersPage() {
     setDialogOpen(true);
   };
 
-  const handleSubmit = async (values: SemesterFormValues) => {
+  const handleSubmit = async (payload: SemesterInput) => {
     try {
-      if (editing) {
-        await updateSemester.mutateAsync({
-          id: editing.id,
-          payload: {
-            name: values.name.trim() || null,
-            start_date: values.start_date,
-            end_date: values.end_date,
-            is_public: values.is_public,
-          },
-        });
-        toast.success(t("semesterUpdated", { id: editing.id }));
-      } else {
-        await createSemester.mutateAsync({
-          id: values.id,
-          name: values.name.trim() || null,
-          start_date: values.start_date,
-          end_date: values.end_date,
-          is_public: values.is_public,
-          is_current: values.is_current,
-        });
-        toast.success(t("semesterAdded", { id: values.id }));
-      }
+      const saved = editing
+        ? await updateSemester.mutateAsync({ id: editing.id, payload })
+        : await createSemester.mutateAsync(payload);
+      toast.success(t(editing ? "semesterUpdated" : "semesterAdded", { name: saved.name }));
       setDialogOpen(false);
       setEditing(null);
     } catch (err) {
@@ -115,20 +70,11 @@ export default function ManageSemestersPage() {
     }
   };
 
-  const handleSetCurrent = async (semester: Semester) => {
-    try {
-      await setCurrent.mutateAsync(semester.id);
-      toast.success(t("nowDefault", { id: semester.id }));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("setCurrentFailed"));
-    }
-  };
-
   const handleDelete = async () => {
     if (!pendingDelete) return;
     try {
       await deleteSemester.mutateAsync(pendingDelete.id);
-      toast.success(t("semesterDeleted", { id: pendingDelete.id }));
+      toast.success(t("semesterDeleted", { name: pendingDelete.name }));
       setPendingDelete(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("deleteFailed"));
@@ -158,16 +104,6 @@ export default function ManageSemestersPage() {
         </Alert>
       )}
 
-      {!isLoading && !error && overlappingIds.size > 0 && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertTitle>{t("overlappingTitle")}</AlertTitle>
-          <AlertDescription>
-            {t("overlappingDescription", { ids: [...overlappingIds].join(", ") })}
-          </AlertDescription>
-        </Alert>
-      )}
-
       {!isLoading && !error && (
         <Card>
           <CardHeader>
@@ -186,8 +122,9 @@ export default function ManageSemestersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>{t("columnCode")}</TableHead>
-                      <TableHead>{t("columnLabel")}</TableHead>
+                      <TableHead>{t("columnName")}</TableHead>
+                      <TableHead>{t("columnHijriCode")}</TableHead>
+                      <TableHead>{t("columnGregorianCode")}</TableHead>
                       <TableHead>{t("columnStarts")}</TableHead>
                       <TableHead>{t("columnEnds")}</TableHead>
                       <TableHead>{t("columnStatus")}</TableHead>
@@ -197,8 +134,9 @@ export default function ManageSemestersPage() {
                   <TableBody>
                     {rows.map((semester) => (
                       <TableRow key={semester.id}>
-                        <TableCell className="font-medium">{semester.id}</TableCell>
-                        <TableCell className="text-muted-foreground">{semester.name ?? "—"}</TableCell>
+                        <TableCell className="font-medium">{semester.name}</TableCell>
+                        <TableCell>{semester.hijri_code}</TableCell>
+                        <TableCell>{semester.gregorian_code}</TableCell>
                         <TableCell>{formatDate(semester.start_date)}</TableCell>
                         <TableCell>{formatDate(semester.end_date)}</TableCell>
                         <TableCell>
@@ -215,45 +153,22 @@ export default function ManageSemestersPage() {
                                 {t("private")}
                               </Badge>
                             )}
-                            {overlappingIds.has(semester.id) && (
-                              <Badge variant="destructive" className="gap-1">
-                                <AlertTriangle className="h-3 w-3" />
-                                {t("overlaps")}
-                              </Badge>
-                            )}
                           </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-1">
-                            {!semester.is_current && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleSetCurrent(semester)}
-                                disabled={setCurrent.isPending}
-                                title={t("setCurrentTitle")}
-                              >
-                                <Star className="h-4 w-4" />
-                                <span className="sr-only">{t("setCurrentSr", { id: semester.id })}</span>
-                              </Button>
-                            )}
                             <Button variant="ghost" size="sm" onClick={() => openEdit(semester)} title={t("edit")}>
                               <Pencil className="h-4 w-4" />
-                              <span className="sr-only">{t("editSr", { id: semester.id })}</span>
+                              <span className="sr-only">{t("editSr", { name: semester.name })}</span>
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
                               onClick={() => setPendingDelete(semester)}
-                              disabled={semester.is_current}
-                              title={
-                                semester.is_current
-                                  ? t("deleteBlockedTitle")
-                                  : t("delete")
-                              }
+                              title={t("delete")}
                             >
                               <Trash2 className="h-4 w-4 text-destructive" />
-                              <span className="sr-only">{t("deleteSr", { id: semester.id })}</span>
+                              <span className="sr-only">{t("deleteSr", { name: semester.name })}</span>
                             </Button>
                           </div>
                         </TableCell>
@@ -274,7 +189,6 @@ export default function ManageSemestersPage() {
           if (!open) setEditing(null);
         }}
         semester={editing}
-        existingIds={rows.map((semester) => semester.id)}
         onSubmit={handleSubmit}
         isLoading={isSaving}
       />
@@ -282,7 +196,7 @@ export default function ManageSemestersPage() {
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle", { id: pendingDelete?.id ?? "" })}</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteConfirmTitle", { name: pendingDelete?.name ?? "" })}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("deleteConfirmDescription")}
             </AlertDialogDescription>
