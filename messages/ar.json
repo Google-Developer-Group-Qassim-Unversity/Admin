@@ -334,7 +334,9 @@
     },
     "card": {
       "noImage": "لا توجد صورة",
-      "starts": "يبدأ:"
+      "starts": "يبدأ:",
+      "attendance": "الحضور:",
+      "department": "القسم:"
     },
     "showingRange": "عرض {from}-{to} من {count, plural, zero {# فعالية} one {# فعالية} two {# فعاليتين} few {# فعاليات} many {# فعالية} other {# فعالية}}",
     "page": "صفحة {current} من {total}",

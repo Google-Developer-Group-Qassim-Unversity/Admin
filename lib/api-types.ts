@@ -23,6 +23,12 @@ export interface Event {
   meeting_url: string | null;
   is_official: boolean;
   created_at: string;
+  /** Set on the paginated admin list - null when the event has no department */
+  department_id?: number | null;
+  department_name?: string | null;
+  department_ar_name?: string | null;
+  /** Distinct members who attended any day of the event */
+  attendance_count?: number;
 }
 
 export interface CreateEventPayload {
