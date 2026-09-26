@@ -20,6 +20,8 @@ import type {
   MembersPageParams,
   Paginated,
   ScanAttendanceResponse,
+  Semester,
+  SemesterInput,
   SendCertificatesResponse,
   UpdateEventPayload,
   UpdateFormPayload,
@@ -243,7 +245,14 @@ export function createApi(request: Requester) {
       request.json<ClubAssignment | null>(`/club-structure/presidents/${slot}`, { method: "PUT", body }),
   };
 
-  return { events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure };
+  const semesters = {
+    list: () => request.json<Semester[]>("/semesters"),
+    create: (body: SemesterInput) => request.json<Semester>("/semesters", { method: "POST", body }),
+    update: (id: string, body: SemesterInput) => request.json<Semester>(`/semesters/${id}`, { method: "PUT", body }),
+    remove: (id: string) => request.json<{ detail: string }>(`/semesters/${id}`, { method: "DELETE" }),
+  };
+
+  return { events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure, semesters };
 }
 
 export type Api = ReturnType<typeof createApi>;
