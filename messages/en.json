@@ -334,7 +334,9 @@
     },
     "card": {
       "noImage": "No image",
-      "starts": "Starts:"
+      "starts": "Starts:",
+      "attendance": "Attendance:",
+      "department": "Department:"
     },
     "showingRange": "Showing {from}-{to} of {count, plural, one {# event} other {# events}}",
     "page": "Page {current} of {total}",

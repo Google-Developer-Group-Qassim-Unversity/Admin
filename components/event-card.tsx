@@ -12,8 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
-import { MapPin, Globe } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { MapPin, Globe, Users, Building2 } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 
 interface EventCardProps {
   event: Event;
@@ -22,6 +22,7 @@ interface EventCardProps {
 export function EventCard({ event }: EventCardProps) {
   const t = useTranslations("events");
   const tc = useTranslations("common.actions");
+  const locale = useLocale();
   // Format the start date to "MMM DD" format
   const formatStartDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
@@ -35,6 +36,13 @@ export function EventCard({ event }: EventCardProps) {
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
 
   const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
+
+  const departmentName =
+    event.department_id == null
+      ? null
+      : locale === "ar"
+        ? (event.department_ar_name ?? event.department_name)
+        : (event.department_name ?? event.department_ar_name);
 
   // Get status badge variant
   const getStatusVariant = (status: Event["status"]) => {
@@ -114,6 +122,29 @@ export function EventCard({ event }: EventCardProps) {
             {formatStartDate(event.start_datetime)}
           </span>
         </div>
+
+        {/* Attendance - links to the event's attendance tab */}
+        <Link
+          href={`/events/${event.id}/attendance`}
+          className="flex items-center gap-2 text-sm rounded-sm -mx-1 px-1 py-0.5 transition-colors hover:bg-muted"
+        >
+          <span className="font-medium">{t("card.attendance")}</span>
+          <Users className="h-4 w-4 shrink-0 text-muted-foreground" />
+          <span className="text-muted-foreground">
+            {event.attendance_count ?? 0}
+          </span>
+        </Link>
+
+        {/* Department - plain label, not clickable */}
+        {departmentName && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="font-medium">{t("card.department")}</span>
+            <Building2 className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="text-muted-foreground truncate" dir="auto">
+              {departmentName}
+            </span>
+          </div>
+        )}
       </CardContent>
 
       {/* Actions */}
