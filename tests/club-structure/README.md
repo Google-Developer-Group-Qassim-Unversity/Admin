@@ -22,7 +22,7 @@ RUN_CLUB_BROWSER=1 uv run pytest
 
 To use an installed browser, set `CHROMIUM_PATH=/usr/bin/chromium`. The ordinary
 backend suite skips this browser check when `RUN_CLUB_BROWSER` is unset. CI runs
-it in `.github/workflows/club-structure-integration.yml`, without application
+it in the `test` job of `.github/workflows/pr.yml`, without application
 secrets, and saves screenshots as an artifact. Python's failure output includes
 the local screenshot directory.
 
