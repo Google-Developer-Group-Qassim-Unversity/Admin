@@ -10,7 +10,9 @@ import { toast } from "sonner";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-panel";
 import { Countdown } from "@/components/pipeline/countdown";
+import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
 import { DetailsForm } from "@/components/pipeline/details-form";
+import { SubmitBar } from "@/components/pipeline/submit-bar";
 import { useDepartmentName } from "@/components/pipeline/shared";
 import { StageBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -29,15 +31,26 @@ export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
     return <p className="text-brand-red-ink text-sm">{error?.message ?? t("notFound")}</p>;
   }
 
+  const canAct = me.is_super_admin || me.departments.some((d) => d.id === request.department.id);
+
   return (
     <div className="flex flex-col gap-5">
       <RequestHeader request={request} me={me} />
+      {request.stage === "draft" && canAct ? <SubmitBar request={request} /> : null}
       <Tabs defaultValue="details">
-        <TabsList>
+        <TabsList className="flex-wrap">
           <TabsTrigger value="details">{t("tabs.details")}</TabsTrigger>
+          <TabsTrigger value="design">{t("tabs.design")}</TabsTrigger>
+          <TabsTrigger value="logistics">{t("tabs.logistics")}</TabsTrigger>
         </TabsList>
         <TabsContent value="details" className="bg-card border-border rounded-xl border p-5">
           <DetailsForm request={request} />
+        </TabsContent>
+        <TabsContent value="design" className="bg-card border-border rounded-xl border p-5">
+          <DesignBriefForm request={request} />
+        </TabsContent>
+        <TabsContent value="logistics" className="bg-card border-border rounded-xl border p-5">
+          <LogisticsBriefForm request={request} />
         </TabsContent>
       </Tabs>
     </div>
@@ -51,6 +64,8 @@ function RequestHeader({ request, me }: { request: EventRequestDetail; me: Pipel
   const cancel = useCancelRequest();
   const canAct = me.is_super_admin || me.departments.some((d) => d.id === request.department.id);
   const isDraft = request.stage === "draft";
+  // Until the sweep marks it, a draft whose hold ran out still shows its old dates.
+  const holdRanOut = isDraft && !!request.hold_expires_at && request.hold_expires_at <= request.now;
 
   const onCancel = async () => {
     if (!window.confirm(t("cancelConfirm"))) return;
@@ -93,7 +108,7 @@ function RequestHeader({ request, me }: { request: EventRequestDetail; me: Pipel
         </div>
       </div>
 
-      {isDraft && request.hold_expires_at ? (
+      {isDraft && request.hold_expires_at && !holdRanOut ? (
         <Alert>
           <CalendarClock className="h-4 w-4" />
           <AlertTitle>{t("holdTitle")}</AlertTitle>
@@ -105,7 +120,9 @@ function RequestHeader({ request, me }: { request: EventRequestDetail; me: Pipel
         </Alert>
       ) : null}
 
-      {!request.start_date && canAct && request.stage !== "published" ? <Redate request={request} me={me} /> : null}
+      {(!request.start_date || holdRanOut) && canAct && request.stage !== "published" ? (
+        <Redate request={request} me={me} />
+      ) : null}
     </section>
   );
 }

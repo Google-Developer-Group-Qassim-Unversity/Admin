@@ -1903,7 +1903,9 @@
       "redateCancel": "ليس الآن",
       "redated": "تم حجز الأيام الجديدة",
       "tabs": {
-        "details": "بيانات الفعالية"
+        "details": "بيانات الفعالية",
+        "design": "طلب التصميم",
+        "logistics": "طلب اللوجستيات"
       }
     },
     "details": {
@@ -1960,6 +1962,112 @@
       "save": "حفظ البيانات",
       "saved": "تم الحفظ",
       "failed": "تعذر الحفظ"
+    },
+    "submit": {
+      "title": "الإرسال للتصميم واللوجستيات",
+      "ready": "كل شيء مكتمل. الإرسال يوصل الطلب للقسمين في نفس الوقت.",
+      "notReady": "ما زال ناقصًا:",
+      "button": "إرسال",
+      "complete": "جاهز للإرسال",
+      "sent": "تم الإرسال للتصميم واللوجستيات",
+      "failed": "تعذر الإرسال"
+    },
+    "fields": {
+      "dates": "التواريخ",
+      "details_title": "العنوان",
+      "details_description": "الوصف",
+      "details_event_type": "نوع الحدث",
+      "details_presenter_name": "اسم مقدم الحدث",
+      "details_presenter_email": "ايميل مقدم الحدث",
+      "details_day_modes": "نوع كل يوم",
+      "details_daily_start_time": "وقت البداية",
+      "details_daily_end_time": "وقت النهاية (بعد البداية)",
+      "details_is_official": "رسمي أو غير رسمي",
+      "details_location_scope": "داخل أو خارج الجامعة",
+      "details_audience": "الفئة المستهدفة",
+      "details_registration": "التسجيل",
+      "details_expected_accepted": "عدد المقبولين",
+      "design_design_type": "التصميم: النوع",
+      "design_design_type_other": "التصميم: نوع آخر",
+      "design_size_other": "التصميم: مقاس آخر",
+      "design_file_type_other": "التصميم: صيغة أخرى",
+      "design_idea": "التصميم: الفكرة",
+      "design_content_status": "التصميم: حالة المحتوى",
+      "design_content": "التصميم: المحتوى",
+      "logistics_meet_link_by_logistics": "اللوجستيات: رابط Google Meet",
+      "logistics_venue": "اللوجستيات: المكان",
+      "logistics_buses_needed": "اللوجستيات: الباصات"
+    },
+    "briefs": {
+      "save": "حفظ الطلب",
+      "saved": "تم الحفظ",
+      "failed": "تعذر الحفظ",
+      "choose": "اختر…",
+      "optional": "اختياري",
+      "other": "أخرى",
+      "otherPlaceholder": "اكتبه هنا",
+      "yes": "نعم",
+      "no": "لا",
+      "linksHint": "رابط في كل سطر (Google Drive وغيره).",
+      "design": {
+        "rule": "لا يتم عمل أي تصميم بدون محتوى واضح.",
+        "designType": "نوع التصميم",
+        "size": "المقاس",
+        "fileType": "صيغة الملف النهائي",
+        "idea": "فكرة التصميم",
+        "contentStatus": "حالة المحتوى",
+        "content": "المحتوى (النص داخل التصميم)",
+        "instructions": "معلومات أو تعليمات خاصة",
+        "imageLinks": "إرفاق صور / شعار (روابط)",
+        "referenceLinks": "صورة لتصميم مشابه (روابط)",
+        "designTypes": {
+          "poster": "صورة إعلانية",
+          "slides": "سلايدات",
+          "posts": "منشورات",
+          "reports": "تقارير",
+          "prints": "مطبوعات",
+          "other": "أخرى"
+        },
+        "sizes": {
+          "square": "مربع",
+          "landscape": "بالعرض",
+          "portrait": "بالطول",
+          "other": "أخرى"
+        },
+        "fileTypes": {
+          "png": "PNG",
+          "jpeg": "JPEG",
+          "pdf": "PDF",
+          "powerpoint": "PowerPoint",
+          "other": "أخرى"
+        },
+        "contentStatuses": {
+          "final": "المحتوى كامل ونهائي",
+          "needs_wording": "المعلومات جاهزة وأحتاج صياغة"
+        }
+      },
+      "logistics": {
+        "pickModesFirst": "اختر نوع كل يوم في بيانات الفعالية أولًا؛ الأسئلة هنا تعتمد عليه.",
+        "onlineSection": "الأيام عن بعد",
+        "meetLink": "هل تنشئ اللوجستيات رابط Google Meet؟",
+        "onSiteSection": "الأيام الحضورية",
+        "venue": "المكان",
+        "room": "رقم القاعة",
+        "services": "الخدمات المطلوبة",
+        "venueNeeds": "احتياجات القاعة",
+        "buses": "هل تحتاجون باصات (للطالبات)؟",
+        "notes": "ملاحظات / معلومات إضافية",
+        "serviceOptions": {
+          "sponsorship": "رعاية",
+          "organizing": "تنظيم",
+          "volunteers": "متطوعين"
+        },
+        "venueNeedOptions": {
+          "devices": "أجهزة",
+          "internet": "إنترنت",
+          "audio": "صوتيات"
+        }
+      }
     }
   }
 }

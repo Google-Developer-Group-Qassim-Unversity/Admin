@@ -42,6 +42,7 @@ import type {
   PermissionGrant,
   PipelineCalendar,
   PipelineMe,
+  PipelineTeam,
   PipelineTeamEntry,
   PipelineTeamsInput,
   UpdateDetailsInput,
@@ -327,6 +328,9 @@ export function createApi(request: Requester) {
     updateDetails: (id: number, body: UpdateDetailsInput) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/details`, { method: "PUT", body }),
     cancel: (id: number) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
+    saveBrief: (id: number, team: PipelineTeam, brief: Record<string, unknown>) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
+    submit: (id: number) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
   };
 
   return {
