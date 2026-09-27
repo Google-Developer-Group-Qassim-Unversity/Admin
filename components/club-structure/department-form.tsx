@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { DEPARTMENT_COLORS } from "@/components/club-structure/shared";
 import { DEPARTMENT_ICONS, DEPARTMENT_ICON_COMPONENTS } from "@/lib/department-icons";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -19,6 +20,7 @@ const EMPTY_SETTINGS: DepartmentSettings = {
   type: "administrative",
   color: DEPARTMENT_COLORS[0],
   icon: "building2",
+  show_in_leaderboard: true,
 };
 
 export function DepartmentForm({
@@ -47,6 +49,7 @@ export function DepartmentForm({
     type: initial.type,
     color: initial.color,
     icon: initial.icon,
+    show_in_leaderboard: initial.show_in_leaderboard,
   };
   const [draft, setDraft] = useState<{
     base: DepartmentSettings;
@@ -131,6 +134,18 @@ export function DepartmentForm({
               {t("types.practical")}
             </ToggleGroupItem>
           </ToggleGroup>
+        </div>
+        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+          <div className="space-y-0.5">
+            <Label htmlFor={`${id}-leaderboard`}>{t("showInLeaderboard")}</Label>
+            <p className="text-xs text-muted-foreground">{t("showInLeaderboardHint")}</p>
+          </div>
+          <Switch
+            id={`${id}-leaderboard`}
+            checked={values.show_in_leaderboard}
+            disabled={pending || readOnly || disabled}
+            onCheckedChange={(checked) => setValues({ ...values, show_in_leaderboard: checked })}
+          />
         </div>
         <fieldset>
           <legend className="mb-3 text-sm font-medium">{t("color")}</legend>

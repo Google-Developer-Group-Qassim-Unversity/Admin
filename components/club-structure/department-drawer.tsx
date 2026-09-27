@@ -13,7 +13,7 @@ import { ClubTabsList, ClubTabsTrigger } from "@/components/club-structure/club-
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { DepartmentForm } from "@/components/club-structure/department-form";
 import { ClubMemberPicker } from "@/components/club-structure/member-picker";
-import { SeatCard } from "@/components/club-structure/seat-card";
+import { RoleSeatCard } from "@/components/club-structure/seat-card";
 import {
   DepartmentIcon,
   ClubLoading,
@@ -23,20 +23,32 @@ import {
   QueryError,
   RoleBadge,
   useDepartmentName,
+  useRoleName,
 } from "@/components/club-structure/shared";
 import { useClubDepartment, useClubMutation, useClubRoster } from "@/hooks/use-club-structure";
-import type { ClubAssignment, ClubDepartment, DepartmentSettings } from "@/lib/club-structure-types";
+import type {
+  ClubDepartment,
+  ClubDepartmentCard,
+  ClubRole,
+  ClubSemester,
+  DepartmentSettings,
+  RosterEntry,
+} from "@/lib/club-structure-types";
 import { normalizeArabic } from "@/lib/search-utils";
 import { useClubError } from "@/components/club-structure/use-club-error";
 
 function DepartmentRoster({
+  semester,
   department,
-  assignments,
+  entries,
+  roleName,
   canEdit,
   disabled,
 }: {
+  semester: ClubSemester;
   department: ClubDepartment;
-  assignments: ClubAssignment[];
+  entries: RosterEntry[];
+  roleName: (key: string) => string;
   canEdit: boolean;
   disabled: boolean;
 }) {
@@ -44,13 +56,13 @@ function DepartmentRoster({
   const describeError = useClubError();
   const [search, setSearch] = useState("");
   const [picker, setPicker] = useState(false);
-  const [removing, setRemoving] = useState<ClubAssignment | null>(null);
-  const add = useClubMutation((api, memberId: number) => api.addMember(department.id, memberId));
-  const remove = useClubMutation((api, assignment: ClubAssignment) =>
-    api.removeMember(department.id, assignment.member_id, assignment.id),
+  const [removing, setRemoving] = useState<RosterEntry | null>(null);
+  const add = useClubMutation((api, memberId: number) => api.addMember(semester.id, department.id, memberId));
+  const remove = useClubMutation((api, entry: RosterEntry) =>
+    api.removeMember(semester.id, department.id, entry.member.id),
   );
-  const visible = assignments.filter((assignment) =>
-    normalizeArabic(assignment.member.name).includes(normalizeArabic(search.trim())),
+  const visible = entries.filter((entry) =>
+    normalizeArabic(entry.member.name).includes(normalizeArabic(search.trim())),
   );
 
   async function addMember(id: number) {
@@ -108,17 +120,21 @@ function DepartmentRoster({
           {t("addingMember")}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">{t("memberCount", { count: assignments.length })}</p>
+      <p className="text-xs text-muted-foreground">{t("memberCount", { count: entries.length })}</p>
       {visible.length ? (
         <ul className="space-y-1">
-          {visible.map((assignment) => (
-            <li key={assignment.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50">
-              <MemberAvatar name={assignment.member.name} />
+          {visible.map((entry) => (
+            <li key={entry.member.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50">
+              <MemberAvatar name={entry.member.name} />
               <div className="min-w-0 flex-1">
                 <p className="wrap-anywhere text-sm font-medium" dir="auto">
-                  {assignment.member.name}
+                  {entry.member.name}
                 </p>
-                <RoleBadge role={assignment.role} />
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {entry.roles.map((role) => (
+                    <RoleBadge key={role} role={role} label={roleName(role)} />
+                  ))}
+                </div>
               </div>
               {canEdit && (
                 <Button
@@ -126,12 +142,10 @@ function DepartmentRoster({
                   size="sm"
                   className="min-h-10 shrink-0 text-destructive sm:min-h-0"
                   disabled={disabled || remove.isPending || add.isPending}
-                  aria-label={t("removeMemberNamed", {
-                    name: assignment.member.name,
-                  })}
+                  aria-label={t("removeMemberNamed", { name: entry.member.name })}
                   onClick={() => {
                     remove.reset();
-                    setRemoving(assignment);
+                    setRemoving(entry);
                   }}
                 >
                   {t("remove")}
@@ -153,7 +167,7 @@ function DepartmentRoster({
       {picker && canEdit && (
         <ClubMemberPicker
           title={t("addMember")}
-          excludedIds={assignments.map((assignment) => assignment.member_id)}
+          excludedIds={entries.map((entry) => entry.member.id)}
           onClose={() => setPicker(false)}
           onSelect={(member) => void addMember(member.id)}
         />
@@ -177,20 +191,30 @@ function DepartmentRoster({
 }
 
 function DepartmentSettingsPanel({
+  semester,
   department,
+  inSemester,
   canEdit,
   disabled,
+  onRemoved,
 }: {
+  semester: ClubSemester;
   department: ClubDepartment;
+  inSemester: boolean;
   canEdit: boolean;
   disabled: boolean;
+  onRemoved: () => void;
 }) {
   const t = useTranslations("clubStructure");
   const describeError = useClubError();
   // Capture the intended status: a refresh must not reverse an open confirmation.
   const [nextActive, setNextActive] = useState<boolean | null>(null);
+  const [removing, setRemoving] = useState(false);
   const update = useClubMutation((api, settings: DepartmentSettings) => api.updateDepartment(department.id, settings));
   const status = useClubMutation((api, active: boolean) => api.setActive(department.id, active));
+  const leave = useClubMutation((api) => api.removeFromSemester(semester.id, department.id));
+  const busy = update.isPending || status.isPending || leave.isPending;
+
   async function save(settings: DepartmentSettings) {
     try {
       await update.mutateAsync(settings);
@@ -211,6 +235,16 @@ function DepartmentSettingsPanel({
       /* Keep the confirmation open. */
     }
   }
+  async function removeFromSemester() {
+    try {
+      await leave.mutateAsync(undefined);
+      setRemoving(false);
+      toast.success(t("removedFromSemester", { semester: semester.name }));
+      onRemoved();
+    } catch {
+      /* Keep the confirmation open. */
+    }
+  }
   return (
     <div className="space-y-6">
       {update.error && (
@@ -220,7 +254,7 @@ function DepartmentSettingsPanel({
       )}
       <DepartmentForm
         initial={department}
-        pending={update.isPending || status.isPending}
+        pending={busy}
         readOnly={!canEdit}
         disabled={disabled}
         submitLabel={t("saveChanges")}
@@ -232,7 +266,7 @@ function DepartmentSettingsPanel({
           <Button
             className="w-full"
             variant="outline"
-            disabled={disabled || update.isPending || status.isPending}
+            disabled={disabled || busy}
             onClick={() => {
               status.reset();
               setNextActive(!department.active);
@@ -241,6 +275,22 @@ function DepartmentSettingsPanel({
             {t(department.active ? "archiveDepartment" : "restoreDepartment")}
           </Button>
           <p className="text-xs leading-relaxed text-muted-foreground">{t("archiveHint")}</p>
+          {inSemester && (
+            <>
+              <Button
+                className="w-full"
+                variant="outline"
+                disabled={disabled || busy}
+                onClick={() => {
+                  leave.reset();
+                  setRemoving(true);
+                }}
+              >
+                {t("removeFromSemester", { semester: semester.name })}
+              </Button>
+              <p className="text-xs leading-relaxed text-muted-foreground">{t("removeFromSemesterHint")}</p>
+            </>
+          )}
         </div>
       )}
       {nextActive !== null && canEdit && (
@@ -257,21 +307,52 @@ function DepartmentSettingsPanel({
           }}
         />
       )}
+      {removing && canEdit && (
+        <ConfirmChange
+          title={t("removeFromSemester", { semester: semester.name })}
+          description={t("removeFromSemesterHint")}
+          pending={leave.isPending}
+          disabled={disabled}
+          error={describeError(leave.error, true)}
+          onConfirm={() => void removeFromSemester()}
+          onClose={() => {
+            setRemoving(false);
+            leave.reset();
+          }}
+        />
+      )}
     </div>
   );
 }
 
-export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit: boolean; onClose: () => void }) {
+export function DepartmentDrawer({
+  id,
+  semester,
+  card,
+  roles,
+  canEdit,
+  onClose,
+}: {
+  id: number;
+  semester: ClubSemester;
+  /** The department as part of this semester; undefined when it is not part of it. */
+  card: ClubDepartmentCard | undefined;
+  roles: ClubRole[];
+  canEdit: boolean;
+  onClose: () => void;
+}) {
   const t = useTranslations("clubStructure");
   const common = useTranslations("common");
-  const [tab, setTab] = useState("roster");
+  const [tab, setTab] = useState(card ? "roster" : "settings");
   const locale = useLocale();
   const name = useDepartmentName();
+  const roleName = useRoleName(roles);
   const department = useClubDepartment(id);
-  const roster = useClubRoster(id);
+  const roster = useClubRoster(id, semester.id);
   const current = department.data;
-  const assignments = roster.data ?? [];
-  const canChangeRoster = canEdit && !!current?.active;
+  const entries = roster.data ?? [];
+  const canChangeRoster = canEdit && !!card;
+  const disabled = !!department.error || !!roster.error;
 
   return (
     <Sheet
@@ -289,8 +370,10 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
           <div className="flex items-center gap-3">
             {current && <DepartmentIcon {...current} />}
             <div className="min-w-0 space-y-1">
-              <SheetTitle className="wrap-anywhere">{current ? name(current) : t("department")}</SheetTitle>
-              <SheetDescription>{t("drawerDescription")}</SheetDescription>
+              <SheetTitle className="wrap-anywhere">
+                {current ? name({ ...current, ...(card ?? {}) }) : t("department")}
+              </SheetTitle>
+              <SheetDescription>{t("drawerDescription", { semester: semester.name })}</SheetDescription>
               {current && (
                 <div className="flex flex-wrap gap-2">
                   <DepartmentTypeBadge type={current.type} />
@@ -321,11 +404,13 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
             dir={locale === "ar" ? "rtl" : "ltr"}
           >
             <ClubTabsList className="shrink-0 gap-0">
-              <ClubTabsTrigger value="roster" className="min-w-0 flex-1 basis-0">
-                <Users aria-hidden="true" />
-                {t("roster")}
-              </ClubTabsTrigger>
-              {current.leadership_enabled && (
+              {card && (
+                <ClubTabsTrigger value="roster" className="min-w-0 flex-1 basis-0">
+                  <Users aria-hidden="true" />
+                  {t("roster")}
+                </ClubTabsTrigger>
+              )}
+              {card && card.roles.length > 0 && (
                 <ClubTabsTrigger value="leadership" className="min-w-0 flex-1 basis-0">
                   <Crown aria-hidden="true" />
                   {t("leadership")}
@@ -336,25 +421,31 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
                 {t("settings")}
               </ClubTabsTrigger>
             </ClubTabsList>
-            {!current.active && (
-              <p className="border-b bg-muted/40 px-6 py-3 text-xs text-muted-foreground">{t("archivedRosterHint")}</p>
+            {!card && (
+              <p className="border-b bg-muted/40 px-6 py-3 text-xs text-muted-foreground">
+                {t("notInSemesterHint", { semester: semester.name })}
+              </p>
             )}
             <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
-              <TabsContent value="roster">
-                {roster.isPending && <ClubLoading />}
-                {roster.error && (
-                  <QueryError error={roster.error} retry={() => void roster.refetch()} stale={!!roster.data} />
-                )}
-                {roster.data && (
-                  <DepartmentRoster
-                    department={current}
-                    assignments={assignments}
-                    canEdit={canChangeRoster}
-                    disabled={!!department.error || !!roster.error}
-                  />
-                )}
-              </TabsContent>
-              {current.leadership_enabled && (
+              {card && (
+                <TabsContent value="roster">
+                  {roster.isPending && <ClubLoading />}
+                  {roster.error && (
+                    <QueryError error={roster.error} retry={() => void roster.refetch()} stale={!!roster.data} />
+                  )}
+                  {roster.data && (
+                    <DepartmentRoster
+                      semester={semester}
+                      department={current}
+                      entries={entries}
+                      roleName={roleName}
+                      canEdit={canChangeRoster}
+                      disabled={disabled}
+                    />
+                  )}
+                </TabsContent>
+              )}
+              {card && (
                 <TabsContent value="leadership" className="space-y-4">
                   {roster.isPending && <ClubLoading />}
                   {roster.error && (
@@ -362,16 +453,17 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
                   )}
                   {roster.data && (
                     <>
-                      {(["leader", "deputy"] as const).map((role) => (
-                        <SeatCard
-                          key={role}
-                          seat={{ departmentId: id, role }}
-                          assignment={assignments.find((assignment) => assignment.role === role) ?? null}
+                      {card.roles.map((seats) => (
+                        <RoleSeatCard
+                          key={seats.key}
+                          semesterId={semester.id}
+                          departmentId={id}
+                          role={seats.key}
+                          label={roleName(seats.key)}
+                          maxHolders={seats.max_holders}
+                          holders={entries.filter((entry) => entry.roles.includes(seats.key)).map((entry) => entry.member)}
                           canEdit={canChangeRoster}
-                          disabled={!!department.error || !!roster.error}
-                          excludedIds={assignments
-                            .filter((assignment) => assignment.role !== "member")
-                            .map((assignment) => assignment.member_id)}
+                          disabled={disabled}
                         />
                       ))}
                       <p className="border-t pt-4 text-xs leading-relaxed text-muted-foreground">
@@ -382,7 +474,14 @@ export function DepartmentDrawer({ id, canEdit, onClose }: { id: number; canEdit
                 </TabsContent>
               )}
               <TabsContent value="settings" forceMount className={tab !== "settings" ? "hidden" : undefined}>
-                <DepartmentSettingsPanel department={current} canEdit={canEdit} disabled={!!department.error} />
+                <DepartmentSettingsPanel
+                  semester={semester}
+                  department={current}
+                  inSemester={!!card}
+                  canEdit={canEdit}
+                  disabled={!!department.error}
+                  onRemoved={onClose}
+                />
               </TabsContent>
             </div>
           </Tabs>

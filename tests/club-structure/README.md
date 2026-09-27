@@ -26,17 +26,18 @@ it in `.github/workflows/club-structure-integration.yml`, without application
 secrets, and saves screenshots as an artifact. Python's failure output includes
 the local screenshot directory.
 
-The check covers creation and settings, roster additions/removals, promotion and
-demotion, equal President seats, Board independence, distinct member counts, an
-open stale confirmation, competing HTTP replacements, repeated archive/restore,
-role permissions, a 480px desktop drawer, and English/Arabic mobile layouts in
+The check covers creation and settings, roster additions/removals, leader and VP
+seats (with their explicit member rows), the two Leadership leaders shown publicly
+as the presidents, the Board as an ordinary unranked department, distinct member
+counts, an open stale confirmation, competing HTTP grants, repeated
+archive/restore, copying a semester's structure into an empty one, role
+permissions, a 480px desktop drawer, and English/Arabic mobile layouts in
 light/dark themes. The regular backend tests cover transaction rollback,
 independent-connection races, database constraints, full route authorization,
 points retention, and migration behavior.
 
 The UI structure is compared with the React source supplied for the
 [Figma Make design](https://www.figma.com/make/usYqch40Q7dRmRsuTdvTHi/Design-Club-Structure-Page).
-The implementation uses the app's theme and navigation, adds the planned President
-seats and Board capability checks, counts distinct people, and describes the
-existing archive visibility rules. This is not a pixel snapshot of the Figma
+The implementation uses the app's theme and navigation, adds a semester picker
+and per-semester rosters, and counts distinct people. This is not a pixel snapshot of the Figma
 preview, a live Clerk sign-in test, or a deployment check.

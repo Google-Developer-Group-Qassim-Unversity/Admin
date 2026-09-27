@@ -27,13 +27,12 @@ import type {
   UpdateFormPayload,
 } from "@/lib/api-types";
 import type {
-  ClubAssignment,
   ClubDepartment,
+  ClubMembership,
   ClubOverview,
+  ClubRoleKey,
   DepartmentSettings,
-  LeadershipRole,
-  PresidentSlot,
-  ReplaceClubAssignment,
+  RosterEntry,
 } from "@/lib/club-structure-types";
 
 export interface EventsFilters {
@@ -210,39 +209,65 @@ export function createApi(request: Requester) {
     stats: () => request.json<MemberStats>("/members/stats", { revalidate: CACHE_TTL, tags: ["members"] }),
   };
 
+  // Reads default to the current semester when `semesterId` is omitted; writes
+  // always name the semester they change.
+  const clubScope = (semesterId: string, departmentId: number) =>
+    `/club-structure/semesters/${semesterId}/departments/${departmentId}`;
   const clubStructure = {
-    overview: (includeArchived = false) =>
+    overview: (semesterId?: string) =>
       request.json<ClubOverview>("/club-structure", {
-        query: { include_archived: includeArchived },
+        query: { semester_id: semesterId },
         revalidate: CACHE_TTL,
         tags: ["club-structure"],
       }),
     department: (id: number) =>
       request.json<ClubDepartment>(`/club-structure/departments/${id}`, { revalidate: CACHE_TTL, tags: ["club-structure"] }),
-    roster: (id: number) =>
-      request.json<ClubAssignment[]>(`/club-structure/departments/${id}/roster`, { revalidate: CACHE_TTL, tags: ["club-structure"] }),
-    createDepartment: (body: DepartmentSettings) =>
-      request.json<ClubDepartment>("/club-structure/departments", { method: "POST", body }),
+    roster: (id: number, semesterId: string) =>
+      request.json<RosterEntry[]>(`/club-structure/departments/${id}/roster`, {
+        query: { semester_id: semesterId },
+        revalidate: CACHE_TTL,
+        tags: ["club-structure"],
+      }),
+    createDepartment: (body: DepartmentSettings, semesterId: string) =>
+      request.json<ClubDepartment>("/club-structure/departments", {
+        method: "POST", body, query: { semester_id: semesterId },
+      }),
     updateDepartment: (id: number, body: DepartmentSettings) =>
       request.json<ClubDepartment>(`/club-structure/departments/${id}`, { method: "PUT", body }),
     setActive: (id: number, active: boolean) =>
       request.json<ClubDepartment>(`/club-structure/departments/${id}/${active ? "restore" : "archive"}`, {
         method: "POST",
       }),
-    addMember: (id: number, memberId: number) =>
-      request.json<ClubAssignment>(`/club-structure/departments/${id}/members`, {
+    addToSemester: (semesterId: string, departmentId: number) =>
+      request.json<ClubDepartment>(clubScope(semesterId, departmentId), { method: "POST" }),
+    removeFromSemester: (semesterId: string, departmentId: number) =>
+      request.json<{ removed: number }>(clubScope(semesterId, departmentId), { method: "DELETE" }),
+    addMember: (semesterId: string, departmentId: number, memberId: number) =>
+      request.json<ClubMembership>(`${clubScope(semesterId, departmentId)}/members`, {
         method: "POST", body: { member_id: memberId },
       }),
-    removeMember: (id: number, memberId: number, expectedAssignmentId: number) =>
-      request.json<ClubAssignment>(`/club-structure/departments/${id}/members/${memberId}`, {
-        method: "DELETE", query: { expected_assignment_id: expectedAssignmentId },
+    removeMember: (semesterId: string, departmentId: number, memberId: number) =>
+      request.json<{ removed: number }>(`${clubScope(semesterId, departmentId)}/members/${memberId}`, {
+        method: "DELETE",
       }),
-    replaceLeadership: (id: number, role: LeadershipRole, body: ReplaceClubAssignment) =>
-      request.json<ClubAssignment | null>(`/club-structure/departments/${id}/leadership/${role}`, {
-        method: "PUT", body,
+    grantRole: (
+      semesterId: string,
+      departmentId: number,
+      memberId: number,
+      role: ClubRoleKey,
+      replacesMemberId: number | null = null,
+    ) =>
+      request.json<ClubMembership>(`${clubScope(semesterId, departmentId)}/members/${memberId}/roles/${role}`, {
+        method: "PUT", body: { replaces_member_id: replacesMemberId },
       }),
-    replacePresident: (slot: PresidentSlot, body: ReplaceClubAssignment) =>
-      request.json<ClubAssignment | null>(`/club-structure/presidents/${slot}`, { method: "PUT", body }),
+    revokeRole: (semesterId: string, departmentId: number, memberId: number, role: ClubRoleKey) =>
+      request.json<{ removed: number }>(`${clubScope(semesterId, departmentId)}/members/${memberId}/roles/${role}`, {
+        method: "DELETE",
+      }),
+    copyFrom: (semesterId: string, sourceSemesterId: string) =>
+      request.json<{ copied: number }>(`/club-structure/semesters/${semesterId}/copy-from/${sourceSemesterId}`, {
+        method: "POST",
+      }),
   };
 
   const semesters = {
