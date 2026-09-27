@@ -9,6 +9,7 @@ import { PageHeader } from "@/components/page-header";
 import { BanEditor } from "@/components/pipeline/ban-editor";
 import { BookPanel } from "@/components/pipeline/book-panel";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
+import { NotificationsPanel } from "@/components/pipeline/notifications-panel";
 import { RequestList } from "@/components/pipeline/request-list";
 import { PipelineGate } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
@@ -41,6 +42,7 @@ function PipelineHome({ me }: { me: PipelineMe }) {
 
   return (
     <>
+      <NotificationsPanel />
       <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-1">
