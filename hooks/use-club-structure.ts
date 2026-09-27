@@ -9,9 +9,10 @@ import { memberKeys } from "@/hooks/use-members";
 
 export const clubStructureKeys = {
   all: ["club-structure"] as const,
-  overview: (includeArchived: boolean) => ["club-structure", "overview", includeArchived] as const,
+  /** `semesterId` undefined = whichever semester is current. */
+  overview: (semesterId?: string) => ["club-structure", "overview", semesterId ?? "current"] as const,
   department: (id: number) => ["club-structure", "department", id] as const,
-  roster: (id: number) => ["club-structure", "roster", id] as const,
+  roster: (id: number, semesterId: string) => ["club-structure", "roster", id, semesterId] as const,
 };
 
 const clubQueryOptions = {
@@ -44,18 +45,18 @@ export function useRefreshClubStructure() {
 // clubOverviewQuery() from the server but clubOverviewQuery is on the client").
 // Hooks are only ever called from client components anyway, exactly like
 // `use-event.ts` and `use-members.ts`.
-export const clubOverviewQuery = (api: Api, includeArchived: boolean) =>
+export const clubOverviewQuery = (api: Api, semesterId?: string) =>
   queryOptions({
     ...clubQueryOptions,
-    queryKey: clubStructureKeys.overview(includeArchived),
-    queryFn: () => api.clubStructure.overview(includeArchived),
+    queryKey: clubStructureKeys.overview(semesterId),
+    queryFn: () => api.clubStructure.overview(semesterId),
   });
 
-export function useClubOverview(includeArchived = false) {
+export function useClubOverview(semesterId?: string) {
   const api = useApi();
   const role = useUserRole();
   return useQuery({
-    ...clubOverviewQuery(api, includeArchived),
+    ...clubOverviewQuery(api, semesterId),
     enabled: role !== "none",
   });
 }
@@ -71,13 +72,13 @@ export function useClubDepartment(id: number) {
   });
 }
 
-export function useClubRoster(id: number) {
+export function useClubRoster(id: number, semesterId: string) {
   const api = useApi();
   const role = useUserRole();
   return useQuery({
     ...clubQueryOptions,
-    queryKey: clubStructureKeys.roster(id),
-    queryFn: () => api.clubStructure.roster(id),
+    queryKey: clubStructureKeys.roster(id, semesterId),
+    queryFn: () => api.clubStructure.roster(id, semesterId),
     enabled: role !== "none",
   });
 }

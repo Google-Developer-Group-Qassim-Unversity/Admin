@@ -1,7 +1,8 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -12,11 +13,20 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { DepartmentForm } from "@/components/club-structure/department-form";
 import { ClubLoading, DepartmentPlusIcon } from "@/components/club-structure/shared";
 import { useClubError } from "@/components/club-structure/use-club-error";
-import { useClubMutation } from "@/hooks/use-club-structure";
+import { useClubMutation, useClubOverview } from "@/hooks/use-club-structure";
 import { useUserRole } from "@/hooks/use-rbac";
 import type { DepartmentSettings } from "@/lib/club-structure-types";
 
 export default function CreateDepartmentPage() {
+  // useSearchParams needs a Suspense boundary for the static build.
+  return (
+    <Suspense fallback={<ClubLoading />}>
+      <CreateDepartment />
+    </Suspense>
+  );
+}
+
+function CreateDepartment() {
   const t = useTranslations("clubStructure");
   const common = useTranslations("common");
   const denied = useTranslations("accessDenied");
@@ -24,13 +34,19 @@ export default function CreateDepartmentPage() {
   const { isLoaded } = useUser();
   const role = useUserRole();
   const describeError = useClubError();
-  const mutation = useClubMutation((api, settings: DepartmentSettings) => api.createDepartment(settings));
+  // The semester the department starts in: the one the overview had selected.
+  const semesterId = useSearchParams().get("semester") ?? undefined;
+  const overview = useClubOverview(semesterId);
+  const semester = overview.data?.semester;
+  const mutation = useClubMutation((api, settings: DepartmentSettings) =>
+    api.createDepartment(settings, semester!.id),
+  );
 
   async function create(settings: DepartmentSettings) {
     try {
       const department = await mutation.mutateAsync(settings);
       toast.success(t("departmentCreated"));
-      router.push(`/club-structure?department=${department.id}`);
+      router.push(`/club-structure?semester=${semester!.id}&department=${department.id}`);
       return true;
     } catch {
       // Keep the entered values so the user can correct or retry the request.
@@ -38,7 +54,7 @@ export default function CreateDepartmentPage() {
     }
   }
 
-  if (!isLoaded) return <ClubLoading />;
+  if (!isLoaded || (!semester && !overview.error)) return <ClubLoading />;
   if (role !== "super_admin")
     return <AccessDenied title={denied("fallbackTitle")} description={denied("fallbackDescription")} />;
 
@@ -48,7 +64,7 @@ export default function CreateDepartmentPage() {
         <CardHeader>
           <div className="mb-4">
             <Button variant="ghost" size="sm" asChild>
-              <Link href="/club-structure" className="flex items-center gap-2">
+              <Link href={semesterId ? `/club-structure?semester=${semesterId}` : "/club-structure"} className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                 {common("actions.back")}
               </Link>
@@ -60,9 +76,14 @@ export default function CreateDepartmentPage() {
             </div>
             {t("newDepartment")}
           </CardTitle>
-          <CardDescription>{t("createDescription")}</CardDescription>
+          <CardDescription>{t("createDescription", { semester: semester?.name ?? "" })}</CardDescription>
         </CardHeader>
         <CardContent>
+          {overview.error && (
+            <p role="alert" className="mb-6 text-sm text-destructive">
+              {describeError(overview.error)}
+            </p>
+          )}
           {mutation.error && (
             <p role="alert" className="mb-6 text-sm text-destructive">
               {describeError(mutation.error, true)}
@@ -71,6 +92,7 @@ export default function CreateDepartmentPage() {
           <DepartmentForm
             mode="create"
             pending={mutation.isPending}
+            disabled={!semester}
             submitLabel={t("createDepartment")}
             onSubmit={create}
           />

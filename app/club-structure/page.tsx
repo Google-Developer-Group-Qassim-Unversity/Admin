@@ -8,10 +8,8 @@ import { ClubStructureContent } from "@/app/club-structure/club-structure-conten
 export default async function ClubStructurePage() {
   const api = await serverApi();
   const queryClient = getQueryClient();
-  await Promise.all([
-    queryClient.prefetchQuery(clubOverviewQuery(api, false)),
-    queryClient.prefetchQuery(clubOverviewQuery(api, true)),
-  ]);
+  // The current semester's structure; picking another semester loads client-side.
+  await queryClient.prefetchQuery(clubOverviewQuery(api));
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>
