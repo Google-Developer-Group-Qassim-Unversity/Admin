@@ -344,6 +344,8 @@ export function createApi(request: Requester) {
     complete: (id: number, team: PipelineTeam) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
     inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
+    publish: (id: number, body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
   };
 
   return {
