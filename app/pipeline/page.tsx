@@ -13,7 +13,7 @@ import { NotificationsPanel } from "@/components/pipeline/notifications-panel";
 import { RequestList } from "@/components/pipeline/request-list";
 import { PipelineGate } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
-import { usePipelineRequests } from "@/hooks/use-pipeline";
+import { useInbox, usePipelineRequests } from "@/hooks/use-pipeline";
 import type { PipelineMe } from "@/lib/pipeline-types";
 
 export default function PipelinePage() {
@@ -39,10 +39,22 @@ function PipelineHome({ me }: { me: PipelineMe }) {
   const [mode, setMode] = React.useState<"view" | "book" | "bans">("view");
   const isLogistics = me.is_super_admin || me.departments.some((d) => d.teams.includes("logistics"));
   const requests = usePipelineRequests();
+  const inbox = useInbox();
+  const hasTeam = me.is_super_admin || me.departments.some((d) => d.teams.length > 0);
 
   return (
     <>
       <NotificationsPanel />
+      {hasTeam ? (
+        <section className="bg-card border-border flex flex-col gap-3 rounded-xl border p-5">
+          <h2 className="font-display text-lg font-semibold tracking-tight">{t("inbox.title")}</h2>
+          <RequestList
+            items={inbox.data?.map((item) => item.request)}
+            isPending={inbox.isPending}
+            empty={t("inbox.none")}
+          />
+        </section>
+      ) : null}
       <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-col gap-1">

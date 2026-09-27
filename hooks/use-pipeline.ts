@@ -136,7 +136,7 @@ export function useSaveBrief(id: number, team: PipelineTeam) {
 
 export function useSubmitRequest(id: number) {
   const api = useApi();
-  return useRequestMutation(id, (_: void) => api.pipelineRequests.submit(id));
+  return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
 }
 
 export function usePipelineNotifications() {
@@ -155,4 +155,24 @@ export function useReadNotifications() {
     mutationFn: (id: number | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...pipelineKeys.all, "notifications"] }),
   });
+}
+
+export function useInbox() {
+  const api = useApi();
+  return useQuery({ queryKey: [...pipelineKeys.requests(), "list", "inbox"], queryFn: () => api.pipelineRequests.inbox() });
+}
+
+export function useReturnRequest(id: number) {
+  const api = useApi();
+  return useRequestMutation(id, (notes: string) => api.pipelineRequests.returnToTeam(id, notes));
+}
+
+export function useResubmit(id: number) {
+  const api = useApi();
+  return useRequestMutation<void>(id, () => api.pipelineRequests.resubmit(id));
+}
+
+export function useCompleteTask(id: number) {
+  const api = useApi();
+  return useRequestMutation(id, (team: PipelineTeam) => api.pipelineRequests.complete(id, team));
 }

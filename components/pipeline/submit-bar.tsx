@@ -36,10 +36,12 @@ export function SubmitBar({ request }: { request: EventRequestDetail }) {
           <h3 className="font-display text-base font-semibold tracking-tight">{t("title")}</h3>
           <p className="text-muted-foreground text-[13px]">{ready ? t("ready") : t("notReady")}</p>
         </div>
+        {request.stage === "draft" ? (
         <Button onClick={onSubmit} disabled={!ready || submit.isPending}>
           {ready ? <Send className="h-4 w-4 rtl:-scale-x-100" /> : null}
           {t("button")}
         </Button>
+        ) : null}
       </div>
       {!ready ? (
         <ul className="flex flex-wrap gap-1.5">

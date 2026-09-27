@@ -185,7 +185,27 @@ export interface EventRequestDetail extends EventRequestSummary {
   can_edit: boolean;
   tasks: RequestTask[];
   missing: string[];
+  returned_at: string | null;
+  return_count: number;
+  return_notes: string | null;
+  return_due_at: string | null;
+  return_deadline: string | null;
+  penalty: { late_days: number; points: number; applied: boolean } | null;
+  actions: {
+    can_submit: boolean;
+    can_return: boolean;
+    can_resubmit: boolean;
+    complete: PipelineTeam[];
+    can_publish: boolean;
+  };
   now: string;
+}
+
+export interface InboxItem {
+  request: EventRequestSummary;
+  team: PipelineTeam;
+  status: TaskStatus;
+  opened_at: string | null;
 }
 
 export interface PaginatedRequests {

@@ -38,6 +38,7 @@ import type {
   DepartmentPermissions,
   EventRequestDetail,
   EventRequestStage,
+  InboxItem,
   PaginatedNotifications,
   PaginatedRequests,
   PermissionGrant,
@@ -337,6 +338,12 @@ export function createApi(request: Requester) {
     saveBrief: (id: number, team: PipelineTeam, brief: Record<string, unknown>) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
     submit: (id: number) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
+    returnToTeam: (id: number, notes: string) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),
+    resubmit: (id: number) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/resubmit`, { method: "POST" }),
+    complete: (id: number, team: PipelineTeam) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
+    inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
   };
 
   return {
