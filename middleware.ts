@@ -10,6 +10,10 @@ const isPublicRoute = createRouteMatcher([
 
 const isApiRoute = createRouteMatcher(['/api/(.*)']);
 
+// The events pipeline is open to department leaders, VPs and the members they
+// gave access to, who are not admins. The backend decides what each can do.
+const isPipelineRoute = createRouteMatcher(['/pipeline(.*)']);
+
 export default clerkMiddleware(async (auth, req) => {
   const { userId, sessionClaims } = await auth();
 
@@ -33,6 +37,12 @@ export default clerkMiddleware(async (auth, req) => {
   const userRole = getRoleFromMetadata(sessionClaims?.metadata ?? {});
 
   if (userRole === 'none') {
+    if (isPipelineRoute(req)) {
+      return NextResponse.next();
+    }
+    if (req.nextUrl.pathname === '/') {
+      return NextResponse.redirect(new URL('/pipeline', req.url));
+    }
     return NextResponse.redirect(new URL('/access-denied?reason=not_admin', req.url));
   }
 

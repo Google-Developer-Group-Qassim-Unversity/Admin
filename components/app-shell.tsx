@@ -13,6 +13,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Workflow,
   Trophy,
   Users,
   type LucideIcon,
@@ -31,6 +32,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useUserRole } from "@/hooks/use-rbac";
 import { getDirection, type Locale } from "@/i18n/config";
 
 /** Routes that render bare - the QR projector screen and the access wall. */
@@ -50,6 +52,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/", key: "home", icon: LayoutDashboard },
       { href: "/events", key: "events", icon: CalendarDays },
+      { href: "/pipeline", key: "pipeline", icon: Workflow },
     ],
   },
   {
@@ -73,6 +76,9 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** What a signed-in person who is not an admin can open: only the events pipeline. */
+const NON_ADMIN_ROUTES = ["/pipeline"];
+
 /** "/" only matches itself; every other entry owns its subtree. */
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -81,10 +87,20 @@ function isActive(pathname: string, href: string) {
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const role = useUserRole();
+  const groups = React.useMemo(
+    () =>
+      role === "none"
+        ? NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => NON_ADMIN_ROUTES.includes(i.href)) })).filter(
+            (g) => g.items.length > 0,
+          )
+        : NAV_GROUPS,
+    [role],
+  );
 
   return (
     <div className="flex flex-col gap-5">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
           {group.items.map((item) => {
             const Icon = item.icon;
