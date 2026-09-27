@@ -77,7 +77,7 @@ function CopyStructure({ overview, semesters }: { overview: ClubOverview; semest
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Select value={sourceId} onValueChange={setSourceId}>
-          <SelectTrigger className="w-full sm:w-72" aria-label={t("copySource")}>
+          <SelectTrigger className="w-full min-w-0 sm:w-72" aria-label={t("copySource")}>
             <SelectValue placeholder={t("copySource")} />
           </SelectTrigger>
           <SelectContent>
@@ -137,10 +137,10 @@ function AddDepartmentToSemester({ overview }: { overview: ClubOverview }) {
   }
 
   return (
-    <div className="space-y-1">
+    <div className="w-full min-w-0 space-y-1 sm:w-auto">
       <div className="flex flex-wrap items-center gap-2">
         <Select value={departmentId} onValueChange={setDepartmentId}>
-          <SelectTrigger className="w-full sm:w-64" aria-label={t("addDepartmentToSemester")}>
+          <SelectTrigger className="w-full min-w-0 sm:w-64" aria-label={t("addDepartmentToSemester")}>
             <SelectValue placeholder={t("addDepartmentToSemester")} />
           </SelectTrigger>
           <SelectContent>
@@ -219,7 +219,7 @@ function ClubStructureOverview() {
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Select value={semester?.id} onValueChange={selectSemester} disabled={!semesters.data}>
-            <SelectTrigger className="w-full sm:w-64" aria-label={t("semester")}>
+            <SelectTrigger className="w-full min-w-0 sm:w-64" aria-label={t("semester")}>
               <SelectValue placeholder={t("semester")} />
             </SelectTrigger>
             <SelectContent>

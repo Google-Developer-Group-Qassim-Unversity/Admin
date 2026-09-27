@@ -27,24 +27,22 @@ export function DepartmentCard({
   const name = useDepartmentName();
   return (
     <article className="flex min-w-0 flex-col rounded-xl border bg-card p-5 transition-colors hover:border-foreground/25">
-      <div className="mb-4 flex items-start justify-between gap-2">
-        <div className="flex min-w-0 items-center gap-3">
-          <DepartmentIcon {...department} />
-          <div className="min-w-0 space-y-1">
-            <h3 className="wrap-anywhere text-sm font-semibold" dir="auto">
-              {name(department)}
-            </h3>
+      <div className="mb-4 flex min-w-0 items-center gap-3">
+        <DepartmentIcon {...department} />
+        <div className="min-w-0 space-y-1">
+          <h3 className="wrap-anywhere text-sm font-semibold" dir="auto">
+            {name(department)}
+          </h3>
+          <div className="flex flex-wrap items-center gap-1">
             <DepartmentTypeBadge type={department.type} />
+            {!department.active && <Badge variant="secondary">{t("archived")}</Badge>}
+            {!department.show_in_leaderboard && (
+              <Badge variant="outline" className="gap-1 text-[10px]" title={t("hiddenFromLeaderboardHint")}>
+                <EyeOff className="size-3" aria-hidden="true" />
+                {t("hiddenFromLeaderboard")}
+              </Badge>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          {!department.active && <Badge variant="secondary">{t("archived")}</Badge>}
-          {!department.show_in_leaderboard && (
-            <Badge variant="outline" className="gap-1 text-[10px]" title={t("hiddenFromLeaderboardHint")}>
-              <EyeOff className="size-3" aria-hidden="true" />
-              {t("hiddenFromLeaderboard")}
-            </Badge>
-          )}
         </div>
       </div>
       <div className="mb-4 flex-1 space-y-2">
