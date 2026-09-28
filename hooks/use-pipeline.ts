@@ -7,6 +7,7 @@ export const pipelineKeys = {
   all: ["pipeline"] as const,
   me: () => [...pipelineKeys.all, "me"] as const,
   permissions: (departmentId: number) => [...pipelineKeys.all, "permissions", departmentId] as const,
+  calendar: (from: string, to: string) => [...pipelineKeys.all, "calendar", from, to] as const,
 };
 
 /** Which departments the signed-in person acts for, and which department is which team. */
@@ -48,5 +49,20 @@ export function useRevokePermission(departmentId: number) {
   return useMutation({
     mutationFn: (grantId: number) => api.pipeline.revoke(departmentId, grantId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.permissions(departmentId) }),
+  });
+}
+
+export function usePipelineCalendar(from: string, to: string) {
+  const api = useApi();
+  return useQuery({ queryKey: pipelineKeys.calendar(from, to), queryFn: () => api.pipeline.calendar(from, to) });
+}
+
+export function useBanDays() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ dates, reason, unban }: { dates: string[]; reason?: string | null; unban?: boolean }) =>
+      unban ? api.pipeline.unban(dates) : api.pipeline.ban(dates, reason ?? null),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }

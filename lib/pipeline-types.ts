@@ -56,3 +56,26 @@ export interface DepartmentPermissions {
 }
 
 export type PipelineTeamsInput = Partial<Record<PipelineTeam, number | null>>;
+
+export type CalendarDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
+
+export interface CalendarDayRequest {
+  id: number;
+  department: PipelineDepartment;
+  title: string | null;
+  stage: string;
+}
+
+export interface CalendarDay {
+  date: string;
+  status: CalendarDayStatus;
+  reason: string | null;
+  /** Requests holding or booking this day. Present from the booking PR on. */
+  requests?: CalendarDayRequest[];
+}
+
+export interface PipelineCalendar {
+  today: string;
+  first_bookable_date: string;
+  days: CalendarDay[];
+}

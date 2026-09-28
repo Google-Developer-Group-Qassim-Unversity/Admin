@@ -37,6 +37,7 @@ import type {
 import type {
   DepartmentPermissions,
   PermissionGrant,
+  PipelineCalendar,
   PipelineMe,
   PipelineTeamEntry,
   PipelineTeamsInput,
@@ -298,6 +299,11 @@ export function createApi(request: Requester) {
       }),
     revoke: (departmentId: number, grantId: number) =>
       request.json<{ detail: string }>(`/departments/${departmentId}/permissions/${grantId}`, { method: "DELETE" }),
+    calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
+    ban: (dates: string[], reason: string | null) =>
+      request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
+    unban: (dates: string[]) =>
+      request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
   };
 
   return {

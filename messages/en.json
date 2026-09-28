@@ -1823,6 +1823,33 @@
       "notSet": "Not set",
       "saveTeams": "Save teams",
       "teamsSaved": "Teams saved"
+    },
+    "calendar": {
+      "title": "Booking calendar",
+      "subtitle": "Every day is open unless it is in the next four days or Logistics closed it.",
+      "previous": "Previous month",
+      "next": "Next month",
+      "firstBookable": "The first day you can book is {date}.",
+      "status": {
+        "locked": "Too soon",
+        "banned": "Closed by Logistics",
+        "open": "Open",
+        "held": "Held (draft)",
+        "booked": "Booked",
+        "published": "Published event"
+      }
+    },
+    "bans": {
+      "edit": "Close or reopen days",
+      "hint": "Pick the days, add a reason every team will see, then close or reopen them. Requests on a closed day lose their dates.",
+      "selected": "{count, plural, =0 {No days selected} one {# day selected} other {# days selected}}",
+      "reasonPlaceholder": "Reason, e.g. midterms",
+      "ban": "Close days",
+      "unban": "Reopen days",
+      "done": "Done",
+      "banned": "{count, plural, one {# day closed} other {# days closed}}",
+      "unbanned": "{count, plural, one {# day reopened} other {# days reopened}}",
+      "failed": "Could not update the days"
     }
   }
 }

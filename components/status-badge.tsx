@@ -68,3 +68,19 @@ export function UrgencyDot({ urgency, className }: { urgency: Urgency; className
     />
   );
 }
+
+/**
+ * Events pipeline calendar days. Same colour rules: a day nobody can book is
+ * neutral, a banned day is red, a day held by a draft is waiting (yellow), a
+ * booked day is taken (blue), and a published event is live (green).
+ */
+export type PipelineDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
+
+export const PIPELINE_DAY_STYLES: Record<PipelineDayStatus, { dot: string; cell: string }> = {
+  locked: { dot: "bg-muted-foreground/60", cell: "bg-muted/60 text-muted-foreground" },
+  banned: { dot: "bg-brand-red", cell: "bg-brand-red-soft text-brand-red-ink" },
+  open: { dot: "bg-border", cell: "bg-card text-foreground" },
+  held: { dot: "bg-brand-yellow", cell: "bg-brand-yellow-soft text-brand-yellow-ink" },
+  booked: { dot: "bg-brand-blue", cell: "bg-brand-blue-soft text-brand-blue-ink" },
+  published: { dot: "bg-brand-green", cell: "bg-brand-green-soft text-brand-green-ink" },
+};
