@@ -138,3 +138,21 @@ export function useSubmitRequest(id: number) {
   const api = useApi();
   return useRequestMutation(id, (_: void) => api.pipelineRequests.submit(id));
 }
+
+export function usePipelineNotifications() {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...pipelineKeys.all, "notifications"],
+    queryFn: () => api.pipeline.notifications(),
+    refetchInterval: 60_000,
+  });
+}
+
+export function useReadNotifications() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: number | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: [...pipelineKeys.all, "notifications"] }),
+  });
+}

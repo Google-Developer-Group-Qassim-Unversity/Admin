@@ -195,3 +195,31 @@ export interface PaginatedRequests {
   page_size: number;
   total_pages: number;
 }
+
+export type NotificationKind =
+  | "request_received"
+  | "dates_banned"
+  | "hold_expired"
+  | "returned"
+  | "task_done"
+  | "media_received"
+  | "ready_to_publish";
+
+export interface PipelineNotification {
+  id: number;
+  kind: NotificationKind;
+  department: PipelineDepartment;
+  request: { id: number; title: string | null; stage: EventRequestStage };
+  payload: Record<string, unknown> | null;
+  created_at: string;
+  read: boolean;
+}
+
+export interface PaginatedNotifications {
+  items: PipelineNotification[];
+  total: number;
+  unread: number;
+  page: number;
+  page_size: number;
+  total_pages: number;
+}

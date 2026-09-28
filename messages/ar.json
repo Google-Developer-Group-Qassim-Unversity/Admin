@@ -2068,6 +2068,20 @@
           "audio": "صوتيات"
         }
       }
+    },
+    "notifications": {
+      "title": "الإشعارات",
+      "readAll": "تعليم الكل كمقروء",
+      "none": "لا جديد.",
+      "kinds": {
+        "request_received": "طلب جديد لقسمكم: {title}",
+        "dates_banned": "أغلقت اللوجستيات يومًا من {title}؛ اختر أيامًا جديدة",
+        "hold_expired": "انتهت مهلة حجز {title}؛ احجز من جديد",
+        "returned": "أعاد التصميم {title} مع ملاحظات",
+        "task_done": "أنهى قسم دوره في {title}",
+        "media_received": "{title} جاهز للإعلام",
+        "ready_to_publish": "{title} جاهز للنشر"
+      }
     }
   }
 }

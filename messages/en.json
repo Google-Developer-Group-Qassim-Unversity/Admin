@@ -2068,6 +2068,20 @@
           "audio": "Audio"
         }
       }
+    },
+    "notifications": {
+      "title": "Notifications",
+      "readAll": "Mark all read",
+      "none": "Nothing new.",
+      "kinds": {
+        "request_received": "New request for your team: {title}",
+        "dates_banned": "Logistics closed a day of {title}; pick new dates",
+        "hold_expired": "The hold on {title} ran out; book dates again",
+        "returned": "Design returned {title} with notes",
+        "task_done": "A team finished its part of {title}",
+        "media_received": "{title} is ready for Media",
+        "ready_to_publish": "{title} is ready to publish"
+      }
     }
   }
 }

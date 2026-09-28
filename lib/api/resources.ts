@@ -38,6 +38,7 @@ import type {
   DepartmentPermissions,
   EventRequestDetail,
   EventRequestStage,
+  PaginatedNotifications,
   PaginatedRequests,
   PermissionGrant,
   PipelineCalendar,
@@ -309,6 +310,11 @@ export function createApi(request: Requester) {
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
     unban: (dates: string[]) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
+    notifications: (unread = false) =>
+      request.json<PaginatedNotifications>("/pipeline/notifications", { query: { unread: unread || undefined } }),
+    readNotification: (id: number) =>
+      request.json<{ count: number }>(`/pipeline/notifications/${id}/read`, { method: "POST" }),
+    readAllNotifications: () => request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST" }),
   };
 
   const pipelineRequests = {
