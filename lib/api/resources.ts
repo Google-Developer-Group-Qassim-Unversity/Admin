@@ -34,6 +34,13 @@ import type {
   DepartmentSettings,
   RosterEntry,
 } from "@/lib/club-structure-types";
+import type {
+  DepartmentPermissions,
+  PermissionGrant,
+  PipelineMe,
+  PipelineTeamEntry,
+  PipelineTeamsInput,
+} from "@/lib/pipeline-types";
 
 export interface EventsFilters {
   semester?: string;
@@ -277,7 +284,26 @@ export function createApi(request: Requester) {
     remove: (id: string) => request.json<{ detail: string }>(`/semesters/${id}`, { method: "DELETE" }),
   };
 
-  return { events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure, semesters };
+  // The events pipeline. Every read here is per caller (it depends on which
+  // departments they act for), so none of them opt into the shared Data Cache.
+  const pipeline = {
+    me: () => request.json<PipelineMe>("/pipeline/me"),
+    setTeams: (body: PipelineTeamsInput) =>
+      request.json<PipelineTeamEntry[]>("/pipeline/teams", { method: "PUT", body }),
+    permissions: (departmentId: number) =>
+      request.json<DepartmentPermissions>(`/departments/${departmentId}/permissions`),
+    grant: (departmentId: number, memberId: number) =>
+      request.json<PermissionGrant>(`/departments/${departmentId}/permissions`, {
+        method: "POST", body: { member_id: memberId },
+      }),
+    revoke: (departmentId: number, grantId: number) =>
+      request.json<{ detail: string }>(`/departments/${departmentId}/permissions/${grantId}`, { method: "DELETE" }),
+  };
+
+  return {
+    events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure, semesters,
+    pipeline,
+  };
 }
 
 export type Api = ReturnType<typeof createApi>;

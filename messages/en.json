@@ -230,7 +230,8 @@
       "people": "People",
       "engage": "Engage",
       "system": "System"
-    }
+    },
+    "pipeline": "Event pipeline"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -1780,6 +1781,48 @@
         "detail": "closed {days, plural, one {# day} other {# days}} ago",
         "action": "Send"
       }
+    }
+  },
+  "pipeline": {
+    "title": "Event pipeline",
+    "subtitle": "Book a date, brief Design and Logistics, and publish your event",
+    "teamAccess": "Team access",
+    "teams": {
+      "design": "Design",
+      "logistics": "Logistics",
+      "media": "Media"
+    },
+    "noAccess": {
+      "title": "You don't have pipeline access",
+      "description": "Department leaders and VPs can use the pipeline, and can give access to members of their department."
+    },
+    "team": {
+      "title": "Team access",
+      "subtitle": "Who can act for your department in the event pipeline",
+      "accessTitle": "Department access",
+      "accessHint": "Leaders and VPs act for their department. They can give the same access to members of their department.",
+      "pickDepartment": "Choose a department",
+      "officers": "Leaders and VPs",
+      "noOfficers": "No leader or VP this semester.",
+      "grants": "Members with access",
+      "noGrants": "Nobody else has access yet.",
+      "grantedBy": "Given by {name}",
+      "pickMember": "Choose a member of this department",
+      "grant": "Give access",
+      "revoke": "Remove",
+      "granted": "Access given",
+      "revoked": "Access removed",
+      "failed": "Something went wrong",
+      "onlyOfficersGrant": "Only the department's leader and VPs can give access.",
+      "roles": {
+        "leader": "Leader",
+        "vp": "VP"
+      },
+      "teamsTitle": "Pipeline teams",
+      "teamsHint": "Which department plays each part. Every request goes to Design and Logistics, then Media.",
+      "notSet": "Not set",
+      "saveTeams": "Save teams",
+      "teamsSaved": "Teams saved"
     }
   }
 }
