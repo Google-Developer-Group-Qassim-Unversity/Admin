@@ -36,11 +36,15 @@ import type {
 } from "@/lib/club-structure-types";
 import type {
   DepartmentPermissions,
+  EventRequestDetail,
+  EventRequestStage,
+  PaginatedRequests,
   PermissionGrant,
   PipelineCalendar,
   PipelineMe,
   PipelineTeamEntry,
   PipelineTeamsInput,
+  UpdateDetailsInput,
 } from "@/lib/pipeline-types";
 
 export interface EventsFilters {
@@ -306,9 +310,28 @@ export function createApi(request: Requester) {
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
   };
 
+  const pipelineRequests = {
+    list: (params: { departmentId?: number; stage?: EventRequestStage; page?: number; pageSize?: number } = {}) =>
+      request.json<PaginatedRequests>("/pipeline/requests", {
+        query: { department_id: params.departmentId, stage: params.stage, page: params.page, page_size: params.pageSize },
+      }),
+    get: (id: number) => request.json<EventRequestDetail>(`/pipeline/requests/${id}`),
+    book: (departmentId: number, startDate: string, endDate: string) =>
+      request.json<EventRequestDetail>("/pipeline/requests", {
+        method: "POST", body: { department_id: departmentId, start_date: startDate, end_date: endDate },
+      }),
+    redate: (id: number, startDate: string, endDate: string) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/dates`, {
+        method: "PUT", body: { start_date: startDate, end_date: endDate },
+      }),
+    updateDetails: (id: number, body: UpdateDetailsInput) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/details`, { method: "PUT", body }),
+    cancel: (id: number) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
+  };
+
   return {
     events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure, semesters,
-    pipeline,
+    pipeline, pipelineRequests,
   };
 }
 

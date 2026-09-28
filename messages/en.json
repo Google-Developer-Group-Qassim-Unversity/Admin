@@ -1850,6 +1850,116 @@
       "banned": "{count, plural, one {# day closed} other {# days closed}}",
       "unbanned": "{count, plural, one {# day reopened} other {# days reopened}}",
       "failed": "Could not update the days"
+    },
+    "stage": {
+      "draft": "Draft",
+      "in_review": "With Design & Logistics",
+      "returned": "Returned",
+      "media": "With Media",
+      "ready": "Ready to publish",
+      "published": "Published",
+      "cancelled": "Cancelled"
+    },
+    "countdown": {
+      "left": "{hours}h {minutes}m {seconds}s left",
+      "expired": "expired"
+    },
+    "book": {
+      "start": "Book dates",
+      "hint": "Click the first day, then the last (up to {max} days). Your dates are held for 24 hours while you fill in the request.",
+      "hintSuperAdmin": "Click the first day, then the last. As a super admin you can book any day.",
+      "pickDays": "Pick the days on the calendar",
+      "range": "{start} → {end}",
+      "pickDepartment": "Which department?",
+      "book": "Book",
+      "cancel": "Cancel",
+      "booked": "Dates held for 24 hours",
+      "failed": "Could not book these days"
+    },
+    "requests": {
+      "mine": "Your department's requests",
+      "none": "No requests yet. Book dates on the calendar to start one.",
+      "untitled": "Request #{id}",
+      "noDates": "No dates",
+      "pageTitle": "Event request #{id}"
+    },
+    "request": {
+      "notFound": "Request not found",
+      "back": "All requests",
+      "untitled": "Untitled event",
+      "noDates": "No dates",
+      "createdBy": "Started by {name}",
+      "cancel": "Cancel request",
+      "cancelConfirm": "Cancel this request? Its dates will be free for others.",
+      "cancelled": "Request cancelled",
+      "failed": "Something went wrong",
+      "holdTitle": "Your dates are held",
+      "holdBody": "Fill in the event and both briefs, then submit before the hold runs out:",
+      "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
+      "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
+      "lostDatesBody": "Everything you filled in is kept. Pick new dates to carry on.",
+      "redate": "Pick new dates",
+      "redateSave": "Book these days",
+      "redateCancel": "Not now",
+      "redated": "New dates booked",
+      "tabs": {
+        "details": "Event details"
+      }
+    },
+    "details": {
+      "title": "Event title",
+      "eventType": "Event type",
+      "description": "Description",
+      "presenterName": "Presenter name",
+      "presenterEmail": "Presenter email",
+      "presenterEmailHint": "Required if any day is online.",
+      "dayModes": "Each day: on-site or online",
+      "noDaysYet": "Book dates first.",
+      "modes": {
+        "on_site": "On-site",
+        "online": "Online"
+      },
+      "startTime": "Starts at (every day)",
+      "endTime": "Ends at (every day)",
+      "officialHours": "Official working hours",
+      "officialHoursUnknown": "Set the dates and times",
+      "officialHoursInside": "Within working hours (Sun–Thu, 8:00–15:00)",
+      "officialHoursOutside": "Outside working hours",
+      "locationScope": "Inside or outside the university",
+      "locationScopeHint": "An event outside the university is unofficial.",
+      "locationScopes": {
+        "inside": "Inside the university",
+        "outside": "Outside the university"
+      },
+      "audience": "Audience",
+      "audiences": {
+        "male": "Male students",
+        "female": "Female students",
+        "mixed": "Male and female students",
+        "none": "No attendance needed"
+      },
+      "registration": "Registration",
+      "registrations": {
+        "acceptance": "Needs acceptance",
+        "open": "Registration only",
+        "none": "No registration"
+      },
+      "isOfficial": "Official event",
+      "isOfficialLabel": "This is an official event",
+      "expectedAccepted": "How many will be accepted",
+      "partners": "Partner departments",
+      "helpNeeded": "Help needed from other departments",
+      "eventTypes": {
+        "course": "Course",
+        "bootcamp": "Bootcamp",
+        "meetup": "Meetup",
+        "workshop": "Workshop",
+        "competition": "Competition"
+      },
+      "choose": "Choose…",
+      "save": "Save details",
+      "saved": "Details saved",
+      "failed": "Could not save"
     }
   }
 }

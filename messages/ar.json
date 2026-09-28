@@ -1850,6 +1850,116 @@
       "banned": "{count, plural, one {تم إغلاق يوم} other {تم إغلاق # أيام}}",
       "unbanned": "{count, plural, one {تم فتح يوم} other {تم فتح # أيام}}",
       "failed": "تعذر تحديث الأيام"
+    },
+    "stage": {
+      "draft": "مسودة",
+      "in_review": "عند التصميم واللوجستيات",
+      "returned": "مُعاد للتعديل",
+      "media": "عند الإعلام",
+      "ready": "جاهز للنشر",
+      "published": "منشور",
+      "cancelled": "ملغى"
+    },
+    "countdown": {
+      "left": "متبقٍ {hours}س {minutes}د {seconds}ث",
+      "expired": "انتهى"
+    },
+    "book": {
+      "start": "احجز موعدًا",
+      "hint": "اضغط أول يوم ثم آخر يوم (حتى {max} أيام). تُحجز لك الأيام ٢٤ ساعة حتى تُكمل الطلب.",
+      "hintSuperAdmin": "اضغط أول يوم ثم آخر يوم. بصفتك مشرفًا عامًا يمكنك حجز أي يوم.",
+      "pickDays": "اختر الأيام من التقويم",
+      "range": "{start} ← {end}",
+      "pickDepartment": "أي قسم؟",
+      "book": "احجز",
+      "cancel": "إلغاء",
+      "booked": "تم حجز الأيام لمدة ٢٤ ساعة",
+      "failed": "تعذر حجز هذه الأيام"
+    },
+    "requests": {
+      "mine": "طلبات قسمك",
+      "none": "لا توجد طلبات بعد. احجز موعدًا من التقويم لتبدأ.",
+      "untitled": "طلب رقم {id}",
+      "noDates": "بلا تواريخ",
+      "pageTitle": "طلب فعالية رقم {id}"
+    },
+    "request": {
+      "notFound": "الطلب غير موجود",
+      "back": "كل الطلبات",
+      "untitled": "فعالية بلا عنوان",
+      "noDates": "بلا تواريخ",
+      "createdBy": "بدأه {name}",
+      "cancel": "إلغاء الطلب",
+      "cancelConfirm": "إلغاء هذا الطلب؟ ستصبح أيامه متاحة للآخرين.",
+      "cancelled": "تم إلغاء الطلب",
+      "failed": "حدث خطأ",
+      "holdTitle": "أيامك محجوزة",
+      "holdBody": "أكمل بيانات الفعالية والطلبين ثم أرسل قبل انتهاء الحجز:",
+      "lostDatesExpired": "انتهت مهلة الـ٢٤ ساعة فأُلغي حجز الأيام",
+      "lostDatesBanned": "أغلقت اللوجستيات أحد أيامك ففقد الطلب تواريخه",
+      "lostDatesBody": "كل ما عبأته محفوظ. اختر أيامًا جديدة لتكمل.",
+      "redate": "اختر أيامًا جديدة",
+      "redateSave": "احجز هذه الأيام",
+      "redateCancel": "ليس الآن",
+      "redated": "تم حجز الأيام الجديدة",
+      "tabs": {
+        "details": "بيانات الفعالية"
+      }
+    },
+    "details": {
+      "title": "عنوان الفعالية",
+      "eventType": "نوع الحدث",
+      "description": "وصف للحدث",
+      "presenterName": "اسم مقدم الحدث",
+      "presenterEmail": "ايميل مقدم الحدث",
+      "presenterEmailHint": "مطلوب إذا كان أي يوم عن بعد.",
+      "dayModes": "كل يوم: حضوري أو عن بعد",
+      "noDaysYet": "احجز الأيام أولًا.",
+      "modes": {
+        "on_site": "حضوري",
+        "online": "عن بعد"
+      },
+      "startTime": "يبدأ الساعة (كل يوم)",
+      "endTime": "ينتهي الساعة (كل يوم)",
+      "officialHours": "أوقات الدوام الرسمي",
+      "officialHoursUnknown": "حدد الأيام والأوقات",
+      "officialHoursInside": "خلال أوقات الدوام (الأحد–الخميس، ٨:٠٠–١٥:٠٠)",
+      "officialHoursOutside": "خارج أوقات الدوام",
+      "locationScope": "داخل أو خارج الجامعة",
+      "locationScopeHint": "الفعالية خارج الجامعة غير رسمية.",
+      "locationScopes": {
+        "inside": "داخل الجامعة",
+        "outside": "خارج الجامعة"
+      },
+      "audience": "الفئة المستهدفة",
+      "audiences": {
+        "male": "طلاب",
+        "female": "طالبات",
+        "mixed": "طلاب وطالبات",
+        "none": "لا يتطلب حضور"
+      },
+      "registration": "التسجيل",
+      "registrations": {
+        "acceptance": "يتطلب قبول",
+        "open": "تسجيل فقط",
+        "none": "بدون تسجيل"
+      },
+      "isOfficial": "رسمي / غير رسمي",
+      "isOfficialLabel": "فعالية رسمية",
+      "expectedAccepted": "عدد الطلاب الذي سيتم قبولهم",
+      "partners": "شراكة مع قسم آخر",
+      "helpNeeded": "هل تحتاجون مساعدة من أقسام أخرى؟",
+      "eventTypes": {
+        "course": "دورة",
+        "bootcamp": "معسكر",
+        "meetup": "لقاء",
+        "workshop": "ورشة",
+        "competition": "مسابقة"
+      },
+      "choose": "اختر…",
+      "save": "حفظ البيانات",
+      "saved": "تم الحفظ",
+      "failed": "تعذر الحفظ"
     }
   }
 }
