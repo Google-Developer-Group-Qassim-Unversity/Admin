@@ -2111,6 +2111,19 @@
       "resubmit": "Resubmit to Design",
       "resubmitted": "Sent back to Design",
       "penalty": "Late fix: {points} point(s) off ({days} late day(s)), taken when the event is published."
+    },
+    "publish": {
+      "title": "Publish the event",
+      "hint": "Every team is done. Publishing creates the event in Events as a draft; an admin reviews it and opens registration.",
+      "tier": "Points tier",
+      "pickTier": "Choose the event's points tier",
+      "image": "Poster image link (optional)",
+      "imageHint": "You can also add it later from the event page.",
+      "button": "Publish",
+      "published": "Published",
+      "failed": "Could not publish",
+      "done": "Published as event #{id} (a draft for admins to review).",
+      "open": "Open the event"
     }
   }
 }

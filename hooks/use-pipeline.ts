@@ -176,3 +176,12 @@ export function useCompleteTask(id: number) {
   const api = useApi();
   return useRequestMutation(id, (team: PipelineTeam) => api.pipelineRequests.complete(id, team));
 }
+
+export function usePublishRequest(id: number) {
+  const api = useApi();
+  return useRequestMutation(
+    id,
+    (body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
+      api.pipelineRequests.publish(id, body),
+  );
+}

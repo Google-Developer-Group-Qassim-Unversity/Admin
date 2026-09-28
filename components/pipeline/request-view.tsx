@@ -12,6 +12,7 @@ import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-pan
 import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
 import { DetailsForm } from "@/components/pipeline/details-form";
+import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { SubmitBar } from "@/components/pipeline/submit-bar";
 import { TeamActions } from "@/components/pipeline/team-actions";
 import { useDepartmentName } from "@/components/pipeline/shared";
@@ -41,6 +42,7 @@ export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
       {request.stage === "returned" && request.actions.can_resubmit && request.missing.length ? (
         <SubmitBar request={request} />
       ) : null}
+      <PublishPanel request={request} />
       <TeamActions request={request} />
       <Tabs defaultValue="details">
         <TabsList className="flex-wrap">
