@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
-import type { EventRequestDetail, PipelineTeamsInput, UpdateDetailsInput } from "@/lib/pipeline-types";
+import type { EventRequestDetail, PipelineTeam, PipelineTeamsInput, UpdateDetailsInput } from "@/lib/pipeline-types";
 
 export const pipelineKeys = {
   all: ["pipeline"] as const,
@@ -127,4 +127,14 @@ export function useCancelRequest() {
     mutationFn: (id: number) => api.pipelineRequests.cancel(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
+}
+
+export function useSaveBrief(id: number, team: PipelineTeam) {
+  const api = useApi();
+  return useRequestMutation(id, (brief: Record<string, unknown>) => api.pipelineRequests.saveBrief(id, team, brief));
+}
+
+export function useSubmitRequest(id: number) {
+  const api = useApi();
+  return useRequestMutation(id, (_: void) => api.pipelineRequests.submit(id));
 }

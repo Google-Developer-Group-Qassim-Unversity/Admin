@@ -1903,7 +1903,9 @@
       "redateCancel": "Not now",
       "redated": "New dates booked",
       "tabs": {
-        "details": "Event details"
+        "details": "Event details",
+        "design": "Design brief",
+        "logistics": "Logistics brief"
       }
     },
     "details": {
@@ -1960,6 +1962,112 @@
       "save": "Save details",
       "saved": "Details saved",
       "failed": "Could not save"
+    },
+    "submit": {
+      "title": "Submit to Design and Logistics",
+      "ready": "Everything is filled in. Submitting sends the request to both teams at once.",
+      "notReady": "Still missing:",
+      "button": "Submit",
+      "complete": "Ready to submit",
+      "sent": "Sent to Design and Logistics",
+      "failed": "Could not submit"
+    },
+    "fields": {
+      "dates": "Dates",
+      "details_title": "Title",
+      "details_description": "Description",
+      "details_event_type": "Event type",
+      "details_presenter_name": "Presenter name",
+      "details_presenter_email": "Presenter email",
+      "details_day_modes": "Each day's mode",
+      "details_daily_start_time": "Start time",
+      "details_daily_end_time": "End time (after the start)",
+      "details_is_official": "Official or not",
+      "details_location_scope": "Inside or outside the university",
+      "details_audience": "Audience",
+      "details_registration": "Registration",
+      "details_expected_accepted": "How many will be accepted",
+      "design_design_type": "Design: type",
+      "design_design_type_other": "Design: other type",
+      "design_size_other": "Design: other size",
+      "design_file_type_other": "Design: other file type",
+      "design_idea": "Design: idea",
+      "design_content_status": "Design: content status",
+      "design_content": "Design: content",
+      "logistics_meet_link_by_logistics": "Logistics: Google Meet link",
+      "logistics_venue": "Logistics: venue",
+      "logistics_buses_needed": "Logistics: buses"
+    },
+    "briefs": {
+      "save": "Save brief",
+      "saved": "Brief saved",
+      "failed": "Could not save",
+      "choose": "Choose…",
+      "optional": "Optional",
+      "other": "Other",
+      "otherPlaceholder": "Write it here",
+      "yes": "Yes",
+      "no": "No",
+      "linksHint": "One link per line (Google Drive, etc.).",
+      "design": {
+        "rule": "No design is made without clear content.",
+        "designType": "Design type",
+        "size": "Size",
+        "fileType": "Final file type",
+        "idea": "Design idea",
+        "contentStatus": "Content status",
+        "content": "Content (the text that goes in the design)",
+        "instructions": "Special instructions",
+        "imageLinks": "Images / logo (links)",
+        "referenceLinks": "Similar designs for reference (links)",
+        "designTypes": {
+          "poster": "Promotional image",
+          "slides": "Slides",
+          "posts": "Posts",
+          "reports": "Reports",
+          "prints": "Prints",
+          "other": "Other"
+        },
+        "sizes": {
+          "square": "Square",
+          "landscape": "Landscape",
+          "portrait": "Portrait",
+          "other": "Other"
+        },
+        "fileTypes": {
+          "png": "PNG",
+          "jpeg": "JPEG",
+          "pdf": "PDF",
+          "powerpoint": "PowerPoint",
+          "other": "Other"
+        },
+        "contentStatuses": {
+          "final": "Content is complete and final",
+          "needs_wording": "Information is ready, needs wording"
+        }
+      },
+      "logistics": {
+        "pickModesFirst": "Choose each day's mode in the event details first; the questions here depend on it.",
+        "onlineSection": "Online days",
+        "meetLink": "OK for Logistics to create the Google Meet link?",
+        "onSiteSection": "On-site days",
+        "venue": "Venue",
+        "room": "Room number",
+        "services": "Services needed",
+        "venueNeeds": "Venue needs",
+        "buses": "Buses needed (female students)",
+        "notes": "Notes",
+        "serviceOptions": {
+          "sponsorship": "Sponsorship",
+          "organizing": "Organizing",
+          "volunteers": "Volunteers"
+        },
+        "venueNeedOptions": {
+          "devices": "Devices",
+          "internet": "Internet",
+          "audio": "Audio"
+        }
+      }
     }
   }
 }

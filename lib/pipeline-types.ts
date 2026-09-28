@@ -123,6 +123,57 @@ export interface EventRequestSummary {
   created_at: string;
 }
 
+export type TaskStatus = "brief" | "open" | "returned" | "done";
+
+export interface RequestTask {
+  team: PipelineTeam;
+  status: TaskStatus;
+  brief: Record<string, unknown> | null;
+  brief_version: number | null;
+  opened_at: string | null;
+  completed_at: string | null;
+  completed_by: { member_id: number; name: string } | null;
+}
+
+export interface DesignBrief {
+  design_type?: "poster" | "slides" | "posts" | "reports" | "prints" | "other";
+  design_type_other?: string | null;
+  size?: "square" | "landscape" | "portrait" | "other" | null;
+  size_other?: string | null;
+  idea?: string;
+  file_type?: "png" | "jpeg" | "pdf" | "powerpoint" | "other" | null;
+  file_type_other?: string | null;
+  content_status?: "final" | "needs_wording";
+  content?: string;
+  instructions?: string | null;
+  image_links?: string[];
+  reference_links?: string[];
+}
+
+export interface LogisticsBrief {
+  meet_link_by_logistics?: boolean | null;
+  venue?: string | null;
+  room?: string | null;
+  services?: ("sponsorship" | "organizing" | "volunteers")[];
+  venue_needs?: ("devices" | "internet" | "audio")[];
+  buses_needed?: boolean | null;
+  notes?: string | null;
+}
+
+/** Mirrors `VENUES` in Backend/app/services/event_briefs.py - the old Logistics form's list. */
+export const VENUES = [
+  "مسرح شطر الطلاب (180)",
+  "مسرح شطر الطالبات",
+  "التيك فالي (60)",
+  "قاعة بكلية البنات",
+  "قاعة بكلية العيال",
+  "القاعة المتوسطة بالمؤتمرات (700)",
+  "القاعة الكبرى بالمؤتمرات (2200)",
+  "قاعة المعرفة كلية الطلاب",
+  "معمل الامن السيبراني",
+  "بيت الثقافة",
+];
+
 export interface EventRequestDetail extends EventRequestSummary {
   created_by: { member_id: number; name: string };
   details: EventDetails;
@@ -132,6 +183,8 @@ export interface EventRequestDetail extends EventRequestSummary {
   updated_at: string;
   event_id: number | null;
   can_edit: boolean;
+  tasks: RequestTask[];
+  missing: string[];
   now: string;
 }
 
