@@ -2082,6 +2082,35 @@
         "media_received": "{title} is ready for Media",
         "ready_to_publish": "{title} is ready to publish"
       }
+    },
+    "inbox": {
+      "title": "Waiting on your team",
+      "none": "Nothing is waiting on your team."
+    },
+    "review": {
+      "title": "Progress",
+      "failed": "Something went wrong",
+      "status": {
+        "brief": "Being written",
+        "open": "Working on it",
+        "returned": "Returned",
+        "done": "Done"
+      },
+      "doneBy": "Done by {name}",
+      "markDone": "Mark done",
+      "marked": "Marked done",
+      "return": "Return with notes",
+      "returnTitle": "Return this request",
+      "returnHint": "Design can return a request once, within two days of receiving it. The team then has 12 hours to fix it, or loses points for each late day.",
+      "notesPlaceholder": "What needs fixing?",
+      "cancel": "Cancel",
+      "returned": "Returned to the team",
+      "returnUntil": "Can be returned until {date}",
+      "returnedTitle": "Design returned this request",
+      "fixWithin": "Fix it and resubmit:",
+      "resubmit": "Resubmit to Design",
+      "resubmitted": "Sent back to Design",
+      "penalty": "Late fix: {points} point(s) off ({days} late day(s)), taken when the event is published."
     }
   }
 }

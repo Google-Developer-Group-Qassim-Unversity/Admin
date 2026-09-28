@@ -13,6 +13,7 @@ import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
 import { DetailsForm } from "@/components/pipeline/details-form";
 import { SubmitBar } from "@/components/pipeline/submit-bar";
+import { TeamActions } from "@/components/pipeline/team-actions";
 import { useDepartmentName } from "@/components/pipeline/shared";
 import { StageBadge } from "@/components/status-badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -37,6 +38,10 @@ export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
     <div className="flex flex-col gap-5">
       <RequestHeader request={request} me={me} />
       {request.stage === "draft" && canAct ? <SubmitBar request={request} /> : null}
+      {request.stage === "returned" && request.actions.can_resubmit && request.missing.length ? (
+        <SubmitBar request={request} />
+      ) : null}
+      <TeamActions request={request} />
       <Tabs defaultValue="details">
         <TabsList className="flex-wrap">
           <TabsTrigger value="details">{t("tabs.details")}</TabsTrigger>
