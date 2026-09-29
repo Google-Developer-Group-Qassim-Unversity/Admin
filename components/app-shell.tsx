@@ -4,7 +4,6 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { useUser } from "@clerk/nextjs";
 import {
   CalendarDays,
   LayoutDashboard,
@@ -14,6 +13,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
+  Workflow,
   Trophy,
   Users,
   type LucideIcon,
@@ -53,6 +53,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/", key: "home", icon: LayoutDashboard },
       { href: "/events", key: "events", icon: CalendarDays },
+      { href: "/pipeline", key: "pipeline", icon: Workflow },
     ],
   },
   {
@@ -76,6 +77,9 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** What a signed-in person who is not an admin can open: only the events pipeline. */
+const NON_ADMIN_ROUTES = ["/pipeline"];
+
 /** "/" only matches itself; every other entry owns its subtree. */
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -84,10 +88,20 @@ function isActive(pathname: string, href: string) {
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const role = useUserRole();
+  const groups = React.useMemo(
+    () =>
+      role === "none"
+        ? NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => NON_ADMIN_ROUTES.includes(i.href)) })).filter(
+            (g) => g.items.length > 0,
+          )
+        : NAV_GROUPS,
+    [role],
+  );
 
   return (
     <div className="flex flex-col gap-5">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
           {group.items.map((item) => {
             const Icon = item.icon;
@@ -144,17 +158,24 @@ function Sidebar() {
  * drawer behind a hamburger. It holds the first four destinations this admin
  * can open; everything else, plus theme and language, lives in "More".
  */
-const MOBILE_PRIORITY = ["/", "/events", "/points", "/manage-members", "/club-structure", "/manage-emails"];
+const MOBILE_PRIORITY = [
+  "/",
+  "/events",
+  "/pipeline",
+  "/points",
+  "/manage-members",
+  "/club-structure",
+  "/manage-emails",
+];
 const MOBILE_SLOTS = 4;
 
 function useMobileNav() {
-  const { isLoaded } = useUser();
   const role = useUserRole();
   const all = NAV_GROUPS.flatMap((g) => g.items);
-  // Until Clerk loads the role reads "none"; show everything rather than an
-  // empty bar. The middleware has already kept out anyone without a role.
-  const allowed = all.filter(
-    (item) => !isLoaded || role === "none" || hasRoutePermission(role, item.href),
+  // Same rule as the sidebar: someone without an admin role (or before Clerk
+  // has loaded one) sees only the pipeline; admins see what their role opens.
+  const allowed = all.filter((item) =>
+    role === "none" ? NON_ADMIN_ROUTES.includes(item.href) : hasRoutePermission(role, item.href),
   );
   const primary = MOBILE_PRIORITY.map((href) => allowed.find((i) => i.href === href))
     .filter((i): i is NavItem => Boolean(i))

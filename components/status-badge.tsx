@@ -68,3 +68,44 @@ export function UrgencyDot({ urgency, className }: { urgency: Urgency; className
     />
   );
 }
+
+/**
+ * Events pipeline calendar days. Same colour rules: a day nobody can book is
+ * neutral, a banned day is red, a day held by a draft is waiting (yellow), a
+ * booked day is taken (blue), and a published event is live (green).
+ */
+export type PipelineDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
+
+export const PIPELINE_DAY_STYLES: Record<PipelineDayStatus, { dot: string; cell: string }> = {
+  locked: { dot: "bg-muted-foreground/60", cell: "bg-muted/60 text-muted-foreground" },
+  banned: { dot: "bg-brand-red", cell: "bg-brand-red-soft text-brand-red-ink" },
+  open: { dot: "bg-border", cell: "bg-card text-foreground" },
+  held: { dot: "bg-brand-yellow", cell: "bg-brand-yellow-soft text-brand-yellow-ink" },
+  booked: { dot: "bg-brand-blue", cell: "bg-brand-blue-soft text-brand-blue-ink" },
+  published: { dot: "bg-brand-green", cell: "bg-brand-green-soft text-brand-green-ink" },
+};
+
+/** Where an event request is. Waiting on someone is yellow, done is green, a draft is neutral. */
+export type RequestStage = "draft" | "in_review" | "returned" | "media" | "ready" | "published" | "cancelled";
+
+const STAGE_STYLES: Record<RequestStage, { dot: string; pill: string }> = {
+  draft: { dot: "bg-muted-foreground/60", pill: "bg-muted text-muted-foreground" },
+  in_review: { dot: "bg-brand-yellow", pill: "bg-brand-yellow-soft text-brand-yellow-ink" },
+  returned: { dot: "bg-brand-red", pill: "bg-brand-red-soft text-brand-red-ink" },
+  media: { dot: "bg-brand-yellow", pill: "bg-brand-yellow-soft text-brand-yellow-ink" },
+  ready: { dot: "bg-brand-blue", pill: "bg-brand-blue-soft text-brand-blue-ink" },
+  published: { dot: "bg-brand-green", pill: "bg-brand-green-soft text-brand-green-ink" },
+  cancelled: { dot: "bg-border", pill: "bg-muted text-muted-foreground" },
+};
+
+export function StageBadge({ stage, className }: { stage: RequestStage; className?: string }) {
+  const t = useTranslations("pipeline.stage");
+  return (
+    <span
+      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${STAGE_STYLES[stage].pill} ${className ?? ""}`}
+    >
+      <span className={`inline-block h-[7px] w-[7px] shrink-0 rounded-full ${STAGE_STYLES[stage].dot}`} aria-hidden="true" />
+      {t(stage)}
+    </span>
+  );
+}

@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import type { ClubDepartment, ClubRole } from "@/lib/club-structure-types";
+import type { ClubDepartment, ClubRole, ClubRoleKey } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClubError } from "@/components/club-structure/use-club-error";
@@ -33,10 +33,28 @@ export function DepartmentPlusIcon({ className }: { className?: string }) {
   );
 }
 
+type NamedDepartment = Pick<ClubDepartment, "name" | "ar_name"> & {
+  semester_name?: string | null;
+  semester_ar_name?: string | null;
+};
+
+/** The department's name in the current language - the one it had that semester, when recorded. */
 export function useDepartmentName() {
   const locale = useLocale();
-  return (department: Pick<ClubDepartment, "name" | "ar_name">) =>
-    locale === "ar" ? department.ar_name : department.name;
+  return (department: NamedDepartment) =>
+    locale === "ar"
+      ? (department.semester_ar_name ?? department.ar_name)
+      : (department.semester_name ?? department.name);
+}
+
+/** A role's display name, from the `club_roles` rows the overview returns. */
+export function useRoleName(roles: ClubRole[]) {
+  const locale = useLocale();
+  return (key: ClubRoleKey) => {
+    const role = roles.find((item) => item.key === key);
+    if (!role) return key;
+    return locale === "ar" ? role.ar_name : role.name;
+  };
 }
 
 export function DepartmentIcon({ icon, color }: Pick<ClubDepartment, "icon" | "color">) {
@@ -92,18 +110,17 @@ export function DepartmentTypeBadge({ type }: Pick<ClubDepartment, "type">) {
   );
 }
 
-export function RoleBadge({ role }: { role: ClubRole }) {
-  const t = useTranslations("clubStructure");
+export function RoleBadge({ role, label }: { role: ClubRoleKey; label: string }) {
   return (
     <Badge
       variant="secondary"
       className={cn(
         "text-[11px]",
         role === "leader" && "bg-brand-blue-soft text-brand-blue-ink",
-        role === "deputy" && "border-border text-foreground bg-transparent",
+        role === "vp" && "border-border text-foreground bg-transparent",
       )}
     >
-      {t(`roles.${role}`)}
+      {label}
     </Badge>
   );
 }
@@ -137,9 +154,10 @@ export function ClubLoading({ overview = false }: { overview?: boolean }) {
         ))}
       </div>
       {overview && (
-        <div aria-hidden="true" className="grid gap-4 sm:grid-cols-2">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
+        <div aria-hidden="true" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
         </div>
       )}
     </div>

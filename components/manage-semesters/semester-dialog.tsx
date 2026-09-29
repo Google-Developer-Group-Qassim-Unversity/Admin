@@ -18,11 +18,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import type { Semester } from "@/lib/api-types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import type { Semester, SemesterInput, SemesterTerm } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
-/** Semester codes run years ahead of the current term, so allow a wide dropdown range. */
+/** Semesters get added ahead of time and back-filled for past terms, so allow a wide range. */
 const CALENDAR_START = new Date(2020, 0);
 const CALENDAR_END = new Date(2035, 11);
 
@@ -94,12 +95,12 @@ function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldPr
 }
 
 export interface SemesterFormValues {
-  id: number;
-  name: string;
+  term: SemesterTerm;
+  hijri_year: string;
+  academic_year_start: string;
   start_date: string;
   end_date: string;
   is_public: boolean;
-  is_current: boolean;
 }
 
 interface SemesterDialogProps {
@@ -107,77 +108,88 @@ interface SemesterDialogProps {
   onOpenChange: (open: boolean) => void;
   /** The semester being edited, or null when adding a new one. */
   semester: Semester | null;
-  existingIds: number[];
-  onSubmit: (values: SemesterFormValues) => void;
+  onSubmit: (values: SemesterInput) => void;
   isLoading?: boolean;
 }
 
 const EMPTY_FORM: SemesterFormValues = {
-  id: NaN,
-  name: "",
+  term: "first",
+  hijri_year: "",
+  academic_year_start: "",
   start_date: "",
   end_date: "",
   is_public: true,
-  is_current: false,
 };
 
-export function SemesterDialog({
-  open,
-  onOpenChange,
-  semester,
-  existingIds,
-  onSubmit,
-  isLoading = false,
-}: SemesterDialogProps) {
+const TERMS: SemesterTerm[] = ["first", "second", "summer"];
+
+/**
+ * What the database will generate - the same expressions as the `semesters`
+ * generated columns (see Backend/app/DB/schema.py). Shown as a preview only;
+ * the saved row's codes always come back from the API.
+ */
+function previewCodes(term: SemesterTerm, hijriYear: number, academicYearStart: number) {
+  const hijriDigit = { first: 1, second: 2, summer: 5 }[term];
+  const gregorianDigit = { first: 1, second: 2, summer: 3 }[term];
+  const season = { first: "Fall", second: "Spring", summer: "Summer" }[term];
+  return {
+    hijriCode: (hijriYear % 100) * 10 + hijriDigit,
+    gregorianCode: (academicYearStart % 100) * 10 + gregorianDigit,
+    name: `${season} ${academicYearStart + (term === "first" ? 0 : 1)}`,
+  };
+}
+
+function parseYear(value: string, min: number, max: number): number | null {
+  const year = Number(value);
+  return Number.isInteger(year) && year >= min && year <= max ? year : null;
+}
+
+export function SemesterDialog({ open, onOpenChange, semester, onSubmit, isLoading = false }: SemesterDialogProps) {
   const t = useTranslations("semesterDialog");
   const tc = useTranslations("common.actions");
   const isEditing = semester !== null;
   const [values, setValues] = React.useState<SemesterFormValues>(EMPTY_FORM);
-  const [idInput, setIdInput] = React.useState("");
 
   React.useEffect(() => {
     if (!open) return;
-    if (semester) {
-      setValues({
-        id: semester.id,
-        name: semester.name ?? "",
-        start_date: semester.start_date,
-        end_date: semester.end_date,
-        is_public: semester.is_public,
-        is_current: semester.is_current,
-      });
-      setIdInput(String(semester.id));
-    } else {
-      setValues(EMPTY_FORM);
-      setIdInput("");
-    }
+    setValues(
+      semester
+        ? {
+            term: semester.term,
+            hijri_year: String(semester.hijri_year),
+            academic_year_start: String(semester.academic_year_start),
+            start_date: semester.start_date,
+            end_date: semester.end_date,
+            is_public: semester.is_public,
+          }
+        : EMPTY_FORM
+    );
   }, [open, semester]);
 
-  const parsedId = Number(idInput);
-  const idError = (() => {
-    if (isEditing || idInput.trim() === "") return null;
-    if (!Number.isInteger(parsedId) || parsedId <= 0) return t("codePositiveInteger");
-    if (existingIds.includes(parsedId)) return t("codeExists", { id: parsedId });
-    return null;
-  })();
+  const hijriYear = parseYear(values.hijri_year, 1400, 1499);
+  const academicYearStart = parseYear(values.academic_year_start, 2000, 2099);
+  const hijriYearError = values.hijri_year && hijriYear === null ? t("hijriYearRange") : null;
+  const academicYearError = values.academic_year_start && academicYearStart === null ? t("academicYearRange") : null;
+  const preview =
+    hijriYear !== null && academicYearStart !== null ? previewCodes(values.term, hijriYear, academicYearStart) : null;
 
   const dateError =
-    values.start_date && values.end_date && values.end_date < values.start_date
-      ? t("endAfterStart")
-      : null;
+    values.start_date && values.end_date && values.end_date < values.start_date ? t("endAfterStart") : null;
 
   const canSubmit =
-    !isLoading &&
-    !idError &&
-    !dateError &&
-    values.start_date !== "" &&
-    values.end_date !== "" &&
-    (isEditing || idInput.trim() !== "");
+    !isLoading && preview !== null && !dateError && values.start_date !== "" && values.end_date !== "";
 
   const handleSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    if (!canSubmit) return;
-    onSubmit({ ...values, id: isEditing ? values.id : parsedId });
+    if (!canSubmit || hijriYear === null || academicYearStart === null) return;
+    onSubmit({
+      term: values.term,
+      hijri_year: hijriYear,
+      academic_year_start: academicYearStart,
+      start_date: values.start_date,
+      end_date: values.end_date,
+      is_public: values.is_public,
+    });
   };
 
   return (
@@ -185,42 +197,67 @@ export function SemesterDialog({
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditing ? t("editTitle", { id: semester.id }) : t("addTitle")}</DialogTitle>
-            <DialogDescription>
-              {t("description")}
-            </DialogDescription>
+            <DialogTitle>{isEditing ? t("editTitle", { name: semester.name }) : t("addTitle")}</DialogTitle>
+            <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
 
           <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="semester-term">{t("term")}</Label>
+              <Select
+                value={values.term}
+                onValueChange={(term) => setValues((v) => ({ ...v, term: term as SemesterTerm }))}
+              >
+                <SelectTrigger id="semester-term" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {TERMS.map((term) => (
+                    <SelectItem key={term} value={term}>
+                      {t(`terms.${term}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="semester-id">{t("semesterCode")}</Label>
+                <Label htmlFor="semester-hijri-year">{t("hijriYear")}</Label>
                 <Input
-                  id="semester-id"
+                  id="semester-hijri-year"
                   inputMode="numeric"
-                  placeholder="475"
-                  value={idInput}
-                  onChange={(e) => setIdInput(e.target.value)}
-                  disabled={isEditing}
-                  aria-invalid={!!idError}
+                  placeholder="1447"
+                  value={values.hijri_year}
+                  onChange={(e) => setValues((v) => ({ ...v, hijri_year: e.target.value.trim() }))}
+                  aria-invalid={!!hijriYearError}
                 />
-                {isEditing ? (
-                  <p className="text-xs text-muted-foreground">{t("codeImmutable")}</p>
-                ) : (
-                  idError && <p className="text-xs text-destructive">{idError}</p>
-                )}
+                {hijriYearError && <p className="text-xs text-destructive">{hijriYearError}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="semester-name">{t("labelOptional")}</Label>
+                <Label htmlFor="semester-academic-year">{t("academicYearStart")}</Label>
                 <Input
-                  id="semester-name"
-                  placeholder="Summer 2026"
-                  value={values.name}
-                  onChange={(e) => setValues((v) => ({ ...v, name: e.target.value }))}
+                  id="semester-academic-year"
+                  inputMode="numeric"
+                  placeholder="2025"
+                  value={values.academic_year_start}
+                  onChange={(e) => setValues((v) => ({ ...v, academic_year_start: e.target.value.trim() }))}
+                  aria-invalid={!!academicYearError}
                 />
+                {academicYearError && <p className="text-xs text-destructive">{academicYearError}</p>}
               </div>
             </div>
+
+            <p className="text-xs text-muted-foreground">
+              {preview
+                ? t("codesPreview", {
+                    name: preview.name,
+                    hijriCode: preview.hijriCode,
+                    gregorianCode: preview.gregorianCode,
+                  })
+                : t("codesHint")}
+            </p>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <DateField
@@ -240,16 +277,12 @@ export function SemesterDialog({
               />
             </div>
             {dateError && <p className="text-xs text-destructive">{dateError}</p>}
-            <p className="text-xs text-muted-foreground">
-              {t("inclusiveDatesHint")}
-            </p>
+            <p className="text-xs text-muted-foreground">{t("datesHint")}</p>
 
             <div className="flex items-center justify-between rounded-lg border p-3">
               <div className="space-y-0.5">
                 <Label htmlFor="semester-public">{t("publiclyVisible")}</Label>
-                <p className="text-xs text-muted-foreground">
-                  {t("publiclyVisibleHint")}
-                </p>
+                <p className="text-xs text-muted-foreground">{t("publiclyVisibleHint")}</p>
               </div>
               <Switch
                 id="semester-public"
@@ -257,22 +290,6 @@ export function SemesterDialog({
                 onCheckedChange={(checked) => setValues((v) => ({ ...v, is_public: checked }))}
               />
             </div>
-
-            {!isEditing && (
-              <div className="flex items-center justify-between rounded-lg border p-3">
-                <div className="space-y-0.5">
-                  <Label htmlFor="semester-current">{t("setAsCurrent")}</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {t("setAsCurrentHint")}
-                  </p>
-                </div>
-                <Switch
-                  id="semester-current"
-                  checked={values.is_current}
-                  onCheckedChange={(checked) => setValues((v) => ({ ...v, is_current: checked }))}
-                />
-              </div>
-            )}
           </div>
 
           <DialogFooter>

@@ -10,7 +10,14 @@ export function testHref(href) {
 }
 
 export function useRouter() {
-  return { push: (href) => window.location.assign(testHref(href)) };
+  return {
+    push: (href) => window.location.assign(testHref(href)),
+    replace: (href) => window.location.replace(testHref(href)),
+  };
+}
+
+export function usePathname() {
+  return window.location.pathname;
 }
 
 export function useSearchParams() {

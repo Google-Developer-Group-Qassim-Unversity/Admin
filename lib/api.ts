@@ -12,7 +12,7 @@
  * nothing in a caller should mention a token at all.
  *
  * Migrated so far: events, their status transitions, attendance, certificates,
- * actions, departments, forms. Still here: points, emails, members, semesters,
+ * actions, departments, forms, semesters. Still here: points, emails, members,
  * submissions, uploads.
  *
  * To move the next one:
@@ -88,9 +88,6 @@ import type {
   EnrichedEmailLog,
   EmailDashboardStats,
   EmailLogFilters,
-  Semester,
-  CreateSemesterPayload,
-  UpdateSemesterPayload,
   EmailJobModel,
   EmailJobStatus,
 } from "./api-types";
@@ -929,45 +926,3 @@ export async function resetLeaderboardCache(getToken?: GetTokenFn): Promise<ApiR
   return apiFetch<CacheResetResponse>("/cache/reset", { method: "POST" }, getToken);
 }
 
-// =============================================================================
-// Semesters API
-// =============================================================================
-
-export async function getSemesters(getToken?: GetTokenFn): Promise<ApiResponse<Semester[]>> {
-  return apiFetch<Semester[]>("/semesters", {}, getToken);
-}
-
-export async function createSemester(
-  payload: CreateSemesterPayload,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Semester>> {
-  return apiFetch<Semester>("/semesters", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function updateSemester(
-  semesterId: number,
-  payload: UpdateSemesterPayload,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Semester>> {
-  return apiFetch<Semester>(`/semesters/${semesterId}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function setCurrentSemester(
-  semesterId: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Semester>> {
-  return apiFetch<Semester>(`/semesters/${semesterId}/current`, { method: "PUT" }, getToken);
-}
-
-export async function deleteSemester(
-  semesterId: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/semesters/${semesterId}`, { method: "DELETE" }, getToken);
-}
