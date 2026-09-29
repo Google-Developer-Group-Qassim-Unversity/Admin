@@ -17,22 +17,21 @@ import {
   UserPlus,
   Users,
   Upload,
-  Search,
   Columns3,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
   ExternalLink,
+  BadgeCheck,
+  UserPen,
+  Mars,
+  Venus,
+  Clock,
+  EllipsisVertical,
+  Mail,
 } from "lucide-react";
 import { format } from "date-fns";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -45,6 +44,7 @@ import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
@@ -55,6 +55,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { PageHeader } from "@/components/page-header";
+import { FilterBar } from "@/components/filter-bar";
+import { ListPager } from "@/components/list-pager";
+import { StatTile } from "@/components/dashboard/stat-tile";
+import { MemberStatePill } from "@/components/manage-members/member-state-pill";
 import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 import { BatchImportDialog } from "@/components/manage-members/batch-import-dialog";
 
@@ -63,11 +67,23 @@ import type { Member } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 import { config } from "@/lib/config";
 
-const PAGE_SIZE_OPTIONS = [
-  { value: "10", label: "10" },
-  { value: "50", label: "50" },
-  { value: "100", label: "100" },
-] as const;
+const PAGE_SIZE_OPTIONS = [10, 50, 100] as const;
+
+// Phones get a sort Select in place of the table's clickable headers. Each
+// option is just a SortingState the server already understands.
+const PHONE_SORTS = {
+  default: [],
+  name: [{ id: "name", desc: false }],
+  recent: [{ id: "last_activity", desc: true }],
+} satisfies Record<string, SortingState>;
+type PhoneSort = keyof typeof PHONE_SORTS;
+
+function phoneSortOf(sorting: SortingState): PhoneSort {
+  const s = sorting[0];
+  if (s?.id === "name" && !s.desc) return "name";
+  if (s?.id === "last_activity" && s.desc) return "recent";
+  return "default";
+}
 
 // Messages come from a translator, so column defs are built per render
 // rather than at module scope where `useTranslations` is unavailable.
@@ -85,7 +101,11 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
           <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => <span className="font-medium">{row.getValue("name")}</span>,
+      cell: ({ row }) => (
+        <span className="font-medium" dir="auto">
+          {row.getValue("name")}
+        </span>
+      ),
     },
     {
       accessorKey: "email",
@@ -112,7 +132,7 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
           <ArrowUpDown className="ms-2 h-4 w-4" />
         </Button>
       ),
-      cell: ({ row }) => row.getValue("uni_id") ?? "—",
+      cell: ({ row }) => <span className="tabular">{row.getValue<string | null>("uni_id") ?? "—"}</span>,
     },
     {
       accessorKey: "gender",
@@ -127,16 +147,7 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
     {
       accessorKey: "is_authenticated",
       header: t("columns.status"),
-      cell: ({ row }) => {
-        const isAuth = row.getValue("is_authenticated");
-        return isAuth ? (
-          <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400" variant="outline">
-            {t("authenticated")}
-          </Badge>
-        ) : (
-          <Badge variant="secondary">{t("manual")}</Badge>
-        );
-      },
+      cell: ({ row }) => <MemberStatePill authenticated={!!row.getValue("is_authenticated")} />,
     },
     {
       accessorKey: "last_activity",
@@ -153,7 +164,7 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
       cell: ({ row }) => {
         const lastActivity = row.getValue<string | null | undefined>("last_activity");
         return lastActivity ? (
-          <span className="text-sm">{format(new Date(lastActivity), "MMM d, yyyy")}</span>
+          <span className="tabular text-sm">{format(new Date(lastActivity), "MMM d, yyyy")}</span>
         ) : (
           <span className="text-sm text-muted-foreground">{t("noActivity")}</span>
         );
@@ -169,14 +180,17 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
       header: t("columns.actions"),
       enableHiding: false,
       cell: ({ row }) => (
-        <Button variant="outline" size="sm" asChild>
+        // Icon-only so the seven columns fit a laptop without the table
+        // scrolling sideways; the name is still announced and shown on hover.
+        <Button variant="outline" size="icon-sm" asChild>
           <a
             href={`${config.memberAppUrl}/members/${row.original.id}`}
             target="_blank"
             rel="noopener noreferrer"
+            title={t("viewMemberPage")}
           >
-            {t("viewMemberPage")}
-            <ExternalLink className="ms-2 h-4 w-4" />
+            <ExternalLink className="h-4 w-4" />
+            <span className="sr-only">{t("viewMemberPage")}</span>
           </a>
         </Button>
       ),
@@ -252,6 +266,25 @@ export function ManageMembersContent() {
   const from = total === 0 ? 0 : pagination.pageIndex * pagination.pageSize + 1;
   const to = Math.min((pagination.pageIndex + 1) * pagination.pageSize, total);
 
+  const columnLabel = (id: string) =>
+    id === "is_authenticated"
+      ? t("columns.status")
+      : id === "uni_id"
+        ? t("columns.universityId")
+        : id === "phone_number"
+          ? t("columns.phone")
+          : id === "name"
+            ? t("columns.name")
+            : id === "email"
+              ? t("columns.email")
+              : id === "gender"
+                ? t("columns.gender")
+                : id === "last_activity"
+                  ? t("columns.lastActivity")
+                  : id.replace(/_/g, " ");
+
+  const emptyMessage = debouncedSearch.length > 0 ? t("noneMatchSearch") : t("noneFound");
+
   return (
     <div className="space-y-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Users}>
@@ -265,97 +298,73 @@ export function ManageMembersContent() {
         </Button>
       </PageHeader>
 
-      {stats && (
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
-          <Card size="sm">
-            <CardContent className="pt-4 pb-4 px-4">
-              <div className="text-2xl font-bold">{stats.total}</div>
-              <div className="text-xs text-muted-foreground">{t("stats.total")}</div>
-            </CardContent>
-          </Card>
-          <Card size="sm">
-            <CardContent className="pt-4 pb-4 px-4">
-              <div className="text-2xl font-bold text-green-600 dark:text-green-400">{stats.authenticated}</div>
-              <div className="text-xs text-muted-foreground">{t("stats.authenticated")}</div>
-            </CardContent>
-          </Card>
-          <Card size="sm">
-            <CardContent className="pt-4 pb-4 px-4">
-              <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{stats.manual}</div>
-              <div className="text-xs text-muted-foreground">{t("stats.manual")}</div>
-            </CardContent>
-          </Card>
-          <Card size="sm">
-            <CardContent className="pt-4 pb-4 px-4">
-              <div className="text-2xl font-bold">{stats.male}</div>
-              <div className="text-xs text-muted-foreground">{t("stats.male")}</div>
-            </CardContent>
-          </Card>
-          <Card size="sm">
-            <CardContent className="pt-4 pb-4 px-4">
-              <div className="text-2xl font-bold">{stats.female}</div>
-              <div className="text-xs text-muted-foreground">{t("stats.female")}</div>
-            </CardContent>
-          </Card>
+      {/* Phones: total across the top, then a 2x2 of the breakdown. */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-3.5">
+        <div className="col-span-2 sm:col-span-1">
+          <StatTile icon={Users} label={t("stats.total")} value={stats?.total} isPending={!stats} />
         </div>
-      )}
-
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="relative max-w-sm flex-1 min-w-[200px]">
-          <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={t("searchPlaceholder")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="ps-8"
-          />
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm">
-              <Columns3 className="me-1 h-4 w-4" />
-              {t("columnsMenu")}
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-48">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => (
-                <DropdownMenuCheckboxItem
-                  key={column.id}
-                  className="capitalize"
-                  checked={column.getIsVisible()}
-                  onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                >
-                  {column.id === "is_authenticated"
-                    ? t("columns.status")
-                    : column.id === "uni_id"
-                      ? t("columns.universityId")
-                      : column.id === "phone_number"
-                        ? t("columns.phone")
-                        : column.id === "name"
-                          ? t("columns.name")
-                          : column.id === "email"
-                            ? t("columns.email")
-                            : column.id === "gender"
-                              ? t("columns.gender")
-                              : column.id === "last_activity"
-                                ? t("columns.lastActivity")
-                                : column.id.replace(/_/g, " ")}
-                </DropdownMenuCheckboxItem>
-              ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
-
-        <div className="flex-1" />
-
-        <div className="text-sm text-muted-foreground">
-          {t("memberCount", { count: total })}
-          {debouncedSearch.length > 0 && stats && t("filteredFromTotal", { total: stats.total })}
-        </div>
+        <StatTile
+          icon={BadgeCheck}
+          tone="green"
+          label={t("stats.authenticated")}
+          value={stats?.authenticated}
+          isPending={!stats}
+        />
+        <StatTile icon={UserPen} label={t("stats.manual")} value={stats?.manual} isPending={!stats} />
+        <StatTile icon={Mars} label={t("stats.male")} value={stats?.male} isPending={!stats} />
+        <StatTile icon={Venus} label={t("stats.female")} value={stats?.female} isPending={!stats} />
       </div>
+
+      <FilterBar
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t("searchPlaceholder")}
+        trailing={
+          <>
+            <span className="tabular">
+              {t("memberCount", { count: total })}
+              {debouncedSearch.length > 0 && stats && t("filteredFromTotal", { total: stats.total })}
+            </span>
+            {/* Columns only exist on the table; phones sort with a Select instead. */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" size="sm" className="hidden md:inline-flex">
+                  <Columns3 className="me-1 h-4 w-4" />
+                  {t("columnsMenu")}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                {table
+                  .getAllColumns()
+                  .filter((column) => column.getCanHide())
+                  .map((column) => (
+                    <DropdownMenuCheckboxItem
+                      key={column.id}
+                      className="capitalize"
+                      checked={column.getIsVisible()}
+                      onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                    >
+                      {columnLabel(column.id)}
+                    </DropdownMenuCheckboxItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Select
+              value={phoneSortOf(sorting)}
+              onValueChange={(value) => setSorting([...PHONE_SORTS[value as PhoneSort]])}
+            >
+              <SelectTrigger size="sm" className="w-auto md:hidden" aria-label={t("sort.label")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent align="end">
+                <SelectItem value="default">{t("sort.default")}</SelectItem>
+                <SelectItem value="name">{t("sort.name")}</SelectItem>
+                <SelectItem value="recent">{t("sort.recent")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </>
+        }
+      />
 
       {isError ? (
         <Alert variant="destructive">
@@ -368,7 +377,35 @@ export function ManageMembersContent() {
         </Alert>
       ) : (
         <>
-          <div className={`rounded-lg border transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
+          {/* Phones: one compact card per member. */}
+          <div
+            className={`bg-card border-border overflow-hidden rounded-xl border transition-opacity md:hidden ${
+              isPlaceholderData ? "opacity-60" : ""
+            }`}
+          >
+            {isPending ? (
+              <ul className="divide-border divide-y">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <li key={i} className="space-y-2 px-4 py-3.5">
+                    <Skeleton className="h-4 w-2/5" />
+                    <Skeleton className="h-3.5 w-4/5" />
+                  </li>
+                ))}
+              </ul>
+            ) : rows.length ? (
+              <ul className="divide-border divide-y">
+                {rows.map((member) => (
+                  <MemberRow key={member.id} member={member} />
+                ))}
+              </ul>
+            ) : (
+              <p className="text-muted-foreground px-4 py-10 text-center text-sm">{emptyMessage}</p>
+            )}
+          </div>
+
+          <div
+            className={`hidden rounded-lg border transition-opacity md:block ${isPlaceholderData ? "opacity-60" : ""}`}
+          >
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
@@ -405,7 +442,7 @@ export function ManageMembersContent() {
                 ) : (
                   <TableRow>
                     <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
-                      {debouncedSearch.length > 0 ? t("noneMatchSearch") : t("noneFound")}
+                      {emptyMessage}
                     </TableCell>
                   </TableRow>
                 )}
@@ -413,48 +450,15 @@ export function ManageMembersContent() {
             </Table>
           </div>
 
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-            <div className="flex items-center gap-4">
-              <div className="text-sm text-muted-foreground">
-                {t("showingRange", { from, to, count: total })}
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-muted-foreground">{t("rows")}</span>
-                <Select
-                  value={String(pagination.pageSize)}
-                  onValueChange={(value) => setPagination((p) => ({ ...p, pageSize: Number(value), pageIndex: 0 }))}
-                >
-                  <SelectTrigger className="w-[70px]" size="sm">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent align="start">
-                    {PAGE_SIZE_OPTIONS.map((option) => (
-                      <SelectItem key={option.value} value={option.value}>
-                        {option.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="flex items-center gap-1">
-              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-                <ChevronsLeft className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="icon-sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-                <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
-              </Button>
-              <span className="px-3 text-sm">
-                {t("page", { current: pagination.pageIndex + 1, total: Math.max(pageCount, 1) })}
-              </span>
-              <Button variant="outline" size="icon-sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-              </Button>
-              <Button variant="outline" size="icon-sm" onClick={() => table.setPageIndex(table.getPageCount() - 1)} disabled={!table.getCanNextPage()}>
-                <ChevronsRight className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
+          <ListPager
+            page={pagination.pageIndex + 1}
+            pageCount={pageCount}
+            onPageChange={(page) => setPagination((p) => ({ ...p, pageIndex: page - 1 }))}
+            pageSize={pagination.pageSize}
+            pageSizeOptions={PAGE_SIZE_OPTIONS}
+            onPageSizeChange={(size) => setPagination((p) => ({ ...p, pageSize: size, pageIndex: 0 }))}
+            summary={t("showingRange", { from, to, count: total })}
+          />
         </>
       )}
 
@@ -472,5 +476,70 @@ export function ManageMembersContent() {
         getToken={getToken}
       />
     </div>
+  );
+}
+
+/** A member as a phone row: name, IDs, state, last seen, and a menu for the rest. */
+function MemberRow({ member }: { member: Member }) {
+  const t = useTranslations("manageMembersPage");
+  return (
+    <li className="flex items-start gap-2 py-3 ps-4 pe-2">
+      <div className="min-w-0 flex-1 space-y-1">
+        <div className="truncate text-[15px] leading-snug font-semibold" dir="auto">
+          {member.name}
+        </div>
+        <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-[13px]">
+          {member.uni_id ? (
+            <>
+              <span className="tabular shrink-0">{member.uni_id}</span>
+              <span aria-hidden="true">·</span>
+            </>
+          ) : null}
+          <span className="truncate" dir="ltr">
+            {member.email}
+          </span>
+        </div>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
+          <MemberStatePill authenticated={!!member.is_authenticated} />
+          <span className="text-muted-foreground flex items-center gap-1 text-[13px]">
+            <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            <span className="sr-only">{t("columns.lastActivity")}: </span>
+            {member.last_activity ? (
+              <span className="tabular">{format(new Date(member.last_activity), "MMM d, yyyy")}</span>
+            ) : (
+              t("noActivity")
+            )}
+          </span>
+        </div>
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
+            <EllipsisVertical />
+            <span className="sr-only">{t("rowActions", { name: member.name })}</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="min-w-52">
+          <DropdownMenuItem asChild>
+            <a
+              href={`${config.memberAppUrl}/members/${member.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink />
+              {t("viewMemberPage")}
+            </a>
+          </DropdownMenuItem>
+          {member.email ? (
+            <DropdownMenuItem asChild>
+              <a href={`mailto:${member.email}`}>
+                <Mail />
+                {t("emailMember")}
+              </a>
+            </DropdownMenuItem>
+          ) : null}
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </li>
   );
 }

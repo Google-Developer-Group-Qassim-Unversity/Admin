@@ -10,6 +10,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -264,7 +265,7 @@ export function ManageAttendanceDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="max-w-3xl! h-[80vh] flex flex-col">
+        <DialogContent className="flex h-[88dvh] flex-col gap-4 overflow-hidden sm:h-[80vh] sm:max-w-3xl sm:gap-5">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
@@ -272,16 +273,21 @@ export function ManageAttendanceDialog({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
+          {/* Five tabs never fit a phone: the strip scrolls sideways instead of squashing. */}
+          <div className="no-scrollbar -mx-5 shrink-0 overflow-x-auto px-5 sm:mx-0 sm:px-0">
+            <div role="tablist" className="flex w-max min-w-full gap-1 rounded-xl bg-muted p-1 sm:rounded-lg">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
+                type="button"
+                role="tab"
+                aria-selected={activeTab === tab.id}
                 onClick={() => {
                   setActiveTab(tab.id);
                   setSelectedMemberIds(new Set());
                   setSearchQuery("");
                 }}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
+                className={`flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors pointer-coarse:min-h-10 sm:flex-1 sm:rounded-md ${
                   activeTab === tab.id
                     ? "bg-background text-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground"
@@ -291,6 +297,7 @@ export function ManageAttendanceDialog({
                 {tab.label}
               </button>
             ))}
+            </div>
           </div>
 
           <div className="flex-1 min-h-0 overflow-y-auto">
@@ -359,8 +366,15 @@ export function ManageAttendanceDialog({
           </div>
 
           {activeTab !== "backfill" && activeTab !== "emails" && (
-            <div className="flex justify-end gap-2 pt-4 border-t">
-              <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
+            <DialogFooter className="shrink-0 border-t pt-4">
+              {/* The sheet already has a close button and swipes away; on a phone
+                  the footer keeps only the action, full width and in thumb reach. */}
+              <Button
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={isSubmitting}
+                className="max-sm:hidden"
+              >
                 {tc("cancel")}
               </Button>
               {activeTab === "mark" && (
@@ -401,7 +415,7 @@ export function ManageAttendanceDialog({
                   {t("copyAttendance")}
                 </Button>
               )}
-            </div>
+            </DialogFooter>
           )}
         </DialogContent>
       </Dialog>

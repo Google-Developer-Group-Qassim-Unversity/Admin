@@ -23,10 +23,14 @@ export default function ManageEmailsPage() {
     <div className="space-y-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Mail} />
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+        <div className="min-w-0">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList>
+            {/* Five tabs do not fit a phone: the strip scrolls sideways and
+                sticks under the top bar so switching never needs a scroll
+                back up. From sm it is the ordinary inline tab list. */}
+            <div className="bg-background/95 supports-backdrop-filter:bg-background/80 border-border sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-20 -mx-4 border-b px-4 py-2 supports-backdrop-filter:backdrop-blur-lg sm:static sm:mx-0 sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+            <TabsList className="w-full sm:w-fit [&>*]:flex-none sm:[&>*]:flex-1">
               <TabsTrigger value="logs">
                 <Mail className="h-4 w-4" />
                 {t("tabs.logs")}
@@ -48,6 +52,7 @@ export default function ManageEmailsPage() {
                 {t("tabs.jobs")}
               </TabsTrigger>
             </TabsList>
+            </div>
             <TabsContent value="logs" className="mt-4">
               <EmailLogsTab />
             </TabsContent>

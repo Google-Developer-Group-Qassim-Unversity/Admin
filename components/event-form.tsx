@@ -7,6 +7,7 @@ import { z } from "zod";
 import { Loader2, AlertCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { FormActions } from "@/components/form-actions";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -185,6 +186,9 @@ export function EventForm({
         <Input
           id="name"
           placeholder={t("fields.namePlaceholder")}
+          autoComplete="off"
+          enterKeyHint="next"
+          dir="auto"
           aria-invalid={!!errors.name}
           aria-describedby={errors.name ? "name-error" : undefined}
           {...register("name")}
@@ -221,7 +225,11 @@ export function EventForm({
             name="location_type"
             control={control}
             render={({ field }) => (
-              <LocationToggle value={field.value} onChange={field.onChange} />
+              <LocationToggle
+                value={field.value}
+                onChange={field.onChange}
+                className="w-full *:flex-1 *:pointer-coarse:h-10 md:w-fit md:*:flex-none"
+              />
             )}
           />
         </div>
@@ -292,7 +300,11 @@ export function EventForm({
             name="requireRegistration"
             control={control}
             render={({ field }) => (
-              <RegistrationToggle value={field.value} onChange={field.onChange} />
+              <RegistrationToggle
+                value={field.value}
+                onChange={field.onChange}
+                className="w-full *:flex-1 *:pointer-coarse:h-10 sm:w-fit sm:*:flex-none"
+              />
             )}
           />
           <p className="text-sm text-muted-foreground">
@@ -303,8 +315,8 @@ export function EventForm({
         </div>
       )}
 
-      {/* Is Official */}
-      <div className="flex items-center gap-3">
+      {/* Is Official - the whole row is the label, so it is a full-width tap target. */}
+      <div className="flex min-h-10 items-center gap-3">
         <Controller
           name="is_official"
           control={control}
@@ -316,7 +328,7 @@ export function EventForm({
             />
           )}
         />
-        <Label htmlFor="is_official" className="cursor-pointer">
+        <Label htmlFor="is_official" className="flex-1 cursor-pointer py-2">
           {t("fields.official")}
         </Label>
       </div>
@@ -340,7 +352,7 @@ export function EventForm({
                   id="department_id"
                   aria-invalid={!!errors.department_id}
                   aria-describedby={errors.department_id ? "department-error" : undefined}
-                  className={errors.department_id ? "border-destructive" : ""}
+                  className={`w-full ${errors.department_id ? "border-destructive" : ""}`}
                 >
                   <SelectValue placeholder={t("fields.departmentPlaceholder")} />
                 </SelectTrigger>
@@ -376,7 +388,7 @@ export function EventForm({
                   id="composite_action"
                   aria-invalid={!!errors.composite_action}
                   aria-describedby={errors.composite_action ? "composite-action-error" : undefined}
-                  className={errors.composite_action ? "border-destructive" : ""}
+                  className={`w-full ${errors.composite_action ? "border-destructive" : ""}`}
                 >
                   <SelectValue placeholder={t("fields.departmentActionPlaceholder")} />
                 </SelectTrigger>
@@ -412,21 +424,25 @@ export function EventForm({
         )}
       />
 
-      {/* Submit Button */}
-      <Button
-        type="submit"
-        className="w-full"
-        disabled={isSubmitting || Object.keys(errors).length > 0}
-      >
-        {isSubmitting ? (
-          <>
-            <Loader2 className="me-2 h-4 w-4 animate-spin" />
-            {submittingText ?? defaultSubmittingText}
-          </>
-        ) : (
-          submitButtonText ?? defaultSubmitText
-        )}
-      </Button>
+      {/* Submit: sticks above the tab bar on phones so it is always in reach.
+          The card around the form pads 16px (24px from sm), which the bar
+          bleeds back out of so it spans the card edge to edge. */}
+      <FormActions className="bg-card/95 supports-backdrop-filter:bg-card/80 sm:-mx-6 sm:px-6 md:mx-0 md:bg-transparent md:px-0">
+        <Button
+          type="submit"
+          className="md:min-w-40"
+          disabled={isSubmitting || Object.keys(errors).length > 0}
+        >
+          {isSubmitting ? (
+            <>
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {submittingText ?? defaultSubmittingText}
+            </>
+          ) : (
+            submitButtonText ?? defaultSubmitText
+          )}
+        </Button>
+      </FormActions>
     </form>
   );
 }

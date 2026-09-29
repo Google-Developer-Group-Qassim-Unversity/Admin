@@ -150,6 +150,9 @@ export function CreateMemberDialog({
             <Label htmlFor="name">{tf("name")} *</Label>
             <Input
               id="name"
+              autoComplete="off"
+              enterKeyHint="next"
+              dir="auto"
               value={name}
               onChange={(e) => {
                 setName(e.target.value);
@@ -165,6 +168,11 @@ export function CreateMemberDialog({
             <Input
               id="email"
               type="email"
+              inputMode="email"
+              autoComplete="off"
+              autoCapitalize="none"
+              spellCheck={false}
+              enterKeyHint="next"
               value={email}
               onChange={(e) => {
                 setEmail(e.target.value);
@@ -179,6 +187,10 @@ export function CreateMemberDialog({
             <Label htmlFor="phone">{t("phoneNumber")}</Label>
             <Input
               id="phone"
+              type="tel"
+              inputMode="tel"
+              autoComplete="off"
+              enterKeyHint="next"
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder={t("phonePlaceholder")}
@@ -189,6 +201,11 @@ export function CreateMemberDialog({
             <Label htmlFor="uniId">{t("universityId")}</Label>
             <Input
               id="uniId"
+              inputMode="numeric"
+              autoComplete="off"
+              maxLength={9}
+              enterKeyHint="next"
+              className="tabular"
               value={uniId}
               onChange={(e) => {
                 setUniId(e.target.value);

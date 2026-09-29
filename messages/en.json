@@ -204,6 +204,15 @@
     },
     "empty": {
       "noResults": "No results"
+    },
+    "pager": {
+      "label": "Pagination",
+      "page": "Page {current} of {total}",
+      "rows": "Rows",
+      "first": "First page",
+      "previous": "Previous",
+      "next": "Next",
+      "last": "Last page"
     }
   },
   "nav": {
@@ -224,7 +233,9 @@
       "people": "People",
       "engage": "Engage",
       "system": "System"
-    }
+    },
+    "more": "More",
+    "appearance": "Appearance"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -336,7 +347,8 @@
       "noImage": "No image",
       "starts": "Starts:",
       "attendance": "Attendance:",
-      "department": "Department:"
+      "department": "Department:",
+      "location": "Location"
     },
     "showingRange": "Showing {from}-{to} of {count, plural, one {# event} other {# events}}",
     "page": "Page {current} of {total}",
@@ -436,12 +448,16 @@
     "dropHint": "Drag & drop an image here, or click to browse",
     "sizeHint": "Max 5MB, images only",
     "uploadingShort": "Uploading...",
-    "dropReplaceHint": "Drop new image here or click to browse"
+    "dropReplaceHint": "Drop new image here or click to browse",
+    "remove": "Remove image"
   },
   "points": {
     "editPoints": "Edit Points",
     "viewEvent": "View Event",
-    "searchCustom": "Search custom events..."
+    "searchCustom": "Search custom events...",
+    "clearFilters": "Clear filters",
+    "noMatchCustom": "No custom events match your search.",
+    "noMatchFull": "No full events match your search."
   },
   "manageEmails": {
     "title": "Manage Emails",
@@ -548,7 +564,8 @@
       "jobsCount": "{count, plural, =0 {No jobs} one {# job} other {# jobs}}",
       "allStatuses": "All statuses",
       "loading": "Loading jobs...",
-      "noneFound": "No email jobs found."
+      "noneFound": "No email jobs found.",
+      "filterByStatus": "Filter by status"
     },
     "logsTab": {
       "logsCount": "{count, plural, =0 {No logs} one {# log} other {# logs}}",
@@ -582,7 +599,11 @@
       "limitHint": "Showing {shown} of {total}. Use search to find more.",
       "selected": "Selected:",
       "noMembersFound": "No members found",
-      "noMembersAvailable": "No members available"
+      "noMembersAvailable": "No members available",
+      "filters": "Filters",
+      "filtersTitle": "Filter email logs",
+      "filtersDescription": "Narrow the log to one type, event or member.",
+      "type": "Type"
     },
     "logRow": {
       "types": {
@@ -621,7 +642,12 @@
       "columnName": "Name",
       "columnEmail": "Email",
       "noMatches": "No matches.",
-      "emailNumber": "Email #{id}"
+      "emailNumber": "Email #{id}",
+      "showDetails": "Show details",
+      "hideDetails": "Hide details",
+      "changedSinceSent": "Changed since this was sent",
+      "sentByLabel": "Sent by:",
+      "fromLabel": "From:"
     },
     "directEmail": {
       "recipients": "Recipients",
@@ -885,7 +911,8 @@
       "certificatesSent": "Certificates Sent",
       "sendCertificates": "Send Certificates ({count})",
       "sendCustomEmail": "Send Custom Email",
-      "allReceived": "All attendees have received certificates."
+      "allReceived": "All attendees have received certificates.",
+      "viewLabel": "Certificate emails"
     },
     "qrCode": {
       "modeQr": "QR Code",
@@ -940,7 +967,8 @@
       "generateFailedGeneric": "Failed to generate token",
       "unknownError": "Unknown error",
       "linkCopied": "Link copied to clipboard",
-      "copyFailed": "Failed to copy link"
+      "copyFailed": "Failed to copy link",
+      "modeLabel": "Attendance mode"
     },
     "manageDialog": {
       "loadMembersFailed": "Could not load members: {error}",
@@ -1066,7 +1094,7 @@
   "eventInfo": {
     "noImage": "No event image",
     "official": "Official Event",
-    "unofficial": "Unoffical Event",
+    "unofficial": "Unofficial Event",
     "daysCount": "({count, plural, one {# Day} other {# Days}})",
     "daily": "(daily)",
     "onlineEvent": "Online Event",
@@ -1075,7 +1103,11 @@
     "attendance": "Attendance",
     "attendeesCount": "{count, plural, one {# attendee} other {# attendees}}",
     "description": "Description",
-    "noDescription": "No description provided for this event."
+    "noDescription": "No description provided for this event.",
+    "date": "Date",
+    "time": "Time",
+    "eventType": "Event type",
+    "details": "Details"
   },
   "eventLayout": {
     "backToPoints": "Back to Points",
@@ -1119,7 +1151,8 @@
       "custom": "Custom Events",
       "full": "Full Events",
       "manage": "Manage Points"
-    }
+    },
+    "sectionsLabel": "Points sections"
   },
   "pointsList": {
     "loadingEvents": "Loading events...",
@@ -1217,7 +1250,18 @@
     "notUsedYet": "This action has not been used yet. It can be safely deleted.",
     "deleting": "Deleting...",
     "deleteAndReassign": "{count, plural, one {Delete & Reassign # Log} other {Delete & Reassign # Logs}}",
-    "delete": "Delete"
+    "delete": "Delete",
+    "usedCount": "{count, plural, =0 {Not used yet} one {Used once} other {Used # times}}",
+    "moreActions": "More actions for {name}",
+    "sortLabel": "Sort",
+    "actionsCountShort": "{count, plural, one {# action} other {# actions}}",
+    "sort": {
+      "order-asc": "Custom order",
+      "points-desc": "Most points",
+      "points-asc": "Fewest points",
+      "used-desc": "Most used",
+      "used-asc": "Least used"
+    }
   },
   "createMember": {
     "nameRequired": "Name is required",
@@ -1284,7 +1328,15 @@
     "showingRange": "Showing {from}-{to} of {count, plural, one {# member} other {# members}}",
     "rows": "Rows:",
     "page": "Page {current} of {total}",
-    "columnsMenu": "Columns"
+    "columnsMenu": "Columns",
+    "rowActions": "Actions for {name}",
+    "emailMember": "Send email",
+    "sort": {
+      "label": "Sort members",
+      "default": "Default order",
+      "name": "Name (A–Z)",
+      "recent": "Recent activity"
+    }
   },
   "revokeAdmin": {
     "title": "Revoke {role} Access",
@@ -1454,7 +1506,14 @@
       "accepted": "Accepted:",
       "emailed": "Emailed:",
       "notEmailed": "Not Emailed:",
-      "pending": "Pending:"
+      "pending": "Pending:",
+      "tiles": {
+        "total": "Total",
+        "accepted": "Accepted",
+        "emailed": "Emailed",
+        "notEmailed": "Not emailed",
+        "pending": "Pending"
+      }
     },
     "selectedCount": "{count, plural, one {# selected} other {# selected}}",
     "processing": "Processing...",
@@ -1491,7 +1550,10 @@
       "sendTestCount": "{count, plural, one {Send Test (# email)} other {Send Test (# emails)}}",
       "noRecipientsButton": "No Recipients",
       "sendToCount": "{count, plural, one {Send to # recipient} other {Send to # recipients}}"
-    }
+    },
+    "answers": "Answers",
+    "clearSelection": "Clear selection",
+    "selectPage": "Select all on this page"
   },
   "responsesTable": {
     "selectAll": "Select all",
@@ -1587,7 +1649,8 @@
     "rowMemberRequired": "Row {number}: Member is required",
     "rowActionRequired": "Row {number}: Action is required",
     "createCustomEvent": "Create Custom Event",
-    "saveChanges": "Save Changes"
+    "saveChanges": "Save Changes",
+    "rowCount": "{count, plural, one {# row} other {# rows}}"
   },
   "formsCopyItem": {
     "attachedSuccess": "Access granted.",
@@ -1608,7 +1671,8 @@
     "requestingAccess": "Requesting access...",
     "createForm": "Create Form & Grant Access",
     "creatingForm": "Creating form...",
-    "disabledTooltip": "Registration is disabled. Enable registration to manage Google Forms."
+    "disabledTooltip": "Registration is disabled. Enable registration to manage Google Forms.",
+    "moreActions": "More form actions"
   },
   "removeGoogleForm": {
     "title": "Remove this form",
@@ -1646,7 +1710,10 @@
     "downloadQrCode": "Download QR Image",
     "qrCopied": "QR code copied to clipboard.",
     "qrCopyFailed": "Failed to copy QR code. Please try again.",
-    "qrDownloadFailed": "Failed to download QR code. Please try again."
+    "qrDownloadFailed": "Failed to download QR code. Please try again.",
+    "eventLink": "Public event link",
+    "copyLink": "Copy event link",
+    "showQr": "Show QR code"
   },
   "memberSelectDialog": {
     "loading": "Loading members…",
@@ -1677,7 +1744,8 @@
     "action": "Action",
     "reason": "Reason",
     "optional": "(optional)",
-    "delete": "Del"
+    "delete": "Del",
+    "removeRow": "Remove row"
   },
   "actionReasonSelect": {
     "selectAction": "Select action...",
@@ -1719,7 +1787,10 @@
     "ariaLabel": "Meeting link",
     "save": "Save",
     "openLink": "Open meeting link",
-    "removeLink": "Remove meeting link"
+    "removeLink": "Remove meeting link",
+    "copyLink": "Copy meeting link",
+    "copied": "Meeting link copied",
+    "copyFailed": "Failed to copy link. Please try again."
   },
   "palette": {
     "title": "Command palette",

@@ -2,18 +2,38 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
-import { MapPin, Globe, Calendar, Clock, Info, Trophy, Users, UserCheck } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, type LucideIcon } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+
+/** One labelled fact in the summary list: icon chip, muted label, value. */
+function Fact({
+  icon: Icon,
+  label,
+  children,
+}: {
+  icon: LucideIcon;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
+      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
+        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <dt className="text-muted-foreground text-[13px] leading-5">{label}</dt>
+        <dd className="text-foreground text-[15px] leading-6 font-medium break-words">{children}</dd>
+      </div>
+    </div>
+  );
+}
 
 export default function EventInfoPage() {
   const t = useTranslations("eventInfo");
-  const te = useTranslations("events");
+  const locale = useLocale();
   const { event } = useEventContext();
 
   const { data: attendanceData } = useEventAttendance(
@@ -30,10 +50,12 @@ export default function EventInfoPage() {
   const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
+  // Gregorian calendar with Latin digits in Arabic, matching the event cards.
+  const dateLocale = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-US";
 
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(dateLocale, {
       weekday: "long",
       year: "numeric",
       month: "long",
@@ -43,7 +65,7 @@ export default function EventInfoPage() {
 
   const formatTime = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
-    return date.toLocaleTimeString("en-US", {
+    return date.toLocaleTimeString(dateLocale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -61,21 +83,7 @@ export default function EventInfoPage() {
   const diffDays = getEventDayCount(start, end);
   const effectiveEnd = getEffectiveEndDate(start, end);
   const endDate = formatDate(effectiveEnd.toISOString());
-
-  const getStatusVariant = (status: typeof event.status) => {
-    switch (status) {
-      case "open":
-        return "default";
-      case "open":
-        return "secondary";
-      case "active":
-        return "default";
-      case "closed":
-        return "outline";
-      default:
-        return "secondary";
-    }
-  };
+  const singleDay = isSameDay || overnight;
 
   const getLocationTypeLabel = () => {
     switch (event.location_type) {
@@ -90,130 +98,91 @@ export default function EventInfoPage() {
     }
   };
 
+  const showAttendance = event.status === "active" || event.status === "closed";
+
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-8 items-start">
-      <div className="flex justify-center lg:justify-start">
-        {imageUrl ? (
+    // Phone: poster, facts, description stacked. lg+: poster beside the rest.
+    <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8">
+      {imageUrl ? (
+        <div className="border-border bg-muted/40 flex justify-center overflow-hidden rounded-2xl border">
           <Image
             src={imageUrl}
             alt={event.name}
             width={600}
-            height={200}
-            className="rounded-xl max-w-full lg:max-w-md xl:max-w-lg h-auto max-h-150 object-contain"
+            height={600}
+            sizes="(min-width: 1024px) 40vw, 100vw"
+            className="h-auto max-h-[60dvh] w-full object-contain lg:max-h-150"
           />
-        ) : (
-          <div className="flex items-center justify-center w-64 h-64 bg-muted rounded-xl text-muted-foreground">
-            <div className="text-center">
-              <Calendar className="h-16 w-16 mx-auto mb-2 opacity-50" />
-              <span className="text-sm">{t("noImage")}</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      <div className="space-y-6 min-w-0">
-        <h1 className="text-3xl md:text-4xl lg:text-5xl font-bold">
-          {event.name}
-        </h1>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge
-            variant={getStatusVariant(event.status)}
-            className="text-sm px-3 py-1"
-          >
-            {te(`status.${event.status}`)}
-          </Badge>
-          {event.is_official ? (
-            <Badge variant="secondary" className="text-sm px-3 py-1">
-              <Trophy className="h-3.5 w-3.5 me-1" />
-              {t("official")}
-            </Badge>
-          ) : (
-            <Badge variant="outline" className="text-sm px-3 py-1">
-              <Users className="h-3.5 w-3.5 me-1" />
-              {t("unofficial")}
-            </Badge>
-          )}
         </div>
+      ) : (
+        <div className="border-border bg-muted/40 text-muted-foreground flex items-center justify-center gap-2 rounded-2xl border border-dashed py-6 lg:aspect-square lg:flex-col lg:py-0">
+          <ImageIcon className="h-5 w-5 opacity-60 lg:h-12 lg:w-12" aria-hidden="true" />
+          <span className="text-sm">{t("noImage")}</span>
+        </div>
+      )}
 
-        <div className="space-y-3">
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Calendar className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              {isSameDay || overnight ? (
-                <span className="font-medium text-foreground">
-                  {startDate}
-                </span>
+      <div className="min-w-0 space-y-4 sm:space-y-6">
+        <section className="bg-card border-border overflow-hidden rounded-xl border">
+          <h2 className="sr-only">{t("details")}</h2>
+          <dl className="divide-border divide-y">
+            <Fact icon={Calendar} label={t("date")}>
+              {singleDay ? (
+                startDate
               ) : (
                 <>
-                  <span className="font-medium text-foreground">
-                    {startDate}
-                  </span>
-                  <span className="mx-2">—</span>
-                  <span className="font-medium text-foreground">
+                  <span className="block">{startDate}</span>
+                  <span className="block">
+                    <ArrowRight className="text-muted-foreground me-1.5 inline h-4 w-4 align-[-2px] rtl:-scale-x-100" aria-hidden="true" />
                     {endDate}
                   </span>
                   {diffDays > 1 && (
-                    <span className="ms-2 text-sm text-muted-foreground font-normal">
+                    <span className="text-muted-foreground block text-[13px] font-normal">
                       {t("daysCount", { count: diffDays })}
                     </span>
                   )}
                 </>
               )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <Clock className="h-5 w-5 text-primary shrink-0" />
-            <span className="font-medium text-foreground">
-              {dailyStartTime} - {dailyEndTime}
-            </span>
-            {!isSameDay && !overnight && (
-              <span className="text-sm text-muted-foreground">{t("daily")}</span>
+            </Fact>
+
+            <Fact icon={Clock} label={t("time")}>
+              <span className="tabular" dir="ltr">{dailyStartTime} – {dailyEndTime}</span>
+              {!singleDay && (
+                <span className="text-muted-foreground ms-2 text-[13px] font-normal">{t("daily")}</span>
+              )}
+            </Fact>
+
+            {event.location_type !== "none" && (
+              <Fact icon={LocationIcon} label={getLocationTypeLabel()}>
+                <span dir="auto">{event.location}</span>
+              </Fact>
             )}
-          </div>
-        </div>
 
-        {event.location_type !== "none" && (
-          <div className="flex items-start gap-2 text-muted-foreground">
-            <LocationIcon className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <div>
-              <span className="text-sm">{getLocationTypeLabel()}</span>
-              <p className="font-medium text-foreground">{event.location}</p>
-            </div>
-          </div>
-        )}
-
-        {(event.status === "active" || event.status === "closed") && (
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <UserCheck className="h-5 w-5 text-primary shrink-0" />
-            <div>
-              <span className="text-sm">{t("attendance")}</span>
-              <p className="font-medium text-foreground">
-                {t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}
-              </p>
-            </div>
-          </div>
-        )}
-
-        <Separator />
-
-        <Card>
-          <CardHeader className="flex flex-row items-center gap-2 py-4">
-            <Info className="h-4 w-4 text-muted-foreground" />
-            <CardTitle className="text-xl font-semibold">{t("description")}</CardTitle>
-          </CardHeader>
-          <CardContent className="pb-6">
-            {event.description ? (
-              <p dir="auto" className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                {event.description}
-              </p>
-            ) : (
-              <p className="text-muted-foreground italic">
-                {t("noDescription")}
-              </p>
+            {showAttendance && (
+              <Fact icon={UserCheck} label={t("attendance")}>
+                <span className="tabular">
+                  {t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}
+                </span>
+              </Fact>
             )}
-          </CardContent>
-        </Card>
+
+            <Fact icon={event.is_official ? Trophy : Users} label={t("eventType")}>
+              {event.is_official ? t("official") : t("unofficial")}
+            </Fact>
+          </dl>
+        </section>
+
+        <section className="bg-card border-border rounded-xl border px-4 py-4 sm:px-5 sm:py-5">
+          <h2 className="font-display mb-2 text-base font-semibold tracking-tight">{t("description")}</h2>
+          {event.description ? (
+            <p dir="auto" className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+              {event.description}
+            </p>
+          ) : (
+            <p className="text-muted-foreground text-sm italic">
+              {t("noDescription")}
+            </p>
+          )}
+        </section>
       </div>
     </div>
   );

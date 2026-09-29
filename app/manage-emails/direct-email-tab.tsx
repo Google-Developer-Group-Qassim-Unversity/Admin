@@ -19,7 +19,6 @@ import {
   FileUploadList,
 } from "@/components/ui/file-upload";
 
-import { cn } from "@/lib/utils";
 import type { DirectEmailResponse, EmailProvider } from "@/lib/api-types";
 import { useSendDirectEmail } from "@/hooks/use-direct-email";
 import { useEmailComposer } from "@/hooks/use-email-composer";
@@ -31,6 +30,8 @@ import {
 } from "@/hooks/use-attachment-uploads";
 import { useRecipientList } from "@/hooks/use-recipient-list";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
+import { FormActions } from "@/components/form-actions";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
 import { DEFAULT_BODY, DEFAULT_STYLES, formatSize } from "./email-composer-utils";
@@ -38,6 +39,7 @@ import { useTranslations } from "next-intl";
 
 export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const t = useTranslations("manageEmails.directEmail");
+  const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
 
   const [subject, setSubject] = React.useState("");
@@ -93,27 +95,35 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          <div className="flex gap-2">
+          {/* Phone: name on its own row, email + add beneath it. sm+: one row. */}
+          <div className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_1fr_auto]">
             <Input
               placeholder={t("namePlaceholder")}
+              aria-label={t("namePlaceholder")}
+              autoComplete="off"
+              enterKeyHint="next"
               value={recipientList.manualName}
               onChange={(e) => recipientList.setManualName(e.target.value)}
               disabled={isBusy}
-              className="h-9"
+              className="col-span-2 sm:col-span-1"
             />
             <Input
               type="email"
+              inputMode="email"
+              autoComplete="off"
+              enterKeyHint="done"
               placeholder={t("emailPlaceholder")}
+              aria-label={t("emailPlaceholder")}
               value={recipientList.manualEmail}
               onChange={(e) => recipientList.setManualEmail(e.target.value)}
               disabled={isBusy}
-              className="h-9"
             />
             <Button
               type="button"
               variant="outline"
               size="icon"
-              className="h-9 w-9 shrink-0"
+              aria-label={tc("add")}
+              className="shrink-0"
               onClick={recipientList.addManual}
               disabled={isBusy || !recipientList.manualEmail.trim()}
             >
@@ -124,25 +134,26 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             type="button"
             variant="outline"
             size="sm"
-            className="h-8 text-xs gap-1.5"
+            className="w-full gap-1.5 sm:w-auto"
             onClick={() => setMemberDialogOpen(true)}
             disabled={isBusy}
           >
             <UserPlus className="h-3.5 w-3.5" /> {t("pickMembers")}
           </Button>
           {recipientList.recipients.length > 0 && (
-            <div className="max-h-40 overflow-y-auto rounded-lg border divide-y">
+            <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg border divide-y sm:max-h-40">
               {recipientList.recipients.map((r) => (
                 <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                   <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium truncate">{r.name}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{r.email}</p>
+                    <p dir="auto" className="text-sm font-medium truncate sm:text-xs">{r.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{r.email}</p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 hover:text-destructive"
+                    size="icon-sm"
+                    aria-label={tc("remove")}
+                    className="hover:text-destructive sm:size-6"
                     onClick={() => recipientList.remove(r.email)}
                     disabled={isBusy}
                   >
@@ -165,40 +176,21 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-shrink-0">
-              <div className="mb-2 flex items-center justify-between">
+            <div className="min-w-0 lg:flex-shrink-0">
+              <div className="mb-2 flex items-center justify-between gap-2">
                 <Label>{t("emailContent")}</Label>
-                <div className="inline-flex rounded-md border p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => composer.handleViewModeChange("rendered")}
-                    className={cn(
-                      "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      composer.viewMode === "rendered"
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {t("rendered")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => composer.handleViewModeChange("raw")}
-                    className={cn(
-                      "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      composer.viewMode === "raw"
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {t("rawHtml")}
-                  </button>
-                </div>
+                <SegmentedControl
+                  label={t("emailContent")}
+                  value={composer.viewMode}
+                  onValueChange={(v) => composer.handleViewModeChange(v as "rendered" | "raw")}
+                  options={[
+                    { value: "rendered", label: t("rendered") },
+                    { value: "raw", label: t("rawHtml") },
+                  ]}
+                  className="w-auto shrink-0 p-0.5 [&>button]:min-h-8 [&>button]:px-2.5 [&>button]:text-xs [&>button]:whitespace-nowrap pointer-coarse:[&>button]:min-h-9"
+                />
               </div>
-              <div
-                className="border rounded-md overflow-auto"
-                style={{ width: "375px", height: "500px", minWidth: "280px", maxWidth: "100%", resize: "horizontal" }}
-              >
+              <div className="border rounded-md overflow-auto h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[500px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
                 {composer.viewMode === "raw" ? (
                   <textarea
                     value={composer.rawHtml}
@@ -223,6 +215,8 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <Label htmlFor="direct-subject">{t("subject")}</Label>
                 <Input
                   id="direct-subject"
+                  dir="auto"
+                  enterKeyHint="done"
                   placeholder={t("subjectPlaceholder")}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -272,7 +266,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                       type="button"
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8"
+                      aria-label={tc("remove")}
                       onClick={() => attachments.handleRemoveFile(entry.file)}
                     >
                       <X className="h-4 w-4" />
@@ -293,12 +287,12 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
-        <Button type="button" onClick={handleSend} disabled={isSendDisabled} className="h-9 gap-2 shadow-sm">
+      <FormActions>
+        <Button type="button" onClick={handleSend} disabled={isSendDisabled} className="gap-2 shadow-sm">
           {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
           {t("send", { count: recipientList.recipients.length })}
         </Button>
-      </div>
+      </FormActions>
 
       {sentResult && (
         <EmailJobStatusCard

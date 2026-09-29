@@ -1,11 +1,14 @@
 "use client";
 
+import * as React from "react";
 import { AlertTriangle, CheckCircle2, Loader2, Mail, XCircle } from "lucide-react";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useEmailJob } from "@/hooks/use-email-jobs";
 import { useTranslations } from "next-intl";
+
+import { URGENCY_STYLES, type Urgency } from "@/components/status-badge";
 
 interface EmailJobStatusCardProps {
   jobId: number | null | undefined;
@@ -33,89 +36,97 @@ export function EmailJobStatusCard({
   const total = job?.total ?? totalHint;
   const noun = (n: number) => t(`nouns.${itemKey}`, { count: n });
 
+  const viewLogs = onGoToLogs ? (
+    <Button type="button" variant="outline" size="sm" className="gap-1.5" onClick={onGoToLogs}>
+      <Mail className="h-3.5 w-3.5" />
+      {t("viewLogs")}
+    </Button>
+  ) : null;
+
   if (!jobId || !job || job.status === "queued" || job.status === "running") {
     return (
-      <Card className="bg-sky-500/5 border-sky-500/20">
-        <CardHeader className="p-4">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-sky-700 dark:text-sky-400">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            {job?.status === "running"
-              ? t("sending", { done: job.succeeded + job.failed, total, noun: noun(total) })
-              : t("started", { total, noun: noun(total) })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
-          <p className="text-xs text-muted-foreground mb-3">
-            {description ?? t("sendingDescription")}
-          </p>
-          {onGoToLogs && (
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
-              <Mail className="h-3.5 w-3.5" />
-              {t("viewLogs")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <StatusShell
+        tone="info"
+        icon={<Loader2 className="h-4 w-4 animate-spin" />}
+        title={
+          job?.status === "running"
+            ? t("sending", { done: job.succeeded + job.failed, total, noun: noun(total) })
+            : t("started", { total, noun: noun(total) })
+        }
+      >
+        <p className="text-[13px] text-muted-foreground sm:text-xs">{description ?? t("sendingDescription")}</p>
+        {viewLogs}
+      </StatusShell>
     );
   }
 
   if (job.status === "succeeded") {
     return (
-      <Card className="bg-emerald-500/5 border-emerald-500/20">
-        <CardHeader className="p-4">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-emerald-700 dark:text-emerald-400">
-            <CheckCircle2 className="h-4 w-4" />
-            {t("allSent", { count: job.succeeded, noun: noun(job.succeeded) })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
-          {onGoToLogs && (
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
-              <Mail className="h-3.5 w-3.5" />
-              {t("viewLogs")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <StatusShell
+        tone="done"
+        icon={<CheckCircle2 className="h-4 w-4" />}
+        title={t("allSent", { count: job.succeeded, noun: noun(job.succeeded) })}
+      >
+        {viewLogs}
+      </StatusShell>
     );
   }
 
   if (job.status === "partial") {
     return (
-      <Card className="bg-amber-500/5 border-amber-500/20">
-        <CardHeader className="p-4">
-          <CardTitle className="text-sm font-bold flex items-center gap-2 text-amber-700 dark:text-amber-400">
-            <AlertTriangle className="h-4 w-4" />
-            {t("partialTitle", { succeeded: job.succeeded, failed: job.failed })}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="px-4 pb-4 pt-0">
-          <p className="text-xs text-muted-foreground mb-3">
-            {t("partialHint", { noun: noun(1) })}
-          </p>
-          {onGoToLogs && (
-            <Button type="button" variant="outline" size="sm" className="h-7 text-xs gap-1.5" onClick={onGoToLogs}>
-              <Mail className="h-3.5 w-3.5" />
-              {t("viewLogs")}
-            </Button>
-          )}
-        </CardContent>
-      </Card>
+      <StatusShell
+        tone="waiting"
+        icon={<AlertTriangle className="h-4 w-4" />}
+        title={t("partialTitle", { succeeded: job.succeeded, failed: job.failed })}
+      >
+        <p className="text-[13px] text-muted-foreground sm:text-xs">{t("partialHint", { noun: noun(1) })}</p>
+        {viewLogs}
+      </StatusShell>
     );
   }
 
   return (
-    <Card className="bg-destructive/5 border-destructive/20">
-      <CardHeader className="p-4">
-        <CardTitle className="text-sm font-bold flex items-center gap-2 text-destructive">
-          <XCircle className="h-4 w-4" />
-          {t("sendFailed")}
+    <StatusShell tone="overdue" icon={<XCircle className="h-4 w-4" />} title={t("sendFailed")}>
+      {job.error && <p className="text-[13px] text-muted-foreground break-words sm:text-xs">{job.error}</p>}
+    </StatusShell>
+  );
+}
+
+// Colour = state: in flight is info (blue), done is green, a partial send
+// waits on an admin to check who was missed (yellow), failed is red.
+const TONE: Record<Urgency, { card: string; title: string }> = {
+  info: { card: "ring-brand-blue/30", title: "text-brand-blue-ink" },
+  done: { card: "ring-brand-green/30", title: "text-brand-green-ink" },
+  waiting: { card: "ring-brand-yellow/50", title: "text-brand-yellow-ink" },
+  overdue: { card: "ring-brand-red/30", title: "text-brand-red-ink" },
+};
+
+function StatusShell({
+  tone,
+  icon,
+  title,
+  children,
+}: {
+  tone: Urgency;
+  icon: React.ReactNode;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  const hasBody = React.Children.toArray(children).some(Boolean);
+  return (
+    <Card className={`gap-0 py-0 sm:gap-0 sm:py-0 ${TONE[tone].card}`}>
+      <CardHeader className="p-4 sm:p-4">
+        <CardTitle className="flex items-start gap-2.5 text-sm font-semibold">
+          <span
+            className={`flex size-7 shrink-0 items-center justify-center rounded-full ${URGENCY_STYLES[tone].pill}`}
+          >
+            {icon}
+          </span>
+          <span className={`min-w-0 self-center ${TONE[tone].title}`}>{title}</span>
         </CardTitle>
       </CardHeader>
-      {job.error && (
-        <CardContent className="px-4 pb-4 pt-0">
-          <p className="text-xs text-muted-foreground">{job.error}</p>
-        </CardContent>
+      {hasBody && (
+        <CardContent className="flex flex-col items-start gap-3 px-4 pt-0 pb-4 sm:px-4 sm:ps-[3.375rem]">{children}</CardContent>
       )}
     </Card>
   );

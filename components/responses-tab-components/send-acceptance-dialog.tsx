@@ -316,7 +316,7 @@ return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
         key={dialogKey}
-        className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col"
+        className="flex flex-col sm:max-w-5xl lg:max-h-[90vh] lg:overflow-hidden"
       >
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
@@ -331,8 +331,8 @@ return (
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-6 flex-1 min-h-0">
-          <div className="flex-shrink-0">
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
+          <div className="w-full shrink-0 lg:w-auto">
             <div className="space-y-2">
               <Label>{td("emailContent")}</Label>
               {templateError ? (
@@ -356,17 +356,13 @@ return (
                     <body contenteditable="true" style="background-color:#f1f5f9;margin:0">${templateBody}</body>
                     </html>`
                   }
-                  className="border rounded-md"
-                  style={{
-                    width: "375px",
-                    height: "667px",
-                  }}
+                  className="h-[28rem] w-full rounded-md border lg:h-[667px] lg:w-[375px]"
                 />
               )}
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
+          <div className="flex flex-1 flex-col space-y-4 lg:overflow-y-auto">
             <div className="space-y-2">
               <Label htmlFor="subject">{td("subject")}</Label>
               <Input
@@ -381,7 +377,7 @@ return (
             <div className="space-y-2">
               <Label htmlFor="whatsappUrl">{t("whatsappLabel")}</Label>
               <div className="relative">
-                <div className="absolute start-3 top-1/2 -translate-y-1/2 text-green-600">
+                <div className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-green-ink">
                   <WhatsAppIcon className="h-5 w-5" />
                 </div>
                 <Input
@@ -423,7 +419,7 @@ return (
                       {recipients.map((recipient, index) => (
                         <tr key={index} className="border-t">
                           <td className="py-2 px-3">{recipient.name}</td>
-                          <td className="py-2 px-3 text-muted-foreground">
+                          <td className="py-2 px-3 text-muted-foreground break-all">
                             {recipient.email}
                           </td>
                         </tr>
@@ -490,7 +486,7 @@ return (
               </Collapsible>
             )}
 
-            <div className="flex justify-end gap-2 mt-auto pt-4 border-t">
+            <div className="mt-auto flex flex-col-reverse gap-2 border-t pt-4 *:max-sm:w-full sm:flex-row sm:justify-end">
               <Button
                 variant="outline"
                 onClick={() => handleOpenChange(false)}

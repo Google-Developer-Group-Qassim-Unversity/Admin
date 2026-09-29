@@ -60,19 +60,19 @@ export function DaySelectDialog({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-3 py-2">
-          <label className="flex items-center gap-3">
+          <label className="flex min-h-10 items-center gap-3">
             <input
               type="radio"
               checked={mode === "single"}
               onChange={() => setMode("single")}
-              className="h-4 w-4"
+              className="h-5 w-5 shrink-0 accent-primary sm:h-4 sm:w-4"
             />
             <Select
               value={selectedDay}
               onValueChange={setSelectedDay}
               disabled={mode !== "single"}
             >
-              <SelectTrigger className="w-[140px]">
+              <SelectTrigger className="flex-1 sm:w-[140px] sm:flex-none">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -84,12 +84,12 @@ export function DaySelectDialog({
               </SelectContent>
             </Select>
           </label>
-          <label className="flex items-center gap-2">
+          <label className="flex min-h-10 items-center gap-3">
             <input
               type="radio"
               checked={mode === "all"}
               onChange={() => setMode("all")}
-              className="h-4 w-4"
+              className="h-5 w-5 shrink-0 accent-primary sm:h-4 sm:w-4"
             />
             <span className="text-sm">{t("allDays", { count: dayCount })}</span>
           </label>

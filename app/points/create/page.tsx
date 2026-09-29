@@ -2,19 +2,10 @@
 
 import * as React from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { ArrowLeft, Trophy } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PointsEditorShell } from "@/components/points-editor-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CustomEventForm,
@@ -36,7 +27,6 @@ import { useTranslations } from "next-intl";
 
 export default function CreateCustomEventPage() {
   const t = useTranslations("createCustomEvent");
-  const tl = useTranslations("eventLayout");
   const router = useRouter();
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
@@ -187,58 +177,35 @@ export default function CreateCustomEventPage() {
   };
 
   return (
-    <div className="flex justify-center">
-      <Card className="w-full max-w-4xl">
-        <CardHeader>
-          <div className="mb-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/points" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-                {tl("backToPoints")}
-              </Link>
-            </Button>
+    <PointsEditorShell title={t("title")} description={t("description")}>
+      {isLoadingData ? (
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
           </div>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-            {t("title")}
-          </CardTitle>
-          <CardDescription>
-            {t("description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {isLoadingData ? (
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-10 w-full" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </div>
-              <Skeleton className="h-px w-full" />
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            </div>
-          ) : (
-            <CustomEventForm
-              mode="create"
-              departmentOptions={departmentOptions}
-              memberOptions={memberOptions}
-              actionOptions={actionOptions}
-              onSubmit={handleSubmit}
-              isSubmitting={isSubmitting}
-              useSimpleInput={true}
-              onMemberCreated={handleMemberCreated}
-            />
-          )}
-        </CardContent>
-      </Card>
-    </div>
+          <Skeleton className="h-px w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      ) : (
+        <CustomEventForm
+          mode="create"
+          departmentOptions={departmentOptions}
+          memberOptions={memberOptions}
+          actionOptions={actionOptions}
+          onSubmit={handleSubmit}
+          isSubmitting={isSubmitting}
+          useSimpleInput={true}
+          onMemberCreated={handleMemberCreated}
+        />
+      )}
+    </PointsEditorShell>
   );
 }

@@ -7,20 +7,16 @@ import {
   AlertCircle,
   Calendar,
   CalendarDays,
-  Search,
-  ChevronLeft,
-  ChevronRight,
-  ChevronsLeft,
-  ChevronsRight,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { EventCard } from "@/components/event-card";
+import { FilterBar } from "@/components/filter-bar";
+import { ListPager } from "@/components/list-pager";
 import { PageHeader } from "@/components/page-header";
 import { useEventsPaginated } from "@/hooks/use-event";
 import { useSemesterOptions } from "@/hooks/use-semesters";
@@ -75,7 +71,7 @@ export function EventsContent() {
   const hasFilters = debouncedSearch.length > 0 || semester !== "all" || status !== "all";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={CalendarDays}>
         <Button asChild>
           <Link href="/events/create" className="flex items-center gap-2">
@@ -85,20 +81,14 @@ export function EventsContent() {
         </Button>
       </PageHeader>
 
-      {/* Filter bar: search + semester + status */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative w-64">
-          <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("searchName")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="ps-8"
-          />
-        </div>
-
+      <FilterBar
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t("searchName")}
+        trailing={<span className="tabular">{t("showingRange", { from, to, count: total })}</span>}
+      >
         <Select value={semester} onValueChange={setSemester}>
-          <SelectTrigger className="w-[180px]" size="sm">
+          <SelectTrigger className="bg-card sm:w-[180px]">
             <SelectValue placeholder={t("filters.semester")} />
           </SelectTrigger>
           <SelectContent>
@@ -112,7 +102,7 @@ export function EventsContent() {
         </Select>
 
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-[150px]" size="sm">
+          <SelectTrigger className="bg-card sm:w-[150px]">
             <SelectValue placeholder={t("statusFilter")} />
           </SelectTrigger>
           <SelectContent>
@@ -124,11 +114,7 @@ export function EventsContent() {
             ))}
           </SelectContent>
         </Select>
-
-        <div className="flex-1" />
-
-        <div className="text-sm text-muted-foreground">{t("showingRange", { from, to, count: total })}</div>
-      </div>
+      </FilterBar>
 
       {/* Body */}
       {isError ? (
@@ -145,9 +131,9 @@ export function EventsContent() {
           </Alert>
         </div>
       ) : isPending ? (
-        <div className="grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))]">
+        <div className="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-40 w-full rounded-lg" />
+            <Skeleton key={i} className="h-[112px] w-full rounded-2xl sm:h-[420px]" />
           ))}
         </div>
       ) : events.length === 0 ? (
@@ -170,7 +156,7 @@ export function EventsContent() {
         </div>
       ) : (
         <div
-          className={`grid gap-3 grid-cols-[repeat(auto-fill,minmax(360px,1fr))] transition-opacity ${
+          className={`grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))] transition-opacity ${
             isPlaceholderData ? "opacity-60" : ""
           }`}
         >
@@ -180,48 +166,15 @@ export function EventsContent() {
         </div>
       )}
 
-      {/* Pagination controls */}
       {!isError && total > 0 && (
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2">
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">{t("rows")}</span>
-            <Select value={String(pageSize)} onValueChange={(v) => setPageSize(Number(v))}>
-              <SelectTrigger className="w-[80px]" size="sm">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent align="start">
-                {PAGE_SIZE_OPTIONS.map((option) => (
-                  <SelectItem key={option} value={option}>
-                    {option}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="icon-sm" onClick={() => setPage(1)} disabled={page <= 1}>
-              <ChevronsLeft className="h-4 w-4" />
-            </Button>
-            <Button variant="outline" size="icon-sm" onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page <= 1}>
-              <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
-            </Button>
-            <span className="px-3 text-sm">
-              {t("page", { current: page, total: Math.max(pageCount, 1) })}
-            </span>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              onClick={() => setPage((p) => Math.min(pageCount, p + 1))}
-              disabled={page >= pageCount}
-            >
-              <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-            </Button>
-            <Button variant="outline" size="icon-sm" onClick={() => setPage(pageCount)} disabled={page >= pageCount}>
-              <ChevronsRight className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
+        <ListPager
+          page={page}
+          pageCount={pageCount}
+          onPageChange={setPage}
+          pageSize={pageSize}
+          pageSizeOptions={PAGE_SIZE_OPTIONS}
+          onPageSizeChange={setPageSize}
+        />
       )}
     </div>
   );

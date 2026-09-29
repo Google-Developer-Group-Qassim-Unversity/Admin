@@ -40,7 +40,7 @@ export function ConfirmDialog({ dialog, onOpenChange, isSubmitting }: ConfirmDia
             {dialog.items.slice(0, 10).map((item, i) => (
               <div key={i} className="text-muted-foreground flex items-center gap-2">
                 <span className="text-xs">•</span>
-                <span>{item}</span>
+                <span dir="auto">{item}</span>
               </div>
             ))}
             {dialog.items.length > 10 && (

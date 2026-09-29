@@ -113,7 +113,8 @@ From `components/dashboard/`:
 
 Layout:
 
-- **`AppShell`** wraps everything (sidebar + topbar + ⌘K palette). New routes get
+- **`AppShell`** wraps everything (sidebar + topbar + ⌘K palette on desktop;
+  top bar + bottom tab bar on phones - see §6). New routes get
   it automatically. A new nav entry goes in `NAV_GROUPS` (`app-shell.tsx`) under
   the right group (Operate / People / Engage / System) with a Lucide icon; add
   the matching label to `messages/{en,ar}.json` under `nav`. Full-bleed routes
@@ -149,7 +150,54 @@ Icons are **Lucide** (`lucide-react`), ~`h-4 w-4` inline. Don't mix icon sets.
 
 ---
 
-## 6. Non-negotiables
+## 6. Phones
+
+Admins run events from a phone - checking people in at the door, flipping an
+event open, glancing at responses. Every page has to work at 360px wide with a
+thumb. Build phone-first and let `sm:`/`md:` restore the denser desktop layout.
+
+**The shell already handles:**
+
+- **Bottom tab bar** (below `md`): the first four destinations the admin's role
+  can open, plus **More** - a bottom sheet with the rest of the nav and the
+  theme/language switches. `main` pads itself so content clears it.
+  Anything you pin to the bottom of the screen on a phone goes *above* it:
+  `bottom-[calc(4rem+env(safe-area-inset-bottom))]`. Sticky things under the
+  top bar use `top-[calc(3.5rem+env(safe-area-inset-top))]`.
+- **Dialogs are bottom sheets** below `sm` (`components/ui/dialog.tsx`): full
+  width, scroll inside, grab handle, footer buttons full width. Don't give a
+  dialog a fixed width or height that fights this.
+- **Touch sizing**: `Button`, `Input`, `SelectTrigger`, menu items and tab
+  lists grow to ~40px on `pointer-coarse`. If you set a height on a primary
+  touch target, pair it with `pointer-coarse:h-10`.
+
+**Reach for these:**
+
+| Want | Use |
+| --- | --- |
+| Search + filters row | `FilterBar` (`components/filter-bar.tsx`) |
+| Server-side paging | `ListPager` (`components/list-pager.tsx`) |
+| Save / cancel at the end of a long form | `FormActions` (sticky above the tab bar on phones) |
+| 2-4 visible choices | `SegmentedControl` (`components/ui/segmented-control.tsx`) |
+| Sideways tab strip | `TabsList` already scrolls; for link tabs copy `event-layout-content.tsx` |
+
+**Rules:**
+
+- **Tables become lists.** Below `md`, render a compact row per record - title
+  line, one muted meta line, a status pill, and a trailing menu or a stretched
+  link - and keep the table for `md:` up. `components/event-card.tsx` is the
+  model: a thumbnail row on phones, the full card from `sm`.
+- **One column.** Multi-column grids and side panels collapse; KPI tiles go
+  2-up.
+- **No fixed widths on phones.** `w-full sm:w-[180px]`, never a bare `w-64`.
+  Nothing may scroll the page sideways at 360px.
+- **Nothing hover-only.** Actions revealed on hover must be visible on touch.
+- **Inputs** get the right `type` / `inputMode` / `enterKeyHint`, and stay at
+  16px on phones (smaller makes iOS zoom the page on focus).
+
+---
+
+## 7. Non-negotiables
 
 - **Tailwind class strings must be complete literals.** Tailwind v4 scans source
   text — it never sees `` `bg-brand-${hue}` ``. Map tones to **full class
@@ -170,7 +218,7 @@ Icons are **Lucide** (`lucide-react`), ~`h-4 w-4` inline. Don't mix icon sets.
 
 ---
 
-## 7. Quick reference
+## 8. Quick reference
 
 | Want | Use |
 | --- | --- |

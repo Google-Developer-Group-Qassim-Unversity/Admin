@@ -60,18 +60,18 @@ export function StatTile({
       ) : (
         <span className={`h-[3px] w-full shrink-0 ${t.bar}`} />
       )}
-      <div className="flex flex-1 flex-col gap-2.5 p-4">
+      <div className="flex flex-1 flex-col gap-2 p-3.5 sm:gap-2.5 sm:p-4">
       <div className="flex items-center gap-2">
         <span className={`flex h-6 w-6 items-center justify-center rounded-md ${t.soft}`}>
           <Icon className={`h-3.5 w-3.5 ${t.ink}`} />
         </span>
-        <span className="text-muted-foreground text-xs font-semibold">{label}</span>
+        <span className="text-muted-foreground line-clamp-2 text-xs leading-tight font-semibold">{label}</span>
       </div>
 
       {isPending ? (
         <Skeleton className="h-8 w-16" />
       ) : (
-        <div className="font-display tabular text-[28px] leading-none font-semibold">{value}</div>
+        <div className="font-display tabular text-[26px] leading-none font-semibold sm:text-[28px]">{value}</div>
       )}
 
       {hint ? (
@@ -79,7 +79,7 @@ export function StatTile({
           <Skeleton className="h-3.5 w-28" />
         ) : (
           <div
-            className={`text-[11.5px] ${
+            className={`line-clamp-2 text-[11.5px] ${
               hintTone ? `font-semibold ${TONES[hintTone].ink}` : "text-muted-foreground"
             }`}
           >

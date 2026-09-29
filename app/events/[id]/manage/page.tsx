@@ -63,24 +63,30 @@ export default function EventManagePage() {
   };
 
   return (
-    <Card className="max-w-3xl mx-auto">
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
+    // On a phone the rows are the cards: the outer card's chrome drops away so
+    // each row gets the full width instead of nesting a box inside a box.
+    <Card className="mx-auto max-w-3xl max-sm:gap-4 max-sm:bg-transparent max-sm:py-0 max-sm:shadow-none max-sm:ring-0">
+      <CardHeader className="max-sm:px-0">
+        <CardTitle className="font-display text-lg font-semibold tracking-tight">{t('title')}</CardTitle>
         <CardDescription>
           {t('subtitle')}
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4">
-        <Item variant="outline">
-          <ItemContent>
-            <ItemTitle>{t('requireRegistration')}</ItemTitle>
-            <ItemDescription>
+      <CardContent className="space-y-3 max-sm:px-0 sm:space-y-4">
+        <Item variant="outline" className="bg-card flex-nowrap">
+          <ItemContent className="min-w-0">
+            <ItemTitle>
+              <label htmlFor="require-registration" className="cursor-pointer">
+                {t('requireRegistration')}
+              </label>
+            </ItemTitle>
+            <ItemDescription className="line-clamp-none">
               {requiresRegistration
                 ? t('requiredHint')
                 : t('notRequiredHint')}
             </ItemDescription>
           </ItemContent>
-          <ItemActions>
+          <ItemActions className="shrink-0">
             {updateFormType.isPending && (
               <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
             )}
@@ -103,7 +109,7 @@ export default function EventManagePage() {
           <MeetingUrlItem event={event} onEventChange={handleFormChange} />
         )}
 
-        <PublishItem 
+        <PublishItem
           event={event}
           formData={formData}
           onEventChange={handleFormChange}

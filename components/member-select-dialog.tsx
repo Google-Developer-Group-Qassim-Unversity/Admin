@@ -134,7 +134,7 @@ export function MemberSelectDialog({
       <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent
           closeLabel={tc("close")}
-          className="w-[calc(100%-2rem)] max-w-3xl! h-[85dvh] md:h-[min(40rem,85dvh)] flex flex-col gap-4 overflow-hidden p-4 sm:p-6"
+          className="flex h-[88dvh] flex-col gap-4 overflow-hidden px-4 sm:h-[85dvh] sm:w-[calc(100%-2rem)] sm:max-w-3xl sm:p-6 md:h-[min(40rem,85dvh)]"
         >
           <DialogHeader className="shrink-0 pe-6">
             <DialogTitle>{title ?? t("title")}</DialogTitle>
@@ -167,7 +167,7 @@ export function MemberSelectDialog({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs gap-1"
+                      className="h-7 gap-1 text-xs pointer-coarse:h-9 pointer-coarse:text-sm"
                       onClick={() => setIsCreateDialogOpen(true)}
                     >
                       <UserPlus className="h-3.5 w-3.5" />
@@ -179,11 +179,14 @@ export function MemberSelectDialog({
                   <div className="relative">
                     <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input
+                      type="search"
+                      inputMode="search"
+                      enterKeyHint="search"
                       aria-label={t("searchPlaceholder")}
                       placeholder={t("searchPlaceholder")}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="ps-8 h-8 text-sm"
+                      className="ps-8 h-8 pointer-coarse:h-10"
                     />
                   </div>
                   {(showLimitHint || showSearchLimitHint) && (
@@ -210,12 +213,12 @@ export function MemberSelectDialog({
                           className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-start hover:bg-muted/50 focus-visible:bg-muted focus-visible:outline-ring cursor-pointer"
                           onClick={() => handleAddMember(member.id)}
                         >
-                          <div className="h-4 w-4 border rounded shrink-0" />
+                          <div className="size-5 shrink-0 rounded border sm:size-4" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm wrap-anywhere">
                               <bdi>{member.label}</bdi>
                             </p>
-                            <p className="text-xs text-muted-foreground wrap-anywhere">
+                            <p className="text-[13px] text-muted-foreground wrap-anywhere sm:text-xs">
                               <bdi>{member.uni_id ?? member.email}</bdi>
                             </p>
                           </div>
@@ -234,7 +237,7 @@ export function MemberSelectDialog({
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-muted-foreground hover:text-destructive"
+                      className="h-7 text-xs text-muted-foreground hover:text-destructive pointer-coarse:h-9 pointer-coarse:text-sm"
                       onClick={() => setPendingSelectedIds(new Set())}
                     >
                       {tc("clearAll")}
@@ -253,7 +256,7 @@ export function MemberSelectDialog({
                             <p className="text-sm wrap-anywhere">
                               <bdi>{member.label}</bdi>
                             </p>
-                            <p className="text-xs text-muted-foreground wrap-anywhere">
+                            <p className="text-[13px] text-muted-foreground wrap-anywhere sm:text-xs">
                               <bdi>{member.uni_id ?? member.email}</bdi>
                             </p>
                           </div>

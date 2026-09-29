@@ -27,7 +27,7 @@ function QueueRow({ item }: { item: AttentionItem }) {
 
       <Link
         href={item.href}
-        className="bg-muted hover:bg-accent hover:text-accent-foreground flex h-7 shrink-0 items-center rounded-md px-3 text-xs font-semibold transition-colors"
+        className="bg-muted hover:bg-accent hover:text-accent-foreground flex h-7 shrink-0 items-center rounded-md px-3 text-xs font-semibold transition-colors pointer-coarse:h-9 pointer-coarse:px-3.5"
       >
         {t(`${item.kind}.action`)}
       </Link>

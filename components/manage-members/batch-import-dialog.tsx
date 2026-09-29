@@ -172,7 +172,7 @@ export function BatchImportDialog({
         if (!newOpen) handleReset();
         onOpenChange(newOpen);
       }}>
-        <DialogContent className="max-w-3xl! flex flex-col max-h-[90vh]">
+        <DialogContent className="flex flex-col sm:max-h-[90vh] sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
@@ -214,7 +214,7 @@ export function BatchImportDialog({
             </div>
 
             {!isVerified ? (
-              <Button onClick={handleVerify} disabled={isVerifying || !token.trim()}>
+              <Button onClick={handleVerify} disabled={isVerifying || !token.trim()} className="w-full sm:w-auto">
                 {isVerifying ? (
                   <>
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />
@@ -234,7 +234,7 @@ export function BatchImportDialog({
                     <CardTitle className="text-base">{tb("tokenMetadata")}</CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3 pt-0">
-                    <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                    <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">{tb("rowCount")}</span>
                         <span className="font-medium">{metadata?.row_count ?? "-"}</span>
@@ -243,9 +243,7 @@ export function BatchImportDialog({
                         <span className="text-muted-foreground">{tb("valid")}</span>
                         <Badge
                           className={
-                            isValidData
-                              ? "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
-                              : ""
+                            isValidData ? "bg-brand-green-soft text-brand-green-ink border-transparent" : ""
                           }
                           variant={isValidData ? "outline" : "destructive"}
                         >
@@ -254,7 +252,7 @@ export function BatchImportDialog({
                       </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">{tb("validatedAt")}</span>
-                        <span className="font-medium">
+                        <span className="font-medium tabular text-end">
                           {metadata?.validated_at
                             ? new Date(metadata.validated_at).toLocaleString()
                             : "-"}
@@ -294,7 +292,28 @@ export function BatchImportDialog({
                       </Label>
                       <Card className="p-0 overflow-hidden">
                         <ScrollArea className="h-48">
-                          <Table>
+                          {/* Phones: one stacked row per member instead of a
+                              four-column table that would scroll sideways. */}
+                          <ul className="divide-border divide-y sm:hidden">
+                            {verifiedRows.slice(0, 50).map((row, idx) => (
+                              <li key={idx} className="px-3 py-2.5">
+                                <div className="truncate text-sm font-medium" dir="auto">
+                                  {row.name}
+                                </div>
+                                <div className="text-muted-foreground truncate text-[13px]">
+                                  <span className="tabular">{row["university id"]}</span>
+                                  {row.email ? <> · {row.email}</> : null}
+                                  {row.gender ? <> · {row.gender}</> : null}
+                                </div>
+                              </li>
+                            ))}
+                            {verifiedRows.length > 50 && (
+                              <li className="text-muted-foreground px-3 py-2.5 text-center text-[13px]">
+                                {tb("andMore", { count: verifiedRows.length - 50 })}
+                              </li>
+                            )}
+                          </ul>
+                          <Table className="hidden sm:table">
                             <TableHeader>
                               <TableRow>
                                 <TableHead>{tb("columnName")}</TableHead>
@@ -332,13 +351,18 @@ export function BatchImportDialog({
           </div>
 
           {isVerified && (
-            <div className="flex items-center gap-3 pt-4 border-t shrink-0">
-              <div className="flex-1" />
-              <Button variant="outline" onClick={handleReset} disabled={batchMutation.isPending}>
+            <div className="flex shrink-0 flex-col-reverse gap-2 border-t pt-4 sm:flex-row sm:items-center sm:gap-3">
+              <div className="hidden flex-1 sm:block" />
+              <Button
+                variant="outline"
+                onClick={handleReset}
+                disabled={batchMutation.isPending}
+                className="w-full sm:w-auto"
+              >
                 {tb("reset")}
               </Button>
               {isValidData && (
-                <Button onClick={handleSubmit} disabled={batchMutation.isPending}>
+                <Button onClick={handleSubmit} disabled={batchMutation.isPending} className="w-full sm:w-auto">
                   {batchMutation.isPending ? (
                     <>
                       <Loader2 className="me-2 h-4 w-4 animate-spin" />
@@ -374,10 +398,10 @@ export function BatchImportDialog({
                 <CardTitle className="text-sm">{tb("members")}</CardTitle>
               </CardHeader>
               <CardContent className="pt-0">
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="flex justify-between items-center">
                     <span className="text-sm text-muted-foreground">{tb("created")}</span>
-                    <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
+                    <Badge className="bg-brand-green-soft text-brand-green-ink tabular border-transparent">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>

@@ -204,6 +204,15 @@
     },
     "empty": {
       "noResults": "لا توجد نتائج"
+    },
+    "pager": {
+      "label": "التنقل بين الصفحات",
+      "page": "صفحة {current} من {total}",
+      "rows": "الصفوف",
+      "first": "الصفحة الأولى",
+      "previous": "السابق",
+      "next": "التالي",
+      "last": "الصفحة الأخيرة"
     }
   },
   "nav": {
@@ -224,7 +233,9 @@
       "people": "الأشخاص",
       "engage": "التواصل",
       "system": "النظام"
-    }
+    },
+    "more": "المزيد",
+    "appearance": "المظهر"
   },
   "theme": {
     "toggle": "تغيير المظهر",
@@ -336,7 +347,8 @@
       "noImage": "لا توجد صورة",
       "starts": "يبدأ:",
       "attendance": "الحضور:",
-      "department": "القسم:"
+      "department": "القسم:",
+      "location": "الموقع"
     },
     "showingRange": "عرض {from}-{to} من {count, plural, zero {# فعالية} one {# فعالية} two {# فعاليتين} few {# فعاليات} many {# فعالية} other {# فعالية}}",
     "page": "صفحة {current} من {total}",
@@ -436,12 +448,16 @@
     "dropHint": "اسحب صورة وأفلتها هنا، أو اضغط عشان تختار",
     "sizeHint": "بحد أقصى 5 ميجا، صور فقط",
     "uploadingShort": "جاري الرفع...",
-    "dropReplaceHint": "أفلت الصورة الجديدة هنا أو اضغط عشان تختار"
+    "dropReplaceHint": "أفلت الصورة الجديدة هنا أو اضغط عشان تختار",
+    "remove": "إزالة الصورة"
   },
   "points": {
     "editPoints": "تعديل النقاط",
     "viewEvent": "عرض الفعالية",
-    "searchCustom": "ابحث في فعاليات النقاط..."
+    "searchCustom": "ابحث في فعاليات النقاط...",
+    "clearFilters": "مسح الفلاتر",
+    "noMatchCustom": "لا توجد فعاليات مخصصة تطابق بحثك.",
+    "noMatchFull": "لا توجد فعاليات كاملة تطابق بحثك."
   },
   "manageEmails": {
     "title": "إدارة البريد",
@@ -548,7 +564,8 @@
       "jobsCount": "{count, plural, =0 {لا توجد مهام} one {مهمة وحدة} two {مهمتان} few {# مهام} many {# مهمة} other {# مهمة}}",
       "allStatuses": "كل الحالات",
       "loading": "جاري تحميل المهام...",
-      "noneFound": "ما فيه مهام بريد."
+      "noneFound": "ما فيه مهام بريد.",
+      "filterByStatus": "التصفية حسب الحالة"
     },
     "logsTab": {
       "logsCount": "{count, plural, =0 {لا توجد سجلات} one {سجل وحد} two {سجلان} few {# سجلات} many {# سجل} other {# سجل}}",
@@ -582,7 +599,11 @@
       "limitHint": "يظهر {shown} من {total}. استخدم البحث عشان تلقى أكثر.",
       "selected": "المحدد:",
       "noMembersFound": "لا يوجد أعضاء مطابقين",
-      "noMembersAvailable": "لا يوجد أعضاء"
+      "noMembersAvailable": "لا يوجد أعضاء",
+      "filters": "عوامل التصفية",
+      "filtersTitle": "تصفية سجل البريد",
+      "filtersDescription": "اعرض نوعًا واحدًا أو فعالية أو عضوًا محددًا فقط.",
+      "type": "النوع"
     },
     "logRow": {
       "types": {
@@ -621,7 +642,12 @@
       "columnName": "الاسم",
       "columnEmail": "البريد",
       "noMatches": "لا توجد نتائج مطابقة.",
-      "emailNumber": "البريد رقم {id}"
+      "emailNumber": "البريد رقم {id}",
+      "showDetails": "عرض التفاصيل",
+      "hideDetails": "إخفاء التفاصيل",
+      "changedSinceSent": "تغيّر منذ الإرسال",
+      "sentByLabel": "أرسلها:",
+      "fromLabel": "من:"
     },
     "directEmail": {
       "recipients": "المستلمون",
@@ -885,7 +911,8 @@
       "certificatesSent": "تم إرسال الشهادات",
       "sendCertificates": "إرسال الشهادات ({count})",
       "sendCustomEmail": "إرسال بريد مخصص",
-      "allReceived": "كل الحاضرين استلموا شهاداتهم."
+      "allReceived": "كل الحاضرين استلموا شهاداتهم.",
+      "viewLabel": "رسائل الشهادات"
     },
     "qrCode": {
       "modeQr": "رمز QR",
@@ -940,7 +967,8 @@
       "generateFailedGeneric": "تعذر إنشاء الرمز",
       "unknownError": "خطأ غير معروف",
       "linkCopied": "تم نسخ الرابط.",
-      "copyFailed": "تعذر نسخ الرابط."
+      "copyFailed": "تعذر نسخ الرابط.",
+      "modeLabel": "طريقة التحضير"
     },
     "manageDialog": {
       "loadMembersFailed": "تعذر تحميل الأعضاء: {error}",
@@ -1075,7 +1103,11 @@
     "attendance": "الحضور",
     "attendeesCount": "{count, plural, =0 {لا يوجد حاضرين} one {حاضر وحد} two {حاضران} few {# حاضرين} many {# حاضر} other {# حاضر}}",
     "description": "الوصف",
-    "noDescription": "ما فيه وصف لهذي الفعالية."
+    "noDescription": "ما فيه وصف لهذي الفعالية.",
+    "date": "التاريخ",
+    "time": "الوقت",
+    "eventType": "نوع الفعالية",
+    "details": "التفاصيل"
   },
   "eventLayout": {
     "backToPoints": "رجوع للنقاط",
@@ -1119,7 +1151,8 @@
       "custom": "فعاليات مخصصة",
       "full": "فعاليات كاملة",
       "manage": "إدارة النقاط"
-    }
+    },
+    "sectionsLabel": "أقسام النقاط"
   },
   "pointsList": {
     "loadingEvents": "جاري تحميل الفعاليات...",
@@ -1217,7 +1250,18 @@
     "notUsedYet": "هذا الإجراء ما استخدم بعد. تقدر تحذفه براحتك.",
     "deleting": "جاري الحذف...",
     "deleteAndReassign": "{count, plural, =0 {حذف} one {حذف وتحويل سجل وحد} two {حذف وتحويل سجلين} few {حذف وتحويل # سجلات} many {حذف وتحويل # سجل} other {حذف وتحويل # سجل}}",
-    "delete": "حذف"
+    "delete": "حذف",
+    "usedCount": "{count, plural, =0 {لم يُستخدم بعد} one {استُخدم مرة واحدة} two {استُخدم مرتين} few {استُخدم # مرات} many {استُخدم # مرة} other {استُخدم # مرة}}",
+    "moreActions": "مزيد من الإجراءات لـ {name}",
+    "sortLabel": "الترتيب",
+    "actionsCountShort": "{count, plural, zero {لا إجراءات} one {إجراء واحد} two {إجراءان} few {# إجراءات} many {# إجراءً} other {# إجراء}}",
+    "sort": {
+      "order-asc": "الترتيب المخصص",
+      "points-desc": "الأعلى نقاطًا",
+      "points-asc": "الأقل نقاطًا",
+      "used-desc": "الأكثر استخدامًا",
+      "used-asc": "الأقل استخدامًا"
+    }
   },
   "createMember": {
     "nameRequired": "الاسم مطلوب",
@@ -1284,7 +1328,15 @@
     "showingRange": "يعرض {from}-{to} من {count, plural, =0 {لا يوجد أعضاء} one {عضو وحد} two {عضوان} few {# أعضاء} many {# عضو} other {# عضو}}",
     "rows": "الصفوف:",
     "page": "صفحة {current} من {total}",
-    "columnsMenu": "الأعمدة"
+    "columnsMenu": "الأعمدة",
+    "rowActions": "إجراءات {name}",
+    "emailMember": "إرسال بريد",
+    "sort": {
+      "label": "ترتيب الأعضاء",
+      "default": "الترتيب الافتراضي",
+      "name": "الاسم (أ–ي)",
+      "recent": "آخر نشاط"
+    }
   },
   "revokeAdmin": {
     "title": "إلغاء صلاحية {role}",
@@ -1454,7 +1506,14 @@
       "accepted": "مقبول:",
       "emailed": "أُرسل له بريد:",
       "notEmailed": "ما أُرسل له بريد:",
-      "pending": "قيد الانتظار:"
+      "pending": "قيد الانتظار:",
+      "tiles": {
+        "total": "الإجمالي",
+        "accepted": "مقبول",
+        "emailed": "أُرسل له بريد",
+        "notEmailed": "ما أُرسل له بريد",
+        "pending": "قيد الانتظار"
+      }
     },
     "selectedCount": "{count, plural, =0 {} one {عنصر وحد محدد} two {عنصران محددان} few {# عناصر محددة} many {# عنصر محدد} other {# عنصر محدد}}",
     "processing": "جاري المعالجة...",
@@ -1491,7 +1550,10 @@
       "sendTestCount": "{count, plural, =0 {إرسال اختبار} one {إرسال اختبار (بريد وحد)} two {إرسال اختبار (بريدين)} few {إرسال اختبار (# رسائل)} many {إرسال اختبار (# رسالة)} other {إرسال اختبار (# رسالة)}}",
       "noRecipientsButton": "ما فيه مستلمين",
       "sendToCount": "{count, plural, =0 {إرسال} one {إرسال لمستلم وحد} two {إرسال لمستلمين} few {إرسال لـ # مستلمين} many {إرسال لـ # مستلم} other {إرسال لـ # مستلم}}"
-    }
+    },
+    "answers": "الإجابات",
+    "clearSelection": "إلغاء التحديد",
+    "selectPage": "تحديد الكل في هذه الصفحة"
   },
   "responsesTable": {
     "selectAll": "تحديد الكل",
@@ -1587,7 +1649,8 @@
     "rowMemberRequired": "الصف {number}: العضو مطلوب",
     "rowActionRequired": "الصف {number}: الإجراء مطلوب",
     "createCustomEvent": "إنشاء فعالية مخصصة",
-    "saveChanges": "حفظ التغييرات"
+    "saveChanges": "حفظ التغييرات",
+    "rowCount": "{count, plural, zero {لا صفوف} one {صف واحد} two {صفّان} few {# صفوف} many {# صفًا} other {# صف}}"
   },
   "formsCopyItem": {
     "attachedSuccess": "تم منح الصلاحية.",
@@ -1608,7 +1671,8 @@
     "requestingAccess": "جاري الطلب...",
     "createForm": "أنشئ النموذج وامنح الصلاحية",
     "creatingForm": "جاري إنشاء النموذج...",
-    "disabledTooltip": "التسجيل معطل. فعّل التسجيل عشان تقدر تدير نماذج Google."
+    "disabledTooltip": "التسجيل معطل. فعّل التسجيل عشان تقدر تدير نماذج Google.",
+    "moreActions": "إجراءات أخرى للنموذج"
   },
   "removeGoogleForm": {
     "title": "فك ارتباط النموذج",
@@ -1646,7 +1710,10 @@
     "downloadQrCode": "تحميل صورة QR",
     "qrCopied": "تم نسخ رمز QR.",
     "qrCopyFailed": "تعذر نسخ رمز QR. حاول مرة ثانية.",
-    "qrDownloadFailed": "تعذر تحميل رمز QR. حاول مرة ثانية."
+    "qrDownloadFailed": "تعذر تحميل رمز QR. حاول مرة ثانية.",
+    "eventLink": "رابط الفعالية العام",
+    "copyLink": "نسخ رابط الفعالية",
+    "showQr": "عرض رمز QR"
   },
   "memberSelectDialog": {
     "loading": "جارٍ تحميل الأعضاء…",
@@ -1677,7 +1744,8 @@
     "action": "الإجراء",
     "reason": "السبب",
     "optional": "(اختياري)",
-    "delete": "حذف"
+    "delete": "حذف",
+    "removeRow": "حذف الصف"
   },
   "actionReasonSelect": {
     "selectAction": "اختر الإجراء...",
@@ -1719,7 +1787,10 @@
     "ariaLabel": "رابط الاجتماع",
     "save": "حفظ",
     "openLink": "فتح رابط الاجتماع",
-    "removeLink": "حذف رابط الاجتماع"
+    "removeLink": "حذف رابط الاجتماع",
+    "copyLink": "نسخ رابط الاجتماع",
+    "copied": "تم نسخ رابط الاجتماع",
+    "copyFailed": "تعذّر نسخ الرابط. حاول مرة أخرى."
   },
   "palette": {
     "title": "لوحة الأوامر",

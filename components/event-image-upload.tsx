@@ -77,8 +77,8 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
 
       {/* Show existing image preview if no new file uploaded */}
       {existingImageUrl && !uploadedFile && displayImageUrl && (
-        <div className="relative rounded-lg border p-4">
-          <div className="flex items-center gap-4">
+        <div className="relative rounded-lg border p-3 sm:p-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
               <Image
                 src={displayImageUrl}
@@ -92,7 +92,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
                 <ImageIcon className="h-4 w-4" />
                 <span className="truncate">{t("current")}</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
+              <p className="text-[13px] text-muted-foreground mt-1">
                 {t("replaceHint")}
               </p>
             </div>
@@ -100,8 +100,9 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
               type="button"
               variant="ghost"
               size="icon"
-              className="h-8 w-8 shrink-0"
+              className="h-8 w-8 shrink-0 pointer-coarse:size-10"
               onClick={handleFileRemove}
+              aria-label={t("remove")}
             >
               <X className="h-4 w-4" />
             </Button>
@@ -140,10 +141,10 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
             ) : (
               <>
                 <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
+                <p className="mt-2 text-sm text-muted-foreground text-center">
                   {t("dropHint")}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                   {t("sizeHint")}
                 </p>
               </>
@@ -164,7 +165,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
             ) : (
               <>
                 <Upload className="h-6 w-6 text-muted-foreground" />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <p className="mt-1 text-[13px] text-muted-foreground text-center">
                   {t("dropReplaceHint")}
                 </p>
               </>
@@ -182,7 +183,8 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8"
+                  className="h-8 w-8 shrink-0 pointer-coarse:size-10"
+                  aria-label={t("remove")}
                   onClick={() => {
                     setUploadedFile(null);
                     // Restore existing image if available

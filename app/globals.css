@@ -181,8 +181,38 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* No 300ms double-tap-zoom wait on anything tappable. */
+  a,
+  button,
+  [role="button"],
+  [role="tab"],
+  label,
+  summary {
+    touch-action: manipulation;
+  }
+  ::selection {
+    background-color: var(--brand-blue-soft);
+    color: var(--brand-blue-ink);
+  }
+  :focus-visible {
+    outline-color: var(--ring);
+  }
+  input,
+  textarea {
+    caret-color: var(--primary);
+  }
+  /* Thin, palette-tinted scrollbars instead of the platform's grey slab. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: color-mix(in oklch, var(--muted-foreground) 35%, transparent) transparent;
   }
   /* A soft diagonal brand wash for hero surfaces, layered over the card colour.
      Reuses the -soft tokens, so it tints correctly in both themes - a whisper
@@ -200,5 +230,14 @@
   /* Counts, IDs and times sit in columns that have to line up. */
   .tabular {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Horizontal strips (tabs, filter chips) that scroll under a thumb without
+   showing a scrollbar. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
   }
 }

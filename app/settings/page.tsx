@@ -26,11 +26,11 @@ function TemplateFormCard() {
   });
 
   return (
-    <Card className="max-w-2xl">
+    <Card className="w-full max-w-2xl">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-            <FileText className="h-5 w-5 text-primary" />
+          <div className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+            <FileText className="text-brand-blue-ink h-5 w-5" />
           </div>
           {t("templateFormTitle")}
         </CardTitle>
@@ -39,22 +39,22 @@ function TemplateFormCard() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <div className="flex items-center justify-between rounded-lg border p-4">
-          <div className="space-y-1">
+        <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 space-y-1">
             <p className="text-sm font-medium leading-none">{t("templateForm")}</p>
             <p className="text-sm text-muted-foreground">
               {error ? t("templateFormLoadFailed") : t("templateFormHint")}
             </p>
           </div>
           {data?.url ? (
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" className="w-full sm:w-auto">
               <a href={data.url} target="_blank" rel="noopener noreferrer">
                 {t("openTemplateForm")}
                 <ExternalLink className="h-4 w-4 ms-2" />
               </a>
             </Button>
           ) : (
-            <Button variant="outline" disabled>
+            <Button variant="outline" disabled className="w-full sm:w-auto">
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
@@ -83,14 +83,14 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 sm:space-y-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Settings} />
 
-      <Card className="max-w-2xl">
+      <Card className="w-full max-w-2xl">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Settings className="h-5 w-5 text-primary" />
+            <div className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+              <Settings className="text-brand-blue-ink h-5 w-5" />
             </div>
             {t("cacheTitle")}
           </CardTitle>
@@ -99,8 +99,8 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center justify-between rounded-lg border p-4">
-            <div className="space-y-1">
+          <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 space-y-1">
               <p className="text-sm font-medium leading-none">{t("resetCache")}</p>
               <p className="text-sm text-muted-foreground">
                 {t("resetCacheHint")}
@@ -110,6 +110,7 @@ export default function SettingsPage() {
               onClick={handleResetCache}
               disabled={resetCache.isPending}
               variant="destructive"
+              className="w-full sm:w-auto"
             >
               <RotateCcw className={`h-4 w-4 me-2 ${resetCache.isPending ? "animate-spin" : ""}`} />
               {resetCache.isPending ? t("resetting") : t("resetCacheButton")}
@@ -119,11 +120,11 @@ export default function SettingsPage() {
       </Card>
 
       <RequireRole role="super_admin">
-        <Card className="max-w-2xl">
+        <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <CalendarRange className="h-5 w-5 text-primary" />
+              <div className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <CalendarRange className="text-brand-blue-ink h-5 w-5" />
               </div>
               {t("semestersTitle")}
             </CardTitle>
@@ -132,14 +133,14 @@ export default function SettingsPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between rounded-lg border p-4">
-              <div className="space-y-1">
+            <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
                 <p className="text-sm font-medium leading-none">{t("manageSemesters")}</p>
                 <p className="text-sm text-muted-foreground">
                   {t("manageSemestersHint")}
                 </p>
               </div>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" className="w-full sm:w-auto">
                 <Link href="/settings/semesters">
                   {t("open")}
                   <ChevronRight className="h-4 w-4 ms-2 rtl:-scale-x-100" />

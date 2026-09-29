@@ -12,12 +12,12 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { locales, localeLabels, type Locale } from "@/i18n/config";
 import { setLocale } from "@/i18n/locale";
 
-export function LanguageToggle() {
+function useSwitchLocale() {
   const active = useLocale() as Locale;
-  const t = useTranslations("common");
   const [pending, startTransition] = React.useTransition();
   const router = useRouter();
 
@@ -30,6 +30,13 @@ export function LanguageToggle() {
       router.refresh();
     });
   }
+
+  return { active, pending, select };
+}
+
+export function LanguageToggle() {
+  const { active, pending, select } = useSwitchLocale();
+  const t = useTranslations("common");
 
   return (
     <DropdownMenu>
@@ -52,5 +59,24 @@ export function LanguageToggle() {
         ))}
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** The same switch laid out flat, for the mobile "More" sheet. */
+export function LanguageSegmented() {
+  const { active, pending, select } = useSwitchLocale();
+  const t = useTranslations("common");
+
+  return (
+    <SegmentedControl
+      label={t("switchLanguage")}
+      value={active}
+      onValueChange={(value) => select(value as Locale)}
+      disabled={pending}
+      options={locales.map((locale) => ({
+        value: locale,
+        label: <span lang={locale}>{localeLabels[locale]}</span>,
+      }))}
+    />
   );
 }

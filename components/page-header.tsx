@@ -23,30 +23,37 @@ export function PageHeader({
   arcSize?: number;
 }) {
   return (
-    <section className="bg-card brand-hero border-border relative overflow-hidden rounded-2xl border px-5 py-5 sm:px-6">
+    <section className="bg-card brand-hero border-border relative overflow-hidden rounded-2xl border px-4 py-4 sm:px-6 sm:py-5">
       <BrandArcs
         size={arcSize}
-        className="pointer-events-none absolute -top-24 -end-12 opacity-35 rtl:-scale-x-100"
+        className="pointer-events-none absolute -top-24 -end-12 opacity-35 max-sm:-top-20 max-sm:-end-16 max-sm:size-[200px] rtl:-scale-x-100"
       />
 
-      <div className="relative flex flex-wrap items-center justify-between gap-4">
+      <div className="relative flex flex-wrap items-center justify-between gap-x-4 gap-y-3.5">
         <div className="flex min-w-0 items-center gap-3">
           {Icon ? (
-            <span className="bg-brand-blue-soft flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
+            <span className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11">
               <Icon className="text-brand-blue-ink h-5 w-5" />
             </span>
           ) : null}
-          <div className="flex min-w-0 flex-col gap-1">
-            <h1 className="font-display text-2xl font-semibold tracking-tight sm:text-[28px]">
+          <div className="flex min-w-0 flex-col gap-0.5 sm:gap-1">
+            <h1 className="font-display text-[22px] leading-tight font-semibold tracking-tight text-balance sm:text-[28px]">
               {title}
             </h1>
             {description ? (
-              <p className="text-muted-foreground text-[13.5px] text-pretty">{description}</p>
+              <p className="text-muted-foreground text-[13px] text-pretty sm:text-[13.5px]">
+                {description}
+              </p>
             ) : null}
           </div>
         </div>
 
-        {children ? <div className="flex flex-wrap items-center gap-2">{children}</div> : null}
+        {/* On a phone the actions take a full-width row of equal buttons. */}
+        {children ? (
+          <div className="flex w-full flex-wrap items-center gap-2 *:flex-1 sm:w-auto sm:*:flex-none">
+            {children}
+          </div>
+        ) : null}
       </div>
     </section>
   );

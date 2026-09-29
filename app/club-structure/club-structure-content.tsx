@@ -10,6 +10,7 @@ import { AccessDenied } from "@/components/ui/access-denied";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
+import { PageHeader } from "@/components/page-header";
 import { ClubTabsList, ClubTabsTrigger } from "@/components/club-structure/club-tabs";
 import { DepartmentCard } from "@/components/club-structure/department-card";
 import { DepartmentDrawer } from "@/components/club-structure/department-drawer";
@@ -61,24 +62,18 @@ function ClubStructureOverview() {
   const hasData = !!overview.data && !!allDepartments.data;
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <ClubRefresh />
-          {canEdit && (
-            <Button asChild>
-              <Link href="/club-structure/create" className="flex items-center gap-2">
-                <DepartmentPlusIcon />
-                {t("newDepartment")}
-              </Link>
-            </Button>
-          )}
-        </div>
-      </div>
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Network}>
+        <ClubRefresh size="default" />
+        {canEdit && (
+          <Button asChild>
+            <Link href="/club-structure/create" className="flex items-center gap-2">
+              <DepartmentPlusIcon />
+              {t("newDepartment")}
+            </Link>
+          </Button>
+        )}
+      </PageHeader>
       {!canEdit && <p className="text-sm text-muted-foreground">{t("readOnlyHint")}</p>}
       {error && (
         <QueryError
@@ -93,16 +88,18 @@ function ClubStructureOverview() {
       {!hasData && !error && <ClubLoading overview />}
       {overview.data && allDepartments.data && (
         <>
-          <dl className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+          <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {[
               { label: t("totalDepartments"), value: departments.length },
               { label: t("active"), value: activeCount },
               { label: t("archived"), value: archivedCount },
               { label: t("totalMembers"), value: overview.data.total_members },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card px-4 py-3.5">
-                <dt className="text-xs font-medium text-muted-foreground">{stat.label}</dt>
-                <dd className="mt-1 text-2xl font-bold tabular-nums">{format.number(stat.value)}</dd>
+              <div key={stat.label} className="min-w-0 rounded-xl border bg-card px-3.5 py-3 sm:px-4 sm:py-3.5">
+                <dt className="truncate text-xs font-semibold text-muted-foreground">{stat.label}</dt>
+                <dd className="font-display mt-1 text-[22px] leading-tight font-semibold tabular-nums sm:text-2xl">
+                  {format.number(stat.value)}
+                </dd>
               </div>
             ))}
           </dl>
@@ -113,7 +110,7 @@ function ClubStructureOverview() {
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">{t("presidentsHint")}</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
               {overview.data.presidents.map((seat) => (
                 <SeatCard
                   key={seat.slot}
@@ -135,8 +132,10 @@ function ClubStructureOverview() {
               dir={locale === "ar" ? "rtl" : "ltr"}
               className="gap-5"
             >
-              <div className="flex flex-wrap items-center justify-between gap-4 border-b">
-                <ClubTabsList className="w-auto border-0" aria-label={t("departmentStatus")}>
+              {/* Phones: search on top, then the tabs sitting on their own
+                  divider. From sm the two share one row over a single divider. */}
+              <div className="flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between sm:gap-4 sm:border-b">
+                <ClubTabsList className="w-full sm:w-auto sm:border-0" aria-label={t("departmentStatus")}>
                   {(["active", "archived"] as const).map((value) => (
                     <ClubTabsTrigger key={value} value={value}>
                       {value === "active" ? <Building2 aria-hidden="true" /> : <Archive aria-hidden="true" />}
@@ -147,10 +146,16 @@ function ClubStructureOverview() {
                     </ClubTabsTrigger>
                   ))}
                 </ClubTabsList>
-                <div className="relative mb-2 w-full sm:w-64">
-                  <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
+                <div className="relative w-full sm:mb-2 sm:w-64">
+                  <Search
+                    className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                    aria-hidden="true"
+                  />
                   <Input
-                    className="ps-9"
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    className="bg-card ps-9"
                     aria-label={t("searchDepartments")}
                     placeholder={t("searchDepartments")}
                     value={search}
@@ -160,7 +165,7 @@ function ClubStructureOverview() {
               </div>
               <TabsContent value={filter}>
                 {visible.length ? (
-                  <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                  <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
                     {visible.map((department) => (
                       <DepartmentCard
                         key={department.id}

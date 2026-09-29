@@ -46,7 +46,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 
 import { CameraScanPanel } from './camera-scan-panel';
 
@@ -109,15 +109,19 @@ function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedCha
   const t = useTranslations("attendance.qrCode");
   return (
     <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
-      <div className="flex items-center gap-2">
-        <Icon className="h-4 w-4 shrink-0 text-muted-foreground" />
-        <Label htmlFor={id} className="text-sm font-normal">
-          {label}
-        </Label>
+      <div className="flex min-w-0 items-start gap-2 pointer-fine:items-center">
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground pointer-fine:mt-0" />
+        <div className="min-w-0">
+          <Label htmlFor={id} className="text-sm font-normal">
+            {label}
+          </Label>
+          {/* Tooltips need a hover; on touch the explanation is simply shown. */}
+          <p className="mt-1 hidden text-[13px] text-muted-foreground pointer-coarse:block">{helpText}</p>
+        </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground hover:text-foreground">
+              <button type="button" className="text-muted-foreground hover:text-foreground pointer-coarse:hidden">
                 <HelpCircle className="h-3.5 w-3.5" />
                 <span className="sr-only">{t('whatDoesThisDo')}</span>
               </button>
@@ -258,42 +262,31 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
 
   const isExpired = timeRemaining === t('expired');
 
+  const modeToggle = (
+    <SegmentedControl
+      label={t('modeLabel')}
+      value={mode}
+      onValueChange={(value) => setMode(value as 'qr' | 'camera')}
+      options={[
+        { value: 'qr', label: <span className="whitespace-nowrap">{t('modeQr')}</span>, icon: QrCode },
+        { value: 'camera', label: <span className="whitespace-nowrap">{t('modeCamera')}</span>, icon: Camera },
+      ]}
+      className="sm:w-auto"
+    />
+  );
+
   return (
     <Card>
       <CardHeader>
         <CardTitle>{t('title')}</CardTitle>
-        <CardDescription>
+        <CardDescription className="col-start-1">
           {t('description')}
         </CardDescription>
-        <CardAction>
-          <div className="flex gap-1 p-1 bg-muted rounded-lg">
-            <button
-              type="button"
-              onClick={() => setMode('qr')}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-                mode === 'qr' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <QrCode className="h-4 w-4" />
-              {t('modeQr')}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('camera')}
-              className={cn(
-                'flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors',
-                mode === 'camera' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              <Camera className="h-4 w-4" />
-              {t('modeCamera')}
-            </button>
-          </div>
-        </CardAction>
+        <CardAction className="hidden sm:block">{modeToggle}</CardAction>
       </CardHeader>
       <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="mb-5 sm:hidden">{modeToggle}</div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {mode === 'camera' ? (
             <CameraScanPanel
               eventId={eventId}
@@ -306,10 +299,12 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
           <>
           <div className="flex flex-col items-center justify-center">
             {tokenData && !isExpired ? (
-              <div className="p-4 bg-white rounded-xl shadow-sm">
+              // The QR sits on white in both themes: scanners need the contrast.
+              <div className="w-full max-w-[20rem] rounded-2xl bg-white p-3 shadow-sm sm:p-4 md:max-w-[17rem]">
                 <QRCodeSVG
                   value={tokenData.attendanceUrl}
                   size={240}
+                  className="block h-auto w-full"
                   level="H"
                   includeMargin
                   imageSettings={{
@@ -321,7 +316,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
                 />
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center w-64 h-64 border-2 border-dashed border-muted-foreground/25 rounded-xl text-muted-foreground">
+              <div className="flex aspect-square w-full max-w-[20rem] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/25 text-muted-foreground md:max-w-64">
                 <QrCode className="h-16 w-16 mb-3 opacity-40" />
                 <p className="text-sm text-center px-4">
                   {isExpired
@@ -335,7 +330,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
               <div className="mt-4 flex items-center gap-2 text-sm">
                 <Timer className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">{t('expiresIn')}</span>
-                <span className="font-medium tabular-nums">{timeRemaining}</span>
+                <span className="tabular font-semibold">{timeRemaining}</span>
               </div>
             )}
 
@@ -347,7 +342,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
             )}
           </div>
 
-          <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-5 md:gap-6">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('expirationTime')}</label>
               <Select value={expirationMinutes} onValueChange={setExpirationMinutes}>
@@ -405,7 +400,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
               </CollapsibleContent>
             </Collapsible>
 
-            <Button onClick={handleGenerateToken} disabled={isGenerating} className="w-full">
+            <Button onClick={handleGenerateToken} disabled={isGenerating} className="h-12 w-full text-base md:h-9 md:text-sm">
               {isGenerating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -480,7 +475,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
           )}
         </div>
 
-        {children && <div className="mt-8 pt-8 border-t">{children}</div>}
+        {children && <div className="mt-6 border-t pt-6 md:mt-8 md:pt-8">{children}</div>}
       </CardContent>
     </Card>
   );

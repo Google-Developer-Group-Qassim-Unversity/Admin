@@ -57,9 +57,9 @@ export function CopyTab({
     <div className="space-y-6 py-4">
       <div className="space-y-4">
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium w-24">{t("sourceDay")}</span>
+          <span className="w-24 shrink-0 text-sm font-medium">{t("sourceDay")}</span>
           <Select value={sourceDay} onValueChange={onSourceDayChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="flex-1 sm:w-[140px] sm:flex-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -73,9 +73,9 @@ export function CopyTab({
         </div>
 
         <div className="flex items-center gap-4">
-          <span className="text-sm font-medium w-24">{t("targetDay")}</span>
+          <span className="w-24 shrink-0 text-sm font-medium">{t("targetDay")}</span>
           <Select value={targetDay} onValueChange={onTargetDayChange}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="flex-1 sm:w-[140px] sm:flex-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

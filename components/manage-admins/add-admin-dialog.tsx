@@ -180,7 +180,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-1xl! max-h-[85vh] flex flex-col w-full sm:!max-w-4xl">
+      <DialogContent className="flex flex-col sm:max-h-[85vh] sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
@@ -193,6 +193,9 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
           <div className="relative">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
               placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -216,16 +219,16 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                 </p>
               )}
             </div>
-            <div className="h-[250px] overflow-y-auto">
+            <div className="h-[42dvh] overflow-y-auto sm:h-[250px]">
               {isLoadingMembers ? (
                 <div className="space-y-2 p-3">
                   {[...Array(5)].map((_, i) => (
                     <div key={i} className="flex items-center justify-between">
                       <div className="space-y-2 flex-1">
-                        <Skeleton className="h-4 w-[200px]" />
-                        <Skeleton className="h-3 w-[150px]" />
+                        <Skeleton className="h-4 w-2/3 sm:w-[200px]" />
+                        <Skeleton className="h-3 w-1/2 sm:w-[150px]" />
                       </div>
-                      <Skeleton className="h-8 w-[180px]" />
+                      <Skeleton className="hidden h-8 w-[180px] sm:block" />
                     </div>
                   ))}
                 </div>
@@ -240,21 +243,22 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                   {displayMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors"
+                      className="flex flex-col gap-2.5 p-3 hover:bg-muted/50 transition-colors sm:flex-row sm:items-start sm:gap-3"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{member.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.uni_id ?? "—"} • {member.email}
+                        <p className="truncate text-sm font-medium" dir="auto">{member.name}</p>
+                        <p className="truncate text-[13px] text-muted-foreground sm:text-xs">
+                          <span className="tabular">{member.uni_id ?? "—"}</span> • <span dir="ltr">{member.email}</span>
                         </p>
                       </div>
-                       <div className="flex gap-2 shrink-0 pt-0.5">
+                       {/* Phones: the three role choices share a row under the name. */}
+                       <div className="grid grid-cols-3 gap-2 sm:flex sm:shrink-0 sm:pt-0.5">
                          <Button
                            size="sm"
                            variant="outline"
                            onClick={() => handleSelectMember(member, "admin")}
                            disabled={isSubmitting}
-                           className="whitespace-nowrap"
+                           className="min-w-0 whitespace-nowrap max-sm:px-1.5"
                          >
                            {tr("admin")}
                          </Button>
@@ -263,7 +267,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            variant="outline"
                            onClick={() => handleSelectMember(member, "admin_points")}
                            disabled={isSubmitting}
-                           className="whitespace-nowrap"
+                           className="min-w-0 whitespace-nowrap max-sm:px-1.5"
                          >
                            {tr("adminPoints")}
                          </Button>
@@ -272,7 +276,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                            variant="outline"
                            onClick={() => handleSelectMember(member, "super_admin")}
                            disabled={isSubmitting}
-                           className="whitespace-nowrap"
+                           className="min-w-0 whitespace-nowrap max-sm:px-1.5"
                          >
                            {tr("superAdmin")}
                          </Button>
@@ -292,7 +296,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                   {t("selectedMembers", { count: selectedMembers.length })}
                 </h3>
               </div>
-              <div className="max-h-[180px] overflow-y-auto">
+              <div className="max-h-[30dvh] overflow-y-auto sm:max-h-[180px]">
                 <div className="divide-y">
                   {selectedMembers.map(({ member, role }) => (
                     <div
@@ -300,8 +304,8 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                       className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{member.name}</p>
-                        <p className="text-xs text-muted-foreground">
+                        <p className="truncate text-sm font-medium" dir="auto">{member.name}</p>
+                        <p className="truncate text-[13px] text-muted-foreground tabular sm:text-xs">
                           {member.uni_id ?? member.email}
                         </p>
                       </div>
@@ -319,6 +323,7 @@ export function AddAdminDialog({ open, onOpenChange, onSuccess }: AddAdminDialog
                           disabled={isSubmitting}
                         >
                           <X className="h-4 w-4" />
+                          <span className="sr-only">{tc("remove")}</span>
                         </Button>
                       </div>
                     </div>

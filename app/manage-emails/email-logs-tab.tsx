@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import { Activity, Loader2, Radio } from "lucide-react";
+import { Activity, ChevronLeft, ChevronRight, Loader2, Radio } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
-import { Badge } from "@/components/ui/badge";
+import { URGENCY_STYLES } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { buildEnrichedStreamUrl, getEmailLogsEnriched } from "@/lib/api";
@@ -173,21 +173,25 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
       />
 
       <div className="rounded-lg border bg-card">
-        <div className="flex items-center justify-between px-3 py-2 border-b">
+        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b">
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">
+            <span className="tabular text-xs text-muted-foreground">
               {t("logsCount", { count: logs.length })}
             </span>
             {isStreaming && isLive && (
-              <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30 text-[10px]">
+              <span
+                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${URGENCY_STYLES.done.pill}`}
+              >
                 <Activity className="h-3 w-3 animate-pulse" />
                 {t("live")}
-              </Badge>
+              </span>
             )}
           </div>
-          <span className="text-[10px] text-muted-foreground">{isLive ? t("autoUpdating") : t("staticView")}</span>
+          <span className="text-xs text-muted-foreground">{isLive ? t("autoUpdating") : t("staticView")}</span>
         </div>
-        <ScrollArea className="h-[520px]">
+        {/* On a phone the list flows with the page - a scroll box inside a
+            scrolling page is a thumb trap. From md it is the fixed-height pane. */}
+        <ScrollArea className="md:h-[520px] [&_[data-slot=scroll-area-viewport]>div]:block!">
           {isLoading && !isLive ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -198,15 +202,15 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
               {isLive && isStreaming ? (
                 hasActiveFilters ? (
                   <>
-                    <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
+                    <Radio className="h-4 w-4 animate-pulse text-brand-green" />
                     <span>{t("listeningFiltered")}</span>
-                    <Button variant="outline" size="sm" className="h-7 text-xs" onClick={clearAllFilters}>
+                    <Button variant="outline" size="sm" onClick={clearAllFilters}>
                       {t("clearFilters")}
                     </Button>
                   </>
                 ) : (
                   <>
-                    <Radio className="h-4 w-4 animate-pulse text-emerald-500" />
+                    <Radio className="h-4 w-4 animate-pulse text-brand-green" />
                     <span>{t("listening")}</span>
                   </>
                 )
@@ -229,25 +233,25 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         </ScrollArea>
         {!isLive && (
           <div className="flex items-center justify-between border-t px-3 py-2">
-            <span className="text-xs text-muted-foreground">{tp("page", { page })}</span>
-            <div className="flex items-center gap-1">
+            <span className="tabular text-xs text-muted-foreground">{tp("page", { page })}</span>
+            <div className="flex items-center gap-2">
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
                 disabled={page <= 1 || isLoading}
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
               >
+                <ChevronLeft className="rtl:-scale-x-100" />
                 {tp("prev")}
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="h-7 text-xs"
                 disabled={logs.length < LOGS_PAGE_SIZE || isLoading}
                 onClick={() => setPage((p) => p + 1)}
               >
                 {tp("next")}
+                <ChevronRight className="rtl:-scale-x-100" />
               </Button>
             </div>
           </div>

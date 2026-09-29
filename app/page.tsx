@@ -48,18 +48,18 @@ export default function DashboardPage() {
   }, [members]);
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 sm:gap-5">
       {/* Hero. The arcs bleed off the trailing corner and flip with the locale. */}
-      <section className="bg-card brand-hero border-border relative overflow-hidden rounded-2xl border px-6 py-7 sm:px-8">
+      <section className="bg-card brand-hero border-border relative overflow-hidden rounded-2xl border px-4 pt-6 pb-4 sm:px-8 sm:py-7">
         <BrandRail className="absolute inset-x-0 top-0" />
         <BrandArcs
           size={380}
-          className="pointer-events-none absolute -top-28 -end-16 opacity-40 rtl:-scale-x-100"
+          className="pointer-events-none absolute -top-28 -end-16 opacity-40 max-sm:-top-14 max-sm:-end-14 max-sm:size-[210px] rtl:-scale-x-100"
         />
 
         <div className="relative flex flex-col gap-4">
           <div className="flex flex-col gap-2">
-            <h1 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="font-display text-[28px] leading-tight font-semibold tracking-tight sm:text-4xl">
               {t("title")}
             </h1>
             <p className="text-muted-foreground max-w-xl text-[15px] text-pretty">
@@ -69,7 +69,7 @@ export default function DashboardPage() {
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2.5">
+          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
             <Button asChild>
               <Link href="/events/create">
                 <CalendarPlus className="h-4 w-4" />
@@ -83,7 +83,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4">
         <StatTile
           icon={CalendarPlus}
           tone="blue"
@@ -121,7 +121,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="grid gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
+      <div className="grid gap-3 sm:gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <AttentionQueue />
         <PipelineCard events={events ?? []} />
       </div>

@@ -201,15 +201,17 @@ export default function EventEditPage() {
   }
 
   return (
-    <Card className="max-w-3xl mx-auto">
+    // overflow-visible below md so the form's sticky save bar can stick; the
+    // card's default overflow-hidden would pin it inside the card instead.
+    <Card className="max-w-3xl mx-auto max-md:overflow-visible">
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-                <Pencil className="h-5 w-5 text-primary" />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-3 font-display text-lg font-semibold tracking-tight">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+                <Pencil className="h-5 w-5 text-muted-foreground" />
               </div>
-              {t("title", { name: event.name })}
+              <span dir="auto" className="min-w-0 line-clamp-2">{t("title", { name: event.name })}</span>
             </CardTitle>
             <CardDescription className="mt-1.5">
               {t("subtitle")}
@@ -221,6 +223,7 @@ export default function EventEditPage() {
                 <Button
                   variant="destructive"
                   size="sm"
+                  className="shrink-0 self-start"
                   disabled={deleteEventMutation.isPending}
                 >
                   {deleteEventMutation.isPending ? (
