@@ -35,13 +35,11 @@ import type {
   RosterEntry,
 } from "@/lib/club-structure-types";
 import type {
-  DepartmentPermissions,
   EventRequestDetail,
   EventRequestStage,
   InboxItem,
   PaginatedNotifications,
   PaginatedRequests,
-  PermissionGrant,
   PipelineCalendar,
   PipelineMe,
   PipelineTeam,
@@ -298,14 +296,6 @@ export function createApi(request: Requester) {
     me: () => request.json<PipelineMe>("/pipeline/me"),
     setTeams: (body: PipelineTeamsInput) =>
       request.json<PipelineTeamEntry[]>("/pipeline/teams", { method: "PUT", body }),
-    permissions: (departmentId: number) =>
-      request.json<DepartmentPermissions>(`/departments/${departmentId}/permissions`),
-    grant: (departmentId: number, memberId: number) =>
-      request.json<PermissionGrant>(`/departments/${departmentId}/permissions`, {
-        method: "POST", body: { member_id: memberId },
-      }),
-    revoke: (departmentId: number, grantId: number) =>
-      request.json<{ detail: string }>(`/departments/${departmentId}/permissions/${grantId}`, { method: "DELETE" }),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
     ban: (dates: string[], reason: string | null) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),

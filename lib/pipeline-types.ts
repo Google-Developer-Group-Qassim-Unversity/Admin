@@ -19,7 +19,6 @@ export interface PipelineTeamEntry {
 
 export interface ActingDepartment extends PipelineDepartment {
   is_officer: boolean;
-  can_grant: boolean;
   teams: PipelineTeam[];
 }
 
@@ -30,29 +29,6 @@ export interface PipelineMe {
   has_access: boolean;
   departments: ActingDepartment[];
   teams: PipelineTeamEntry[];
-}
-
-export interface PermissionPerson {
-  member_id: number;
-  name: string;
-}
-
-export interface PermissionOfficer extends PermissionPerson {
-  role: string;
-}
-
-export interface PermissionGrant extends PermissionPerson {
-  id: number;
-  granted_by: PermissionPerson;
-  granted_at: string;
-}
-
-export interface DepartmentPermissions {
-  department: PipelineDepartment;
-  can_grant: boolean;
-  officers: PermissionOfficer[];
-  grants: PermissionGrant[];
-  candidates: PermissionPerson[];
 }
 
 export type PipelineTeamsInput = Partial<Record<PipelineTeam, number | null>>;
