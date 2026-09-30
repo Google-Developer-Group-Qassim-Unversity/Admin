@@ -13,6 +13,8 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+import { ScaledEmailFrame } from "./scaled-email-frame";
+
 interface HtmlPreviewDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -35,27 +37,21 @@ export function HtmlPreviewDialog({ open, onOpenChange, html, subject }: HtmlPre
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-fit! max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent className="sm:max-h-[90vh] sm:max-w-[calc(375px+3rem+2px)]">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
-          {subject && <DialogDescription>{subject}</DialogDescription>}
+          {subject && <DialogDescription dir="auto">{subject}</DialogDescription>}
         </DialogHeader>
         <div className="border rounded-md overflow-hidden bg-muted/30">
-          <iframe
-            srcDoc={html}
-            className="border-0"
-            style={{ width: "375px", height: "667px" }}
-            sandbox="allow-same-origin"
-            title="Email HTML Preview"
-          />
+          <ScaledEmailFrame srcDoc={html} title={t("title")} />
         </div>
-        <div className="flex items-center gap-2 pt-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">
           <Button variant="outline" size="sm" onClick={handleCopy}>
-            <Copy className="h-3.5 w-3.5 me-1.5" />
+            <Copy className="h-3.5 w-3.5" />
             {t("copyHtml")}
           </Button>
           <Button variant="outline" size="sm" onClick={handleOpenTab}>
-            <ExternalLink className="h-3.5 w-3.5 me-1.5" />
+            <ExternalLink className="h-3.5 w-3.5" />
             {t("openNewTab")}
           </Button>
         </div>

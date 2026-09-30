@@ -176,7 +176,7 @@ export default function ManageAdminsPage() {
   const currentUserId = user?.id;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6 sm:space-y-8">
       <PageHeader title={t("title")} description={t("subtitle")} icon={ShieldCheck}>
         <Button onClick={() => setIsAddDialogOpen(true)}>
           <UserPlus className="h-4 w-4 me-2" />

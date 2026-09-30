@@ -75,19 +75,20 @@ export default function CreateEventPage() {
 
   return (
     <div className="flex justify-center">
-      <Card className="w-full max-w-2xl">
+      {/* overflow-visible below md so the form's sticky save bar can stick. */}
+      <Card className="w-full max-w-2xl max-md:overflow-visible">
         <CardHeader>
-          <div className="mb-4">
-            <Button variant="ghost" size="sm" asChild>
+          <div className="mb-2 sm:mb-4">
+            <Button variant="ghost" size="sm" asChild className="-ms-2">
               <Link href="/events" className="flex items-center gap-2">
                 <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
                 {tl("backToEvents")}
               </Link>
             </Button>
           </div>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <CalendarPlus className="h-5 w-5 text-primary" />
+          <CardTitle className="flex items-center gap-3 font-display text-lg font-semibold tracking-tight">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
+              <CalendarPlus className="h-5 w-5 text-muted-foreground" />
             </div>
             {te("createNew")}
           </CardTitle>

@@ -219,12 +219,17 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
   return (
     <>
       <div className="flex flex-col items-center justify-center">
-        <div className="relative w-64 h-64 rounded-xl overflow-hidden bg-muted border-2 border-dashed border-muted-foreground/25">
+        <div
+          className={cn(
+            "relative aspect-square w-full max-w-md overflow-hidden rounded-2xl bg-muted md:size-64 md:max-w-none md:rounded-xl",
+            isCameraOn ? "border-2 border-transparent" : "border-2 border-dashed border-muted-foreground/25"
+          )}
+        >
           <video ref={videoRef} muted playsInline className="w-full h-full object-cover" />
 
           {!isCameraOn && !isStarting && (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground pointer-events-none">
-              <Camera className="h-16 w-16 mb-3 opacity-40" />
+              <Camera className="mb-3 h-16 w-16 opacity-40" />
               <p className="text-sm text-center px-4">{t("hint")}</p>
             </div>
           )}
@@ -233,9 +238,9 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
             className={cn(
               "absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 px-4 text-center transition-opacity duration-100",
               flash ? "opacity-100" : "opacity-0 pointer-events-none",
-              flash?.status === "marked" && "bg-primary/95 text-primary-foreground",
-              flash?.status === "already_marked" && "bg-amber-500/95 text-white",
-              flash?.status === "error" && "bg-destructive/95 text-white"
+              flash?.status === "marked" && "bg-brand-green-soft/95 text-brand-green-ink",
+              flash?.status === "already_marked" && "bg-brand-yellow-soft/95 text-brand-yellow-ink",
+              flash?.status === "error" && "bg-brand-red-soft/95 text-brand-red-ink"
             )}
           >
             {flash?.status === "error" ? (
@@ -243,15 +248,17 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
             ) : (
               <CheckCircle2 className="h-12 w-12" />
             )}
-            <p className="font-semibold leading-tight break-words">{flash?.label}</p>
+            <p className="text-lg leading-tight font-semibold break-words md:text-base" dir="auto">
+              {flash?.label}
+            </p>
             {flash?.status === "already_marked" && (
-              <p className="text-xs opacity-90">{t("alreadyMarkedLabel")}</p>
+              <p className="text-sm opacity-90 md:text-xs">{t("alreadyMarkedLabel")}</p>
             )}
           </div>
         </div>
       </div>
 
-      <div className="flex flex-col gap-6">
+      <div className="flex flex-col gap-3 md:gap-6">
         {isMultiDay && (
           <Select value={selectedDay} onValueChange={onDayChange}>
             <SelectTrigger className="w-full">
@@ -267,7 +274,12 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
           </Select>
         )}
 
-        <Button onClick={toggleCamera} disabled={isStarting} className="w-full">
+        <Button
+          onClick={toggleCamera}
+          disabled={isStarting}
+          variant={isCameraOn ? "outline" : "default"}
+          className="h-12 w-full text-base md:h-9 md:text-sm"
+        >
           {isStarting ? (
             <Loader2 className="h-4 w-4 animate-spin" />
           ) : isCameraOn ? (
@@ -283,20 +295,20 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
           {muted ? t("unmute") : t("mute")}
         </Button>
 
-        <div className="space-y-2">
-          <p className="text-sm font-medium">{t("scanCount", { count: entries.length })}</p>
+        <div className="space-y-2 pt-2 md:pt-0">
+          <p className="text-sm font-medium tabular">{t("scanCount", { count: entries.length })}</p>
           {entries.length === 0 ? (
             <p className="text-sm text-muted-foreground">{t("noScansYet")}</p>
           ) : (
             <div className="divide-y rounded-lg border">
               {entries.map((entry) => (
-                <div key={entry.id} className="flex items-center gap-2 px-3 py-2 text-sm">
-                  {entry.status === "marked" && <CheckCircle2 className="h-4 w-4 text-primary shrink-0" />}
+                <div key={entry.id} className="flex items-center gap-2.5 px-3 py-2.5 text-sm">
+                  {entry.status === "marked" && <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-green-ink" />}
                   {entry.status === "already_marked" && (
-                    <CheckCircle2 className="h-4 w-4 text-muted-foreground shrink-0" />
+                    <CheckCircle2 className="h-4 w-4 shrink-0 text-brand-yellow-ink" />
                   )}
-                  {entry.status === "error" && <XCircle className="h-4 w-4 text-destructive shrink-0" />}
-                  <span className="truncate">{entry.label}</span>
+                  {entry.status === "error" && <XCircle className="h-4 w-4 shrink-0 text-brand-red-ink" />}
+                  <span className="truncate" dir="auto">{entry.label}</span>
                 </div>
               ))}
             </div>

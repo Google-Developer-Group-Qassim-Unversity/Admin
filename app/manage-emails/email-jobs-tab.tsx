@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { formatDistanceToNow } from "date-fns";
 import { useAuth } from "@clerk/nextjs";
 import {
   AlertTriangle,
   Award,
   CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
   Clock,
   Loader2,
   Mail,
@@ -17,22 +18,24 @@ import {
   XCircle,
 } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { URGENCY_STYLES, type Urgency } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useEmailJobs, useUnfinishedEmailJobs } from "@/hooks/use-email-jobs";
 import type { EmailJobModel, EmailJobStatus, EmailJobType } from "@/lib/api-types";
-import { useTranslations } from "next-intl";
+import { useFormatter, useNow, useTranslations } from "next-intl";
 
-const TYPE_CONFIG: Record<EmailJobType, { icon: React.ElementType; badgeClass: string }> = {
-  "event-certificate": { icon: Award, badgeClass: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
-  "manual-certificate": { icon: PenLine, badgeClass: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20" },
-  "custom-email": { icon: Mail, badgeClass: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
-  "direct-email": { icon: Send, badgeClass: "bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/20" },
-  blast: { icon: Megaphone, badgeClass: "bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/20" },
-  acceptance: { icon: MailCheck, badgeClass: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20" },
+// A job's type is a category, not a state: the icon tells them apart and the
+// brand colours are kept for the status pill.
+const TYPE_ICON: Record<EmailJobType, React.ElementType> = {
+  "event-certificate": Award,
+  "manual-certificate": PenLine,
+  "custom-email": Mail,
+  "direct-email": Send,
+  blast: Megaphone,
+  acceptance: MailCheck,
 };
 
 // Maps a job type to the key under manageEmails.jobs.types.
@@ -45,50 +48,60 @@ const TYPE_LABEL_KEY: Record<EmailJobType, string> = {
   acceptance: "acceptance",
 };
 
+// Colour = state (DESIGN.md): queued/running are in flight on the server, not
+// waiting on an admin, so they read as info (blue); a partial send needs an
+// admin to check who was missed (yellow); failed is red; succeeded is done.
 const STATUS_CONFIG: Record<
   EmailJobStatus,
-  { icon: React.ElementType; badgeClass: string; spin?: boolean }
+  { icon: React.ElementType; urgency: Urgency; spin?: boolean }
 > = {
-  queued: { icon: Clock, badgeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20" },
-  running: { icon: Loader2, badgeClass: "bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/20", spin: true },
-  succeeded: { icon: CheckCircle2, badgeClass: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20" },
-  partial: { icon: AlertTriangle, badgeClass: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20" },
-  failed: { icon: XCircle, badgeClass: "bg-destructive/10 text-destructive border-destructive/20" },
+  queued: { icon: Clock, urgency: "info" },
+  running: { icon: Loader2, urgency: "info", spin: true },
+  succeeded: { icon: CheckCircle2, urgency: "done" },
+  partial: { icon: AlertTriangle, urgency: "waiting" },
+  failed: { icon: XCircle, urgency: "overdue" },
 };
 
 function JobRow({ job }: { job: EmailJobModel }) {
   const t = useTranslations("manageEmails.jobs");
-  const type = TYPE_CONFIG[job.job_type];
+  const format = useFormatter();
+  const now = useNow({ updateInterval: 60_000 });
+  const TypeIcon = TYPE_ICON[job.job_type] ?? Mail;
   const status = STATUS_CONFIG[job.status];
-  const TypeIcon = type.icon;
   const StatusIcon = status.icon;
 
   return (
-    <div className="flex items-start gap-3 px-3 py-2.5">
-      <div className="mt-0.5 shrink-0 text-muted-foreground">
+    <div className="flex items-start gap-3 px-3 py-3">
+      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
         <TypeIcon className="h-4 w-4" />
-      </div>
+      </span>
       <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2 flex-wrap">
-          <Badge variant="outline" className={`text-[10px] ${type.badgeClass}`}>
+        <div className="flex items-center gap-2">
+          <p className="min-w-0 flex-1 truncate text-sm font-medium">
             {t(`types.${TYPE_LABEL_KEY[job.job_type]}`)}
-          </Badge>
-          <Badge variant="outline" className={`text-[10px] gap-1 ${status.badgeClass}`}>
+          </p>
+          <span
+            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${URGENCY_STYLES[status.urgency].pill}`}
+          >
             <StatusIcon className={`h-3 w-3 ${status.spin ? "animate-spin" : ""}`} />
             {t(`statuses.${job.status}`)}
-          </Badge>
-          <span className="text-xs text-muted-foreground">
+          </span>
+        </div>
+        <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] sm:text-xs">
+          <span className="tabular">
             {t("sentCount", { succeeded: job.succeeded, total: job.total })}
             {job.failed > 0 ? t("failedSuffix", { failed: job.failed }) : ""}
           </span>
-        </div>
-        {job.error && <p className="text-xs text-destructive mt-1 truncate">{job.error}</p>}
-      </div>
-      <div className="text-end shrink-0">
-        <div className="text-xs text-muted-foreground">
-          {formatDistanceToNow(new Date(job.created_at), { addSuffix: true })}
-        </div>
-        <div className="text-[10px] text-muted-foreground/70">#{job.id}</div>
+          <span aria-hidden="true">·</span>
+          <time dateTime={job.created_at} className="tabular">
+            {format.relativeTime(new Date(job.created_at), now)}
+          </time>
+          <span aria-hidden="true">·</span>
+          <span className="tabular text-muted-foreground/70">#{job.id}</span>
+        </p>
+        {job.error && (
+          <p className="text-brand-red-ink mt-1 line-clamp-2 text-[13px] break-words sm:text-xs">{job.error}</p>
+        )}
       </div>
     </div>
   );
@@ -124,23 +137,23 @@ export function EmailJobsTab() {
   return (
     <div className="space-y-3">
       {unfinished.length > 0 && (
-        <Alert className="border-amber-500/30 bg-amber-500/5">
-          <AlertTriangle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-          <AlertTitle className="text-amber-700 dark:text-amber-400">
+        <Alert className="border-brand-yellow/40 bg-brand-yellow-soft">
+          <AlertTriangle className="h-4 w-4 text-brand-yellow-ink" />
+          <AlertTitle className="text-brand-yellow-ink">
             {t("unfinishedTitle", { count: unfinished.length })}
           </AlertTitle>
-          <AlertDescription className="text-xs text-muted-foreground">
+          <AlertDescription className="text-[13px] text-brand-yellow-ink/80 sm:text-xs">
             {t("unfinishedDescription")}
           </AlertDescription>
         </Alert>
       )}
 
-      <div className="flex items-center justify-between">
-        <span className="text-xs text-muted-foreground">
+      <div className="flex items-center justify-between gap-3">
+        <span className="tabular text-xs text-muted-foreground">
           {t("jobsCount", { count: jobs.length })}
         </span>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as EmailJobStatus | "all")}>
-          <SelectTrigger className="h-8 w-[160px] text-xs">
+          <SelectTrigger aria-label={t("filterByStatus")} className="w-[160px] sm:h-8 sm:text-xs">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -155,7 +168,7 @@ export function EmailJobsTab() {
       </div>
 
       <div className="rounded-lg border bg-card">
-        <ScrollArea className="h-[480px]">
+        <ScrollArea className="md:h-[480px] [&_[data-slot=scroll-area-viewport]>div]:block!">
           {jobsQuery.isLoading ? (
             <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -174,25 +187,25 @@ export function EmailJobsTab() {
           )}
         </ScrollArea>
         <div className="flex items-center justify-between border-t px-3 py-2">
-          <span className="text-xs text-muted-foreground">{tp("page", { page })}</span>
-          <div className="flex items-center gap-1">
+          <span className="tabular text-xs text-muted-foreground">{tp("page", { page })}</span>
+          <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs"
               disabled={page <= 1 || jobsQuery.isFetching}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
             >
+              <ChevronLeft className="rtl:-scale-x-100" />
               {tp("prev")}
             </Button>
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs"
               disabled={jobs.length < JOBS_PAGE_SIZE || jobsQuery.isFetching}
               onClick={() => setPage((p) => p + 1)}
             >
               {tp("next")}
+              <ChevronRight className="rtl:-scale-x-100" />
             </Button>
           </div>
         </div>

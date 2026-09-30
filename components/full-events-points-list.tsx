@@ -2,8 +2,8 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
+import { FilterBar } from "@/components/filter-bar";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FullEventPointsCard } from "@/components/full-event-points-card";
@@ -23,6 +23,7 @@ export function FullEventsPointsList({
   onSemesterChange, 
 }: FullEventsPointsListProps) {
   const t = useTranslations("events.filters");
+  const tp = useTranslations("points");
   const [searchQuery, setSearchQuery] = React.useState("");
   const semesterOptions = useSemesterOptions();
 
@@ -55,20 +56,22 @@ export function FullEventsPointsList({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative w-64">
-          <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={t("search")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="ps-8 h-9 text-sm"
-          />
-        </div>
-
+      <FilterBar
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={t("search")}
+        trailing={
+          hasActiveFilters ? (
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="shrink-0 pointer-coarse:h-9">
+              <X className="h-4 w-4" />
+              {tp("clearFilters")}
+            </Button>
+          ) : null
+        }
+      >
         {onSemesterChange && (
           <Select value={semester || "all"} onValueChange={onSemesterChange}>
-            <SelectTrigger className="h-9 w-36">
+            <SelectTrigger className="bg-card w-full sm:w-40" aria-label={t("semester")}>
               <SelectValue placeholder={t("semester")} />
             </SelectTrigger>
             <SelectContent>
@@ -79,29 +82,17 @@ export function FullEventsPointsList({
             </SelectContent>
           </Select>
         )}
-
-        {hasActiveFilters && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleClearFilters}
-            className="h-9 shrink-0"
-          >
-            <X className="h-4 w-4" />
-            remove filters
-          </Button>
-        )}
-      </div>
+      </FilterBar>
 
       {filteredEvents.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvents.map((event) => (
             <FullEventPointsCard key={event.id} event={event} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          No full events match your search. Try adjusting your search criteria.
+        <div className="text-muted-foreground py-12 text-center">
+          {tp("noMatchFull")}
         </div>
       )}
     </div>

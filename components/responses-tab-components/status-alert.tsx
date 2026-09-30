@@ -26,10 +26,10 @@ export function StatusAlert({
         icon: Info,
         title: t('notPublishedTitle'),
         description: t('notPublishedDescription'),
-        className: 'bg-blue-500/10 border-blue-500/30',
-        iconClassName: 'text-blue-600',
-        titleClassName: 'text-blue-700 dark:text-blue-400',
-        descClassName: 'text-blue-600/90 dark:text-blue-400/90',
+        className: 'bg-brand-blue-soft border-brand-blue/30',
+        iconClassName: 'text-brand-blue-ink',
+        titleClassName: 'text-brand-blue-ink',
+        descClassName: 'text-brand-blue-ink/90',
       };
     }
     
@@ -39,10 +39,10 @@ export function StatusAlert({
         icon: AlertTriangle,
         title: t('activeTitle'),
         description: t('activeDescription'),
-        className: 'bg-amber-500/10 border-amber-500/30',
-        iconClassName: 'text-amber-600',
-        titleClassName: 'text-amber-700 dark:text-amber-400',
-        descClassName: 'text-amber-600/90 dark:text-amber-400/90',
+        className: 'bg-brand-yellow-soft border-brand-yellow/40',
+        iconClassName: 'text-brand-yellow-ink',
+        titleClassName: 'text-brand-yellow-ink',
+        descClassName: 'text-brand-yellow-ink/90',
       };
     }
     

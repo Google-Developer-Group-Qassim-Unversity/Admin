@@ -221,7 +221,7 @@ export function SemesterDialog({ open, onOpenChange, semester, onSubmit, isLoadi
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="semester-hijri-year">{t("hijriYear")}</Label>
                 <Input
@@ -259,7 +259,7 @@ export function SemesterDialog({ open, onOpenChange, semester, onSubmit, isLoadi
                 : t("codesHint")}
             </p>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
               <DateField
                 id="semester-start"
                 label={t("startDate")}

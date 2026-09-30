@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/tooltip";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { URGENCY_STYLES } from "@/components/status-badge";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -300,7 +301,9 @@ export function createColumns(
       cell: ({ row }) => {
         const isAccepted = row.original.is_accepted;
         return isAccepted ? (
-          <Check className="h-4 w-4 text-green-600" />
+          <span className={`inline-flex size-6 items-center justify-center rounded-full ${URGENCY_STYLES.done.pill}`}>
+            <Check className="h-3.5 w-3.5" />
+          </span>
         ) : (
           <X className="h-4 w-4 text-muted-foreground" />
         );
@@ -316,7 +319,9 @@ export function createColumns(
       cell: ({ row }) => {
         const isInvited = row.original.is_invited;
         return isInvited ? (
-          <Check className="h-4 w-4 text-blue-600" />
+          <span className={`inline-flex size-6 items-center justify-center rounded-full ${URGENCY_STYLES.info.pill}`}>
+            <Check className="h-3.5 w-3.5" />
+          </span>
         ) : (
           <X className="h-4 w-4 text-muted-foreground" />
         );
@@ -336,7 +341,7 @@ export function createColumns(
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="font-medium">{name}</span>
+                <span className="font-medium" dir="auto">{name}</span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{name}</p>
@@ -344,7 +349,7 @@ export function createColumns(
             </Tooltip>
           );
         }
-        return <span className="font-medium">{name}</span>;
+        return <span className="font-medium" dir="auto">{name}</span>;
       },
     },
     {
@@ -416,7 +421,7 @@ export function createColumns(
       cell: ({ row }) => {
         const date = new Date(row.getValue("submitted_at"));
         return (
-          <span className="text-muted-foreground">
+          <span className="tabular text-muted-foreground">
             {date.toLocaleDateString()}{" "}
             {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
           </span>

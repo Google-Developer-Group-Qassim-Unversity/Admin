@@ -89,6 +89,9 @@ function DepartmentRoster({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-2">
         <Input
+          type="search"
+          inputMode="search"
+          enterKeyHint="search"
           className="min-w-0 flex-1 basis-40"
           aria-label={t("searchMembers")}
           placeholder={t("searchMembers")}
@@ -366,7 +369,7 @@ export function DepartmentDrawer({
         className="w-full! sm:max-w-[480px]! gap-0"
         closeLabel={common("actions.close")}
       >
-        <SheetHeader className="border-b p-6 pe-12">
+        <SheetHeader className="border-b p-4 pe-12 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6 sm:pe-12">
           <div className="flex items-center gap-3">
             {current && <DepartmentIcon {...current} />}
             <div className="min-w-0 space-y-1">
@@ -387,12 +390,12 @@ export function DepartmentDrawer({
           </div>
         </SheetHeader>
         {department.isPending && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <ClubLoading />
           </div>
         )}
         {department.error && (
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             <QueryError error={department.error} retry={() => void department.refetch()} stale={!!current} />
           </div>
         )}
@@ -422,11 +425,11 @@ export function DepartmentDrawer({
               </ClubTabsTrigger>
             </ClubTabsList>
             {!card && (
-              <p className="border-b bg-muted/40 px-6 py-3 text-xs text-muted-foreground">
+              <p className="border-b bg-muted/40 px-4 py-3 text-xs sm:px-6 text-muted-foreground">
                 {t("notInSemesterHint", { semester: semester.name })}
               </p>
             )}
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-6">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:p-6">
               {card && (
                 <TabsContent value="roster">
                   {roster.isPending && <ClubLoading />}

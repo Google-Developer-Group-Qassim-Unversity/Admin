@@ -2,10 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import * as React from "react";
-import { Search, X } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { CustomEventCard } from "@/components/custom-event-card";
+import { FilterBar } from "@/components/filter-bar";
+import { PointsCustomEventCard } from "@/components/points-custom-event-card";
 import type { Event } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
 
@@ -36,42 +36,29 @@ export function CustomEventsList({ events }: CustomEventsListProps) {
 
   return (
     <div className="space-y-4">
-      {/* Search Filter */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative w-64">
-          <Search className="absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder={tp("searchCustom")}
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="ps-8 h-9 text-sm"
-          />
-        </div>
+      <FilterBar
+        search={searchQuery}
+        onSearchChange={setSearchQuery}
+        searchPlaceholder={tp("searchCustom")}
+        trailing={
+          searchQuery ? (
+            <Button variant="ghost" size="sm" onClick={handleClearFilters} className="shrink-0 pointer-coarse:h-9">
+              <X className="h-4 w-4" />
+              {tp("clearFilters")}
+            </Button>
+          ) : null
+        }
+      />
 
-        {searchQuery && (
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleClearFilters}
-            className="h-9 shrink-0"
-          >
-            <X className="h-4 w-4" />
-            remove filters
-          </Button>
-        )}
-      </div>
-
-      {/* Grid */}
       {filteredEvents.length > 0 ? (
-        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvents.map((event) => (
-            <CustomEventCard key={event.id} event={event} />
+            <PointsCustomEventCard key={event.id} event={event} />
           ))}
         </div>
       ) : (
-        <div className="text-center py-12 text-muted-foreground">
-          No custom events match your search. Try adjusting your search
-          criteria.
+        <div className="text-muted-foreground py-12 text-center">
+          {tp("noMatchCustom")}
         </div>
       )}
     </div>

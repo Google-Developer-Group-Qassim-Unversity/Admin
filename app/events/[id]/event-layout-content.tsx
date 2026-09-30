@@ -3,8 +3,8 @@
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX } from "lucide-react";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/status-badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +20,11 @@ const TAB_ITEMS = [
   { value: "attendance", key: "attendance", icon: ClipboardCheck, path: "/attendance" },
   { value: "edit", key: "edit", icon: Pencil, path: "/edit" },
 ] as const;
+
+/** Brings the active tab into view when the strip is scrolled sideways. */
+function scrollIntoViewOnMount(el: HTMLAnchorElement | null) {
+  el?.scrollIntoView({ block: "nearest", inline: "center" });
+}
 
 function TabSkeleton({ w }: { w: string }) {
   return (
@@ -65,7 +70,7 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Skeleton className="w-full h-150 rounded-lg" />
+            <Skeleton className="w-full aspect-square sm:aspect-auto sm:h-150 rounded-lg" />
             <div className="space-y-6">
               <Skeleton className="h-12 w-3/4" />
               <div className="flex gap-2">
@@ -151,44 +156,53 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
 
   return (
     <EventProvider event={event} isLoading={isLoading} error={error} refetch={refetch}>
-      <div className="space-y-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href={backHref} className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-            {backLabel}
-          </Link>
-        </Button>
+      <div className="space-y-4 sm:space-y-6">
+        <div className="flex items-start gap-2 sm:flex-col sm:gap-3">
+          <Button variant="ghost" size="sm" asChild className="-ms-2 shrink-0 max-sm:size-9 max-sm:px-0">
+            <Link href={backHref} className="flex items-center gap-2" aria-label={backLabel}>
+              <ArrowLeft className="h-4 w-4 rtl:-scale-x-100 max-sm:h-5 max-sm:w-5" />
+              <span className="max-sm:hidden">{backLabel}</span>
+            </Link>
+          </Button>
 
-        <h1 className="text-2xl font-bold">{event.name}</h1>
+          <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-1 sm:flex-row sm:items-center sm:gap-3 sm:pt-0">
+            <h1 className="font-display line-clamp-3 text-xl leading-tight font-semibold tracking-tight text-balance sm:text-2xl" dir="auto">
+              {event.name}
+            </h1>
+            <StatusBadge status={event.status} className="shrink-0" />
+          </div>
+        </div>
 
-        <nav className="border-b">
-          <ScrollArea className="w-full">
-            <div className="flex gap-1">
-              {TAB_ITEMS.map((tab) => {
-                const isActive = isActiveTab(tab.path);
-                const href = `/events/${eventId}${tab.path}`;
-                return (
-                  <Link
-                    key={tab.value}
-                    href={href}
-                    prefetch
-                    className={`flex items-center gap-2 px-3 py-3 text-sm font-medium transition-colors relative ${
-                      isActive
-                        ? "text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <tab.icon className="h-4 w-4" />
-                    {t(`tabs.${tab.key}`)}
-                    {isActive && (
-                      <span className="absolute bottom-0 inset-x-0 h-0.5 bg-primary" />
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-            <ScrollBar orientation="horizontal" />
-          </ScrollArea>
+        {/* Sticky under the top bar on phones so switching tab never needs a
+            scroll back up; the strip scrolls sideways and keeps the current
+            tab in view. */}
+        <nav className="bg-background/95 supports-backdrop-filter:bg-background/80 border-border sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 supports-backdrop-filter:backdrop-blur-lg sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
+          <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
+            {TAB_ITEMS.map((tab) => {
+              const isActive = isActiveTab(tab.path);
+              const href = `/events/${eventId}${tab.path}`;
+              return (
+                <Link
+                  key={tab.value}
+                  href={href}
+                  prefetch
+                  aria-current={isActive ? "page" : undefined}
+                  ref={isActive ? scrollIntoViewOnMount : undefined}
+                  className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors pointer-coarse:py-3.5 ${
+                    isActive
+                      ? "text-foreground"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <tab.icon className="h-4 w-4" />
+                  {t(`tabs.${tab.key}`)}
+                  {isActive && (
+                    <span className="bg-primary absolute inset-x-2 bottom-0 h-[3px] rounded-t-full" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </nav>
 
         <div className="space-y-6">

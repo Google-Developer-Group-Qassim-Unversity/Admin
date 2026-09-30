@@ -3,18 +3,12 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Trophy } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { PointsEditorShell } from "@/components/points-editor-shell";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CustomEventForm,
@@ -427,38 +421,24 @@ if (actionsRes.success) {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center">
-        <Card className="w-full max-w-4xl">
-          <CardHeader>
-            <div className="mb-4">
-              <Skeleton className="h-9 w-40" />
+      <PointsEditorShell title={null}>
+        <div className="space-y-6">
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-40" />
+            <Skeleton className="h-10 w-full" />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
             </div>
-            <div className="flex items-center gap-2">
-              <Skeleton className="h-10 w-10 rounded-lg" />
-              <Skeleton className="h-7 w-48" />
-            </div>
-            <Skeleton className="h-5 w-72" />
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-6">
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-40" />
-                <Skeleton className="h-10 w-full" />
-                <div className="grid grid-cols-2 gap-4">
-                  <Skeleton className="h-10 w-full" />
-                  <Skeleton className="h-10 w-full" />
-                </div>
-              </div>
-              <Skeleton className="h-px w-full" />
-              <div className="space-y-4">
-                <Skeleton className="h-6 w-32" />
-                <Skeleton className="h-24 w-full" />
-                <Skeleton className="h-24 w-full" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+          </div>
+          <Skeleton className="h-px w-full" />
+          <div className="space-y-4">
+            <Skeleton className="h-6 w-32" />
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-24 w-full" />
+          </div>
+        </div>
+      </PointsEditorShell>
     );
   }
 
@@ -495,46 +475,24 @@ if (actionsRes.success) {
   }
 
   return (
-    <div className="flex justify-center">
-      <Card className="w-full max-w-4xl">
-        <CardHeader>
-          <div className="mb-4">
-            <Button variant="ghost" size="sm" asChild>
-              <Link href="/points" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-                {tl("backToPoints")}
-              </Link>
-            </Button>
-          </div>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <Trophy className="h-5 w-5 text-primary" />
-            </div>
-            {isFullEvent ? t("titleFull") : t("titleCustom")}
-          </CardTitle>
-          <CardDescription>
-            {isFullEvent 
-              ? t("descriptionFull")
-              : t("descriptionCustom")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <CustomEventForm
-            mode="edit"
-            initialData={initialData ?? undefined}
-            initialMemberData={initialMemberData ?? undefined}
-            eventNameOptions={eventNameOptions}
-            allEvents={allEvents}
-            departmentOptions={departmentOptions}
-            memberOptions={memberOptions}
-            actionOptions={actionOptions}
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            isFullEvent={isFullEvent}
-            onMemberCreated={handleMemberCreated}
-          />
-        </CardContent>
-      </Card>
-    </div>
+    <PointsEditorShell
+      title={isFullEvent ? t("titleFull") : t("titleCustom")}
+      description={isFullEvent ? t("descriptionFull") : t("descriptionCustom")}
+    >
+      <CustomEventForm
+        mode="edit"
+        initialData={initialData ?? undefined}
+        initialMemberData={initialMemberData ?? undefined}
+        eventNameOptions={eventNameOptions}
+        allEvents={allEvents}
+        departmentOptions={departmentOptions}
+        memberOptions={memberOptions}
+        actionOptions={actionOptions}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        isFullEvent={isFullEvent}
+        onMemberCreated={handleMemberCreated}
+      />
+    </PointsEditorShell>
   );
 }

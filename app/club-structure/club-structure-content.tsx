@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
+import { PageHeader } from "@/components/page-header";
 import { DepartmentCard } from "@/components/club-structure/department-card";
 import { DepartmentDrawer } from "@/components/club-structure/department-drawer";
 import {
@@ -211,15 +212,13 @@ function ClubStructureOverview() {
   };
 
   return (
-    <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="mt-1 text-sm text-muted-foreground">{t("subtitle")}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+    <div className="space-y-6 sm:space-y-8">
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Network}>
+        {/* Phones: the semester picker takes its own full-width row above the
+            two actions; from sm everything sits on the header's trailing side. */}
+        <div className="flex w-full flex-wrap items-center gap-2 *:flex-1 sm:w-auto sm:*:flex-none">
           <Select value={semester?.id} onValueChange={selectSemester} disabled={!semesters.data}>
-            <SelectTrigger className="w-full min-w-0 sm:w-64" aria-label={t("semester")}>
+            <SelectTrigger className="bg-card w-full min-w-0 basis-full sm:w-64 sm:basis-auto" aria-label={t("semester")}>
               <SelectValue placeholder={t("semester")} />
             </SelectTrigger>
             <SelectContent>
@@ -241,7 +240,7 @@ function ClubStructureOverview() {
             </Button>
           )}
         </div>
-      </div>
+      </PageHeader>
       {!canEdit && <p className="text-sm text-muted-foreground">{t("readOnlyHint")}</p>}
       {overview.error && (
         <QueryError error={overview.error} stale={!!overview.data} retry={() => void overview.refetch()} />
@@ -249,7 +248,7 @@ function ClubStructureOverview() {
       {!overview.data && !overview.error && <ClubLoading overview />}
       {overview.data && semester && (
         <>
-          <dl className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+          <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
             {[
               { label: t("semesterDepartments", { semester: semester.name }), value: departments.length },
               { label: t("active"), value: departments.filter((department) => department.active).length },
@@ -268,9 +267,15 @@ function ClubStructureOverview() {
             <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-3">
               {canEdit ? <AddDepartmentToSemester key={semester.id} overview={overview.data} /> : <span />}
               <div className="relative w-full sm:w-64">
-                <Search className="absolute start-3 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
+                <Search
+                  className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  aria-hidden="true"
+                />
                 <Input
-                  className="ps-9"
+                  type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
+                  className="bg-card ps-9"
                   aria-label={t("searchDepartments")}
                   placeholder={t("searchDepartments")}
                   value={search}
@@ -279,7 +284,7 @@ function ClubStructureOverview() {
               </div>
             </div>
             {visible.length ? (
-              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
                 {visible.map((department) => (
                   <DepartmentCard
                     key={department.id}

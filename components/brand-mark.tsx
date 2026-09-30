@@ -82,8 +82,8 @@ export function AppBackground() {
       {/* Glowing colour orbs, blurred into washes. */}
       <div className="bg-brand-blue absolute -top-40 -end-40 h-[36rem] w-[36rem] rounded-full opacity-[0.13] blur-[120px] dark:opacity-30" />
       <div className="bg-brand-green absolute -bottom-48 -start-40 h-[38rem] w-[38rem] rounded-full opacity-[0.11] blur-[130px] dark:opacity-25" />
-      <div className="bg-brand-yellow absolute top-1/3 start-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px] dark:opacity-[0.14]" />
-      <div className="bg-brand-red absolute -bottom-32 end-1/4 h-[22rem] w-[22rem] rounded-full opacity-[0.07] blur-[120px] dark:opacity-[0.12]" />
+      <div className="bg-brand-yellow absolute top-1/3 max-md:hidden start-1/2 h-[26rem] w-[26rem] -translate-x-1/2 rounded-full opacity-[0.10] blur-[120px] dark:opacity-[0.14]" />
+      <div className="bg-brand-red absolute -bottom-32 max-md:hidden end-1/4 h-[22rem] w-[22rem] rounded-full opacity-[0.07] blur-[120px] dark:opacity-[0.12]" />
 
       {/* Big faint arcs - the hero mark, blown up and bled off two corners. */}
       <BrandArcs
@@ -92,7 +92,7 @@ export function AppBackground() {
       />
       <BrandArcs
         size={520}
-        className="absolute -bottom-60 -start-44 rotate-180 opacity-[0.08] rtl:-scale-x-100 dark:opacity-[0.13]"
+        className="absolute -bottom-60 max-md:hidden -start-44 rotate-180 opacity-[0.08] rtl:-scale-x-100 dark:opacity-[0.13]"
       />
 
       {/* Dot grid over the top: grey-blue on light, faint white on dark. */}

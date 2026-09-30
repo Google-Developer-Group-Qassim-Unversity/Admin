@@ -39,9 +39,9 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
   };
 
   return (
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-4">
-      <div className="flex items-center gap-4">
-        <div className="text-sm text-muted-foreground">
+    <div className="flex flex-col items-center justify-between gap-3 py-4 sm:flex-row sm:gap-4">
+      <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-start">
+        <div className="tabular text-[13px] text-muted-foreground sm:text-sm">
           {t("showingRange", {
             from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1,
             to: Math.min(
@@ -54,7 +54,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">{tm("rows")}</span>
           <Select value={String(currentPageSize)} onValueChange={handlePageSizeChange}>
-            <SelectTrigger className="w-[70px]" size="sm">
+            <SelectTrigger className="w-[70px] pointer-coarse:w-20" size="sm">
               <SelectValue />
             </SelectTrigger>
             <SelectContent align="start">
@@ -67,14 +67,14 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
           </Select>
         </div>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-2 sm:gap-1">
         <Button
           variant="outline"
           size="icon-sm"
           onClick={() => table.setPageIndex(0)}
           disabled={!table.getCanPreviousPage()}
         >
-          <ChevronsLeft className="h-4 w-4" />
+          <ChevronsLeft className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
         <Button
           variant="outline"
@@ -84,7 +84,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
         >
           <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
-        <span className="px-3 text-sm">
+        <span className="tabular px-3 text-sm">
           {tm("page", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
         </span>
         <Button
@@ -101,7 +101,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
           onClick={() => table.setPageIndex(table.getPageCount() - 1)}
           disabled={!table.getCanNextPage()}
         >
-          <ChevronsRight className="h-4 w-4" />
+          <ChevronsRight className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
       </div>
     </div>

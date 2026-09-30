@@ -295,13 +295,22 @@ export function DateTimeRangePicker({
             className
           )}
         >
-          <CalendarIcon className="me-2 h-4 w-4" />
+          <CalendarIcon className="me-2 h-4 w-4 shrink-0" />
           {/* The summary is a Latin date string ("10 Sep, 10:00 AM - 11:00 AM"),
               which bidi reorders into nonsense inside an RTL button. */}
-          <span dir={value.startDate ? "ltr" : undefined}>{getDisplayText()}</span>
+          <span dir={value.startDate ? "ltr" : undefined} className="tabular min-w-0 truncate">
+            {getDisplayText()}
+          </span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0" align="start">
+      {/* Phone: as wide as the field (never wider than the screen) with
+          36px day cells for a thumb, and it scrolls rather than running off
+          the screen when the field sits mid-page; sm+: the compact popover. */}
+      <PopoverContent
+        className="max-h-(--radix-popover-content-available-height) w-(--radix-popover-trigger-width) max-w-[calc(100vw-2rem)] overflow-y-auto overscroll-contain p-0 sm:w-auto sm:max-w-none"
+        align="start"
+        collisionPadding={16}
+      >
         {/* The time row below is wider than a default calendar, so the calendar
             stretches to match instead of leaving a gap beside the grid. */}
         <Calendar
@@ -310,7 +319,7 @@ export function DateTimeRangePicker({
           onSelect={handleDateRangeSelect}
           numberOfMonths={1}
           disabled={disabled}
-          className="w-full p-3"
+          className="w-full p-3 max-sm:[--cell-size:--spacing(9)]"
           classNames={{ root: "w-full" }}
         />
         <div className="grid grid-cols-2 gap-3 border-t p-3">

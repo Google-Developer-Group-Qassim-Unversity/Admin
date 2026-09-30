@@ -39,6 +39,7 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSearchDialogProps) {
   const t = useTranslations("memberSearch");
   const tc = useTranslations("common.actions");
+  const tPager = useTranslations("common.pager");
 
   const [searchQuery, setSearchQuery] = React.useState("");
   const [page, setPage] = React.useState(1);
@@ -92,16 +93,19 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl! max-h-[80vh] flex flex-col">
+      <DialogContent className="flex h-[92dvh] flex-col sm:h-auto sm:max-h-[80vh] sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
+        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-y-auto overscroll-contain sm:block sm:space-y-4">
           <div className="relative">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
+              type="search"
+              inputMode="search"
+              enterKeyHint="search"
               placeholder={t("searchPlaceholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -109,13 +113,13 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
             />
           </div>
 
-          <div className="border rounded-lg">
-            <div className="p-3 border-b bg-muted/50 flex items-center justify-between">
+          <div className="flex min-h-0 flex-1 flex-col border rounded-lg sm:block">
+            <div className="p-3 border-b bg-muted/50 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
               <h3 className="text-sm font-medium">{t("membersHeading")}</h3>
               <p className="text-xs text-muted-foreground">{t("searchAllHint")}</p>
             </div>
             <div
-              className={`h-[200px] overflow-y-auto transition-opacity ${
+              className={`min-h-[200px] flex-1 overflow-y-auto overscroll-contain transition-opacity sm:h-[200px] sm:flex-none ${
                 query.isPlaceholderData ? "opacity-60" : ""
               }`}
             >
@@ -143,16 +147,16 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                       className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{member.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {member.uni_id} &bull; {member.email}
+                        <p dir="auto" className="text-sm font-medium truncate">{member.name}</p>
+                        <p className="text-[13px] text-muted-foreground truncate sm:text-xs">
+                          <span className="tabular">{member.uni_id}</span> &bull; {member.email}
                         </p>
                       </div>
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleStage(member)}
-                        className="shrink-0"
+                        className="shrink-0 pointer-coarse:h-10"
                       >
                         <UserPlus className="h-3.5 w-3.5 me-1" />
                         {t("add")}
@@ -164,13 +168,15 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
             </div>
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t px-3 py-2">
-                <span className="text-xs text-muted-foreground">
+                <span className="tabular text-xs text-muted-foreground">
                   {t("pageOf", { page, total: totalPages })}
                 </span>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="icon-sm"
+                    className="pointer-coarse:size-10"
+                    aria-label={tPager("previous")}
                     disabled={page <= 1 || query.isFetching}
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
                   >
@@ -179,6 +185,8 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                   <Button
                     variant="outline"
                     size="icon-sm"
+                    className="pointer-coarse:size-10"
+                    aria-label={tPager("next")}
                     disabled={page >= totalPages || query.isFetching}
                     onClick={() => setPage((p) => p + 1)}
                   >
@@ -196,7 +204,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                   {t("selectedHeading", { count: stagedMembers.length })}
                 </h3>
               </div>
-              <div className="max-h-[160px] overflow-y-auto">
+              <div className="max-h-[160px] overflow-y-auto overscroll-contain">
                 <div className="divide-y">
                   {stagedMembers.map((member) => (
                     <div
@@ -204,10 +212,16 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                       className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
                     >
                       <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{member.name}</p>
-                        <p className="text-xs text-muted-foreground">{member.uni_id}</p>
+                        <p dir="auto" className="text-sm font-medium truncate">{member.name}</p>
+                        <p className="tabular text-xs text-muted-foreground">{member.uni_id}</p>
                       </div>
-                      <Button size="icon-sm" variant="ghost" onClick={() => handleUnstage(member.id)}>
+                      <Button
+                        size="icon-sm"
+                        variant="ghost"
+                        className="pointer-coarse:size-10"
+                        aria-label={tc("remove")}
+                        onClick={() => handleUnstage(member.id)}
+                      >
                         <X className="h-4 w-4" />
                       </Button>
                     </div>

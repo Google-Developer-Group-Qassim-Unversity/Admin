@@ -45,25 +45,25 @@ function PreviewDialog({
   const t = useTranslations("manageEmails.assets.items");
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl! max-h-[85vh] flex flex-col p-0 overflow-hidden">
-        <DialogHeader className="px-6 pt-6 pb-2">
+      <DialogContent className="flex max-h-[88dvh] flex-col gap-0 overflow-hidden p-0 sm:max-h-[85vh] sm:max-w-4xl">
+        <DialogHeader className="px-5 pt-7 pb-3 sm:px-6 sm:pt-6">
           <DialogTitle>{t(`${asset.key}.name`)}</DialogTitle>
           <DialogDescription>{t(`${asset.key}.description`)}</DialogDescription>
         </DialogHeader>
         <div className="flex-1 min-h-0 border-t">
           {asset.type === "svg" && asset.src && (
-            <div className="w-full h-full min-h-[400px] bg-muted/30 flex items-center justify-center p-4 overflow-auto">
+            <div className="w-full h-full min-h-[50dvh] sm:min-h-[400px] bg-muted/30 flex items-center justify-center p-4 overflow-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset.src} alt={t(`${asset.key}.name`)} className="max-w-full max-h-full object-contain" />
             </div>
           )}
           {asset.type === "html" && asset.src && (
-            <iframe src={asset.src} className="w-full h-full min-h-[400px] border-0" title={t(`${asset.key}.name`)} />
+            <iframe src={asset.src} className="w-full h-full min-h-[60dvh] sm:min-h-[400px] border-0 bg-white" title={t(`${asset.key}.name`)} />
           )}
           {asset.type === "figma" && asset.iframeSrc && (
             <iframe
               src={asset.iframeSrc}
-              className="w-full h-full min-h-[400px] border-0"
+              className="w-full h-full min-h-[60dvh] sm:min-h-[400px] border-0"
               style={{ border: "1px solid rgba(0, 0, 0, 0.1)" }}
               title={t(`${asset.key}.name`)}
               allowFullScreen
@@ -105,20 +105,21 @@ export function AssetsPanel() {
           {assets.map((asset) => (
             <div
               key={asset.key}
-              className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-muted/50 transition-colors group"
+              className="flex items-center gap-2 px-2 py-1.5 pointer-coarse:py-2 rounded-md hover:bg-muted/50 transition-colors group"
             >
               <asset.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium truncate">{t(`items.${asset.key}.name`)}</p>
-                <p className="text-[10px] text-muted-foreground truncate">{t(`items.${asset.key}.description`)}</p>
+                <p className="text-sm font-medium truncate md:text-xs">{t(`items.${asset.key}.name`)}</p>
+                <p className="text-xs text-muted-foreground truncate">{t(`items.${asset.key}.description`)}</p>
               </div>
-              <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 pointer-coarse:opacity-100">
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="h-6 w-6"
+                      className="md:size-6"
+                      aria-label={t("preview")}
                       onClick={() => setPreviewAsset(asset)}
                     >
                       <Eye className="h-3 w-3" />
@@ -131,7 +132,8 @@ export function AssetsPanel() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="h-6 w-6"
+                      className="md:size-6"
+                      aria-label={asset.type === "figma" ? t("openInFigma") : t("download")}
                       onClick={() => handleDownload(asset)}
                     >
                       <Download className="h-3 w-3" />

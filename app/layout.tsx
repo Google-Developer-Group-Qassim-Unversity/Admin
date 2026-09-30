@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Manrope, Outfit, IBM_Plex_Sans_Arabic } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
@@ -52,6 +52,18 @@ export const metadata: Metadata = {
   icons: {
     icon: "/gdg.ico",
   },
+};
+
+// viewport-fit=cover lets the bottom nav and sheets run under the home
+// indicator; they pad themselves with env(safe-area-inset-*).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#1b2130" },
+  ],
 };
 
 export default async function RootLayout({

@@ -245,7 +245,7 @@ export function BackfillTab({
       </div>
 
       {!isVerified ? (
-        <Button onClick={handleVerify} disabled={isVerifying || !token.trim()}>
+        <Button onClick={handleVerify} disabled={isVerifying || !token.trim()} className="w-full sm:w-auto">
           {isVerifying ? (
             <>
               <Loader2 className="me-2 h-4 w-4 animate-spin" />
@@ -265,10 +265,10 @@ export function BackfillTab({
               <CardTitle className="text-base">{t("tokenMetadata")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3 pt-0">
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+              <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
                 <div className="flex justify-between items-center">
                   <span className="text-muted-foreground">{t("rowCount")}</span>
-                  <span className="font-medium">
+                  <span className="tabular font-medium">
                     {metadata?.row_count ?? "-"}
                   </span>
                 </div>
@@ -277,7 +277,7 @@ export function BackfillTab({
                   <Badge
                     className={
                       isValidData
-                        ? "bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400"
+                        ? "border-transparent bg-brand-green-soft text-brand-green-ink"
                         : ""
                     }
                     variant={isValidData ? "outline" : "destructive"}
@@ -327,7 +327,24 @@ export function BackfillTab({
                 <Label>
                   {t("preview", { count: verifiedRows.length })}
                 </Label>
-                <Card className="p-0 overflow-hidden">
+                <ul className="max-h-60 divide-y overflow-y-auto overscroll-contain rounded-lg border sm:hidden">
+                  {verifiedRows.slice(0, 50).map((row, idx) => (
+                    <li key={idx} className="px-3 py-2">
+                      <p className="truncate text-sm font-medium"><bdi>{row.name}</bdi></p>
+                      <p className="truncate text-[13px] text-muted-foreground">
+                        <span className="tabular" dir="ltr">{row["university id"]}</span>
+                        {" · "}
+                        <span dir="ltr">{row.email}</span>
+                      </p>
+                    </li>
+                  ))}
+                  {verifiedRows.length > 50 && (
+                    <li className="px-3 py-2 text-center text-[13px] text-muted-foreground">
+                      {t("andMore", { count: verifiedRows.length - 50 })}
+                    </li>
+                  )}
+                </ul>
+                <Card className="hidden overflow-hidden p-0 sm:flex">
                   <ScrollArea className="h-48">
                     <Table>
                       <TableHeader>
@@ -368,11 +385,11 @@ export function BackfillTab({
             </>
           )}
 
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-center gap-2">
               <Label className="text-muted-foreground">{t("dayLabel")}</Label>
               <Select value={selectedDay} onValueChange={onDayChange}>
-                <SelectTrigger className="w-24">
+                <SelectTrigger className="flex-1 sm:w-24 sm:flex-none">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -387,18 +404,19 @@ export function BackfillTab({
               </Select>
             </div>
 
-            <div className="flex-1" />
+            <div className="hidden flex-1 sm:block" />
 
             <Button
               variant="outline"
               onClick={handleReset}
               disabled={isSubmitting}
+              className="order-last sm:order-none"
             >
               {t("reset")}
             </Button>
 
             {isValidData && (
-              <Button onClick={handleSubmit} disabled={isSubmitting}>
+              <Button onClick={handleSubmit} disabled={isSubmitting} className="whitespace-normal">
                 {isSubmitting ? (
                   <>
                     <Loader2 className="me-2 h-4 w-4 animate-spin" />
@@ -438,7 +456,7 @@ export function BackfillTab({
                     <span className="text-sm text-muted-foreground">
                       {t("created")}
                     </span>
-                    <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
+                    <Badge className="tabular border-transparent bg-brand-green-soft text-brand-green-ink">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
@@ -461,7 +479,7 @@ export function BackfillTab({
                     <span className="text-sm text-muted-foreground">
                       {t("marked")}
                     </span>
-                    <Badge className="bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400">
+                    <Badge className="tabular border-transparent bg-brand-green-soft text-brand-green-ink">
                       {summaryDialog?.marked_count ?? 0}
                     </Badge>
                   </div>
@@ -469,7 +487,7 @@ export function BackfillTab({
                     <span className="text-sm text-muted-foreground">
                       {t("skipped")}
                     </span>
-                    <Badge className="bg-amber-500/10 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400">
+                    <Badge className="tabular border-transparent bg-brand-yellow-soft text-brand-yellow-ink">
                       {summaryDialog?.already_attended_count ?? 0}
                     </Badge>
                   </div>

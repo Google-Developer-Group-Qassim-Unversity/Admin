@@ -43,14 +43,6 @@ export default function FullEventsPage() {
   if (isLoading) {
     return (
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-            <p className="text-muted-foreground mt-2">
-              {t("subtitle")}
-            </p>
-          </div>
-        </div>
         <div className="flex justify-center py-12">
           <div className="animate-pulse text-muted-foreground">{tp("loadingEvents")}</div>
         </div>
@@ -61,14 +53,6 @@ export default function FullEventsPage() {
   if (error) {
     return (
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-            <p className="text-muted-foreground mt-2">
-              {t("subtitle")}
-            </p>
-          </div>
-        </div>
         <div className="flex justify-center">
           <Alert variant="destructive" className="max-w-2xl">
             <AlertCircle className="h-4 w-4" />
@@ -88,14 +72,6 @@ export default function FullEventsPage() {
   if (fullEvents.length === 0) {
     return (
       <div className="space-y-8">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-            <p className="text-muted-foreground mt-2">
-              {t("subtitle")}
-            </p>
-          </div>
-        </div>
         <div className="flex justify-center">
           <Alert className="max-w-2xl">
             <Calendar className="h-4 w-4" />
@@ -122,15 +98,6 @@ export default function FullEventsPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-2">
-            Manage points for full events
-          </p>
-        </div>
-      </div>
-
       <FullEventsPointsList
         events={fullEvents}
         semester={semester}

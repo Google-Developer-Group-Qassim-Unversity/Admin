@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useTranslations } from "next-intl";
 import { format, setHours, setMinutes } from "date-fns";
-import { CalendarIcon, Plus, Building2, User } from "lucide-react";
+import { CalendarIcon, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -26,6 +26,7 @@ import type { CustomEventDepartment, CustomEventMember, GroupedActions, Location
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 import { useUserRole } from "@/hooks/use-rbac";
+import { FormActions } from "@/components/form-actions";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
@@ -126,7 +127,6 @@ export function CustomEventForm({
   });
 
   const [calendarOpen, setCalendarOpen] = React.useState(false);
-  const [showTypeSelector, setShowTypeSelector] = React.useState(false);
 
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
@@ -215,7 +215,6 @@ export function CustomEventForm({
 
   const addRow = (type: PointRowType) => {
     setRows((prev) => [...prev, createEmptyRow(type)]);
-    setShowTypeSelector(false);
   };
 
   const validate = (): boolean => {
@@ -267,9 +266,9 @@ export function CustomEventForm({
   const displayDate = date ? format(date, "PPP") : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8">
+    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
       <div className="space-y-4">
-        <h3 className="text-lg font-semibold">{t("eventInformation")}</h3>
+        <h3 className="font-display text-lg font-semibold tracking-tight">{t("eventInformation")}</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="event-name">{t("eventName")}</Label>
@@ -280,6 +279,9 @@ export function CustomEventForm({
                 onChange={(e) => handleEventNameChange(e.target.value)}
                 placeholder={t("eventNamePlaceholder")}
                 disabled={isSubmitting || isFullEvent}
+                dir="auto"
+                autoComplete="off"
+                enterKeyHint="next"
               />
             ) : (
               <CreatableCombobox
@@ -332,7 +334,7 @@ export function CustomEventForm({
 
           <div className="space-y-1.5">
             <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
-            <div className="flex items-center gap-4 rounded-lg border p-4">
+            <label htmlFor="is_visible" className="flex cursor-pointer items-center gap-4 rounded-lg border p-3 sm:p-4">
               <Switch
                 id="is_visible"
                 checked={isVisible}
@@ -349,7 +351,7 @@ export function CustomEventForm({
                     : t("hiddenHint")}
                 </p>
               </div>
-            </div>
+            </label>
           </div>
         </div>
       </div>
@@ -357,42 +359,11 @@ export function CustomEventForm({
       <div className="border-t" />
 
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-semibold">{t("pointDetails")}</h3>
-          <div className="relative">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => setShowTypeSelector(!showTypeSelector)}
-              disabled={isSubmitting}
-            >
-              <Plus className="h-4 w-4 me-1" />
-              {t("addRow")}
-            </Button>
-            {showTypeSelector && (
-              <div className="absolute end-0 mt-2 w-48 rounded-md border bg-popover shadow-lg z-10">
-                <div className="p-1">
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                    onClick={() => addRow("department")}
-                  >
-                    <Building2 className="h-4 w-4" />
-                    {t("departmentRow")}
-                  </button>
-                  <button
-                    type="button"
-                    className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm hover:bg-accent"
-                    onClick={() => addRow("member")}
-                  >
-                    <User className="h-4 w-4" />
-                    {t("memberRow")}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+        <div className="flex items-center justify-between gap-2">
+          <h3 className="font-display text-lg font-semibold tracking-tight">{t("pointDetails")}</h3>
+          <span className="tabular text-muted-foreground text-[13px]">
+            {t("rowCount", { count: rows.length })}
+          </span>
         </div>
 
         {errors.rows && (
@@ -408,7 +379,7 @@ export function CustomEventForm({
           ))}
 
         <div className="space-y-3">
-{rows.map((row, index) => (
+          {rows.map((row, index) => (
             <PointDetailRow
               key={index}
               data={row}
@@ -423,9 +394,33 @@ export function CustomEventForm({
             />
           ))}
         </div>
+
+        {/* Adding a row sits under the rows, where the thumb already is. */}
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
+          <Button
+            type="button"
+            variant="outline"
+            className="border-dashed"
+            onClick={() => addRow("department")}
+            disabled={isSubmitting}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="truncate">{t("departmentRow")}</span>
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-dashed"
+            onClick={() => addRow("member")}
+            disabled={isSubmitting}
+          >
+            <Plus className="h-4 w-4" />
+            <span className="truncate">{t("memberRow")}</span>
+          </Button>
+        </div>
       </div>
 
-      <div className="flex justify-end gap-3">
+      <FormActions>
         <Button type="submit" disabled={isSubmitting || (mode === "edit" && !isDirty)}>
           {isSubmitting
             ? mode === "create"
@@ -435,7 +430,7 @@ export function CustomEventForm({
               ? t("createCustomEvent")
               : t("saveChanges")}
         </Button>
-      </div>
+      </FormActions>
     </form>
   );
 }

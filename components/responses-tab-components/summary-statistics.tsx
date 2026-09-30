@@ -2,6 +2,9 @@
 
 import { useTranslations } from "next-intl";
 
+import { URGENCY_STYLES } from "@/components/status-badge";
+import { cn } from "@/lib/utils";
+
 interface SummaryStatisticsProps {
   total: number;
   accepted: number;
@@ -10,6 +13,12 @@ interface SummaryStatisticsProps {
   acceptedNotInvited: number;
 }
 
+/**
+ * Response counts as small tiles - 2-up on a phone (total spans the row),
+ * one row of five on a wide screen. Each tile's dot says what state it
+ * counts: green done (accepted), blue informational (emailed), yellow
+ * waiting on an admin (not yet emailed, not yet accepted).
+ */
 export function SummaryStatistics({
   total,
   accepted,
@@ -18,31 +27,36 @@ export function SummaryStatistics({
   acceptedNotInvited,
 }: SummaryStatisticsProps) {
   const t = useTranslations("responses.summary");
+
+  const tiles: { key: string; label: string; value: number; dot: string | null; className?: string }[] = [
+    { key: "total", label: t("tiles.total"), value: total, dot: null, className: "col-span-2 sm:col-span-1" },
+    { key: "accepted", label: t("tiles.accepted"), value: accepted, dot: URGENCY_STYLES.done.dot },
+    { key: "emailed", label: t("tiles.emailed"), value: invited, dot: URGENCY_STYLES.info.dot },
+    { key: "notEmailed", label: t("tiles.notEmailed"), value: acceptedNotInvited, dot: URGENCY_STYLES.waiting.dot },
+    { key: "pending", label: t("tiles.pending"), value: pending, dot: URGENCY_STYLES.waiting.dot },
+  ];
+
   return (
-    <div className="rounded-lg border p-6 mb-6">
-      <div className="text-sm text-muted-foreground">{t("title")}</div>
-      <div className="mt-2 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 text-sm">
-        <div className="p-2 rounded bg-muted/50">
-          <span className="text-muted-foreground">{t("total")}</span>{" "}
-          <span className="font-medium">{total}</span>
-        </div>
-        <div className="p-2 rounded bg-green-500/10">
-          <span className="text-muted-foreground">{t("accepted")}</span>{" "}
-          <span className="font-medium text-green-600">{accepted}</span>
-        </div>
-        <div className="p-2 rounded bg-blue-500/10">
-          <span className="text-muted-foreground">{t("emailed")}</span>{" "}
-          <span className="font-medium text-blue-600">{invited}</span>
-        </div>
-<div className="p-2 rounded bg-purple-500/10">
-          <span className="text-muted-foreground">{t("notEmailed")}</span>{" "}
-          <span className="font-medium text-purple-600">{acceptedNotInvited}</span>
-        </div>
-        <div className="p-2 rounded bg-yellow-500/10">
-          <span className="text-muted-foreground">{t("pending")}</span>{" "}
-          <span className="font-medium text-yellow-600">{pending}</span>
-        </div>
-      </div>
-    </div>
+    <section aria-label={t("title")} className="mb-5 sm:mb-6">
+      <h3 className="sr-only">{t("title")}</h3>
+      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+        {tiles.map((tile) => (
+          <div
+            key={tile.key}
+            className={cn("rounded-xl border bg-muted/40 px-3.5 py-3", tile.className)}
+          >
+            <dt className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
+              {tile.dot ? (
+                <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full", tile.dot)} aria-hidden="true" />
+              ) : null}
+              <span className="truncate">{tile.label}</span>
+            </dt>
+            <dd className="tabular mt-1 font-display text-2xl leading-none font-semibold tracking-tight">
+              {tile.value}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }

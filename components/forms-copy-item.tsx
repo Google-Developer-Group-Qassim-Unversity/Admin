@@ -91,127 +91,136 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
     });
   };
 
+  const isReady = youHaveAccess && !showEmailInput;
+
+  const moreMenu = (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="shrink-0"
+          disabled={isLoading || disabled}
+          aria-label={t('moreActions')}
+        >
+          {isLoading && !showEmailInput ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : (
+            <MoreHorizontal className="h-4 w-4" />
+          )}
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end">
+        <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
+          <Trash2 className="me-2 h-4 w-4" />
+          {t('unattach')}
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+
   const itemContent = (
     <Item
       variant="outline"
-      className={`${youHaveAccess && !showEmailInput ? 'bg-green-500/10 border-green-500/30' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`bg-card ${isReady ? 'border-brand-green/40' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      <ItemMedia variant="image">
-        <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${youHaveAccess && !showEmailInput ? 'bg-green-500/20' : 'bg-muted'}`}>
-          <GoogleFormsIcon className={`w-6 h-6 ${youHaveAccess && !showEmailInput ? 'text-green-500' : ''}`} />
+      <ItemMedia>
+        {/* Green = done: the form exists and this browser can edit it. */}
+        <div className={`flex size-10 items-center justify-center rounded-lg ${isReady ? 'bg-brand-green-soft text-brand-green-ink' : 'bg-muted'}`}>
+          <GoogleFormsIcon className="h-5 w-5" />
         </div>
       </ItemMedia>
-      <ItemContent>
+      <ItemContent className="min-w-0">
         <ItemTitle>
-          {youHaveAccess && !showEmailInput ? t('attached') : t('attachForm')}
+          {isReady ? t('attached') : t('attachForm')}
         </ItemTitle>
-        <ItemDescription className="max-w-100">
-          {youHaveAccess && !showEmailInput ? (
-            <div className="flex flex-col gap-1">
+        <ItemDescription className="line-clamp-none sm:max-w-100">
+          {isReady ? (
+            <span className="flex flex-col gap-1">
               <span>{t('attachedDescription')}</span>
-              <span className="text-xs text-muted-foreground">{t('attachedEditHint')}</span>
-              <span className="text-xs text-muted-foreground">{t('sharedWith', { email: savedEmail ?? '' })}</span>
+              <span className="text-[13px] text-muted-foreground">{t('attachedEditHint')}</span>
+              <span className="text-[13px] text-muted-foreground break-all">{t('sharedWith', { email: savedEmail ?? '' })}</span>
               <button
                 type="button"
-                className="text-xs text-muted-foreground underline underline-offset-2 text-start w-fit"
+                className="-my-1.5 w-fit py-1.5 text-start text-[13px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
                 onClick={() => setRequestingDifferentEmail(true)}
               >
                 {t('requestDifferentEmail')}
               </button>
-            </div>
+            </span>
           ) : (
-            <div className="flex flex-col gap-1">
+            <span className="flex flex-col gap-1">
               <span>{hasExistingForm ? t('requestAccessDescription') : t('createDescription')}</span>
               {hasExistingForm && sharedWithEmail && (
-                <span className="text-xs text-muted-foreground">{t('sharedWith', { email: sharedWithEmail })}</span>
+                <span className="text-[13px] text-muted-foreground break-all">{t('sharedWith', { email: sharedWithEmail })}</span>
               )}
-            </div>
+            </span>
           )}
         </ItemDescription>
       </ItemContent>
-      <ItemActions>
+      {/* Phone: the actions take their own full-width row under the text. */}
+      <ItemActions className="w-full sm:w-auto">
         {showEmailInput ? (
-          <form onSubmit={handleRequestAccess} className="flex items-center gap-2">
+          <form onSubmit={handleRequestAccess} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <Input
               type="email"
+              inputMode="email"
+              autoComplete="email"
+              autoCapitalize="none"
+              spellCheck={false}
+              enterKeyHint="send"
+              dir="ltr"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder={t('emailPlaceholder')}
               disabled={isLoading || disabled}
-              className="h-9 w-56"
+              aria-label={t('emailPlaceholder')}
+              className="w-full sm:w-56"
             />
-            <Button type="submit" disabled={isLoading || disabled || !email.trim()}>
-              {attachForm.isPending ? (
-                <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                  {hasExistingForm ? t('requestingAccess') : t('creatingForm')}
-                </>
-              ) : hasExistingForm ? (
-                t('requestAccess')
-              ) : (
-                t('createForm')
-              )}
-            </Button>
-            {youHaveAccess && requestingDifferentEmail && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                disabled={isLoading}
-                onClick={() => {
-                  setEmail(savedEmail || '');
-                  setRequestingDifferentEmail(false);
-                }}
-              >
-                {tCommon('cancel')}
+            <div className="flex gap-2">
+              <Button type="submit" className="flex-1 sm:flex-none" disabled={isLoading || disabled || !email.trim()}>
+                {attachForm.isPending ? (
+                  <>
+                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    {hasExistingForm ? t('requestingAccess') : t('creatingForm')}
+                  </>
+                ) : hasExistingForm ? (
+                  t('requestAccess')
+                ) : (
+                  t('createForm')
+                )}
               </Button>
-            )}
-            {hasExistingForm && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button type="button" variant="outline" size="icon" disabled={isLoading || disabled}>
-                    <MoreHorizontal className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
-                    <Trash2 className="me-2 h-4 w-4" />
-                    {t('unattach')}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
+              {youHaveAccess && requestingDifferentEmail && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  disabled={isLoading}
+                  onClick={() => {
+                    setEmail(savedEmail || '');
+                    setRequestingDifferentEmail(false);
+                  }}
+                >
+                  {tCommon('cancel')}
+                </Button>
+              )}
+              {hasExistingForm && moreMenu}
+            </div>
           </form>
         ) : (
-          <div className="flex items-center gap-1">
-            <Button variant="outline" size="sm" asChild disabled={disabled}>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Button variant="outline" className="flex-1 sm:flex-none" asChild disabled={disabled}>
               <a
                 href={`https://docs.google.com/forms/d/${fileId}/edit`}
                 target="_blank"
                 rel="noopener noreferrer"
               >
                 {t('openForm')}
-                <ExternalLink className="ms-2 h-4 w-4" />
+                <ExternalLink className="ms-2 h-4 w-4 rtl:-scale-x-100" />
               </a>
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="icon" disabled={isLoading || disabled}>
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <MoreHorizontal className="h-4 w-4" />
-                  )}
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
-                  <Trash2 className="me-2 h-4 w-4" />
-                  {t('unattach')}
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {moreMenu}
           </div>
         )}
       </ItemActions>

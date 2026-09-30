@@ -53,10 +53,20 @@ function CommandDialog({
         <DialogDescription>{description}</DialogDescription>
       </DialogHeader>
       <DialogContent
-        className={cn("rounded-xl! overflow-hidden p-0", className)}
+        // Phones: a search sheet dropped from the top, where the keyboard
+        // can't cover it; the results scroll inside.
+        className={cn(
+          "rounded-xl! overflow-hidden p-0 [&>[data-slot=dialog-handle]]:hidden",
+          "max-sm:top-[calc(env(safe-area-inset-top)+0.5rem)] max-sm:bottom-auto max-sm:inset-x-2 max-sm:w-auto max-sm:rounded-2xl! max-sm:pb-0 max-sm:max-h-[calc(100dvh-1rem)] max-sm:[--tw-enter-translate-y:-1rem] max-sm:[--tw-exit-translate-y:-1rem]",
+          className
+        )}
         showCloseButton={showCloseButton}
       >
-        {children}
+        {/* cmdk's items read their store from this root; without it the
+            first CommandItem throws and takes the page down with it. */}
+        <Command className="**:data-[slot=command-input-wrapper]:p-2 **:data-[slot=command-input-wrapper]:pb-0">
+          {children}
+        </Command>
       </DialogContent>
     </Dialog>
   )
@@ -68,11 +78,11 @@ function CommandInput({
 }: React.ComponentProps<typeof CommandPrimitive.Input>) {
   return (
     <div data-slot="command-input-wrapper" className="p-1 pb-0">
-      <InputGroup className="bg-input/30 border-input/30 h-8! rounded-lg! shadow-none! *:data-[slot=input-group-addon]:ps-2!">
+      <InputGroup className="bg-input/30 border-input/30 h-8! pointer-coarse:h-11! rounded-lg! shadow-none! *:data-[slot=input-group-addon]:ps-2!">
         <CommandPrimitive.Input
           data-slot="command-input"
           className={cn(
-            "w-full text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
+            "w-full text-base sm:text-sm outline-hidden disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}
@@ -149,7 +159,7 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-selected:bg-muted data-selected:text-foreground data-selected:**:[svg]:text-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none [&_svg:not([class*='size-'])]:size-4 [[data-slot=dialog-content]_&]:rounded-lg! group/command-item data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
+        "data-selected:bg-muted data-selected:text-foreground data-selected:**:[svg]:text-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 pointer-coarse:py-2.5 text-sm outline-hidden select-none [&_svg:not([class*='size-'])]:size-4 [[data-slot=dialog-content]_&]:rounded-lg! group/command-item data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
         className
       )}
       {...props}

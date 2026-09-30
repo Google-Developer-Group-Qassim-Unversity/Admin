@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { AlertCircle, CalendarPlus, CheckCircle2, EyeOff, Pencil, Trash2 } from "lucide-react";
+import { AlertCircle, CalendarPlus, CalendarRange, CheckCircle2, EyeOff, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -19,6 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SemesterDialog } from "@/components/manage-semesters/semester-dialog";
 import { useCreateSemester, useDeleteSemester, useSemesters, useUpdateSemester } from "@/hooks/use-semesters";
@@ -81,18 +82,49 @@ export default function ManageSemestersPage() {
     }
   };
 
+  const renderBadges = (semester: Semester) => (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {semester.is_current && (
+        <Badge variant="secondary" className="bg-brand-green-soft text-brand-green-ink gap-1 border-transparent">
+          <CheckCircle2 className="h-3 w-3" />
+          {t("current")}
+        </Badge>
+      )}
+      {!semester.is_public && (
+        <Badge variant="outline" className="gap-1">
+          <EyeOff className="h-3 w-3" />
+          {t("private")}
+        </Badge>
+      )}
+    </div>
+  );
+
+  const renderActions = (semester: Semester) => (
+    <div className="flex items-center justify-end gap-1">
+      <Button variant="ghost" size="icon-sm" onClick={() => openEdit(semester)} title={t("edit")}>
+        <Pencil className="h-4 w-4" />
+        <span className="sr-only">{t("editSr", { name: semester.name })}</span>
+      </Button>
+      <Button
+        variant="ghost"
+        size="icon-sm"
+        onClick={() => setPendingDelete(semester)}
+        title={t("delete")}
+      >
+        <Trash2 className="h-4 w-4 text-destructive" />
+        <span className="sr-only">{t("deleteSr", { name: semester.name })}</span>
+      </Button>
+    </div>
+  );
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-2">{t("subtitle")}</p>
-        </div>
+    <div className="space-y-4 sm:space-y-6">
+      <PageHeader title={t("title")} description={t("subtitle")} icon={CalendarRange}>
         <Button onClick={openAdd}>
-          <CalendarPlus className="h-4 w-4 me-2" />
+          <CalendarPlus className="h-4 w-4" />
           {t("addSemester")}
         </Button>
-      </div>
+      </PageHeader>
 
       {isLoading && <Skeleton className="h-[240px] w-full" />}
 
@@ -118,7 +150,28 @@ export default function ManageSemestersPage() {
                 {t("noneYet")}
               </p>
             ) : (
-              <div className="overflow-x-auto">
+              <>
+              {/* Phones: one row per semester - name, codes and dates, badges, actions. */}
+              <ul className="divide-border -mx-4 divide-y md:hidden">
+                {rows.map((semester) => (
+                  <li key={semester.id} className="flex items-start gap-3 px-4 py-3.5">
+                    <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                      <span className="font-semibold" dir="auto">
+                        {semester.name}
+                      </span>
+                      <span className="text-muted-foreground tabular text-[13px]">
+                        {semester.hijri_code} · {semester.gregorian_code}
+                      </span>
+                      <span className="text-muted-foreground tabular text-[13px]">
+                        {formatDate(semester.start_date)} – {formatDate(semester.end_date)}
+                      </span>
+                      {renderBadges(semester)}
+                    </div>
+                    {renderActions(semester)}
+                  </li>
+                ))}
+              </ul>
+              <div className="hidden overflow-x-auto md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -140,43 +193,17 @@ export default function ManageSemestersPage() {
                         <TableCell>{formatDate(semester.start_date)}</TableCell>
                         <TableCell>{formatDate(semester.end_date)}</TableCell>
                         <TableCell>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            {semester.is_current && (
-                              <Badge variant="default" className="gap-1">
-                                <CheckCircle2 className="h-3 w-3" />
-                                {t("current")}
-                              </Badge>
-                            )}
-                            {!semester.is_public && (
-                              <Badge variant="outline" className="gap-1">
-                                <EyeOff className="h-3 w-3" />
-                                {t("private")}
-                              </Badge>
-                            )}
-                          </div>
+                          {renderBadges(semester)}
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center justify-end gap-1">
-                            <Button variant="ghost" size="sm" onClick={() => openEdit(semester)} title={t("edit")}>
-                              <Pencil className="h-4 w-4" />
-                              <span className="sr-only">{t("editSr", { name: semester.name })}</span>
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => setPendingDelete(semester)}
-                              title={t("delete")}
-                            >
-                              <Trash2 className="h-4 w-4 text-destructive" />
-                              <span className="sr-only">{t("deleteSr", { name: semester.name })}</span>
-                            </Button>
-                          </div>
+                          {renderActions(semester)}
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </div>
+              </>
             )}
           </CardContent>
         </Card>

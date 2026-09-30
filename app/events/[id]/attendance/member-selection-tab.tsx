@@ -1,6 +1,6 @@
 "use client";
 
-import { Search, X, Check, ChevronRight, UserPlus } from "lucide-react";
+import { Search, X, Check, ChevronRight, Plus, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,14 +35,15 @@ export function MemberSelectionTab({
   onCreateMember,
 }: MemberSelectionTabProps) {
   const t = useTranslations("attendance.memberSelection");
+  const tc = useTranslations("common.actions");
   const showLimitHint =
     !isRemoveMode && totalAvailable > DISPLAY_LIMIT && searchQuery.trim() === "";
 
   return (
-    <div className="space-y-4">
+    <div className="flex h-full flex-col gap-3 sm:gap-4">
       {isMultiDay && isRemoveMode && (
         <Select value={selectedDay} onValueChange={onDayChange}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-full shrink-0 sm:w-[140px]">
             <SelectValue placeholder={t("selectDay")} />
           </SelectTrigger>
           <SelectContent>
@@ -55,36 +56,47 @@ export function MemberSelectionTab({
         </Select>
       )}
 
-      <div className="flex gap-4 min-h-[400px]">
-        <div className="flex-1 flex flex-col border rounded-lg">
-          <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
-            <span className="text-sm font-medium">
+      {/* Phone: the (short) selected tray sits on top and the member list fills
+          the rest of the sheet. sm+: the two lists side by side. */}
+      <div className="flex min-h-0 flex-1 flex-col gap-3 sm:min-h-[400px] sm:flex-row sm:gap-4">
+        <div className="flex min-h-0 flex-1 flex-col rounded-lg border">
+          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-muted/50 px-3 py-1.5">
+            <span className="tabular text-sm font-medium">
               {isRemoveMode ? t("attended") : t("available")} ({totalAvailable})
             </span>
             {!isRemoveMode && onCreateMember && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs gap-1" onClick={onCreateMember}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-xs pointer-coarse:h-9 pointer-coarse:text-sm"
+                onClick={onCreateMember}
+              >
                 <UserPlus className="h-3.5 w-3.5" />
                 {t("create")}
               </Button>
             )}
           </div>
-          <div className="px-3 py-2 border-b">
+          <div className="border-b px-3 py-2">
             <div className="relative">
-              <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
                 placeholder={t("search")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="ps-8 h-8 text-sm"
+                className="h-8 ps-8 text-sm pointer-coarse:h-10"
               />
             </div>
             {showLimitHint && (
-              <p className="text-xs text-muted-foreground mt-1.5">
+              <p className="mt-1.5 text-xs text-muted-foreground">
                 {t("limitHint", { shown: DISPLAY_LIMIT, total: totalAvailable })}
               </p>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="min-h-40 flex-1 overflow-y-auto overscroll-contain sm:min-h-0">
             {isLoading ? (
               <div className="space-y-2 p-3">
                 {[...Array(5)].map((_, i) => (
@@ -102,47 +114,64 @@ export function MemberSelectionTab({
             ) : (
               <div className="divide-y">
                 {availableMembers.map((member) => (
-                  <div
+                  <button
                     key={member.id}
-                    className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50 cursor-pointer"
+                    type="button"
+                    className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-start hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:bg-muted"
                     onClick={() => onAdd(member.id)}
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm"><bdi>{member.name}</bdi></p>
+                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">
+                        <span className="tabular" dir="ltr">{member.uni_id ?? member.email}</span>
+                      </p>
                     </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0 rtl:-scale-x-100" />
-                  </div>
+                    <Plus className="h-5 w-5 shrink-0 text-muted-foreground sm:hidden" />
+                    <ChevronRight className="hidden h-4 w-4 shrink-0 text-muted-foreground rtl:-scale-x-100 sm:block" />
+                  </button>
                 ))}
               </div>
             )}
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col border rounded-lg">
-          <div className="px-3 py-2 border-b bg-muted/50 flex items-center justify-between">
-            <span className="text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
+        <div className="order-first flex max-h-[30%] shrink-0 flex-col rounded-lg border sm:order-none sm:max-h-none sm:min-h-0 sm:flex-1 sm:shrink">
+          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-muted/50 px-3 py-1.5">
+            <span className="tabular text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
             {selectedMembers.length > 0 && (
-              <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={onClearAll}>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 text-xs pointer-coarse:h-9 pointer-coarse:text-sm"
+                onClick={onClearAll}
+              >
                 {t("clearAll")}
               </Button>
             )}
           </div>
-          <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {selectedMembers.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className="p-3 text-center text-sm text-muted-foreground sm:p-4">
                 {t("noneSelected")}
               </div>
             ) : (
               <div className="divide-y">
                 {selectedMembers.map((member) => (
-                  <div key={member.id} className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
-                    <Check className="h-4 w-4 text-primary shrink-0" />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm truncate">{member.name}</p>
-                      <p className="text-xs text-muted-foreground">{member.uni_id ?? member.email}</p>
+                  <div key={member.id} className="flex min-h-12 items-center gap-2 px-3 py-1.5 hover:bg-muted/50">
+                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm"><bdi>{member.name}</bdi></p>
+                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">
+                        <span className="tabular" dir="ltr">{member.uni_id ?? member.email}</span>
+                      </p>
                     </div>
-                    <Button variant="ghost" size="icon-sm" onClick={() => onRemove(member.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      onClick={() => onRemove(member.id)}
+                      aria-label={`${tc("remove")} ${member.name}`}
+                      className="pointer-coarse:size-10"
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>

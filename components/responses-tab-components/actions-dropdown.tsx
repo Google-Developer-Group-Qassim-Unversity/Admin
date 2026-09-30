@@ -18,6 +18,7 @@ interface ActionsDropdownProps {
   onCopyAcceptedEmails: () => void;
   filteredRowCount: number;
   isLoading?: boolean;
+  className?: string;
 }
 
 export function ActionsDropdown({
@@ -27,18 +28,19 @@ export function ActionsDropdown({
   onCopyAcceptedEmails,
   filteredRowCount,
   isLoading = false,
+  className,
 }: ActionsDropdownProps) {
   const t = useTranslations("responses");
   const tf = useTranslations("common.fields");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button variant="outline" size="sm" className={className}>
           {tf("actions")}
           <ChevronDown className="ms-1 h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[180px]">
+      <DropdownMenuContent align="end" className="min-w-[180px]">
         <DropdownMenuItem onClick={onCopyAsTSV}>
           <Copy className="me-2 h-4 w-4" />
           {t("copyAsTsv")}

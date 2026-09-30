@@ -404,6 +404,9 @@ try {
       await expect(page.getByRole("dialog").last().getByText(outsider.name, { exact: true })).toBeVisible();
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth));
       const dialog = page.getByRole("dialog").last();
+      // On a phone the picker is a bottom sheet that slides up; measure where
+      // it comes to rest, not a frame of the slide.
+      await dialog.evaluate((el) => Promise.all(el.getAnimations().map((animation) => animation.finished)));
       const bounds = await dialog.boundingBox();
       assert.ok(bounds.x >= 0 && bounds.x + bounds.width <= 321 && bounds.y >= 0 && bounds.y + bounds.height <= 641);
       await page.screenshot({ path: path.join(artifacts, `picker-${locale}-${theme}.png`) });

@@ -16,6 +16,7 @@ import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
 import { useTranslations } from "next-intl";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 type SubTab = "sent" | "not-sent";
 
@@ -173,30 +174,19 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
 
   return (
     <div className="space-y-3 px-1 pb-1">
-      <div className="flex gap-1 p-1 bg-muted rounded-lg">
-        <button
-          onClick={() => setSubTab("sent")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            subTab === "sent"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Send className="h-3.5 w-3.5" />
-          {t("sent", { count: logs.length > 0 ? logs.length : sentCount })}
-        </button>
-        <button
-          onClick={() => setSubTab("not-sent")}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
-            subTab === "not-sent"
-              ? "bg-background text-foreground shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Users className="h-3.5 w-3.5" />
-          {t("notSent", { count: notSentCount })}
-        </button>
-      </div>
+      <SegmentedControl
+        label={t("viewLabel")}
+        value={subTab}
+        onValueChange={(value) => setSubTab(value as typeof subTab)}
+        options={[
+          {
+            value: "sent",
+            label: t("sent", { count: logs.length > 0 ? logs.length : sentCount }),
+            icon: Send,
+          },
+          { value: "not-sent", label: t("notSent", { count: notSentCount }), icon: Users },
+        ]}
+      />
 
       {activeJob && (
         <EmailJobStatusCard
@@ -217,14 +207,14 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                   : t("noneSentYet")}
               </span>
               {isStreaming && (
-                <Badge variant="outline" className="gap-1 text-emerald-600 border-emerald-500/30">
+                <Badge variant="outline" className="gap-1 border-transparent bg-brand-green-soft text-brand-green-ink">
                   <Activity className="h-3 w-3 animate-pulse" />
                   {t("live")}
                 </Badge>
               )}
             </div>
           </div>
-          <ScrollArea className="h-[320px]">
+          <ScrollArea className="h-[45dvh] sm:h-[320px]">
             {logs.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">
                 {isStreaming ? (
@@ -243,14 +233,14 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                     key={log.id}
                     className="flex items-start gap-3 px-3 py-2.5"
                   >
-                    <CheckCircle className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-green-ink" />
                     <div className="flex-1 min-w-0">
-                      <span className="text-sm font-medium">{log.member_name}</span>
-                      <p className="text-xs text-muted-foreground truncate">{log.member_email}</p>
+                      <p className="truncate text-sm font-medium"><bdi>{log.member_name}</bdi></p>
+                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">{log.member_email}</p>
                     </div>
                     <div className="text-end shrink-0">
-                      <div className="text-xs text-muted-foreground">{formatSentAt(log.sent_at)}</div>
-                      <div className="text-[10px] text-muted-foreground/70">{log.from_address}</div>
+                      <div className="tabular text-xs text-muted-foreground">{formatSentAt(log.sent_at)}</div>
+                      <div className="hidden text-xs text-muted-foreground/70 sm:block">{log.from_address}</div>
                     </div>
                   </div>
                 ))}
@@ -262,13 +252,13 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
 
       {subTab === "not-sent" && (
         <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="tabular text-sm text-muted-foreground">
               {isLoading
                 ? t("loading")
                 : t("eligibleCount", { count: notSentCount })}
             </span>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
               <Button
                 onClick={handleSend}
                 disabled={isSending || notSentCount === 0}
@@ -298,7 +288,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
           </div>
 
           <div className="rounded-lg border bg-muted/30">
-            <ScrollArea className="h-[310px]">
+            <ScrollArea className="h-[40dvh] sm:h-[310px]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -313,8 +303,8 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                     <div key={member.id} className="flex items-start gap-3 px-3 py-2.5">
                       <Users className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div className="min-w-0">
-                        <span className="text-sm font-medium">{member.name}</span>
-                        <p className="text-xs text-muted-foreground truncate">{member.email}</p>
+                        <p className="truncate text-sm font-medium"><bdi>{member.name}</bdi></p>
+                        <p className="truncate text-[13px] text-muted-foreground sm:text-xs">{member.email}</p>
                       </div>
                     </div>
                   ))}

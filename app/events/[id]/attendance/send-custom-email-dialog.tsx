@@ -166,7 +166,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
           size="sm"
           onClick={() => setMemberDialogOpen(true)}
           disabled={disabled}
-          className="h-7 text-xs gap-1.5"
+          className="h-7 gap-1.5 text-xs pointer-coarse:h-9"
         >
           <UserPlus className="h-3.5 w-3.5" /> {t("pickMembers")}
         </Button>
@@ -176,7 +176,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
           size="sm"
           onClick={addRow}
           disabled={disabled}
-          className="h-7 text-xs gap-1.5"
+          className="h-7 gap-1.5 text-xs pointer-coarse:h-9"
         >
           <Plus className="h-3.5 w-3.5" /> {tsc("addRow")}
         </Button>
@@ -194,7 +194,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 size="icon"
                 onClick={() => removeRow(index)}
                 disabled={disabled}
-                className="absolute -end-2 -top-2 h-5 w-5 rounded-full bg-background border shadow-sm hover:text-destructive"
+                className="absolute -end-2 -top-2 z-10 h-5 w-5 rounded-full border bg-background shadow-sm hover:text-destructive pointer-coarse:size-7"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -205,17 +205,19 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 onChange={(e) => handleRowChange(index, "name", e.target.value)}
                 placeholder={tsc("fullNamePlaceholder")}
                 disabled={disabled}
-                className="h-8 text-xs bg-background"
+                className="h-8 bg-background text-xs pointer-coarse:h-10 pointer-coarse:text-sm"
               />
             </div>
             <div className="md:col-span-4">
               <Input
                 type="email"
+                inputMode="email"
+                autoComplete="off"
                 value={recipient.email}
                 onChange={(e) => handleRowChange(index, "email", e.target.value)}
                 placeholder={t("emailPlaceholder")}
                 disabled={disabled}
-                className="h-8 text-xs bg-background"
+                className="h-8 bg-background text-xs pointer-coarse:h-10 pointer-coarse:text-sm"
               />
             </div>
             <div className="md:col-span-3">
@@ -224,7 +226,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 onValueChange={(v) => handleRowChange(index, "gender", v as "Male" | "Female")}
                 disabled={disabled}
               >
-                <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectTrigger className="h-8 w-full bg-background text-xs pointer-coarse:h-10 pointer-coarse:text-sm">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -431,7 +433,7 @@ export function SendCustomEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent key={dialogKey} className="sm:max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
+      <DialogContent key={dialogKey} className="flex flex-col sm:max-w-5xl lg:max-h-[90vh] lg:overflow-hidden">
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
@@ -441,8 +443,8 @@ export function SendCustomEmailDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex gap-6 flex-1 min-h-0">
-          <div className="flex-shrink-0">
+        <div className="flex flex-col gap-6 lg:min-h-0 lg:flex-1 lg:flex-row">
+          <div className="w-full shrink-0 lg:w-auto">
             <div className="space-y-2">
               <Label>{t("emailBody")}</Label>
               {templateError ? (
@@ -464,14 +466,13 @@ export function SendCustomEmailDialog({
                     <body contenteditable="true" dir="rtl" style="background-color:#f1f5f9;margin:0">${templateBody}</body>
                     </html>`
                   }
-                  className="border rounded-md"
-                  style={{ width: "375px", height: "667px" }}
+                  className="h-[28rem] w-full rounded-md border lg:h-[667px] lg:w-[375px]"
                 />
               )}
             </div>
           </div>
 
-          <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
+          <div className="flex flex-1 flex-col space-y-4 lg:overflow-y-auto">
           <div className="space-y-2">
             <Label htmlFor="custom-email-subject">{td("subject")}</Label>
             <Input
@@ -595,7 +596,7 @@ export function SendCustomEmailDialog({
             </CollapsibleContent>
           </Collapsible>
 
-          <div className="flex justify-end gap-2 pt-2 border-t">
+          <div className="flex flex-col-reverse gap-2 border-t pt-2 *:max-sm:w-full sm:flex-row sm:justify-end">
             <Button variant="outline" onClick={() => handleOpenChange(false)} disabled={isBusy}>
               {tc("cancel")}
             </Button>

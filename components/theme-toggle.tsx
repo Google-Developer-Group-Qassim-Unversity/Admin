@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Moon, Sun } from "lucide-react";
+import { Monitor, Moon, Sun } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 
@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 
 export function ThemeToggle() {
   const { setTheme } = useTheme();
@@ -52,5 +53,29 @@ export function ThemeToggle() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+  );
+}
+
+/** Light / dark / system laid out flat, for the mobile "More" sheet. */
+export function ThemeSegmented() {
+  const { theme, setTheme } = useTheme();
+  const t = useTranslations("theme");
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  return (
+    <SegmentedControl
+      label={t("toggle")}
+      value={mounted ? (theme ?? "system") : "system"}
+      onValueChange={setTheme}
+      options={[
+        { value: "light", label: t("light"), icon: Sun },
+        { value: "dark", label: t("dark"), icon: Moon },
+        { value: "system", label: t("system"), icon: Monitor },
+      ]}
+    />
   );
 }

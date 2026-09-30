@@ -66,7 +66,6 @@ import {
   FileUploadList,
 } from "@/components/ui/file-upload";
 
-import { cn } from "@/lib/utils";
 import type { BlastOrderBy, BlastSendResponse, EmailProvider, EmailTemplate } from "@/lib/api-types";
 import {
   useBlastEligibleCount,
@@ -88,6 +87,8 @@ import { useRecipientList } from "@/hooks/use-recipient-list";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
+import { FormActions } from "@/components/form-actions";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { DEFAULT_BODY, DEFAULT_STYLES, extractTemplateParts, formatSize } from "./email-composer-utils";
 import { useTranslations } from "next-intl";
 
@@ -302,9 +303,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 {t("composeHint")}
               </CardDescription>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex w-full items-center gap-2 sm:w-auto">
               <Select value={selectedTemplateId ? String(selectedTemplateId) : "blank"} onValueChange={handleSelectTemplate}>
-                <SelectTrigger className="h-8 w-[220px] text-xs">
+                <SelectTrigger
+                  aria-label={t("startFromTemplate")}
+                  className="min-w-0 flex-1 sm:h-8 sm:w-[220px] sm:flex-none sm:text-xs"
+                >
                   <SelectValue placeholder={t("startFromTemplate")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -321,13 +325,14 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   type="button"
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                  aria-label={tc("delete")}
+                  className="text-muted-foreground hover:text-destructive sm:size-8"
                   onClick={() => setDeleteTarget(templates.find((t) => t.id === selectedTemplateId) ?? null)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
               )}
-              <Button type="button" variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={openSaveDialog}>
+              <Button type="button" variant="outline" size="sm" className="shrink-0 gap-1.5 sm:text-xs" onClick={openSaveDialog}>
                 <Save className="h-3.5 w-3.5" /> {t("saveTemplate")}
               </Button>
             </div>
@@ -335,40 +340,21 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CardHeader>
         <CardContent>
           <div className="flex flex-col lg:flex-row gap-6">
-            <div className="flex-shrink-0">
-              <div className="mb-2 flex items-center justify-between">
+            <div className="min-w-0 lg:flex-shrink-0">
+              <div className="mb-2 flex items-center justify-between gap-2">
                 <Label>{tDirect("emailContent")}</Label>
-                <div className="inline-flex rounded-md border p-0.5">
-                  <button
-                    type="button"
-                    onClick={() => composer.handleViewModeChange("rendered")}
-                    className={cn(
-                      "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      composer.viewMode === "rendered"
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {tDirect("rendered")}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => composer.handleViewModeChange("raw")}
-                    className={cn(
-                      "px-2.5 py-1 text-xs rounded-sm transition-colors",
-                      composer.viewMode === "raw"
-                        ? "bg-muted font-medium text-foreground"
-                        : "text-muted-foreground hover:text-foreground"
-                    )}
-                  >
-                    {tDirect("rawHtml")}
-                  </button>
-                </div>
+                <SegmentedControl
+                  label={tDirect("emailContent")}
+                  value={composer.viewMode}
+                  onValueChange={(v) => composer.handleViewModeChange(v as "rendered" | "raw")}
+                  options={[
+                    { value: "rendered", label: tDirect("rendered") },
+                    { value: "raw", label: tDirect("rawHtml") },
+                  ]}
+                  className="w-auto shrink-0 p-0.5 [&>button]:min-h-8 [&>button]:px-2.5 [&>button]:text-xs [&>button]:whitespace-nowrap pointer-coarse:[&>button]:min-h-9"
+                />
               </div>
-              <div
-                className="border rounded-md overflow-auto"
-                style={{ width: "375px", height: "700px", minWidth: "280px", maxWidth: "100%", resize: "horizontal" }}
-              >
+              <div className="border rounded-md overflow-auto h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[700px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
                 {composer.viewMode === "raw" ? (
                   <Textarea
                     value={composer.rawHtml}
@@ -393,6 +379,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <Label htmlFor="blast-subject">{tDirect("subject")}</Label>
                 <Input
                   id="blast-subject"
+                  dir="auto"
+                  enterKeyHint="next"
                   placeholder={tDirect("subjectPlaceholder")}
                   value={subject}
                   onChange={(e) => setSubject(e.target.value)}
@@ -403,6 +391,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <Label htmlFor="blast-preview-text">{t("previewText")}</Label>
                 <Input
                   id="blast-preview-text"
+                  dir="auto"
+                  enterKeyHint="done"
                   placeholder={t("previewTextPlaceholder")}
                   value={previewText}
                   onChange={(e) => setPreviewText(e.target.value)}
@@ -429,19 +419,22 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             <ProviderSelect value={provider} onChange={setProvider} disabled={isBusy} />
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>{t("recipientCount")}</Label>
+              <div className="flex items-center justify-between gap-3">
+                <Label htmlFor="blast-count">{t("recipientCount")}</Label>
                 <Input
+                  id="blast-count"
                   type="number"
+                  inputMode="numeric"
+                  enterKeyHint="done"
                   min={0}
                   max={recipientCap}
                   value={count}
                   onChange={(e) => setCount(clampCount(Number(e.target.value) || 0))}
                   disabled={isBusy}
-                  className="h-8 w-24 text-xs"
+                  className="tabular w-24 sm:h-8 md:text-xs"
                 />
               </div>
-              <div className="relative py-1">
+              <div className="relative py-1 pointer-coarse:py-3">
                 <Slider
                   value={[count]}
                   min={0}
@@ -452,7 +445,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 />
               </div>
               {remainingCapacity !== null && remainingCapacity < eligibleCount && (
-                <p className="text-[11px] text-muted-foreground">
+                <p className="text-xs text-muted-foreground">
                   {t("cappedHint", { remaining: remainingCapacity, eligible: eligibleCount })}
                 </p>
               )}
@@ -472,7 +465,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </div>
 
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <Label>
                   {t("guaranteedRecipients", { count: recipientList.recipients.length > 0 ? `(${recipientList.recipients.length})` : "" })}
                 </Label>
@@ -480,7 +473,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   type="button"
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs gap-1.5"
+                  className="gap-1.5 sm:h-7 sm:text-xs"
                   onClick={() => setMemberDialogOpen(true)}
                   disabled={isBusy}
                 >
@@ -490,27 +483,35 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               <p className="text-xs text-muted-foreground">
                 {t("guaranteedHint", { count })}
               </p>
-              <div className="flex gap-2">
+              <div className="grid grid-cols-[1fr_auto] gap-2 sm:grid-cols-[1fr_1fr_auto]">
                 <Input
                   placeholder={tDirect("namePlaceholder")}
+                  aria-label={tDirect("namePlaceholder")}
+                  autoComplete="off"
+                  enterKeyHint="next"
                   value={recipientList.manualName}
                   onChange={(e) => recipientList.setManualName(e.target.value)}
                   disabled={isBusy}
-                  className="h-8 text-xs"
+                  className="col-span-2 sm:col-span-1 sm:h-8 md:text-xs"
                 />
                 <Input
                   type="email"
+                  inputMode="email"
+                  autoComplete="off"
+                  enterKeyHint="done"
                   placeholder={tDirect("emailPlaceholder")}
+                  aria-label={tDirect("emailPlaceholder")}
                   value={recipientList.manualEmail}
                   onChange={(e) => recipientList.setManualEmail(e.target.value)}
                   disabled={isBusy}
-                  className="h-8 text-xs"
+                  className="sm:h-8 md:text-xs"
                 />
                 <Button
                   type="button"
                   variant="outline"
                   size="icon"
-                  className="h-8 w-8 shrink-0"
+                  aria-label={tc("add")}
+                  className="shrink-0 sm:size-8"
                   onClick={recipientList.addManual}
                   disabled={isBusy || !recipientList.manualEmail.trim()}
                 >
@@ -518,18 +519,19 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 </Button>
               </div>
               {recipientList.recipients.length > 0 && (
-                <div className="max-h-40 overflow-y-auto rounded-lg border divide-y">
+                <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg border divide-y sm:max-h-40">
                   {recipientList.recipients.map((r) => (
                     <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                       <div className="flex-1 min-w-0">
-                        <p className="text-xs font-medium truncate">{r.name}</p>
-                        <p className="text-[11px] text-muted-foreground truncate">{r.email}</p>
+                        <p dir="auto" className="text-sm font-medium truncate sm:text-xs">{r.name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{r.email}</p>
                       </div>
                       <Button
                         type="button"
                         variant="ghost"
-                        size="icon"
-                        className="h-6 w-6 hover:text-destructive"
+                        size="icon-sm"
+                        aria-label={tc("remove")}
+                        className="hover:text-destructive sm:size-6"
                         onClick={() => recipientList.remove(r.email)}
                         disabled={isBusy}
                       >
@@ -589,7 +591,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         type="button"
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8"
+                        aria-label={tc("remove")}
                         onClick={() => attachments.handleRemoveFile(entry.file)}
                       >
                         <X className="h-4 w-4" />
@@ -624,6 +626,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             <Textarea
               id="blast-test-emails"
               placeholder={t("testEmailsPlaceholder")}
+              inputMode="email"
+              autoComplete="off"
               value={testEmails}
               onChange={(e) => setTestEmails(e.target.value)}
               disabled={isBusy}
@@ -650,10 +654,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CollapsibleContent>
       </Collapsible>
 
-      <div className="flex justify-end">
+      <FormActions>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button type="button" disabled={isSendDisabled} className="h-9 gap-2 shadow-sm">
+            <Button type="button" disabled={isSendDisabled} className="gap-2 shadow-sm">
               {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               {t("sendBlast", { count: totalRecipients })}
             </Button>
@@ -676,7 +680,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-      </div>
+      </FormActions>
 
       {sentResult && (
         <EmailJobStatusCard

@@ -74,6 +74,7 @@ import {
   SummaryStatistics,
   SendAcceptanceDialog,
   SendAcceptanceButton,
+  ResponseCardList,
 } from "@/components/responses-tab-components";
 import {
   AlertDialog,
@@ -421,6 +422,42 @@ export default function EventResponsesPage() {
     }
   };
 
+  const canToggleResponses = event.status === 'open' || event.status === 'active';
+  const toggleResponsesButton = canToggleResponses ? (
+    <Button
+        variant={event.status === 'open' ? 'default' : 'outline'}
+        size="sm"
+        onClick={handleToggleResponsesClick}
+        disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
+      >
+        {event.status === 'open' ? (
+          closeResponsesMutation.isPending ? (
+            <>
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {t("closing")}
+            </>
+          ) : (
+            <>
+              <Lock className="me-2 h-4 w-4" />
+              {t("closeResponses")}
+            </>
+          )
+        ) : (
+          openResponsesMutation.isPending ? (
+            <>
+              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              {t("opening")}
+            </>
+          ) : (
+            <>
+              <Unlock className="me-2 h-4 w-4" />
+              {t("openResponses")}
+            </>
+          )
+        )}
+      </Button>
+  ) : null;
+
   if (!formDataLoading && formData?.formType === 'none') {
     return (
       <Card className="max-w-full mx-auto">
@@ -465,7 +502,71 @@ export default function EventResponsesPage() {
           <>
             <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
-            <div className="flex flex-wrap items-center gap-4 mb-4">
+            {/* Phone toolbar: search, then filter + actions, then the two
+                event-level actions. Desktop keeps the one-row toolbar below. */}
+            <div className="mb-4 space-y-2 md:hidden">
+              <div className="flex gap-2">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input
+                    type="search"
+                    inputMode="search"
+                    enterKeyHint="search"
+                    autoComplete="off"
+                    placeholder={t("searchByName")}
+                    value={globalFilter}
+                    onChange={(e) => setGlobalFilter(e.target.value)}
+                    className="ps-9"
+                  />
+                </div>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => refetchSubmissions()}
+                  disabled={submissionsLoading}
+                  aria-label={t("refresh")}
+                  className="shrink-0 pointer-coarse:size-10"
+                >
+                  <RefreshCw className={`h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
+                </Button>
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <Select
+                  value={statusFilter}
+                  onValueChange={(value: StatusFilter) => setStatusFilter(value)}
+                >
+                  <SelectTrigger className="w-full" aria-label={t("filterStatus")}>
+                    <SelectValue placeholder={t("filterStatus")} />
+                  </SelectTrigger>
+                  <SelectContent align="start">
+                    <SelectItem value="all">{t("filters.all")}</SelectItem>
+                    <SelectItem value="accepted">{t("filters.accepted")}</SelectItem>
+                    <SelectItem value="not_accepted">{t("filters.notAccepted")}</SelectItem>
+                    <SelectItem value="accepted_invited">{t("filters.acceptedInvited")}</SelectItem>
+                    <SelectItem value="accepted_not_invited">{t("filters.acceptedNotInvited")}</SelectItem>
+                  </SelectContent>
+                </Select>
+                <ActionsDropdown
+                  onCopyAsTSV={handleCopyAsTSV}
+                  onAcceptAll={handleAcceptAllClick}
+                  onAcceptBulk={() => setBulkAcceptDialogOpen(true)}
+                  onCopyAcceptedEmails={handleCopyAcceptedEmails}
+                  filteredRowCount={table.getFilteredRowModel().rows.length}
+                  isLoading={acceptSubmissionsMutation.isPending}
+                  className="w-full justify-between"
+                />
+              </div>
+              <div className="grid grid-cols-1 gap-2 *:w-full">
+                <SendAcceptanceButton
+                  onClick={() => setSendAcceptanceDialogOpen(true)}
+                  recipientCount={acceptedNotInvited}
+                  isLoading={sendAcceptanceMutation.isPending}
+                />
+                {toggleResponsesButton}
+              </div>
+            </div>
+
+            <div className="mb-4 hidden flex-wrap items-center gap-4 md:flex">
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
@@ -485,6 +586,9 @@ export default function EventResponsesPage() {
               <div className="relative max-w-sm">
                 <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
+                  type="search"
+                  inputMode="search"
+                  enterKeyHint="search"
                   placeholder={t("searchByName")}
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
@@ -494,6 +598,7 @@ export default function EventResponsesPage() {
 
               <SelectedRowsActions
                 selectedCount={table.getFilteredSelectedRowModel().rows.length}
+                className="max-md:hidden"
                 allAccepted={allSelectedAccepted}
                 onAcceptSelected={handleAcceptSelected}
                 isLoading={acceptSubmissionsMutation.isPending}
@@ -552,43 +657,14 @@ export default function EventResponsesPage() {
                 isLoading={sendAcceptanceMutation.isPending}
               />
 
-              {(event.status === 'open' || event.status === 'active') && (
-                <Button
-                  variant={event.status === 'open' ? 'default' : 'outline'}
-                  size="sm"
-                  onClick={handleToggleResponsesClick}
-                  disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
-                >
-                  {event.status === 'open' ? (
-                    closeResponsesMutation.isPending ? (
-                      <>
-                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                        {t("closing")}
-                      </>
-                    ) : (
-                      <>
-                        <Lock className="me-2 h-4 w-4" />
-                        {t("closeResponses")}
-                      </>
-                    )
-                  ) : (
-                    openResponsesMutation.isPending ? (
-                      <>
-                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
-                        {t("opening")}
-                      </>
-                    ) : (
-                      <>
-                        <Unlock className="me-2 h-4 w-4" />
-                        {t("openResponses")}
-                      </>
-                    )
-                  )}
-                </Button>
-              )}
+              {toggleResponsesButton}
             </div>
 
-            <div className="rounded-lg border">
+            <div className="md:hidden">
+              <ResponseCardList table={table} questionKeys={questionKeys} emptyLabel={t("noneFound")} />
+            </div>
+
+            <div className="hidden rounded-lg border md:block">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -638,6 +714,20 @@ export default function EventResponsesPage() {
             </div>
 
             <Pagination table={table} />
+
+            {/* Phone bulk bar - fixed above the tab bar while rows are ticked. */}
+            <SelectedRowsActions
+              variant="floating"
+              className="md:hidden"
+              selectedCount={table.getFilteredSelectedRowModel().rows.length}
+              allAccepted={allSelectedAccepted}
+              onAcceptSelected={handleAcceptSelected}
+              onClearSelection={() => setRowSelection({})}
+              isLoading={acceptSubmissionsMutation.isPending}
+            />
+            {table.getFilteredSelectedRowModel().rows.length > 0 && (
+              <div aria-hidden="true" className="h-16 md:hidden" />
+            )}
           </>
         )}
       </CardContent>

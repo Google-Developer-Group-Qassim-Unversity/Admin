@@ -5,13 +5,7 @@ import { DoorClosed, DoorOpen, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from '@/components/ui/item';
+import { StatusBadge } from '@/components/status-badge';
 import { CloseEventModal } from '@/components/close-event-modal';
 import { useOpenEvent } from '@/hooks/use-event';
 import type { Event } from '@/lib/api-types';
@@ -42,42 +36,47 @@ export function EventStatusItem({ event, isEventClosed, onStatusChange }: EventS
 
   return (
     <>
-      <Item variant="outline">
-        <ItemContent>
-          <ItemTitle>{isEventClosed ? t('reopenTitle') : t('closeTitle')}</ItemTitle>
-          <ItemDescription>
-            {isEventClosed
-              ? t('reopenDescription')
-              : t('closeDescription')}
-          </ItemDescription>
-        </ItemContent>
-        <ItemActions>
-          {isEventClosed ? (
-            <Button
-              variant="outline"
-              onClick={handleOpenEvent}
-              disabled={openEventMutation.isPending}
-            >
-              {openEventMutation.isPending ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t('opening')}
-                </>
-              ) : (
-                <>
-                  <DoorOpen className="h-4 w-4" />
-                  {t('openEvent')}
-                </>
-              )}
-            </Button>
-          ) : (
-            <Button variant="outline" onClick={() => setIsCloseModalOpen(true)}>
-              <DoorClosed className="h-4 w-4" />
-              {t('closeEvent')}
-            </Button>
-          )}
-        </ItemActions>
-      </Item>
+      <section className="bg-card ring-foreground/10 flex flex-col gap-3 rounded-xl p-4 shadow-xs ring-1 sm:flex-row sm:items-center sm:gap-6 sm:px-6">
+        <div className="min-w-0 flex-1 space-y-1">
+          <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+            <h2 className="font-display text-base font-semibold tracking-tight">
+              {isEventClosed ? t('reopenTitle') : t('closeTitle')}
+            </h2>
+            <StatusBadge status={event.status} />
+          </div>
+          <p className="text-muted-foreground text-[13px] sm:text-sm">
+            {isEventClosed ? t('reopenDescription') : t('closeDescription')}
+          </p>
+        </div>
+        {isEventClosed ? (
+          <Button
+            onClick={handleOpenEvent}
+            disabled={openEventMutation.isPending}
+            className="w-full shrink-0 sm:w-auto"
+          >
+            {openEventMutation.isPending ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                {t('opening')}
+              </>
+            ) : (
+              <>
+                <DoorOpen className="h-4 w-4" />
+                {t('openEvent')}
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            variant="outline"
+            onClick={() => setIsCloseModalOpen(true)}
+            className="w-full shrink-0 sm:w-auto"
+          >
+            <DoorClosed className="h-4 w-4" />
+            {t('closeEvent')}
+          </Button>
+        )}
+      </section>
 
       <CloseEventModal
         event={event}

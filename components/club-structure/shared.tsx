@@ -99,10 +99,10 @@ export function DepartmentTypeBadge({ type }: Pick<ClubDepartment, "type">) {
     <Badge
       variant="outline"
       className={cn(
-        "rounded-full text-[10px]",
-        type === "administrative"
-          ? "border-blue-500/20 bg-blue-500/10 text-blue-700 dark:text-blue-300"
-          : "border-violet-500/20 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+        "rounded-full border-transparent text-[11px]",
+        // Type is information, not state: specialised gets the informational
+        // blue, administrative stays neutral.
+        type === "administrative" ? "bg-muted text-muted-foreground" : "bg-brand-blue-soft text-brand-blue-ink",
       )}
     >
       {t(`types.${type}`)}
@@ -115,9 +115,9 @@ export function RoleBadge({ role, label }: { role: ClubRoleKey; label: string })
     <Badge
       variant="secondary"
       className={cn(
-        "text-[10px]",
-        role === "leader" && "bg-primary/10 text-primary",
-        role === "vp" && "bg-yellow-500/10 text-yellow-800 dark:text-yellow-300",
+        "text-[11px]",
+        role === "leader" && "bg-brand-blue-soft text-brand-blue-ink",
+        role === "vp" && "border-border text-foreground bg-transparent",
       )}
     >
       {label}
@@ -164,7 +164,7 @@ export function ClubLoading({ overview = false }: { overview?: boolean }) {
   );
 }
 
-export function ClubRefresh() {
+export function ClubRefresh({ size = "sm" }: { size?: "sm" | "default" }) {
   const t = useTranslations("clubStructure");
   const fetching = useIsFetching({ queryKey: clubStructureKeys.all }) > 0;
   const saving = useIsMutating({ mutationKey: clubStructureKeys.all }) > 0;
@@ -172,7 +172,7 @@ export function ClubRefresh() {
   return (
     <Button
       variant="outline"
-      size="sm"
+      size={size}
       aria-label={t(fetching ? "refreshing" : "refresh")}
       disabled={fetching || saving}
       onClick={() => void refresh()}
