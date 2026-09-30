@@ -3,7 +3,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useUser } from "@clerk/nextjs";
 import { ArrowLeft } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
@@ -14,7 +13,7 @@ import { DepartmentForm } from "@/components/club-structure/department-form";
 import { ClubLoading, DepartmentPlusIcon } from "@/components/club-structure/shared";
 import { useClubError } from "@/components/club-structure/use-club-error";
 import { useClubMutation, useClubOverview } from "@/hooks/use-club-structure";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import type { DepartmentSettings } from "@/lib/club-structure-types";
 
 export default function CreateDepartmentPage() {
@@ -31,8 +30,7 @@ function CreateDepartment() {
   const common = useTranslations("common");
   const denied = useTranslations("accessDenied");
   const router = useRouter();
-  const { isLoaded } = useUser();
-  const role = useUserRole();
+  const { can, isLoading } = useAccess();
   const describeError = useClubError();
   // The semester the department starts in: the one the overview had selected.
   const semesterId = useSearchParams().get("semester") ?? undefined;
@@ -54,8 +52,8 @@ function CreateDepartment() {
     }
   }
 
-  if (!isLoaded || (!semester && !overview.error)) return <ClubLoading />;
-  if (role !== "super_admin")
+  if (isLoading || (!semester && !overview.error)) return <ClubLoading />;
+  if (!can("club_structure.manage"))
     return <AccessDenied title={denied("fallbackTitle")} description={denied("fallbackDescription")} />;
 
   return (

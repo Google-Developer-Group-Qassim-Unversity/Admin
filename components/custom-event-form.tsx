@@ -25,7 +25,7 @@ import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, Member, PointRowType } from "@/lib/api-types";
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import { FormActions } from "@/components/form-actions";
 
 export interface CustomEventFormProps {
@@ -79,8 +79,9 @@ export function CustomEventForm({
 }: CustomEventFormProps) {
   const t = useTranslations("customEventForm");
   const tc = useTranslations("common.states");
-  const userRole = useUserRole();
-  const isRestrictedMode = userRole === "admin_points";
+  const { isSuperAdmin } = useAccess();
+  // Only super admins give points outside the point actions.
+  const isRestrictedMode = !isSuperAdmin;
 
   const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
   const [date, setDate] = React.useState<Date | undefined>(() => {

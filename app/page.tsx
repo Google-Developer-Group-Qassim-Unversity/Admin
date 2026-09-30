@@ -13,15 +13,18 @@ import { PipelineCard } from "@/components/dashboard/pipeline-card";
 import { StatTile } from "@/components/dashboard/stat-tile";
 import { Button } from "@/components/ui/button";
 import { useEvents } from "@/hooks/use-event";
+import { useAccess } from "@/hooks/use-access";
 import { useMembers } from "@/hooks/use-members";
 import { getEmailDashboardStats } from "@/lib/api";
 
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
   const { getToken } = useAuth();
+  const { can } = useAccess();
+  const canSeeMembers = can("members.view");
 
   const { data: events, isPending: eventsPending } = useEvents(undefined);
-  const { data: members, isPending: membersPending } = useMembers(getToken);
+  const { data: members, isPending: membersPending } = useMembers(getToken, canSeeMembers);
 
   const { data: emailStats, isPending: emailsPending } = useQuery({
     queryKey: ["emails", "stats", "dashboard", 1],
@@ -70,12 +73,14 @@ export default function DashboardPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
-            <Button asChild>
-              <Link href="/events/create">
-                <CalendarPlus className="h-4 w-4" />
-                {t("newEvent")}
-              </Link>
-            </Button>
+            {can("events.create") ? (
+              <Button asChild>
+                <Link href="/events/create">
+                  <CalendarPlus className="h-4 w-4" />
+                  {t("newEvent")}
+                </Link>
+              </Button>
+            ) : null}
             <Button asChild variant="outline">
               <Link href="/events">{t("allEvents")}</Link>
             </Button>
@@ -100,17 +105,19 @@ export default function DashboardPage() {
           hint={counts.liveName ?? t("tiles.liveNone")}
           isPending={eventsPending}
         />
-        <StatTile
-          icon={Users}
-          tone="blue"
-          label={t("tiles.members")}
-          value={memberSplit.total.toLocaleString()}
-          hint={t("tiles.membersHint", {
-            verified: memberSplit.verified,
-            pending: memberSplit.total - memberSplit.verified,
-          })}
-          isPending={membersPending}
-        />
+        {canSeeMembers ? (
+          <StatTile
+            icon={Users}
+            tone="blue"
+            label={t("tiles.members")}
+            value={memberSplit.total.toLocaleString()}
+            hint={t("tiles.membersHint", {
+              verified: memberSplit.verified,
+              pending: memberSplit.total - memberSplit.verified,
+            })}
+            isPending={membersPending}
+          />
+        ) : null}
         <StatTile
           icon={Mail}
           tone="neutral"

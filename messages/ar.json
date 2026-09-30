@@ -244,7 +244,6 @@
     "events": "الفعاليات",
     "points": "النقاط",
     "members": "الأعضاء",
-    "admins": "المشرفين",
     "settings": "الإعدادات",
     "menu": "القائمة",
     "toggleMenu": "فتح القائمة",
@@ -300,11 +299,6 @@
       "description": "تابع سجلات البريد وإحصائيات الاستخدام، وأدر ملفات البريد.",
       "button": "إدارة البريد"
     },
-    "admins": {
-      "title": "إدارة المشرفين",
-      "description": "أضف المشرفين واعرض أدوارهم وصلاحياتهم وعدّلها.",
-      "button": "إدارة المشرفين"
-    },
     "settings": {
       "title": "الإعدادات",
       "description": "أدر إعدادات التطبيق وأعد تعيين ذاكرة لوحة الصدارة.",
@@ -314,28 +308,23 @@
   "accessDenied": {
     "fallbackTitle": "الوصول مرفوض",
     "fallbackDescription": "ليس لديك صلاحية للوصول إلى هذه الميزة.",
-    "signInButton": "سجل دخولك بحساب مشرف",
-    "notAdmin": {
-      "title": "تحتاج صلاحية مشرف",
-      "description": "حسابك لا يملك صلاحيات المشرف. هذه اللوحة مخصصة للمشرفين المصرح لهم فقط.",
-      "hint": "إذا تعتقد إن المفروض عندك صلاحية، تواصل مع albrrak773 أو أي أحد من فريق التطوير."
-    },
-    "notSuperAdmin": {
-      "title": "تحتاج صلاحية مشرف عام",
-      "description": "هذه الصفحة تتطلب صلاحيات المشرف العام. إدارة أدوار المشرفين متاحة للمشرفين العامين فقط.",
-      "hint": "إذا تحتاج صلاحية مشرف عام، تواصل مع أحد المشرفين العامين الحاليين."
-    },
-    "notAuthorized": {
-      "title": "صلاحيات غير كافية",
-      "description": "ليس لديك الصلاحيات المطلوبة للوصول إلى هذه الصفحة. إذا كنت تعتقد أن هذا خطأ، تواصل مع أحد المشرفين."
-    },
-    "config": {
-      "title": "خطأ في الإعدادات",
-      "description": "التطبيق غير مهيأ بشكل صحيح. يرجى التواصل مع مسؤول النظام."
-    },
+    "signInButton": "تسجيل الدخول",
     "default": {
-      "title": "الوصول مرفوض",
-      "description": "يجب تسجيل الدخول بحساب مشرف للوصول إلى هذه اللوحة."
+      "title": "يلزم تسجيل الدخول",
+      "description": "سجّل الدخول للمتابعة."
+    },
+    "notStaff": {
+      "title": "لا تملك صلاحية الدخول",
+      "description": "ليس لديك صلاحية الدخول إلى هذا التطبيق."
+    },
+    "unavailable": {
+      "title": "تعذر التحقق من صلاحيتك",
+      "description": "حدث خطأ أثناء التحقق من صلاحيتك. حاول مرة أخرى بعد قليل.",
+      "retry": "حاول مرة أخرى"
+    },
+    "noPermission": {
+      "title": "لا تملك الصلاحية",
+      "description": "ليس لديك صلاحية فتح هذه الصفحة."
     }
   },
   "events": {
@@ -1361,79 +1350,6 @@
       "name": "الاسم (أ–ي)",
       "recent": "آخر نشاط"
     }
-  },
-  "revokeAdmin": {
-    "title": "إلغاء صلاحية {role}",
-    "confirmDescription": "متأكد إنك تبي تلغي صلاحية {role} عن <strong>{name}</strong>؟",
-    "loseAccessIntro": "ما راح يقدر بعدها على:",
-    "loseAccessDashboard": "الوصول للوحة التحكم",
-    "loseAccessEvents": "إدارة الفعاليات والمشاركين",
-    "loseAccessAdmins": "إدارة مشرفين ثانين",
-    "reversible": "تقدر تتراجع عن هذا الإجراء بترقيته مرة ثانية.",
-    "revoking": "جاري الإلغاء...",
-    "revokeAccess": "إلغاء الصلاحية"
-  },
-  "editRole": {
-    "title": "تعديل دور {name}",
-    "currentRole": "الدور الحالي:",
-    "newRole": "الدور الجديد",
-    "demotingWarningTitle": "تنبيه: تنزيل من مشرف عام",
-    "demotingWarningDescription": "هذا المستخدم راح يفقد صلاحية إدارة المشرفين والشهادات.",
-    "updating": "جاري التحديث...",
-    "updateRole": "تحديث الدور"
-  },
-  "adminList": {
-    "title": "المشرفون الحاليون",
-    "countFiltered": "{shown} من {total, plural, one {مشرف} other {مشرف}}",
-    "countActive": "{count, plural, =0 {ما فيه مشرفين نشطين} one {مشرف نشط وحد} two {مشرفان نشطان} few {# مشرفين نشطين} many {# مشرف نشط} other {# مشرف نشط}}",
-    "searchPlaceholder": "ابحث بالاسم أو البريد أو الرقم الجامعي...",
-    "noneMatch": "ما فيه مشرفين يطابقون بحثك",
-    "noneFound": "ما فيه مشرفين",
-    "columnName": "الاسم",
-    "columnEmail": "البريد",
-    "columnUniId": "الرقم الجامعي",
-    "columnRole": "الدور",
-    "columnActions": "الإجراءات",
-    "you": "(أنت)",
-    "editRole": "تعديل الدور",
-    "revokeAccess": "إلغاء الصلاحية"
-  },
-  "addAdmin": {
-    "loadFailed": "تعذر تحميل الأعضاء: {error}",
-    "selectAtLeastOne": "يرجى اختيار عضو واحد على الأقل",
-    "promoteFailed": "تعذر ترقية {name}: {error}",
-    "metadataWarning": "{name}: تم تحديث الدور في قاعدة البيانات، لكن ما لقينا المستخدم في نظام التوثيق.",
-    "metadataFailed": "{name}: تعذر تحديث بيانات التوثيق",
-    "promoteFailedUnknown": "تعذر ترقية {name}: {error}",
-    "unknownError": "خطأ غير معروف",
-    "promotedSuccess": "{count, plural, =0 {} one {تمت ترقية عضو وحد} two {تمت ترقية عضوين} few {تمت ترقية # أعضاء} many {تمت ترقية # عضو} other {تمت ترقية # عضو}}",
-    "promoteFailedCount": "{count, plural, =0 {} one {تعذرت ترقية عضو وحد} two {تعذرت ترقية عضوين} few {تعذرت ترقية # أعضاء} many {تعذرت ترقية # عضو} other {تعذرت ترقية # عضو}}",
-    "title": "إضافة مشرفين جدد",
-    "description": "ابحث عن الأعضاء واختر دورهم عشان ترقيهم لمشرفين",
-    "searchPlaceholder": "ابحث بالاسم أو الرقم الجامعي أو البريد...",
-    "selectMembers": "اختيار الأعضاء",
-    "limitMessage": "يظهر أعلى {max} نتيجة. استخدم البحث عشان تلقى أكثر.",
-    "searchLimitMessage": "يظهر أعلى {max} نتيجة مطابقة.",
-    "noneFound": "ما فيه أعضاء مطابقين. جرب كلمة بحث ثانية.",
-    "allSelected": "كل الأعضاء متحددين.",
-    "selectedMembers": "الأعضاء المحددين ({count})",
-    "promoting": "{count, plural, =0 {جاري الترقية...} one {جاري ترقية عضو وحد...} two {جاري ترقية عضوين...} few {جاري ترقية # أعضاء...} many {جاري ترقية # عضو...} other {جاري ترقية # عضو...}}",
-    "addAdminButton": "{count, plural, =0 {إضافة مشرفين} one {إضافة مشرف وحد} two {إضافة مشرفين} few {إضافة # مشرفين} many {إضافة # مشرف} other {إضافة # مشرف}}"
-  },
-  "manageAdminsPage": {
-    "revokeFailed": "تعذر إلغاء صلاحية المشرف: {error}",
-    "revokeMetadataWarning": "تم إلغاء الدور في قاعدة البيانات، لكن ما لقينا المستخدم في نظام التوثيق",
-    "metadataFailed": "تعذر تحديث بيانات التوثيق: {error}",
-    "revokedSuccess": "تم إلغاء صلاحية المشرف عن {name}.",
-    "revokeGenericFailed": "تعذر إلغاء صلاحية المشرف",
-    "updateRoleFailed": "تعذر تحديث الدور: {error}",
-    "updateMetadataWarning": "تم تحديث الدور في قاعدة البيانات، لكن ما لقينا المستخدم في نظام التوثيق",
-    "roleUpdatedSuccess": "تم تحديث دور {name} إلى {role}.",
-    "updateGenericFailed": "تعذر تحديث الدور",
-    "title": "إدارة المشرفين",
-    "subtitle": "أضف مشرفين وأدر أدوارهم وصلاحياتهم.",
-    "addAdmin": "إضافة مشرف",
-    "loadFailed": "تعذر تحميل المشرفين"
   },
   "settingsPage": {
     "title": "الإعدادات",

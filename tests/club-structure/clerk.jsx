@@ -1,17 +1,10 @@
 // Only bundled by the integration runner. Never used by the Next.js application.
+// The role picks a test identity; what it can do comes from the backend's
+// /access/me, which the test server answers per identity.
 const role = new URLSearchParams(location.search).get("role") || "super_admin";
 export function useUser() {
-  return {
-    isLoaded: true,
-    user: {
-      publicMetadata: {
-        is_admin: role === "admin",
-        is_super_admin: role === "super_admin",
-        is_admin_points: role === "admin_points",
-      },
-    },
-  };
+  return { isLoaded: true, user: { publicMetadata: {} } };
 }
 export function useAuth() {
-  return { getToken: async () => `browser-${role}` };
+  return { isSignedIn: true, getToken: async () => `browser-${role}` };
 }

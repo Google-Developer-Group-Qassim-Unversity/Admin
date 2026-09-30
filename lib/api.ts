@@ -51,8 +51,6 @@ import type {
   ReorderActionsPayload,
   Department,
   Member,
-  MemberWithRole,
-  MemberRole,
   ManualMemberCreateRequest,
   CreatedMemberResponse,
   BatchCreateMemberItem,
@@ -702,22 +700,6 @@ export async function getMemberById(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Member>> {
   return apiFetch<Member>(`/members/${memberId}`, {}, getToken);
-}
-
-export async function getMemberRoles(
-  getToken?: GetTokenFn
-): Promise<ApiResponse<MemberWithRole[]>> {
-  return apiFetch<MemberWithRole[]>("/members/roles", {}, getToken);
-}
-
-export async function updateMemberRole(
-  memberId: number,
-  newRole: MemberRole,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/members/roles?member_id=${memberId}&new_role=${newRole}`, {
-    method: "POST",
-  }, getToken);
 }
 
 // =============================================================================

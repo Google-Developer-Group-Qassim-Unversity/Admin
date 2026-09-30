@@ -46,8 +46,9 @@ export function useMemberStats() {
   return useQuery(memberStatsQuery(api));
 }
 
-export function useMembers(getToken: () => Promise<string | null>) {
+export function useMembers(getToken: () => Promise<string | null>, enabled = true) {
   return useQuery({
+    enabled,
     queryKey: memberKeys.list(),
     queryFn: async () => {
       const result = await getMembers(getToken);

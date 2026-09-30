@@ -1,63 +1,33 @@
-import { auth } from "@clerk/nextjs/server";
+import "server-only";
 
-type AdminMetadata = {
-  is_admin?: boolean;
-  is_super_admin?: boolean;
-  is_admin_points?: boolean;
-};
+import { can, type AccessMe, type Perm } from "@/lib/access";
+import { serverApi } from "@/lib/api/server";
 
-function isAdminFromMetadata(metadata: AdminMetadata | undefined): boolean {
-  return metadata?.is_admin === true || metadata?.is_super_admin === true || metadata?.is_admin_points === true;
+/**
+ * Permission checks for route handlers, from the backend's `GET /access/me`,
+ * never from Clerk metadata. Each returns null when the caller is not allowed
+ * (or not signed in), so a handler can answer 403.
+ */
+
+export async function serverAccess(): Promise<AccessMe | null> {
+  try {
+    return await (await serverApi()).access.me();
+  } catch {
+    return null;
+  }
 }
 
-// Role flags are read off the session JWT's "metadata" claim (configured in
-// Clerk Dashboard > Sessions > customize session token to mirror
-// publicMetadata) rather than a live clerkClient().users.getUser() call,
-// which used to run on every request.
-
-export async function requireAdmin(): Promise<{
-  userId: string;
-  isAdmin: true;
-} | null> {
-  const { userId, sessionClaims } = await auth();
-
-  if (!userId) {
-    return null;
-  }
-
-  if (!isAdminFromMetadata(sessionClaims?.metadata)) {
-    return null;
-  }
-
-  return { userId, isAdmin: true };
+export async function requirePermission(perm: Perm): Promise<AccessMe | null> {
+  const access = await serverAccess();
+  return can(access, perm) ? access : null;
 }
 
-export async function requireSuperAdmin(): Promise<{
-  userId: string;
-  isSuperAdmin: true;
-} | null> {
-  const { userId, sessionClaims } = await auth();
-
-  if (!userId) {
-    return null;
+/** `perm` for one event, checked against the event's department by the backend. */
+export async function requireEventPermission(perm: Perm, eventId: number): Promise<boolean> {
+  try {
+    const { permissions } = await (await serverApi()).access.forEvent(eventId);
+    return permissions.includes(perm);
+  } catch {
+    return false;
   }
-
-  if (sessionClaims?.metadata?.is_super_admin !== true) {
-    return null;
-  }
-
-  return { userId, isSuperAdmin: true };
-}
-
-export async function getAuthUser(): Promise<{
-  userId: string;
-  isAdmin: boolean;
-} | null> {
-  const { userId, sessionClaims } = await auth();
-
-  if (!userId) {
-    return null;
-  }
-
-  return { userId, isAdmin: isAdminFromMetadata(sessionClaims?.metadata) };
 }

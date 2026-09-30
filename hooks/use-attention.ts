@@ -6,6 +6,7 @@ import { useEvents } from "@/hooks/use-event";
 import type { Event } from "@/lib/api-types";
 import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
 import type { Urgency } from "@/components/status-badge";
+import { useAccess } from "@/hooks/use-access";
 
 export type AttentionKind = "overdue" | "draft" | "closingSoon" | "certificates";
 
@@ -41,6 +42,7 @@ function daysBetween(from: Date, to: Date) {
  */
 export function useAttention() {
   const api = useApi();
+  const { can } = useAccess();
   const { data: events, isPending, error } = useEvents(undefined);
 
   const now = React.useMemo(() => new Date(), []);
@@ -63,6 +65,8 @@ export function useAttention() {
       queryKey: ["certificates", "eligible", event.id] as const,
       queryFn: () => api.certificates.eligibleCount(event.id),
       staleTime: 5 * 60 * 1000,
+      // Only for people who send event certificates; the backend refuses events of other departments.
+      enabled: can("emails.event"),
     })),
   });
 

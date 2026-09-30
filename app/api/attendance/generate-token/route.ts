@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import jwt from 'jsonwebtoken';
 import { auth } from '@clerk/nextjs/server';
+import { requireEventPermission } from '@/lib/auth';
 import { config } from '@/lib/config';
 import { serverConfig } from '@/lib/config-server';
 
@@ -14,15 +15,8 @@ interface TokenPayload {
 }
 
 export async function POST(request: NextRequest) {
-  const { userId, sessionClaims } = await auth();
+  const { userId } = await auth();
   if (!userId) {
-    return NextResponse.json(
-      { error: 'Unauthorized' },
-      { status: 401 }
-    );
-  }
-  const isAdmin = sessionClaims?.metadata?.is_admin === true;
-  if (!isAdmin) {
     return NextResponse.json(
       { error: 'Unauthorized' },
       { status: 401 }
@@ -43,6 +37,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: 'Invalid eventId' },
         { status: 400 }
+      );
+    }
+
+    // Taking attendance for this event's department, as the backend decides.
+    if (!(await requireEventPermission('attendance.take', eventId))) {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
       );
     }
 

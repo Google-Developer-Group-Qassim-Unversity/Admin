@@ -5,7 +5,6 @@ import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
 import { Copy, Network, Plus, Search } from "lucide-react";
-import { useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 import { AccessDenied } from "@/components/ui/access-denied";
 import { Button } from "@/components/ui/button";
@@ -25,7 +24,7 @@ import {
 } from "@/components/club-structure/shared";
 import { useClubError } from "@/components/club-structure/use-club-error";
 import { useClubMutation, useClubOverview } from "@/hooks/use-club-structure";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import { useSemesters } from "@/hooks/use-semesters";
 import type { Semester } from "@/lib/api-types";
 import type { ClubOverview } from "@/lib/club-structure-types";
@@ -170,9 +169,8 @@ function ClubStructureOverview() {
   const t = useTranslations("clubStructure");
   const denied = useTranslations("accessDenied");
   const format = useFormatter();
-  const { isLoaded } = useUser();
-  const role = useUserRole();
-  const canEdit = role === "super_admin";
+  const { can, isLoading } = useAccess();
+  const canEdit = can("club_structure.manage");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -196,8 +194,8 @@ function ClubStructureOverview() {
     [overview.data],
   );
 
-  if (!isLoaded) return <ClubLoading overview />;
-  if (role === "none")
+  if (isLoading) return <ClubLoading overview />;
+  if (!can("club_structure.view"))
     return <AccessDenied title={denied("fallbackTitle")} description={denied("fallbackDescription")} />;
 
   const semester = overview.data?.semester;

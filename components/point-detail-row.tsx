@@ -25,7 +25,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { MemberSelectDialog } from "./member-select-dialog";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 
 export interface MemberOption {
   id: number;
@@ -68,7 +68,7 @@ export function PointDetailRow({
   onMemberCreated,
 }: PointDetailRowProps) {
   const t = useTranslations("pointDetailRow");
-  const userRole = useUserRole();
+  const { isSuperAdmin } = useAccess();
   const isPointsLocked = data.action_id !== null;
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
 
@@ -76,7 +76,8 @@ export function PointDetailRow({
   const isDiscountRow = data.action_name?.toLowerCase() === "discount";
   const isCompositeAction = !isDiscountRow && !!(data.action_id !== null && !allActions.find((a) => a.id === data.action_id) && data.action_name);
 
-  const isRestrictedMode = userRole === "admin_points";
+  // Only super admins give points outside the point actions.
+  const isRestrictedMode = !isSuperAdmin;
 
   const updateField = <K extends keyof PointDetailRowData>(
     field: K,

@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AccessDenied } from "@/components/ui/access-denied";
-import { useHasPermission } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 
 import type { CopyTabProps } from "./types";
 import { useTranslations } from "next-intl";
@@ -23,7 +23,7 @@ export function CopyTab({
   preview,
 }: CopyTabProps) {
   const t = useTranslations("attendance.copyTab");
-  const hasAccess = useHasPermission(["super_admin"]);
+  const hasAccess = useAccess().can("attendance.copy");
 
   const sourceInt = parseInt(sourceDay, 10);
   const allDays = Array.from({ length: dayCount }, (_, i) => i + 1);

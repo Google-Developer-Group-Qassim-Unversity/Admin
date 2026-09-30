@@ -11,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useResetLeaderboardCache } from "@/hooks/use-cache";
-import { RequireRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import { useTranslations } from "next-intl";
 
 function TemplateFormCard() {
@@ -72,6 +72,7 @@ export default function SettingsPage() {
   const t = useTranslations("settingsPage");
   const { getToken } = useAuth();
   const resetCache = useResetLeaderboardCache(getToken);
+  const { can } = useAccess();
 
   const handleResetCache = async () => {
     try {
@@ -86,40 +87,42 @@ export default function SettingsPage() {
     <div className="space-y-4 sm:space-y-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Settings} />
 
-      <Card className="w-full max-w-2xl">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <div className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-              <Settings className="text-brand-blue-ink h-5 w-5" />
+      {can("cache.reset") ? (
+        <Card className="w-full max-w-2xl">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <div className="bg-brand-blue-soft flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
+                <Settings className="text-brand-blue-ink h-5 w-5" />
+              </div>
+              {t("cacheTitle")}
+            </CardTitle>
+            <CardDescription>
+              {t("cacheDescription")}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="min-w-0 space-y-1">
+                <p className="text-sm font-medium leading-none">{t("resetCache")}</p>
+                <p className="text-sm text-muted-foreground">
+                  {t("resetCacheHint")}
+                </p>
+              </div>
+              <Button
+                onClick={handleResetCache}
+                disabled={resetCache.isPending}
+                variant="destructive"
+                className="w-full sm:w-auto"
+              >
+                <RotateCcw className={`h-4 w-4 me-2 ${resetCache.isPending ? "animate-spin" : ""}`} />
+                {resetCache.isPending ? t("resetting") : t("resetCacheButton")}
+              </Button>
             </div>
-            {t("cacheTitle")}
-          </CardTitle>
-          <CardDescription>
-            {t("cacheDescription")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-3 rounded-xl border p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="min-w-0 space-y-1">
-              <p className="text-sm font-medium leading-none">{t("resetCache")}</p>
-              <p className="text-sm text-muted-foreground">
-                {t("resetCacheHint")}
-              </p>
-            </div>
-            <Button
-              onClick={handleResetCache}
-              disabled={resetCache.isPending}
-              variant="destructive"
-              className="w-full sm:w-auto"
-            >
-              <RotateCcw className={`h-4 w-4 me-2 ${resetCache.isPending ? "animate-spin" : ""}`} />
-              {resetCache.isPending ? t("resetting") : t("resetCacheButton")}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      ) : null}
 
-      <RequireRole role="super_admin">
+      {can("semesters.manage") ? (
         <Card className="w-full max-w-2xl">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -149,9 +152,9 @@ export default function SettingsPage() {
             </div>
           </CardContent>
         </Card>
+      ) : null}
 
-        <TemplateFormCard />
-      </RequireRole>
+      {can("settings.template_form") ? <TemplateFormCard /> : null}
     </div>
   );
 }

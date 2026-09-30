@@ -12,7 +12,6 @@ import {
   Network,
   Search,
   Settings,
-  ShieldCheck,
   Workflow,
   Trophy,
   Users,
@@ -33,8 +32,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { useUserRole } from "@/hooks/use-rbac";
-import { hasRoutePermission } from "@/lib/role-based-access";
+import { AccessDenied } from "@/components/ui/access-denied";
+import { useAccess } from "@/hooks/use-access";
 
 /** Routes that render bare - the QR projector screen and the access wall. */
 const MINIMAL_ROUTES = ["/qr-display", "/access-denied"];
@@ -61,7 +60,6 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/manage-members", key: "members", icon: Users },
       { href: "/club-structure", key: "clubStructure", icon: Network },
-      { href: "/manage-admins", key: "admins", icon: ShieldCheck },
     ],
   },
   {
@@ -77,6 +75,20 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
+/** The nav, less what the signed-in person cannot open (nothing, until their access has loaded). */
+export function useNavGroups(): NavGroup[] {
+  const { canOpen, access } = useAccess();
+  return React.useMemo(
+    () =>
+      NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => canOpen(i.href)) })).filter(
+        (g) => g.items.length > 0,
+      ),
+    // canOpen changes identity every render; access is what it reads.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [access],
+  );
+}
+
 /** "/" only matches itself; every other entry owns its subtree. */
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -85,10 +97,11 @@ function isActive(pathname: string, href: string) {
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const groups = useNavGroups();
 
   return (
     <div className="flex flex-col gap-5">
-      {NAV_GROUPS.map((group) => (
+      {groups.map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
           {group.items.map((item) => {
             const Icon = item.icon;
@@ -157,9 +170,7 @@ const MOBILE_PRIORITY = [
 const MOBILE_SLOTS = 4;
 
 function useMobileNav() {
-  const role = useUserRole();
-  const all = NAV_GROUPS.flatMap((g) => g.items);
-  const allowed = all.filter((item) => hasRoutePermission(role, item.href));
+  const allowed = useNavGroups().flatMap((g) => g.items);
   const primary = MOBILE_PRIORITY.map((href) => allowed.find((i) => i.href === href))
     .filter((i): i is NavItem => Boolean(i))
     .slice(0, MOBILE_SLOTS);
@@ -359,6 +370,21 @@ function Topbar({ onOpenSearch }: { onOpenSearch: () => void }) {
   );
 }
 
+/**
+ * Each page's own permission (see `routeNeeds` in lib/access.ts). The
+ * middleware only lets staff in; this stops a staff member at a page they
+ * cannot use, and the backend refuses the calls anyway.
+ */
+function PageAccess({ pathname, children }: { pathname: string; children: React.ReactNode }) {
+  const t = useTranslations("accessDenied");
+  const { access, isLoading, canOpen } = useAccess();
+  if (isLoading && !access) return null;
+  if (!canOpen(pathname)) {
+    return <AccessDenied title={t("noPermission.title")} description={t("noPermission.description")} />;
+  }
+  return <>{children}</>;
+}
+
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -391,7 +417,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <Topbar onOpenSearch={() => setSearchOpen(true)} />
           <main className="flex-1 px-4 pt-4 pb-[calc(5.5rem+env(safe-area-inset-bottom))] sm:px-6 sm:pt-6 md:pb-6 lg:px-8">
-            {children}
+            <PageAccess pathname={pathname}>{children}</PageAccess>
           </main>
         </div>
       </div>

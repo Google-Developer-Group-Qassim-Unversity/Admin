@@ -1,6 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
-import { ROUTE_PERMISSIONS, getRoleFromMetadata, type Role } from '@/lib/role-based-access';
+
+import { ACCESS_COOKIE, ACCESS_COOKIE_MAX_AGE_S, readAccessCookie, signAccessCookie } from '@/lib/access-cookie';
 import { config as envConfig } from '@/lib/config';
 
 const isPublicRoute = createRouteMatcher([
@@ -10,8 +11,13 @@ const isPublicRoute = createRouteMatcher([
 
 const isApiRoute = createRouteMatcher(['/api/(.*)']);
 
+/**
+ * The door: only staff (on the current semester's roster, or a super admin)
+ * get in, as the backend's GET /access/me says. Everyone else is denied, on
+ * every page. What each page allows is up to the page and the backend.
+ */
 export default clerkMiddleware(async (auth, req) => {
-  const { userId, sessionClaims } = await auth();
+  const { userId, getToken } = await auth();
 
   if (isPublicRoute(req)) {
     return NextResponse.next();
@@ -26,28 +32,41 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.redirect(signInUrl);
   }
 
-  // Role flags come off the session JWT's "metadata" claim (Clerk Dashboard >
-  // Sessions > customize session token mirrors publicMetadata into it)
-  // instead of a live clerkClient().users.getUser() call, which used to run
-  // on every navigation.
-  const userRole = getRoleFromMetadata(sessionClaims?.metadata ?? {});
+  let isStaff = await readAccessCookie(req.cookies.get(ACCESS_COOKIE)?.value, userId);
+  let freshCookie: string | null = null;
 
-  // Only admins get past this point. A signed-in person without an admin role
-  // belongs on gdg.com, never here - not even on one page.
-  if (userRole === 'none') {
-    return NextResponse.redirect(new URL('/access-denied?reason=not_admin', req.url));
-  }
-
-  for (const [route, allowedRoles] of Object.entries(ROUTE_PERMISSIONS)) {
-    if (req.nextUrl.pathname.startsWith(route)) {
-      if (!allowedRoles.includes(userRole)) {
-        return NextResponse.redirect(new URL('/access-denied?reason=not_authorized', req.url));
-      }
-      break;
+  if (isStaff === null) {
+    try {
+      const token = await getToken();
+      const response = await fetch(`${envConfig.backendApiUrl}/access/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: 'no-store',
+      });
+      if (!response.ok) throw new Error(`GET /access/me returned ${response.status}`);
+      const body = (await response.json()) as { is_staff?: boolean };
+      isStaff = body.is_staff === true;
+      freshCookie = await signAccessCookie(userId, isStaff);
+    } catch (error) {
+      // Fail closed, and do not remember the failure.
+      console.error('Could not check access', error);
+      return NextResponse.redirect(new URL('/access-denied?reason=unavailable', req.url));
     }
   }
 
-  return NextResponse.next();
+  const response = isStaff
+    ? NextResponse.next()
+    : NextResponse.redirect(new URL('/access-denied?reason=not_staff', req.url));
+
+  if (freshCookie) {
+    response.cookies.set(ACCESS_COOKIE, freshCookie, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: ACCESS_COOKIE_MAX_AGE_S,
+    });
+  }
+  return response;
 });
 
 export const config = {

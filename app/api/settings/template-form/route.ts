@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { requireSuperAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth';
 import { serverConfig } from '@/lib/config-server';
 
 export async function GET() {
-  const admin = await requireSuperAdmin();
-  if (!admin) {
+  const allowed = await requirePermission('settings.template_form');
+  if (!allowed) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

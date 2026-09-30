@@ -3,7 +3,7 @@ import { useCallback } from "react";
 import { useApi } from "@/lib/api/client";
 import type { Api } from "@/lib/api/resources";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import { eventKeys } from "@/hooks/use-event";
 import { memberKeys } from "@/hooks/use-members";
 
@@ -54,32 +54,32 @@ export const clubOverviewQuery = (api: Api, semesterId?: string) =>
 
 export function useClubOverview(semesterId?: string) {
   const api = useApi();
-  const role = useUserRole();
+  const { can } = useAccess();
   return useQuery({
     ...clubOverviewQuery(api, semesterId),
-    enabled: role !== "none",
+    enabled: can("club_structure.view"),
   });
 }
 
 export function useClubDepartment(id: number) {
   const api = useApi();
-  const role = useUserRole();
+  const { can } = useAccess();
   return useQuery({
     ...clubQueryOptions,
     queryKey: clubStructureKeys.department(id),
     queryFn: () => api.clubStructure.department(id),
-    enabled: role !== "none",
+    enabled: can("club_structure.view"),
   });
 }
 
 export function useClubRoster(id: number, semesterId: string) {
   const api = useApi();
-  const role = useUserRole();
+  const { can } = useAccess();
   return useQuery({
     ...clubQueryOptions,
     queryKey: clubStructureKeys.roster(id, semesterId),
     queryFn: () => api.clubStructure.roster(id, semesterId),
-    enabled: role !== "none",
+    enabled: can("club_structure.view"),
   });
 }
 

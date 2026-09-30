@@ -5,7 +5,8 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { CalendarPlus, RotateCcw, Trophy, UserPlus } from "lucide-react";
 
-import { NAV_GROUPS } from "@/components/app-shell";
+import { useNavGroups } from "@/components/app-shell";
+import { useAccess } from "@/hooks/use-access";
 import { StatusDot } from "@/components/status-badge";
 import {
   CommandDialog,
@@ -41,6 +42,11 @@ export function CommandPalette({
   const t = useTranslations("palette");
   const tn = useTranslations("nav");
   const router = useRouter();
+  const navGroups = useNavGroups();
+  const { canOpen, can } = useAccess();
+  const quickActions = QUICK_ACTIONS.filter((action) =>
+    action.key === "resetCache" ? can("cache.reset") : action.key === "addMember" ? can("members.create") : canOpen(action.href),
+  );
 
   // Only fetch once the palette has actually been opened.
   const { data: events } = useEvents(undefined);
@@ -76,7 +82,7 @@ export function CommandPalette({
         <CommandEmpty>{t("empty")}</CommandEmpty>
 
         <CommandGroup heading={t("actions")}>
-          {QUICK_ACTIONS.map((action) => {
+          {quickActions.map((action) => {
             const Icon = action.icon;
             return (
               <CommandItem key={action.href} value={t(action.key)} onSelect={() => go(action.href)}>
@@ -90,7 +96,7 @@ export function CommandPalette({
         <CommandSeparator />
 
         <CommandGroup heading={t("goTo")}>
-          {NAV_GROUPS.flatMap((group) => group.items).map((item) => {
+          {navGroups.flatMap((group) => group.items).map((item) => {
             const Icon = item.icon;
             return (
               <CommandItem key={item.href} value={tn(item.key)} onSelect={() => go(item.href)}>

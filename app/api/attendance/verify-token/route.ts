@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/auth';
+import { requirePermission } from '@/lib/auth';
 import { serverConfig } from '@/lib/config-server';
 import * as crypto from 'crypto';
 
@@ -89,8 +89,9 @@ function verifyExportToken(token: string, secret: string): { valid: boolean; pay
 }
 
 export async function POST(request: NextRequest) {
-  const admin = await requireAdmin();
-  if (!admin) {
+  // Verifies a sheet-processor export for importing attendance.
+  const allowed = await requirePermission('attendance.backfill');
+  if (!allowed) {
     return NextResponse.json({ valid: false, error: 'Unauthorized' }, { status: 401 });
   }
 

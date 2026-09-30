@@ -244,7 +244,6 @@
     "events": "Events",
     "points": "Points",
     "members": "Members",
-    "admins": "Admins",
     "settings": "Settings",
     "menu": "Menu",
     "toggleMenu": "Toggle menu",
@@ -300,11 +299,6 @@
       "description": "Monitor email logs, usage stats, and manage email assets",
       "button": "Manage Emails"
     },
-    "admins": {
-      "title": "Manage Admins",
-      "description": "Add, view, and manage administrator roles and permissions",
-      "button": "Manage Admins"
-    },
     "settings": {
       "title": "Settings",
       "description": "Manage application settings and reset the leaderboard cache",
@@ -314,28 +308,23 @@
   "accessDenied": {
     "fallbackTitle": "Access Denied",
     "fallbackDescription": "You don't have permission to access this feature.",
-    "signInButton": "Sign In with Admin Account",
-    "notAdmin": {
-      "title": "Admin Access Required",
-      "description": "Your account does not have administrator privileges. This dashboard is restricted to authorized administrators only.",
-      "hint": "If you believe you should have access, please contact albrrak773 or anyone else on the development team."
-    },
-    "notSuperAdmin": {
-      "title": "Super Admin Access Required",
-      "description": "This page requires super administrator privileges. Only super admins can manage administrator roles.",
-      "hint": "If you need super admin access, please contact an existing super administrator."
-    },
-    "notAuthorized": {
-      "title": "Insufficient Permissions",
-      "description": "You don't have the required permissions to access this page. Please contact an administrator if you believe this is an error."
-    },
-    "config": {
-      "title": "Configuration Error",
-      "description": "The application is not properly configured. Please contact the system administrator."
-    },
+    "signInButton": "Sign in",
     "default": {
-      "title": "Access Denied",
-      "description": "You must be signed in with an administrator account to access this dashboard."
+      "title": "Sign in required",
+      "description": "Sign in to continue."
+    },
+    "notStaff": {
+      "title": "No access",
+      "description": "You don't have access to this app."
+    },
+    "unavailable": {
+      "title": "Couldn't check your access",
+      "description": "Something went wrong while checking your access. Try again in a moment.",
+      "retry": "Try again"
+    },
+    "noPermission": {
+      "title": "No permission",
+      "description": "You don't have permission to open this page."
     }
   },
   "events": {
@@ -1361,79 +1350,6 @@
       "name": "Name (A–Z)",
       "recent": "Recent activity"
     }
-  },
-  "revokeAdmin": {
-    "title": "Revoke {role} Access",
-    "confirmDescription": "Are you sure you want to revoke {role} access for <strong>{name}</strong>?",
-    "loseAccessIntro": "They will no longer be able to:",
-    "loseAccessDashboard": "Access the admin dashboard",
-    "loseAccessEvents": "Manage events and participants",
-    "loseAccessAdmins": "Manage other administrators",
-    "reversible": "This action can be reversed by promoting them again.",
-    "revoking": "Revoking...",
-    "revokeAccess": "Revoke Access"
-  },
-  "editRole": {
-    "title": "Edit Role for {name}",
-    "currentRole": "Current role:",
-    "newRole": "New role",
-    "demotingWarningTitle": "Warning: Demoting from Super Admin",
-    "demotingWarningDescription": "This user will lose access to manage administrators and certificates.",
-    "updating": "Updating...",
-    "updateRole": "Update Role"
-  },
-  "adminList": {
-    "title": "Current Admins",
-    "countFiltered": "{shown, plural, one {# of {total} administrator} other {# of {total} administrators}}",
-    "countActive": "{count, plural, one {# active administrator} other {# active administrators}}",
-    "searchPlaceholder": "Search by name, email, or uni ID...",
-    "noneMatch": "No matching administrators found",
-    "noneFound": "No administrators found",
-    "columnName": "Name",
-    "columnEmail": "Email",
-    "columnUniId": "Uni ID",
-    "columnRole": "Role",
-    "columnActions": "Actions",
-    "you": "(You)",
-    "editRole": "Edit role",
-    "revokeAccess": "Revoke access"
-  },
-  "addAdmin": {
-    "loadFailed": "Failed to load members: {error}",
-    "selectAtLeastOne": "Please select at least one member",
-    "promoteFailed": "Failed to promote {name}: {error}",
-    "metadataWarning": "{name}: Role updated in database, but user not found in authentication system.",
-    "metadataFailed": "{name}: Failed to update authentication metadata",
-    "promoteFailedUnknown": "Failed to promote {name}: {error}",
-    "unknownError": "Unknown error",
-    "promotedSuccess": "{count, plural, one {Successfully promoted # member} other {Successfully promoted # members}}",
-    "promoteFailedCount": "{count, plural, one {Failed to promote # member} other {Failed to promote # members}}",
-    "title": "Add New Admins",
-    "description": "Search for members and select their role to promote them to administrators",
-    "searchPlaceholder": "Search by name, uni_id, or email...",
-    "selectMembers": "Select Members",
-    "limitMessage": "Showing top {max} results. Use search to find more.",
-    "searchLimitMessage": "Showing top {max} matching results.",
-    "noneFound": "No members found. Try a different search term.",
-    "allSelected": "All members have been selected.",
-    "selectedMembers": "Selected Members ({count})",
-    "promoting": "{count, plural, one {Promoting # member...} other {Promoting # members...}}",
-    "addAdminButton": "{count, plural, =0 {Add Admins} one {Add # Admin} other {Add # Admins}}"
-  },
-  "manageAdminsPage": {
-    "revokeFailed": "Failed to revoke admin: {error}",
-    "revokeMetadataWarning": "Role revoked in database, but user not found in authentication system",
-    "metadataFailed": "Failed to update authentication metadata: {error}",
-    "revokedSuccess": "Successfully revoked admin access for {name}",
-    "revokeGenericFailed": "Failed to revoke admin access",
-    "updateRoleFailed": "Failed to update role: {error}",
-    "updateMetadataWarning": "Role updated in database, but user not found in authentication system",
-    "roleUpdatedSuccess": "Successfully updated role for {name} to {role}",
-    "updateGenericFailed": "Failed to update role",
-    "title": "Manage Admins",
-    "subtitle": "Add, view, and manage administrator roles and permissions",
-    "addAdmin": "Add Admin",
-    "loadFailed": "Failed to Load Admins"
   },
   "settingsPage": {
     "title": "Settings",

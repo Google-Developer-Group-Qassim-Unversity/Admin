@@ -1,5 +1,6 @@
 import { format } from "date-fns";
 
+import type { AccessMe, Perm } from "@/lib/access";
 import type { Requester } from "@/lib/api/request";
 import type {
   ActionsResponse,
@@ -338,9 +339,17 @@ export function createApi(request: Requester) {
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
   };
 
+  const access = {
+    /** What the signed-in person can do. Never cached on the server: it is per person. */
+    me: () => request.json<AccessMe>("/access/me"),
+    /** The permissions the signed-in person has for one event (department-scoped ones against its department). */
+    forEvent: (eventId: number) =>
+      request.json<{ event_id: number; permissions: Perm[] }>(`/access/events/${eventId}`),
+  };
+
   return {
-    events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure, semesters,
-    pipeline, pipelineRequests,
+    access, events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure,
+    semesters, pipeline, pipelineRequests,
   };
 }
 

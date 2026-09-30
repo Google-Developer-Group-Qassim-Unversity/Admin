@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { usePublishRequest } from "@/hooks/use-pipeline";
-import { useUserRole } from "@/hooks/use-rbac";
+import { useAccess } from "@/hooks/use-access";
 import { useApi } from "@/lib/api/client";
 import type { EventRequestDetail } from "@/lib/pipeline-types";
 
@@ -24,7 +24,7 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.publish");
   const locale = useLocale();
   const api = useApi();
-  const role = useUserRole();
+  const { can } = useAccess();
   const publish = usePublishRequest(request.id);
   const [pair, setPair] = React.useState("");
   const [imageUrl, setImageUrl] = React.useState("");
@@ -38,7 +38,7 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
     return (
       <section className="bg-brand-green-soft text-brand-green-ink flex flex-wrap items-center justify-between gap-3 rounded-xl p-5">
         <span className="text-sm font-medium">{t("done", { id: request.event_id })}</span>
-        {role !== "none" ? (
+        {can("events.view") ? (
           <Button asChild variant="outline" size="sm">
             <Link href={`/events/${request.event_id}`}>
               <ExternalLink className="h-4 w-4" />
