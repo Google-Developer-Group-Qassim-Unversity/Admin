@@ -354,10 +354,11 @@ export default function EventResponsesPage() {
     }
   };
 
-  const allSelectedAccepted = useMemo(() => {
-    const selectedRows = table.getFilteredSelectedRowModel().rows.map((row) => row.original);
-    return selectedRows.length > 0 && selectedRows.every((row) => row.is_accepted);
-  }, [table]);
+  // Computed each render: `table` is a stable instance, so memoising on it
+  // froze this at whatever the first selection was.
+  const selectedResponses = table.getFilteredSelectedRowModel().rows;
+  const allSelectedAccepted =
+    selectedResponses.length > 0 && selectedResponses.every((row) => row.original.is_accepted);
 
   if (!event) {
     return null;

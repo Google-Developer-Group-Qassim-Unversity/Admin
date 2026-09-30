@@ -433,7 +433,12 @@ export function createColumns(
   // Dynamic question columns
   const questionColumns: ColumnDef<TableRowData>[] = questionKeys.map(
     (key) => ({
-      accessorKey: key,
+      // A Google Form question title is free text. As an accessorKey, TanStack
+      // reads a "." as a nested path and rewrites the id, so "Your major." had
+      // no column and getValue/getColumn threw. An explicit id and a flat
+      // accessor keep the title exactly as the key.
+      id: key,
+      accessorFn: (row) => row[key],
       header: createHeaderWithDropdown(key, false, true),
       enableSorting: false,
       cell: ({ row }) => {
