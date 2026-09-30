@@ -133,7 +133,7 @@ export function EventsContent() {
       ) : isPending ? (
         <div className="grid grid-cols-1 gap-2.5 sm:gap-3 sm:grid-cols-[repeat(auto-fill,minmax(min(360px,100%),1fr))]">
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-[112px] w-full rounded-2xl sm:h-[420px]" />
+            <Skeleton key={i} className="h-[112px] w-full rounded-2xl sm:h-40 sm:rounded-lg" />
           ))}
         </div>
       ) : events.length === 0 ? (

@@ -38,7 +38,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/30 duration-200 supports-backdrop-filter:backdrop-blur-xs sm:bg-black/10 fixed inset-0 isolate z-50", className)}
+      className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs max-sm:bg-black/30 max-sm:duration-200 fixed inset-0 isolate z-50", className)}
       {...props}
     />
   )
@@ -62,9 +62,10 @@ function DialogContent({
         className={cn(
           // Phones: a bottom sheet pinned to the lower edge, in thumb reach, that
           // scrolls inside itself. sm and up: the centred dialog.
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 ring-foreground/10 grid gap-5 text-sm ring-1 fixed z-50 w-full outline-none",
-          "inset-x-0 bottom-0 max-h-[92dvh] overflow-y-auto overscroll-contain rounded-t-3xl px-5 pt-7 pb-[max(1.25rem,env(safe-area-inset-bottom))] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] data-open:slide-in-from-bottom data-closed:slide-out-to-bottom",
-          "sm:inset-x-auto sm:bottom-auto sm:top-1/2 sm:left-1/2 sm:max-h-[calc(100dvh-2rem)] sm:max-w-lg sm:-translate-x-1/2 sm:-translate-y-1/2 sm:gap-6 sm:rounded-xl sm:p-6 sm:duration-150 sm:ease-out sm:data-open:slide-in-from-bottom-0 sm:data-closed:slide-out-to-bottom-0 sm:data-open:zoom-in-95 sm:data-closed:zoom-out-95",
+          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid sm:max-w-lg rounded-xl text-sm ring-1 duration-100 fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
+          "[--dialog-gap:--spacing(6)] [--dialog-px:--spacing(6)] [--dialog-pt:--spacing(6)] [--dialog-pb:--spacing(6)] [--dialog-max-h:none] gap-(--dialog-gap) px-(--dialog-px) pt-(--dialog-pt) pb-(--dialog-pb) max-h-(--dialog-max-h)",
+          "max-sm:[--dialog-gap:--spacing(5)] max-sm:[--dialog-px:--spacing(5)] max-sm:[--dialog-pt:--spacing(7)] max-sm:[--dialog-pb:max(1.25rem,env(safe-area-inset-bottom))] max-sm:[--dialog-max-h:92dvh]",
+          "max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:rounded-none max-sm:rounded-t-3xl max-sm:duration-300 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:zoom-in-100 max-sm:data-closed:zoom-out-100 max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom",
           className
         )}
         {...props}
@@ -77,7 +78,7 @@ function DialogContent({
         {children}
         {showCloseButton && (
           <DialogPrimitive.Close data-slot="dialog-close" asChild>
-            <Button variant="ghost" className="absolute top-3.5 end-3.5 sm:top-4 sm:end-4" size="icon-sm">
+            <Button variant="ghost" className="absolute top-4 end-4 max-sm:top-3.5 max-sm:end-3.5" size="icon-sm">
               <XIcon
               />
               <span className="sr-only">{closeLabel}</span>
@@ -93,7 +94,7 @@ function DialogHeader({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="dialog-header"
-      className={cn("gap-2 flex flex-col pe-8 sm:pe-0", className)}
+      className={cn("gap-2 flex flex-col max-sm:pe-8", className)}
       {...props}
     />
   )
@@ -111,7 +112,7 @@ function DialogFooter({
     <div
       data-slot="dialog-footer"
       className={cn(
-        "gap-2 flex flex-col-reverse sm:flex-row sm:justify-end *:data-[slot=button]:max-sm:w-full",
+        "gap-2 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end max-sm:*:data-[slot=button]:w-full",
         className
       )}
       {...props}
@@ -133,7 +134,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("font-display text-lg leading-tight font-semibold tracking-tight sm:text-base sm:leading-none sm:font-medium sm:font-sans sm:tracking-normal", className)}
+      className={cn("leading-none font-medium max-sm:font-display max-sm:text-lg max-sm:leading-tight max-sm:font-semibold max-sm:tracking-tight", className)}
       {...props}
     />
   )
