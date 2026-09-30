@@ -15,12 +15,16 @@ interface FullEventsPointsListProps {
   events: Event[];
   semester?: string;
   onSemesterChange?: (semester: string) => void;
+  /** Shown instead of the results (loading, an error, an empty semester) while
+   * the filter bar stays put, so the semester can always be changed back. */
+  status?: React.ReactNode;
 }
 
 export function FullEventsPointsList({ 
   events, 
   semester, 
   onSemesterChange, 
+  status,
 }: FullEventsPointsListProps) {
   const t = useTranslations("events.filters");
   const tp = useTranslations("points");
@@ -84,7 +88,9 @@ export function FullEventsPointsList({
         )}
       </FilterBar>
 
-      {filteredEvents.length > 0 ? (
+      {status ? (
+        status
+      ) : filteredEvents.length > 0 ? (
         <div className="grid gap-2.5 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3 xl:grid-cols-4">
           {filteredEvents.map((event) => (
             <FullEventPointsCard key={event.id} event={event} />

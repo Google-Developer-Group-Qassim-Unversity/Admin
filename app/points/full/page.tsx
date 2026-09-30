@@ -40,58 +40,51 @@ export default function FullEventsPage() {
     fetchEvents();
   }, [semester]);
 
+  // Only the results area changes with the state; the filter bar above it
+  // stays mounted, so an empty semester never strands you without the picker.
+  let status: React.ReactNode = null;
   if (isLoading) {
-    return (
-      <div className="space-y-8">
-        <div className="flex justify-center py-12">
-          <div className="animate-pulse text-muted-foreground">{tp("loadingEvents")}</div>
-        </div>
+    status = (
+      <div className="flex justify-center py-12">
+        <div className="animate-pulse text-muted-foreground">{tp("loadingEvents")}</div>
       </div>
     );
-  }
-
-  if (error) {
-    return (
-      <div className="space-y-8">
-        <div className="flex justify-center">
-          <Alert variant="destructive" className="max-w-2xl">
-            <AlertCircle className="h-4 w-4" />
-            <AlertTitle>{te("loadFailed")}</AlertTitle>
-            <AlertDescription>
-              {error.message || te("loadFailedDescription")}
-              {error.isServerError && (
-                <span className="block mt-1">{te("serverUnavailable")}</span>
-              )}
-            </AlertDescription>
-          </Alert>
-        </div>
+  } else if (error) {
+    status = (
+      <div className="flex justify-center">
+        <Alert variant="destructive" className="max-w-2xl">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>{te("loadFailed")}</AlertTitle>
+          <AlertDescription>
+            {error.message || te("loadFailedDescription")}
+            {error.isServerError && (
+              <span className="block mt-1">{te("serverUnavailable")}</span>
+            )}
+          </AlertDescription>
+        </Alert>
       </div>
     );
-  }
-
-  if (fullEvents.length === 0) {
-    return (
-      <div className="space-y-8">
-        <div className="flex justify-center">
-          <Alert className="max-w-2xl">
-            <Calendar className="h-4 w-4" />
-            <AlertTitle>{t("noneFound")}</AlertTitle>
-            <AlertDescription>
-              {t("noneMatchSemester")}
-              <div className="mt-4">
-                <Button asChild size="sm">
-                  <Link
-                    href="/events/create"
-                    className="flex items-center gap-2"
-                  >
-                    <CalendarPlus className="h-4 w-4" />
-                    {te("create")}
-                  </Link>
-                </Button>
-              </div>
-            </AlertDescription>
-          </Alert>
-        </div>
+  } else if (fullEvents.length === 0) {
+    status = (
+      <div className="flex justify-center">
+        <Alert className="max-w-2xl">
+          <Calendar className="h-4 w-4" />
+          <AlertTitle>{t("noneFound")}</AlertTitle>
+          <AlertDescription>
+            {t("noneMatchSemester")}
+            <div className="mt-4">
+              <Button asChild size="sm">
+                <Link
+                  href="/events/create"
+                  className="flex items-center gap-2"
+                >
+                  <CalendarPlus className="h-4 w-4" />
+                  {te("create")}
+                </Link>
+              </Button>
+            </div>
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }
@@ -102,6 +95,7 @@ export default function FullEventsPage() {
         events={fullEvents}
         semester={semester}
         onSemesterChange={setSemester}
+        status={status}
       />
     </div>
   );
