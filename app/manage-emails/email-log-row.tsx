@@ -282,7 +282,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-1 text-sm">
               <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
-              <span className="font-medium truncate">
+              <span className="font-medium truncate" dir="auto">
                 {nameDiffers ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -339,7 +339,7 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
             {subject && (
               <span className="truncate max-w-[280px]">
                 <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
-                <span className="italic">&ldquo;{subject}&rdquo;</span>
+                <bdi className="italic">&ldquo;{subject}&rdquo;</bdi>
               </span>
             )}
           </div>
@@ -397,7 +397,7 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
           {subject && (
             <div className="text-xs text-muted-foreground truncate max-w-[320px]">
               <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
-              <span className="italic">&ldquo;{subject}&rdquo;</span>
+              <bdi className="italic">&ldquo;{subject}&rdquo;</bdi>
             </div>
           )}
           {data && (
@@ -473,7 +473,7 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
           {memberName ? (
             <div className="flex items-center gap-1 text-sm">
               <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
-              <span className="font-medium truncate">
+              <span className="font-medium truncate" dir="auto">
                 {nameDiffers ? (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -529,7 +529,7 @@ function DefaultRow({ log }: EmailLogRowProps) {
         {log.member_name && (
           <div className="flex items-center gap-1 text-xs">
             <span className="text-muted-foreground/60">{t("member")}</span>
-            <span className="truncate">{log.member_name}</span>
+            <span className="truncate" dir="auto">{log.member_name}</span>
           </div>
         )}
         {log.member_email && (

@@ -21,7 +21,7 @@ function QueueRow({ item }: { item: AttentionItem }) {
           {t(`${item.kind}.title`, { count: item.count ?? 0, days: item.days })}
         </span>
         <span className="text-muted-foreground truncate text-[11.5px]">
-          {item.event.name} · {t(`${item.kind}.detail`, { days: item.days })}
+          <bdi>{item.event.name}</bdi> · {t(`${item.kind}.detail`, { days: item.days })}
         </span>
       </div>
 

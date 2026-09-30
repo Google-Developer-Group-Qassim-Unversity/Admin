@@ -148,7 +148,7 @@ function DesktopEventCard({ event }: EventCardProps) {
   // Format the start date to "MMM DD" format
   const formatStartDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleDateString(locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-US", {
       month: "short",
       day: "numeric",
     });
@@ -212,7 +212,7 @@ function DesktopEventCard({ event }: EventCardProps) {
             variant="link"
             className="font-semibold text-base h-auto p-0 flex-1 justify-start text-start whitespace-normal text-foreground hover:text-foreground"
           >
-            <Link href={`/events/${event.id}`} className="line-clamp-2">
+            <Link href={`/events/${event.id}`} className="line-clamp-2" dir="auto">
               {event.name}
             </Link>
           </Button>
@@ -233,7 +233,7 @@ function DesktopEventCard({ event }: EventCardProps) {
         {event.location_type !== "none" && (
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
             <LocationIcon className="h-4 w-4 shrink-0" />
-            <span className="truncate">{event.location}</span>
+            <span className="truncate" dir="auto">{event.location}</span>
           </div>
         )}
 

@@ -82,6 +82,7 @@ export function StatTile({
             className={`line-clamp-2 text-[11.5px] ${
               hintTone ? `font-semibold ${TONES[hintTone].ink}` : "text-muted-foreground"
             }`}
+            dir="auto"
           >
             {hint}
           </div>

@@ -145,7 +145,7 @@ export default function EventInfoPage() {
             </Fact>
 
             <Fact icon={Clock} label={t("time")}>
-              <span className="tabular" dir="ltr">{dailyStartTime} – {dailyEndTime}</span>
+              <span className="tabular" dir="auto">{dailyStartTime} – {dailyEndTime}</span>
               {!singleDay && (
                 <span className="text-muted-foreground ms-2 text-[13px] font-normal">{t("daily")}</span>
               )}

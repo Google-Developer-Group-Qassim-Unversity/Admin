@@ -187,7 +187,8 @@ function createHeaderWithDropdown(titleKey: string, sortable: boolean = false, i
             size="sm"
             className="-ms-2 h-8 data-[state=open]:bg-accent data-[state=open]:text-accent-foreground"
           >
-            {title}
+            {/* A question title is the form author's own words, in either language. */}
+            {isLiteral ? <bdi>{title}</bdi> : title}
             {sortable && <ArrowUpDown className="ms-1 h-3 w-3" />}
           </Button>
         </DropdownMenuTrigger>
@@ -404,15 +405,15 @@ export function createColumns(
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span>{college}</span>
+                <span dir="auto">{college}</span>
               </TooltipTrigger>
               <TooltipContent>
-                <p>{college}</p>
+                <p dir="auto">{college}</p>
               </TooltipContent>
             </Tooltip>
           );
         }
-        return <span>{college}</span>;
+        return <span dir="auto">{college}</span>;
       },
     },
     {
@@ -452,18 +453,18 @@ export function createColumns(
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="max-w-[200px] truncate block">
+                <span className="max-w-[200px] truncate block" dir="auto">
                   {stringValue}
                 </span>
               </TooltipTrigger>
               <TooltipContent className="max-w-md">
-                <p className="whitespace-pre-wrap break-words">{stringValue}</p>
+                <p className="whitespace-pre-wrap break-words" dir="auto">{stringValue}</p>
               </TooltipContent>
             </Tooltip>
           );
         }
         return (
-          <span className="max-w-[200px] truncate block">{stringValue}</span>
+          <span className="max-w-[200px] truncate block" dir="auto">{stringValue}</span>
         );
       },
     })

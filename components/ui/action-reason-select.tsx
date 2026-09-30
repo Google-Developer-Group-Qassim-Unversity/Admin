@@ -154,7 +154,7 @@ export function ActionReasonSelect({
             className
           )}
         >
-          <span className="truncate">
+          <span className="truncate" dir="auto">
             {displayValue || (restricted ? t("selectAction") : t("selectReasonOptional"))}
           </span>
           <div className="flex items-center gap-1 shrink-0">
@@ -227,7 +227,7 @@ export function ActionReasonSelect({
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {formatActionLabel(action)}
+                    <bdi>{formatActionLabel(action)}</bdi>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -253,7 +253,7 @@ export function ActionReasonSelect({
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {formatActionLabel(action)}
+                    <bdi>{formatActionLabel(action)}</bdi>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -284,7 +284,7 @@ export function ActionReasonSelect({
                         selectedActionId === action.id ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {formatActionLabel(action)}
+                    <bdi>{formatActionLabel(action)}</bdi>
                   </CommandItem>
                 ))}
               </CommandGroup>
