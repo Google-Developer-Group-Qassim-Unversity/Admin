@@ -15,12 +15,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Check, Upload, Loader2, ExternalLink, Lock, Copy, QrCode } from 'lucide-react';
+import { Check, Upload, Loader2, ExternalLink, Lock } from 'lucide-react';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
 import { config } from '@/lib/config';
-import { EventQrCodeDialog } from '@/components/event-qr-code-dialog';
 
 interface PublishItemProps {
   event: Event;
@@ -57,15 +56,6 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       onEventChange();
     } catch {
       toast.error(t('unpublishFailed'));
-    }
-  };
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(eventUrl);
-      toast.success(t('linkCopied'));
-    } catch {
-      toast.error(t('copyFailed'));
     }
   };
 
@@ -116,15 +106,6 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
       <ItemActions className="w-full max-sm:order-last sm:w-auto">
         {isPublished && (
           <>
-            <EventQrCodeDialog
-              url={eventUrl}
-              eventName={event.name}
-              trigger={
-                <Button variant="outline" size="icon" className="shrink-0" title={t('showQr')} aria-label={t('showQr')}>
-                  <QrCode className="h-4 w-4" />
-                </Button>
-              }
-            />
             <Button variant="outline" className="flex-1 sm:flex-none" asChild>
               <a href={eventUrl} target="_blank" rel="noopener noreferrer">
                 {t('openEvent')}
@@ -165,26 +146,6 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
           </Button>
         )}
       </ItemActions>
-      {isPublished && (
-        // The public link, always one line: it truncates rather than pushing
-        // the row wider than the phone, and the copy button sits beside it.
-        <div className="bg-muted/50 border-border flex min-w-0 basis-full items-center gap-2 rounded-lg border py-1 ps-3 pe-1 sm:ms-[3.375rem]">
-          <span className="sr-only">{t('eventLink')}</span>
-          <span dir="ltr" className="text-muted-foreground min-w-0 flex-1 truncate text-[13px]" title={eventUrl}>
-            {eventUrl}
-          </span>
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            className="shrink-0"
-            onClick={handleCopyLink}
-            title={t('copyLink')}
-            aria-label={t('copyLink')}
-          >
-            <Copy className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
     </Item>
   );
 }
