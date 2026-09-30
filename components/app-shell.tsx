@@ -77,9 +77,6 @@ export const NAV_GROUPS: NavGroup[] = [
   },
 ];
 
-/** What a signed-in person who is not an admin can open: only the events pipeline. */
-const NON_ADMIN_ROUTES = ["/pipeline"];
-
 /** "/" only matches itself; every other entry owns its subtree. */
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
@@ -88,20 +85,10 @@ function isActive(pathname: string, href: string) {
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
   const t = useTranslations("nav");
   const pathname = usePathname();
-  const role = useUserRole();
-  const groups = React.useMemo(
-    () =>
-      role === "none"
-        ? NAV_GROUPS.map((g) => ({ ...g, items: g.items.filter((i) => NON_ADMIN_ROUTES.includes(i.href)) })).filter(
-            (g) => g.items.length > 0,
-          )
-        : NAV_GROUPS,
-    [role],
-  );
 
   return (
     <div className="flex flex-col gap-5">
-      {groups.map((group) => (
+      {NAV_GROUPS.map((group) => (
         <div key={group.key} className="flex flex-col gap-0.5">
           {group.items.map((item) => {
             const Icon = item.icon;
@@ -172,11 +159,7 @@ const MOBILE_SLOTS = 4;
 function useMobileNav() {
   const role = useUserRole();
   const all = NAV_GROUPS.flatMap((g) => g.items);
-  // Same rule as the sidebar: someone without an admin role (or before Clerk
-  // has loaded one) sees only the pipeline; admins see what their role opens.
-  const allowed = all.filter((item) =>
-    role === "none" ? NON_ADMIN_ROUTES.includes(item.href) : hasRoutePermission(role, item.href),
-  );
+  const allowed = all.filter((item) => hasRoutePermission(role, item.href));
   const primary = MOBILE_PRIORITY.map((href) => allowed.find((i) => i.href === href))
     .filter((i): i is NavItem => Boolean(i))
     .slice(0, MOBILE_SLOTS);
