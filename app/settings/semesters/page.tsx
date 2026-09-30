@@ -187,7 +187,7 @@ export default function ManageSemestersPage() {
                   <TableBody>
                     {rows.map((semester) => (
                       <TableRow key={semester.id}>
-                        <TableCell className="font-medium">{semester.name}</TableCell>
+                        <TableCell className="font-medium" dir="auto">{semester.name}</TableCell>
                         <TableCell>{semester.hijri_code}</TableCell>
                         <TableCell>{semester.gregorian_code}</TableCell>
                         <TableCell>{formatDate(semester.start_date)}</TableCell>

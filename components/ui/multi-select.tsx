@@ -252,7 +252,7 @@ export function MultiSelectValue({
                 : undefined
             }
           >
-            {items.get(value)}
+            <bdi>{items.get(value)}</bdi>
             {clickToRemove && (
               <XIcon className="size-2 text-muted-foreground group-hover:text-destructive" />
             )}

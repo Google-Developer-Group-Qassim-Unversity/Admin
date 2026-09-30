@@ -28,7 +28,9 @@ function SelectGroup({
 function SelectValue({
   ...props
 }: React.ComponentProps<typeof SelectPrimitive.Value>) {
-  return <SelectPrimitive.Value data-slot="select-value" {...props} />
+  // Options are often content (a department's Arabic name in the English UI),
+  // so the shown value takes the direction of its own text.
+  return <SelectPrimitive.Value data-slot="select-value" dir="auto" {...props} />
 }
 
 function SelectTrigger({
@@ -127,7 +129,7 @@ function SelectItem({
           <CheckIcon className="pointer-events-none" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <SelectPrimitive.ItemText dir="auto">{children}</SelectPrimitive.ItemText>
     </SelectPrimitive.Item>
   )
 }

@@ -148,8 +148,8 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
         </div>
       </TableCell>
       <TableCell className="font-medium">
-        <div className="flex items-center gap-2" dir="auto">
-          {action.action_name}
+        <div className="flex items-center gap-2">
+          <span dir="auto">{action.action_name}</span>
           {action.is_hidden && (
             <Badge variant="outline" className="text-xs">
               <EyeOff className="h-3 w-3 me-1" />
