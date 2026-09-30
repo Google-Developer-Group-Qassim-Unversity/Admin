@@ -3,6 +3,13 @@ import { format } from "date-fns";
 import type { AccessMe, Perm } from "@/lib/access";
 import type { Requester } from "@/lib/api/request";
 import type {
+  Assignments,
+  CataloguePermission,
+  DepartmentGrants,
+  GrantEntry,
+  SuperAdminEntry,
+} from "@/lib/permissions-types";
+import type {
   ActionsResponse,
   AttendanceResponse,
   AttendanceType,
@@ -347,8 +354,35 @@ export function createApi(request: Requester) {
       request.json<{ event_id: number; permissions: Perm[] }>(`/access/events/${eventId}`),
   };
 
+  const permissions = {
+    catalogue: () => request.json<CataloguePermission[]>("/permissions/catalogue"),
+    assignments: () => request.json<Assignments>("/permissions/assignments"),
+    setShared: (permissions: Perm[]) =>
+      request.json<Assignments>("/permissions/shared", { method: "PUT", body: { permissions } }),
+    setDepartment: (departmentId: number, permissions: Perm[]) =>
+      request.json<Assignments>(`/permissions/departments/${departmentId}`, { method: "PUT", body: { permissions } }),
+    superAdmins: () => request.json<SuperAdminEntry[]>("/permissions/super-admins"),
+    addSuperAdmin: (memberId: number) =>
+      request.json<SuperAdminEntry[]>("/permissions/super-admins", { method: "POST", body: { member_id: memberId } }),
+    removeSuperAdmin: (memberId: number) =>
+      request.json<SuperAdminEntry[]>(`/permissions/super-admins/${memberId}`, { method: "DELETE" }),
+    grants: (departmentId: number, history: boolean) =>
+      request.json<DepartmentGrants>(`/permissions/departments/${departmentId}/grants`, {
+        query: { history: history ? true : undefined },
+      }),
+    grant: (departmentId: number, memberId: number, permission: Perm) =>
+      request.json<GrantEntry>(`/permissions/departments/${departmentId}/grants`, {
+        method: "POST",
+        body: { member_id: memberId, permission },
+      }),
+    revoke: (departmentId: number, grantId: number) =>
+      request.json<{ detail: string }>(`/permissions/departments/${departmentId}/grants/${grantId}`, {
+        method: "DELETE",
+      }),
+  };
+
   return {
-    access, events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure,
+    access, permissions, events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure,
     semesters, pipeline, pipelineRequests,
   };
 }

@@ -258,7 +258,8 @@
     },
     "pipeline": "Event pipeline",
     "more": "More",
-    "appearance": "Appearance"
+    "appearance": "Appearance",
+    "permissions": "Permissions"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -2129,6 +2130,62 @@
       "failed": "Could not publish",
       "done": "Published as event #{id} (a draft for admins to review).",
       "open": "Open the event"
+    }
+  },
+  "permissions": {
+    "title": "Permissions",
+    "subtitle": "Who can do what in the admin app",
+    "tabs": {
+      "grants": "Grants",
+      "shared": "Shared",
+      "departments": "Departments",
+      "superAdmins": "Super admins"
+    },
+    "grants": {
+      "title": "Grants",
+      "hint": "Give members of your department extra permissions for this semester. Grants end with the semester.",
+      "pickDepartment": "Choose a department",
+      "pickMember": "Choose a member",
+      "pickPermission": "Choose a permission",
+      "grant": "Grant",
+      "revoke": "Revoke",
+      "granted": "Permission granted",
+      "revoked": "Permission revoked",
+      "failed": "Something went wrong",
+      "noMembers": "This department has no plain members this semester.",
+      "noGrants": "No grants yet.",
+      "noDepartments": "You can't grant permissions in any department.",
+      "showHistory": "Show revoked grants",
+      "grantedBy": "Granted by {name} on {date}",
+      "revokedBy": "revoked by {name} on {date}"
+    },
+    "assignments": {
+      "shared": {
+        "title": "Shared permissions",
+        "hint": "Every leader and VP has these, for their own department where the permission is per department."
+      },
+      "departments": {
+        "title": "Department permissions",
+        "hint": "What this department's leaders and VPs have because of the department's job, on top of the shared ones."
+      },
+      "scopeDepartment": "per department",
+      "scopeClub": "club-wide",
+      "save": "Save",
+      "saved": "Saved",
+      "failed": "Something went wrong"
+    },
+    "superAdmins": {
+      "title": "Super admins",
+      "hint": "Super admins can do anything, to any department. They add and remove each other.",
+      "add": "Add a super admin",
+      "remove": "Remove",
+      "added": "Super admin added",
+      "removed": "Super admin removed",
+      "failed": "Something went wrong",
+      "addedBy": "Added by {name} on {date}",
+      "addedByScript": "Added on {date}",
+      "removeConfirm": "Remove {name} as a super admin?",
+      "removeHint": "They keep whatever their department roles give them."
     }
   }
 }

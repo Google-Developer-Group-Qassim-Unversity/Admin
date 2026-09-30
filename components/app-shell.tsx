@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   CalendarDays,
+  KeyRound,
   LayoutDashboard,
   LayoutGrid,
   Mail,
@@ -60,6 +61,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { href: "/manage-members", key: "members", icon: Users },
       { href: "/club-structure", key: "clubStructure", icon: Network },
+      { href: "/permissions", key: "permissions", icon: KeyRound },
     ],
   },
   {
