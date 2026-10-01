@@ -46,3 +46,16 @@ export function PipelineGate({ children }: { children: (me: PipelineMe) => React
   }
   return <>{children(me)}</>;
 }
+
+/** "5–7 Oct" for a range of ISO days, in the reader's language. */
+export function useFormatDateRange() {
+  const locale = useLocale();
+  return React.useMemo(() => {
+    const formatter = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+    return (start: string, end?: string | null) => {
+      const from = new Date(`${start}T00:00:00Z`);
+      if (!end || end === start) return formatter.format(from);
+      return formatter.formatRange(from, new Date(`${end}T00:00:00Z`));
+    };
+  }, [locale]);
+}

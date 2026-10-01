@@ -8,7 +8,7 @@ import { CalendarPlus, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
-import { useDepartmentName } from "@/components/pipeline/shared";
+import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useBookRequest } from "@/hooks/use-pipeline";
@@ -55,6 +55,7 @@ export function BookPanel({ me, onDone }: { me: PipelineMe; onDone: () => void }
   const t = useTranslations("pipeline.book");
   const router = useRouter();
   const departmentName = useDepartmentName();
+  const formatRange = useFormatDateRange();
   const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
   const [departmentId, setDepartmentId] = React.useState<string>(
     me.departments.length === 1 ? String(me.departments[0].id) : "",
@@ -75,36 +76,47 @@ export function BookPanel({ me, onDone }: { me: PipelineMe; onDone: () => void }
     }
   };
 
+  const cancel = (
+    <Button variant="ghost" size="sm" onClick={onDone}>
+      <X className="h-4 w-4" />
+      {t("cancel")}
+    </Button>
+  );
+
   return (
     <div className="flex flex-col gap-4">
-      <p className="text-muted-foreground text-sm">{t(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}</p>
-      <BookingCalendar selected={range.selected} onDayClick={range.onDayClick} isSelectable={isSelectable} />
-      <div className="bg-muted/40 border-border flex flex-col gap-3 rounded-lg border p-3 sm:flex-row sm:items-center">
-        <span className="text-sm font-medium">
-          {range.start ? t("range", { start: range.start, end: range.end ?? range.start }) : t("pickDays")}
+      <BookingCalendar
+        selected={range.selected}
+        onDayClick={range.onDayClick}
+        isSelectable={isSelectable}
+        toolbar={cancel}
+      />
+      {/* On a phone the bar follows the thumb, just above the tab bar. */}
+      <div className="bg-card border-border flex flex-col gap-3 rounded-xl border p-3 shadow-sm sm:flex-row sm:items-center max-sm:sticky max-sm:bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-sm:shadow-lg">
+        <span className={`min-w-0 flex-1 text-sm ${range.start ? "tabular font-semibold" : "text-muted-foreground"}`}>
+          {range.start
+            ? formatRange(range.start, range.end)
+            : t(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}
         </span>
-        <Select value={departmentId} onValueChange={setDepartmentId}>
-          <SelectTrigger className="sm:w-64">
-            <SelectValue placeholder={t("pickDepartment")} />
-          </SelectTrigger>
-          <SelectContent>
-            {me.departments.map((d) => (
-              <SelectItem key={d.id} value={String(d.id)}>
-                {departmentName(d)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex flex-wrap gap-2 sm:ms-auto">
-          <Button onClick={onBook} disabled={!range.start || !departmentId || book.isPending}>
-            <CalendarPlus className="h-4 w-4" />
-            {t("book")}
-          </Button>
-          <Button variant="ghost" onClick={onDone}>
-            <X className="h-4 w-4" />
-            {t("cancel")}
-          </Button>
-        </div>
+        {/* One department is the answer already; only ask when there is a choice. */}
+        {me.departments.length > 1 ? (
+          <Select value={departmentId} onValueChange={setDepartmentId}>
+            <SelectTrigger className="sm:w-56">
+              <SelectValue placeholder={t("pickDepartment")} />
+            </SelectTrigger>
+            <SelectContent>
+              {me.departments.map((d) => (
+                <SelectItem key={d.id} value={String(d.id)}>
+                  {departmentName(d)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : null}
+        <Button onClick={onBook} disabled={!range.start || !departmentId || book.isPending}>
+          <CalendarPlus className="h-4 w-4" />
+          {t("book")}
+        </Button>
       </div>
     </div>
   );

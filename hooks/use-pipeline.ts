@@ -102,12 +102,14 @@ export function useSubmitRequest(id: number) {
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
 }
 
-export function usePipelineNotifications() {
+/** `enabled` lets the top bar's bell skip the call for someone without pipeline access. */
+export function usePipelineNotifications({ enabled = true }: { enabled?: boolean } = {}) {
   const api = useApi();
   return useQuery({
     queryKey: [...pipelineKeys.all, "notifications"],
     queryFn: () => api.pipeline.notifications(),
     refetchInterval: 60_000,
+    enabled,
   });
 }
 
@@ -120,9 +122,13 @@ export function useReadNotifications() {
   });
 }
 
-export function useInbox() {
+export function useInbox(enabled = true) {
   const api = useApi();
-  return useQuery({ queryKey: [...pipelineKeys.requests(), "list", "inbox"], queryFn: () => api.pipelineRequests.inbox() });
+  return useQuery({
+    queryKey: [...pipelineKeys.requests(), "list", "inbox"],
+    queryFn: () => api.pipelineRequests.inbox(),
+    enabled,
+  });
 }
 
 export function useReturnRequest(id: number) {
