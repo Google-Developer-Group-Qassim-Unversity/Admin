@@ -1964,10 +1964,7 @@
         "workshop": "Workshop",
         "competition": "Competition"
       },
-      "choose": "Choose…",
-      "save": "Save details",
-      "saved": "Details saved",
-      "failed": "Could not save"
+      "choose": "Choose…"
     },
     "submit": {
       "title": "Submit to Design and Logistics",
@@ -1976,7 +1973,11 @@
       "button": "Submit",
       "complete": "Ready to submit",
       "sent": "Sent to Design and Logistics",
-      "failed": "Could not submit"
+      "failed": "Could not submit",
+      "finishLater": "Finish later",
+      "finishLaterSaved": "Draft saved. Everything you filled in will be here when you come back.",
+      "finishLaterSavedHold": "Draft saved. Come back and submit before your 24-hour hold runs out.",
+      "finishLaterFailed": "Some changes couldn't be saved. Check the highlighted message and try again."
     },
     "fields": {
       "dates": "Dates",
@@ -2005,9 +2006,6 @@
       "logistics_buses_needed": "Logistics: buses"
     },
     "briefs": {
-      "save": "Save brief",
-      "saved": "Brief saved",
-      "failed": "Could not save",
       "choose": "Choose…",
       "optional": "Optional",
       "other": "Other",
@@ -2130,6 +2128,12 @@
       "failed": "Could not publish",
       "done": "Published as event #{id} (a draft for admins to review).",
       "open": "Open the event"
+    },
+    "autosave": {
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "error": "Couldn't save. Retrying when you edit again",
+      "failed": "Couldn't save your changes"
     }
   },
   "permissions": {
