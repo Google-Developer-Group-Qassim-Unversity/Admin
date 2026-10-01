@@ -1809,7 +1809,6 @@
   "pipeline": {
     "title": "Event pipeline",
     "subtitle": "Book a date, brief Design and Logistics, and publish your event",
-    "teamAccess": "Pipeline teams",
     "teams": {
       "design": "Design",
       "logistics": "Logistics",
@@ -1818,17 +1817,6 @@
     "noAccess": {
       "title": "You don't have pipeline access",
       "description": "Department leaders and VPs can use the pipeline."
-    },
-    "team": {
-      "title": "Pipeline teams",
-      "subtitle": "Which department plays each part in the events pipeline",
-      "onlySuperAdmins": "Only super admins set the pipeline's teams.",
-      "failed": "Something went wrong",
-      "teamsTitle": "Pipeline teams",
-      "teamsHint": "Which department plays each part. Every request goes to Design and Logistics, then Media.",
-      "notSet": "Not set",
-      "saveTeams": "Save teams",
-      "teamsSaved": "Teams saved"
     },
     "calendar": {
       "title": "Booking calendar",
@@ -1964,10 +1952,7 @@
         "workshop": "Workshop",
         "competition": "Competition"
       },
-      "choose": "Choose…",
-      "save": "Save details",
-      "saved": "Details saved",
-      "failed": "Could not save"
+      "choose": "Choose…"
     },
     "submit": {
       "title": "Submit to Design and Logistics",
@@ -1976,7 +1961,11 @@
       "button": "Submit",
       "complete": "Ready to submit",
       "sent": "Sent to Design and Logistics",
-      "failed": "Could not submit"
+      "failed": "Could not submit",
+      "finishLater": "Finish later",
+      "finishLaterSaved": "Draft saved. Everything you filled in will be here when you come back.",
+      "finishLaterSavedHold": "Draft saved. Come back and submit before your 24-hour hold runs out.",
+      "finishLaterFailed": "Some changes couldn't be saved. Check the highlighted message and try again."
     },
     "fields": {
       "dates": "Dates",
@@ -2005,9 +1994,6 @@
       "logistics_buses_needed": "Logistics: buses"
     },
     "briefs": {
-      "save": "Save brief",
-      "saved": "Brief saved",
-      "failed": "Could not save",
       "choose": "Choose…",
       "optional": "Optional",
       "other": "Other",
@@ -2130,15 +2116,20 @@
       "failed": "Could not publish",
       "done": "Published as event #{id} (a draft for admins to review).",
       "open": "Open the event"
+    },
+    "autosave": {
+      "saving": "Saving…",
+      "saved": "All changes saved",
+      "error": "Couldn't save. Retrying when you edit again",
+      "failed": "Couldn't save your changes"
     }
   },
   "permissions": {
     "title": "Permissions",
     "subtitle": "Who can do what in the admin app",
     "tabs": {
-      "grants": "Grants",
-      "shared": "Shared",
-      "departments": "Departments",
+      "grants": "Member grants",
+      "leaders": "Leaders & VPs",
       "superAdmins": "Super admins"
     },
     "grants": {
@@ -2159,18 +2150,29 @@
       "grantedBy": "Granted by {name} on {date}",
       "revokedBy": "revoked by {name} on {date}"
     },
-    "assignments": {
-      "shared": {
-        "title": "Shared permissions",
-        "hint": "Every leader and VP has these, for their own department where the permission is per department."
+    "leaders": {
+      "title": "What leaders and VPs can do",
+      "hint": "Pick \"Every department\" to set what all leaders and VPs get. Pick a department to give its leaders and VPs extra permissions on top of that.",
+      "pickTarget": "Whose permissions",
+      "everyDepartment": "Every department",
+      "sharedSummary": "Every leader and VP in every department has these {count} permissions.",
+      "departmentSummary": "{department}'s leaders and VPs have the {shared} permissions every leader has (locked below), plus {extra} just for {department}.",
+      "groups": {
+        "basics": "Basics",
+        "events": "Events and attendance",
+        "emails": "Emails and certificates",
+        "points": "Points",
+        "people": "People and structure",
+        "pipeline": "Events pipeline",
+        "system": "System"
       },
-      "departments": {
-        "title": "Department permissions",
-        "hint": "What this department's leaders and VPs have because of the department's job, on top of the shared ones."
-      },
-      "scopeDepartment": "per department",
-      "scopeClub": "club-wide",
-      "save": "Save",
+      "lockedStaff": "Everyone on staff has this",
+      "lockedShared": "Every leader has this",
+      "ownDepartment": "For their own department only",
+      "ownDepartmentNamed": "For {department} only",
+      "saveShared": "Save for every department",
+      "saveDepartment": "Save for {department}",
+      "discard": "Discard changes",
       "saved": "Saved",
       "failed": "Something went wrong"
     },

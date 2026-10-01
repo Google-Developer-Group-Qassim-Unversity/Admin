@@ -38,7 +38,6 @@ export const PERMS = [
   "pipeline.design",
   "pipeline.logistics",
   "pipeline.media",
-  "pipeline.teams",
   "uploads",
   "cache.reset",
   "forms.admin",
@@ -61,6 +60,50 @@ export const DEPARTMENT_SCOPED: ReadonlySet<Perm> = new Set<Perm>([
   "permissions.grant",
   "pipeline.request",
 ]);
+
+/** Everyone on the current roster has these, with no assignment or grant (the backend's `STAFF_BASICS`). */
+export const STAFF_BASICS: ReadonlySet<Perm> = new Set<Perm>([
+  "admin.access",
+  "events.view",
+  "club_structure.view",
+  "uploads",
+]);
+
+/** How the permissions screens group the keys. A key missing here lands in "system". */
+export const PERM_GROUPS = {
+  basics: ["admin.access", "events.view", "members.view", "club_structure.view", "uploads"],
+  events: [
+    "events.create",
+    "events.edit",
+    "events.delete",
+    "attendance.take",
+    "attendance.backfill",
+    "attendance.copy",
+    "forms.manage",
+    "submissions.review",
+  ],
+  emails: ["emails.event", "emails.direct", "emails.blast", "emails.logs", "certificates.manual"],
+  points: ["points.catalogue", "points.custom"],
+  people: [
+    "members.create",
+    "club_structure.manage_roster",
+    "club_structure.manage",
+    "semesters.manage",
+    "permissions.grant",
+    "permissions.manage",
+  ],
+  pipeline: [
+    "pipeline.request",
+    "pipeline.bans",
+    "pipeline.design",
+    "pipeline.logistics",
+    "pipeline.media",
+    "pipeline.teams",
+  ],
+  system: ["cache.reset", "forms.admin", "settings.template_form"],
+} satisfies Record<string, Perm[]>;
+
+export type PermGroup = keyof typeof PERM_GROUPS;
 
 export interface AccessDepartment {
   id: number;
@@ -113,10 +156,7 @@ const ROUTE_PERMS: [prefix: string, needs: Perm[] | "super_admin"][] = [
   ["/settings/semesters", ["semesters.manage"]],
   ["/events/create", ["events.create"]],
   ["/events", ["events.view"]],
-  [
-    "/pipeline",
-    ["pipeline.request", "pipeline.bans", "pipeline.design", "pipeline.logistics", "pipeline.media", "pipeline.teams"],
-  ],
+  ["/pipeline", ["pipeline.request", "pipeline.bans", "pipeline.design", "pipeline.logistics", "pipeline.media"]],
 ];
 
 export function routeNeeds(pathname: string): Perm[] | "super_admin" {

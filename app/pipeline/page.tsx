@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarPlus, KeyRound, Workflow } from "lucide-react";
+import { Ban, CalendarPlus, Workflow } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { BanEditor } from "@/components/pipeline/ban-editor";
@@ -21,14 +20,7 @@ export default function PipelinePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={Workflow}>
-        <Button asChild variant="outline">
-          <Link href="/pipeline/team">
-            <KeyRound className="h-4 w-4" />
-            {t("teamAccess")}
-          </Link>
-        </Button>
-      </PageHeader>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Workflow} />
       <PipelineGate>{(me) => <PipelineHome me={me} />}</PipelineGate>
     </div>
   );
@@ -41,6 +33,11 @@ function PipelineHome({ me }: { me: PipelineMe }) {
   const requests = usePipelineRequests();
   const inbox = useInbox();
   const hasTeam = me.is_super_admin || me.departments.some((d) => d.teams.length > 0);
+  // The inbox has one entry per open task, so a request two of the caller's teams
+  // are working on (every team, for a super admin) would show twice.
+  const inboxRequests = inbox.data
+    ? [...new Map(inbox.data.map((item) => [item.request.id, item.request])).values()]
+    : undefined;
 
   return (
     <>
@@ -49,7 +46,7 @@ function PipelineHome({ me }: { me: PipelineMe }) {
         <section className="bg-card border-border flex flex-col gap-3 rounded-xl border p-5">
           <h2 className="font-display text-lg font-semibold tracking-tight">{t("inbox.title")}</h2>
           <RequestList
-            items={inbox.data?.map((item) => item.request)}
+            items={inboxRequests}
             isPending={inbox.isPending}
             empty={t("inbox.none")}
           />
