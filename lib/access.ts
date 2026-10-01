@@ -98,7 +98,6 @@ export const PERM_GROUPS = {
     "pipeline.design",
     "pipeline.logistics",
     "pipeline.media",
-    "pipeline.teams",
   ],
   system: ["cache.reset", "forms.admin", "settings.template_form"],
 } satisfies Record<string, Perm[]>;
