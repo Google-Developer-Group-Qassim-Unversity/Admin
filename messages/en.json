@@ -2136,9 +2136,8 @@
     "title": "Permissions",
     "subtitle": "Who can do what in the admin app",
     "tabs": {
-      "grants": "Grants",
-      "shared": "Shared",
-      "departments": "Departments",
+      "grants": "Member grants",
+      "leaders": "Leaders & VPs",
       "superAdmins": "Super admins"
     },
     "grants": {
@@ -2159,18 +2158,29 @@
       "grantedBy": "Granted by {name} on {date}",
       "revokedBy": "revoked by {name} on {date}"
     },
-    "assignments": {
-      "shared": {
-        "title": "Shared permissions",
-        "hint": "Every leader and VP has these, for their own department where the permission is per department."
+    "leaders": {
+      "title": "What leaders and VPs can do",
+      "hint": "Pick \"Every department\" to set what all leaders and VPs get. Pick a department to give its leaders and VPs extra permissions on top of that.",
+      "pickTarget": "Whose permissions",
+      "everyDepartment": "Every department",
+      "sharedSummary": "Every leader and VP in every department has these {count} permissions.",
+      "departmentSummary": "{department}'s leaders and VPs have the {shared} permissions every leader has (locked below), plus {extra} just for {department}.",
+      "groups": {
+        "basics": "Basics",
+        "events": "Events and attendance",
+        "emails": "Emails and certificates",
+        "points": "Points",
+        "people": "People and structure",
+        "pipeline": "Events pipeline",
+        "system": "System"
       },
-      "departments": {
-        "title": "Department permissions",
-        "hint": "What this department's leaders and VPs have because of the department's job, on top of the shared ones."
-      },
-      "scopeDepartment": "per department",
-      "scopeClub": "club-wide",
-      "save": "Save",
+      "lockedStaff": "Everyone on staff has this",
+      "lockedShared": "Every leader has this",
+      "ownDepartment": "For their own department only",
+      "ownDepartmentNamed": "For {department} only",
+      "saveShared": "Save for every department",
+      "saveDepartment": "Save for {department}",
+      "discard": "Discard changes",
       "saved": "Saved",
       "failed": "Something went wrong"
     },
