@@ -2,8 +2,6 @@
 
 export type PipelineTeam = "design" | "logistics" | "media";
 
-export const PIPELINE_TEAMS: PipelineTeam[] = ["design", "logistics", "media"];
-
 export interface PipelineDepartment {
   id: number;
   name: string;
@@ -30,8 +28,6 @@ export interface PipelineMe {
   departments: ActingDepartment[];
   teams: PipelineTeamEntry[];
 }
-
-export type PipelineTeamsInput = Partial<Record<PipelineTeam, number | null>>;
 
 export type CalendarDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
 

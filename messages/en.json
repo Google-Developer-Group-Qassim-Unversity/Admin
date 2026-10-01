@@ -1809,7 +1809,6 @@
   "pipeline": {
     "title": "Event pipeline",
     "subtitle": "Book a date, brief Design and Logistics, and publish your event",
-    "teamAccess": "Pipeline teams",
     "teams": {
       "design": "Design",
       "logistics": "Logistics",
@@ -1818,17 +1817,6 @@
     "noAccess": {
       "title": "You don't have pipeline access",
       "description": "Department leaders and VPs can use the pipeline."
-    },
-    "team": {
-      "title": "Pipeline teams",
-      "subtitle": "Which department plays each part in the events pipeline",
-      "onlySuperAdmins": "Only super admins set the pipeline's teams.",
-      "failed": "Something went wrong",
-      "teamsTitle": "Pipeline teams",
-      "teamsHint": "Which department plays each part. Every request goes to Design and Logistics, then Media.",
-      "notSet": "Not set",
-      "saveTeams": "Save teams",
-      "teamsSaved": "Teams saved"
     },
     "calendar": {
       "title": "Booking calendar",

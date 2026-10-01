@@ -38,7 +38,6 @@ export const PERMS = [
   "pipeline.design",
   "pipeline.logistics",
   "pipeline.media",
-  "pipeline.teams",
   "uploads",
   "cache.reset",
   "forms.admin",
@@ -113,10 +112,7 @@ const ROUTE_PERMS: [prefix: string, needs: Perm[] | "super_admin"][] = [
   ["/settings/semesters", ["semesters.manage"]],
   ["/events/create", ["events.create"]],
   ["/events", ["events.view"]],
-  [
-    "/pipeline",
-    ["pipeline.request", "pipeline.bans", "pipeline.design", "pipeline.logistics", "pipeline.media", "pipeline.teams"],
-  ],
+  ["/pipeline", ["pipeline.request", "pipeline.bans", "pipeline.design", "pipeline.logistics", "pipeline.media"]],
 ];
 
 export function routeNeeds(pathname: string): Perm[] | "super_admin" {

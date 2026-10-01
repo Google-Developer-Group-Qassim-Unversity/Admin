@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarPlus, KeyRound, Workflow } from "lucide-react";
+import { Ban, CalendarPlus, Workflow } from "lucide-react";
 
 import { PageHeader } from "@/components/page-header";
 import { BanEditor } from "@/components/pipeline/ban-editor";
@@ -21,14 +20,7 @@ export default function PipelinePage() {
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={Workflow}>
-        <Button asChild variant="outline">
-          <Link href="/pipeline/team">
-            <KeyRound className="h-4 w-4" />
-            {t("teamAccess")}
-          </Link>
-        </Button>
-      </PageHeader>
+      <PageHeader title={t("title")} description={t("subtitle")} icon={Workflow} />
       <PipelineGate>{(me) => <PipelineHome me={me} />}</PipelineGate>
     </div>
   );
