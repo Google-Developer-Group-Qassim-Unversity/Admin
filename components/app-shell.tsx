@@ -121,7 +121,7 @@ function Sidebar() {
   const t = useTranslations("nav");
 
   return (
-    <aside className="bg-sidebar border-border hidden w-60 shrink-0 flex-col border-e md:flex">
+    <aside className="bg-sidebar border-border sticky top-0 hidden h-svh max-h-svh w-60 shrink-0 self-start flex-col border-e md:flex">
       <div className="border-border flex h-14 items-center gap-2.5 border-b px-4">
         <BrandMark size={26} />
         <div className="flex min-w-0 flex-col">
