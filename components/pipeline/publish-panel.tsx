@@ -4,10 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
-import { ExternalLink, Rocket } from "lucide-react";
+import { ExternalLink, PartyPopper, Rocket } from "lucide-react";
 import { toast } from "sonner";
 
-import { Field } from "@/components/pipeline/details-form";
+import { Field } from "@/components/pipeline/form-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -36,8 +36,11 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
 
   if (request.stage === "published" && request.event_id) {
     return (
-      <section className="bg-brand-green-soft text-brand-green-ink flex flex-wrap items-center justify-between gap-3 rounded-xl p-5">
-        <span className="text-sm font-medium">{t("done", { id: request.event_id })}</span>
+      <section className="bg-brand-green-soft text-brand-green-ink border-brand-green/30 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 sm:p-5">
+        <span className="flex items-center gap-2.5 text-sm font-medium">
+          <PartyPopper className="h-5 w-5 shrink-0" />
+          {t("done", { id: request.event_id })}
+        </span>
         {can("events.view") ? (
           <Button asChild variant="outline" size="sm">
             <Link href={`/events/${request.event_id}`}>
@@ -68,15 +71,20 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
   };
 
   return (
-    <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5">
-      <div className="flex flex-col gap-1">
-        <h3 className="font-display text-base font-semibold tracking-tight">{t("title")}</h3>
-        <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
+    <section className="bg-card border-brand-green/40 flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
+      <div className="flex items-start gap-3">
+        <span className="bg-brand-green-soft text-brand-green-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
+          <Rocket className="h-[18px] w-[18px]" />
+        </span>
+        <div className="flex flex-col gap-0.5">
+          <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
+          <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
+        </div>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label={t("tier")}>
           <Select value={pair} onValueChange={setPair}>
-            <SelectTrigger>
+            <SelectTrigger className="w-full">
               <SelectValue placeholder={t("pickTier")} />
             </SelectTrigger>
             <SelectContent>
@@ -88,12 +96,12 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
             </SelectContent>
           </Select>
         </Field>
-        <Field label={t("image")} hint={t("imageHint")}>
+        <Field label={t("image")} hint={t("imageHint")} optional>
           <Input dir="ltr" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />
         </Field>
       </div>
-      <div>
-        <Button onClick={onPublish} disabled={!pair || publish.isPending}>
+      <div className="flex">
+        <Button className="max-sm:flex-1" onClick={onPublish} disabled={!pair || publish.isPending}>
           <Rocket className="h-4 w-4" />
           {t("button")}
         </Button>

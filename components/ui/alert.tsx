@@ -7,7 +7,7 @@ const alertVariants = cva("grid gap-0.5 rounded-lg border px-4 py-3 text-start t
   variants: {
     variant: {
       default: "bg-card text-card-foreground",
-      destructive: "text-destructive bg-card *:data-[slot=alert-description]:text-destructive/90 *:[svg]:text-current",
+      destructive: "bg-brand-red-soft text-brand-red-ink border-brand-red/30 *:data-[slot=alert-description]:text-brand-red-ink/90 *:[svg]:text-current",
     },
   },
   defaultVariants: {

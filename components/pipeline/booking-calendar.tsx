@@ -82,7 +82,7 @@ export function BookingCalendar({
           const day = byDate.get(iso);
           const inMonth = isSameMonth(cell, month);
           if (isPending || !day) {
-            return <Skeleton key={iso} className="h-16 rounded-lg sm:h-20" />;
+            return <Skeleton key={iso} className="h-11 rounded-lg sm:h-20" />;
           }
           const style = PIPELINE_DAY_STYLES[day.status];
           const clickable = !!onDayClick && (isSelectable ? isSelectable(day) : true);
@@ -95,7 +95,7 @@ export function BookingCalendar({
               disabled={!clickable}
               onClick={() => onDayClick?.(day)}
               title={day.reason ?? (firstRequest ? departmentName(firstRequest.department) : t(`status.${day.status}`))}
-              className={`border-border flex h-16 flex-col items-start gap-0.5 overflow-hidden rounded-lg border p-1.5 text-start transition sm:h-20 ${style.cell} ${
+              className={`border-border flex h-11 flex-col items-start gap-0.5 overflow-hidden rounded-lg border p-1.5 text-start transition sm:h-20 ${style.cell} ${
                 inMonth ? "" : "opacity-40"
               } ${clickable ? "hover:ring-primary/50 cursor-pointer hover:ring-2" : "cursor-default"} ${
                 isSelected ? "ring-primary ring-2" : ""
@@ -103,10 +103,10 @@ export function BookingCalendar({
             >
               <span className="tabular text-xs">{format(cell, "d")}</span>
               {day.status === "banned" && day.reason ? (
-                <span className="line-clamp-2 text-[10px] leading-tight">{day.reason}</span>
+                <span className="line-clamp-2 text-[10px] leading-tight max-sm:hidden">{day.reason}</span>
               ) : null}
               {firstRequest ? (
-                <span className="line-clamp-2 text-[10px] leading-tight">
+                <span className="line-clamp-2 text-[10px] leading-tight max-sm:hidden">
                   {departmentName(firstRequest.department)}
                   {day.requests && day.requests.length > 1 ? ` +${day.requests.length - 1}` : ""}
                 </span>

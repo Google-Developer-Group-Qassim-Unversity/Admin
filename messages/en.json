@@ -1855,7 +1855,8 @@
       "cancelled": "Cancelled"
     },
     "countdown": {
-      "left": "{hours}h {minutes}m {seconds}s left",
+      "left": "{hours}h {minutes}m left",
+      "leftMinutes": "{minutes}m {seconds}s left",
       "expired": "expired"
     },
     "book": {
@@ -1881,15 +1882,15 @@
     },
     "request": {
       "notFound": "Request not found",
-      "back": "All requests",
+      "back": "Pipeline",
       "untitled": "Untitled event",
       "noDates": "No dates",
       "createdBy": "Started by {name}",
       "cancel": "Cancel request",
-      "cancelConfirm": "Cancel this request? Its dates will be free for others.",
+      "cancelConfirm": "Its dates become free for other departments. This can't be undone.",
       "cancelled": "Request cancelled",
       "failed": "Something went wrong",
-      "holdTitle": "Your dates are held",
+      "holdTitle": "Dates held",
       "holdBody": "Fill in the event and both briefs, then submit before the hold runs out:",
       "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
       "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
@@ -1902,7 +1903,9 @@
         "details": "Event details",
         "design": "Design brief",
         "logistics": "Logistics brief"
-      }
+      },
+      "cancelTitle": "Cancel this request?",
+      "keep": "Keep it"
     },
     "details": {
       "title": "Event title",
@@ -1954,20 +1957,35 @@
         "workshop": "Workshop",
         "competition": "Competition"
       },
-      "choose": "Choose…"
+      "choose": "Choose…",
+      "sections": {
+        "basics": "The event",
+        "schedule": "Days and times",
+        "audience": "Who it's for",
+        "collaboration": "Working with others"
+      },
+      "titlePlaceholder": "e.g. Intro to Flutter",
+      "descriptionPlaceholder": "What will attendees do and learn?",
+      "official": {
+        "yes": "Official",
+        "no": "Unofficial"
+      }
     },
     "submit": {
       "title": "Submit to Design and Logistics",
       "ready": "Everything is filled in. Submitting sends the request to both teams at once.",
       "notReady": "Still missing:",
       "button": "Submit",
-      "complete": "Ready to submit",
+      "complete": "Everything's filled in. Submit when you're ready.",
       "sent": "Sent to Design and Logistics",
       "failed": "Could not submit",
       "finishLater": "Finish later",
       "finishLaterSaved": "Draft saved. Everything you filled in will be here when you come back.",
       "finishLaterSavedHold": "Draft saved. Come back and submit before your 24-hour hold runs out.",
-      "finishLaterFailed": "Some changes couldn't be saved. Check the highlighted message and try again."
+      "finishLaterFailed": "Some changes couldn't be saved. Check the highlighted message and try again.",
+      "stillMissing": "{count, plural, one {# thing left before you can submit} other {# things left before you can submit}}",
+      "incomplete": "{count, plural, one {# field still needs filling in} other {# fields still need filling in}}",
+      "more": "+{count} more"
     },
     "fields": {
       "dates": "Dates",
@@ -2038,7 +2056,16 @@
         "contentStatuses": {
           "final": "Content is complete and final",
           "needs_wording": "Information is ready, needs wording"
-        }
+        },
+        "sections": {
+          "what": "What to design",
+          "content": "The content",
+          "extras": "Extras"
+        },
+        "designTypeOther": "Which design type?",
+        "sizeOther": "Which size?",
+        "fileTypeOther": "Which file type?",
+        "ideaPlaceholder": "The look and feel you have in mind"
       },
       "logistics": {
         "pickModesFirst": "Choose each day's mode in the event details first; the questions here depend on it.",
@@ -2060,7 +2087,9 @@
           "devices": "Devices",
           "internet": "Internet",
           "audio": "Audio"
-        }
+        },
+        "goToDetails": "Go to event details",
+        "notesSection": "Anything else"
       }
     },
     "notifications": {
@@ -2105,14 +2134,19 @@
       "fixWithin": "Fix it and resubmit:",
       "resubmit": "Resubmit to Design",
       "resubmitted": "Sent back to Design",
-      "penalty": "Late fix: {points} point(s) off ({days} late day(s)), taken when the event is published."
+      "penalty": "Late fix: {points, plural, one {# point} other {# points}} off for {days, plural, one {# late day} other {# late days}}, taken when the event is published.",
+      "yourTurn": "Your team's turn",
+      "yourTurnHint": "Read the request below, then mark your part done when it's finished.",
+      "markTeamDone": "Mark {team} done",
+      "returnConfirm": "Send back",
+      "returnedHint": "Fix what the notes ask for in the forms below, then resubmit."
     },
     "publish": {
       "title": "Publish the event",
       "hint": "Every team is done. Publishing creates the event in Events as a draft; an admin reviews it and opens registration.",
       "tier": "Points tier",
       "pickTier": "Choose the event's points tier",
-      "image": "Poster image link (optional)",
+      "image": "Poster image link",
       "imageHint": "You can also add it later from the event page.",
       "button": "Publish",
       "published": "Published",
@@ -2125,6 +2159,15 @@
       "saved": "All changes saved",
       "error": "Couldn't save. Retrying when you edit again",
       "failed": "Couldn't save your changes"
+    },
+    "form": {
+      "optional": "Optional",
+      "required": "Fill this in to submit"
+    },
+    "progress": {
+      "label": "Progress",
+      "step": "Step {current} of {total}",
+      "cancelled": "This request was cancelled."
     }
   },
   "permissions": {
