@@ -19,15 +19,18 @@ const LEGEND: PipelineDayStatus[] = ["open", "held", "booked", "published", "ban
  * A month of the booking calendar. Days are coloured by status; clicking one
  * calls `onDayClick`, and `selected` days get a ring. What a click means -
  * picking days to ban, or a range to book - is the parent's business.
+ * `toolbar` sits at the trailing end of the month header.
  */
 export function BookingCalendar({
   selected,
   onDayClick,
   isSelectable,
+  toolbar,
 }: {
   selected?: Set<string>;
   onDayClick?: (day: CalendarDay) => void;
   isSelectable?: (day: CalendarDay) => boolean;
+  toolbar?: React.ReactNode;
 }) {
   const t = useTranslations("pipeline.calendar");
   const locale = useLocale();
@@ -45,19 +48,25 @@ export function BookingCalendar({
   }, [locale, gridStart]);
   const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(month);
 
+  // Only the statuses this month actually shows; "open" is always worth a key.
+  const legend = LEGEND.filter((status) => status === "open" || data?.days.some((d) => d.status === status));
+
   const cells: Date[] = [];
   for (let day = gridStart; day <= gridEnd; day = addDays(day, 1)) cells.push(day);
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex items-center justify-between gap-2">
-        <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, -1))} aria-label={t("previous")}>
-          <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
-        </Button>
-        <h3 className="font-display text-base font-semibold tracking-tight">{monthLabel}</h3>
-        <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label={t("next")}>
-          <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
-        </Button>
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 className="font-display min-w-36 text-lg font-semibold tracking-tight">{monthLabel}</h3>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, -1))} aria-label={t("previous")}>
+            <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
+          </Button>
+          <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label={t("next")}>
+            <ChevronRight className="h-4 w-4 rtl:-scale-x-100" />
+          </Button>
+        </div>
+        {toolbar ? <div className="ms-auto flex items-center gap-2">{toolbar}</div> : null}
       </div>
 
       {error ? <p className="text-brand-red-ink text-sm">{error.message}</p> : null}
@@ -108,14 +117,14 @@ export function BookingCalendar({
       </div>
 
       <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-        {LEGEND.map((status) => (
+        {legend.map((status) => (
           <span key={status} className="text-muted-foreground flex items-center gap-1.5 text-xs">
             <span className={`inline-block h-2 w-2 rounded-full ${PIPELINE_DAY_STYLES[status].dot}`} />
             {t(`status.${status}`)}
           </span>
         ))}
       </div>
-      {data ? (
+      {data && onDayClick ? (
         <p className="text-muted-foreground text-xs">
           {t("firstBookable", { date: format(parseISO(data.first_bookable_date), "d MMM yyyy") })}
         </p>

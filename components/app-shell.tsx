@@ -23,6 +23,7 @@ import { AuthButton } from "@/components/auth-button";
 import { AppBackground, BrandMark } from "@/components/brand-mark";
 import { CommandPalette } from "@/components/command-palette";
 import { LanguageSegmented, LanguageToggle } from "@/components/language-toggle";
+import { NotificationBell } from "@/components/pipeline/notification-bell";
 import { ThemeSegmented, ThemeToggle } from "@/components/theme-toggle";
 import { Button } from "@/components/ui/button";
 import {
@@ -364,6 +365,7 @@ function Topbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           <LanguageToggle />
           <ThemeToggle />
         </div>
+        <NotificationBell />
         <div className="flex h-10 w-10 items-center justify-center">
           <AuthButton />
         </div>
