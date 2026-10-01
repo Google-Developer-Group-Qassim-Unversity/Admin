@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { ClubMemberPicker } from "@/components/club-structure/member-picker";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { MemberAvatar } from "@/components/club-structure/shared";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { useClubMutation } from "@/hooks/use-club-structure";
 import type { ClubMember, ClubRoleKey } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
@@ -75,10 +76,10 @@ export function RoleSeatCard({
       <ul className="space-y-3">
         {holders.map((holder) => (
           <li key={holder.id} className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex min-w-0 items-center gap-3">
+            <MemberDetailsTrigger member={holder} className="flex min-w-0 items-center gap-3">
               <MemberAvatar name={holder.name} />
-              <bdi className="min-w-0 wrap-anywhere text-sm font-medium">{holder.name}</bdi>
-            </div>
+              <bdi className="min-w-0 wrap-anywhere text-sm font-medium group-hover/member:underline">{holder.name}</bdi>
+            </MemberDetailsTrigger>
             {canEdit && (
               <div className="flex gap-2">
                 <Button

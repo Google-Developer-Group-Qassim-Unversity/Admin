@@ -9,6 +9,7 @@ export const memberKeys = {
   list: () => [...memberKeys.all, 'list'] as const,
   paginated: (params: MembersPageParams) => [...memberKeys.all, 'paginated', params] as const,
   stats: () => [...memberKeys.all, 'stats'] as const,
+  detail: (id: number) => [...memberKeys.all, 'detail', id] as const,
 };
 
 // Query option factories - the same definition prefetched server-side
@@ -44,6 +45,16 @@ export function useMembersPaginated(params: MembersPageParams, enabled = true) {
 export function useMemberStats() {
   const api = useApi();
   return useQuery(memberStatsQuery(api));
+}
+
+/** One member's full record, for the details dialog a member's name opens. */
+export function useMemberDetails(id: number, enabled = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: memberKeys.detail(id),
+    queryFn: () => api.members.get(id),
+    enabled,
+  });
 }
 
 export function useMembers(getToken: () => Promise<string | null>, enabled = true) {

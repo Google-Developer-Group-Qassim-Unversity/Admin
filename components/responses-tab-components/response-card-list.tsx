@@ -4,6 +4,7 @@ import type { Table as TanStackTable } from "@tanstack/react-table";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { Checkbox } from "@/components/ui/checkbox";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { URGENCY_STYLES } from "@/components/status-badge";
 import type { TableRowData } from "@/lib/responses-utils";
 import { cn } from "@/lib/utils";
@@ -74,7 +75,11 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
                   aria-label={tt("selectRow")}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium"><bdi>{data.name}</bdi></p>
+                  <p className="truncate text-sm font-medium">
+                    <bdi>
+                      <MemberDetailsTrigger member={{ id: data.member_id, name: String(data.name) }} />
+                    </bdi>
+                  </p>
                   <p className="truncate text-[13px] text-muted-foreground">
                     <span dir="ltr">{data.email}</span>
                   </p>

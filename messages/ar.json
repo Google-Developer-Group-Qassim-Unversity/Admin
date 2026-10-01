@@ -2187,5 +2187,24 @@
       "removeConfirm": "إزالة {name} من المشرفين العامين؟",
       "removeHint": "يحتفظ بما تمنحه له أدواره في الأقسام."
     }
+  },
+  "memberDetails": {
+    "open": "عرض تفاصيل {name}",
+    "description": "بيانات التواصل والبيانات الجامعية لهذا العضو.",
+    "loadFailed": "تعذّر تحميل بيانات هذا العضو.",
+    "email": "البريد الإلكتروني",
+    "universityId": "الرقم الجامعي",
+    "phone": "رقم الجوال",
+    "gender": "الجنس",
+    "level": "المستوى",
+    "college": "الكلية",
+    "memberId": "رقم العضو",
+    "joined": "تاريخ الانضمام",
+    "updated": "آخر تحديث",
+    "notProvided": "غير متوفر",
+    "memberPage": "عرض صفحة العضو",
+    "sendEmail": "إرسال بريد",
+    "copy": "نسخ {field}",
+    "copied": "تم نسخ {field}"
   }
 }

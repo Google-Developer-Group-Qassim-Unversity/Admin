@@ -25,6 +25,7 @@ import {
   useDepartmentName,
   useRoleName,
 } from "@/components/club-structure/shared";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { useClubDepartment, useClubMutation, useClubRoster } from "@/hooks/use-club-structure";
 import type {
   ClubDepartment,
@@ -128,17 +129,19 @@ function DepartmentRoster({
         <ul className="space-y-1">
           {visible.map((entry) => (
             <li key={entry.member.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50">
-              <MemberAvatar name={entry.member.name} />
-              <div className="min-w-0 flex-1">
-                <p className="wrap-anywhere text-sm font-medium" dir="auto">
-                  {entry.member.name}
-                </p>
-                <div className="mt-1 flex flex-wrap gap-1">
-                  {entry.roles.map((role) => (
-                    <RoleBadge key={role} role={role} label={roleName(role)} />
-                  ))}
-                </div>
-              </div>
+              <MemberDetailsTrigger member={entry.member} className="flex min-w-0 flex-1 items-center gap-3">
+                <MemberAvatar name={entry.member.name} />
+                <span className="block min-w-0 flex-1">
+                  <span className="block wrap-anywhere text-sm font-medium underline-offset-2 group-hover/member:underline" dir="auto">
+                    {entry.member.name}
+                  </span>
+                  <span className="mt-1 flex flex-wrap gap-1">
+                    {entry.roles.map((role) => (
+                      <RoleBadge key={role} role={role} label={roleName(role)} />
+                    ))}
+                  </span>
+                </span>
+              </MemberDetailsTrigger>
               {canEdit && (
                 <Button
                   variant="ghost"

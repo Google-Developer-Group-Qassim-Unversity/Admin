@@ -695,13 +695,6 @@ export async function getMembers(
   return apiFetch<Member[]>("/members", {}, getToken);
 }
 
-export async function getMemberById(
-  memberId: number | string,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<Member>> {
-  return apiFetch<Member>(`/members/${memberId}`, {}, getToken);
-}
-
 // =============================================================================
 // Custom Points API
 // =============================================================================

@@ -61,6 +61,7 @@ import { StatTile } from "@/components/dashboard/stat-tile";
 import { MemberStatePill } from "@/components/manage-members/member-state-pill";
 import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 import { BatchImportDialog } from "@/components/manage-members/batch-import-dialog";
+import { MemberDetailsTrigger } from "@/components/member-details";
 
 import { useMembersPaginated, useMemberStats, memberKeys } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
@@ -103,7 +104,7 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
       ),
       cell: ({ row }) => (
         <span className="font-medium" dir="auto">
-          {row.getValue("name")}
+          <MemberDetailsTrigger member={row.original} />
         </span>
       ),
     },
@@ -486,7 +487,7 @@ function MemberRow({ member }: { member: Member }) {
     <li className="flex items-start gap-2 py-3 ps-4 pe-2">
       <div className="min-w-0 flex-1 space-y-1">
         <div className="truncate text-[15px] leading-snug font-semibold" dir="auto">
-          {member.name}
+          <MemberDetailsTrigger member={member} />
         </div>
         <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-[13px]">
           {member.uni_id ? (

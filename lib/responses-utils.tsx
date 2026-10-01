@@ -18,6 +18,7 @@ import {
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { URGENCY_STYLES } from "@/components/status-badge";
+import { MemberDetailsTrigger } from "@/components/member-details";
 
 // Type for transformed table row data
 // Using Record<string, unknown> to allow dynamic question keys
@@ -338,11 +339,14 @@ export function createColumns(
       enableSorting: false,
       cell: ({ row }) => {
         const name = String(row.getValue("name"));
+        const member = { id: row.original.member_id, name };
         if (name.length > 25) {
           return (
             <Tooltip>
               <TooltipTrigger asChild>
-                <span className="font-medium" dir="auto">{name}</span>
+                <span className="font-medium" dir="auto">
+                  <MemberDetailsTrigger member={member} />
+                </span>
               </TooltipTrigger>
               <TooltipContent>
                 <p>{name}</p>
@@ -350,7 +354,11 @@ export function createColumns(
             </Tooltip>
           );
         }
-        return <span className="font-medium" dir="auto">{name}</span>;
+        return (
+          <span className="font-medium" dir="auto">
+            <MemberDetailsTrigger member={member} />
+          </span>
+        );
       },
     },
     {

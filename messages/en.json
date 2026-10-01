@@ -2187,5 +2187,24 @@
       "removeConfirm": "Remove {name} as a super admin?",
       "removeHint": "They keep whatever their department roles give them."
     }
+  },
+  "memberDetails": {
+    "open": "Show details for {name}",
+    "description": "Contact and university details for this member.",
+    "loadFailed": "Could not load this member's details.",
+    "email": "Email",
+    "universityId": "University ID",
+    "phone": "Phone",
+    "gender": "Gender",
+    "level": "Level",
+    "college": "College",
+    "memberId": "Member ID",
+    "joined": "Joined",
+    "updated": "Last updated",
+    "notProvided": "Not provided",
+    "memberPage": "View member page",
+    "sendEmail": "Send email",
+    "copy": "Copy {field}",
+    "copied": "{field} copied"
   }
 }

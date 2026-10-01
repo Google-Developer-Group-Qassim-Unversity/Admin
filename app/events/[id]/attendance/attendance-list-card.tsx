@@ -6,6 +6,7 @@ import { Search, Users, Loader2, RefreshCw, UserPlus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { MemberDetailsTrigger } from '@/components/member-details';
 import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from '@/components/ui/card';
 import {
   Select,
@@ -180,7 +181,7 @@ export function AttendanceListCard({
                 return (
                   <li key={member.id} className="flex min-h-14 items-center gap-3 px-3 py-2.5 sm:px-4">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium"><bdi>{member.name}</bdi></p>
+                      <p className="truncate text-sm font-medium"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
                       <p className="truncate text-[13px] text-muted-foreground">
                         <span className="tabular" dir="ltr">
                           {member.uni_id ?? member.email}
