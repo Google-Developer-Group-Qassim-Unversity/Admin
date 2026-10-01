@@ -51,8 +51,6 @@ import type {
   PipelineCalendar,
   PipelineMe,
   PipelineTeam,
-  PipelineTeamEntry,
-  PipelineTeamsInput,
   UpdateDetailsInput,
 } from "@/lib/pipeline-types";
 
@@ -302,8 +300,6 @@ export function createApi(request: Requester) {
   // departments they act for), so none of them opt into the shared Data Cache.
   const pipeline = {
     me: () => request.json<PipelineMe>("/pipeline/me"),
-    setTeams: (body: PipelineTeamsInput) =>
-      request.json<PipelineTeamEntry[]>("/pipeline/teams", { method: "PUT", body }),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
     ban: (dates: string[], reason: string | null) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),

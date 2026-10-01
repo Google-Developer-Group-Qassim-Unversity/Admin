@@ -2,37 +2,26 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
-import { toast } from "sonner";
 
 import { ChoiceSelect, Field } from "@/components/pipeline/details-form";
-import { Button } from "@/components/ui/button";
+import { useAutosavedDraft } from "@/components/pipeline/draft-autosave";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSaveBrief } from "@/hooks/use-pipeline";
 import { VENUES, type DesignBrief, type EventRequestDetail, type LogisticsBrief } from "@/lib/pipeline-types";
 
-function useBriefState<T extends object>(request: EventRequestDetail, team: "design" | "logistics") {
-  const initial = (request.tasks.find((task) => task.team === team)?.brief ?? {}) as T;
-  const [brief, setBrief] = React.useState<T>(initial);
-  const key = JSON.stringify(initial);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  React.useEffect(() => setBrief(initial), [key]);
-  const set = <K extends keyof T>(field: K, value: T[K]) => setBrief((b) => ({ ...b, [field]: value }));
-  return { brief, set };
-}
-
-function SaveButton({ onClick, pending }: { onClick: () => void; pending: boolean }) {
-  const t = useTranslations("pipeline.briefs");
-  return (
-    <div>
-      <Button onClick={onClick} disabled={pending}>
-        <Save className="h-4 w-4" />
-        {t("save")}
-      </Button>
-    </div>
-  );
+/** A brief's local copy, saved a moment after the last change (see draft-autosave). */
+function useBriefDraft<T extends object>(request: EventRequestDetail, team: "design" | "logistics") {
+  const save = useSaveBrief(request.id, team);
+  const draft = useAutosavedDraft<T>({
+    key: team,
+    server: (request.tasks.find((task) => task.team === team)?.brief ?? {}) as T,
+    enabled: request.can_edit,
+    save: (brief) => save.mutateAsync(brief as Record<string, unknown>),
+  });
+  const set = <K extends keyof T>(field: K, value: T[K]) => draft.update((b) => ({ ...b, [field]: value }));
+  return { brief: draft.value, set };
 }
 
 const linesToList = (text: string) =>
@@ -41,21 +30,40 @@ const linesToList = (text: string) =>
     .map((line) => line.trim())
     .filter(Boolean);
 
+/** One link per line. Keeps the raw text while typing, so pressing Enter isn't undone. */
+function LinksField({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: string[] | undefined;
+  onChange: (links: string[]) => void;
+  disabled: boolean;
+}) {
+  const joined = (value ?? []).join("\n");
+  const [text, setText] = React.useState(joined);
+  React.useEffect(() => {
+    setText((current) => (linesToList(current).join("\n") === joined ? current : joined));
+  }, [joined]);
+  return (
+    <Textarea
+      dir="ltr"
+      rows={3}
+      value={text}
+      disabled={disabled}
+      onChange={(e) => {
+        setText(e.target.value);
+        onChange(linesToList(e.target.value));
+      }}
+    />
+  );
+}
+
 export function DesignBriefForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.briefs.design");
   const tb = useTranslations("pipeline.briefs");
-  const { brief, set } = useBriefState<DesignBrief>(request, "design");
-  const save = useSaveBrief(request.id, "design");
+  const { brief, set } = useBriefDraft<DesignBrief>(request, "design");
   const disabled = !request.can_edit;
-
-  const onSave = async () => {
-    try {
-      await save.mutateAsync(brief as Record<string, unknown>);
-      toast.success(tb("saved"));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tb("failed"));
-    }
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -151,25 +159,12 @@ export function DesignBriefForm({ request }: { request: EventRequestDetail }) {
       </Field>
       <div className="grid gap-4 md:grid-cols-2">
         <Field label={t("imageLinks")} hint={tb("linksHint")}>
-          <Textarea
-            dir="ltr"
-            rows={3}
-            value={(brief.image_links ?? []).join("\n")}
-            disabled={disabled}
-            onChange={(e) => set("image_links", linesToList(e.target.value))}
-          />
+          <LinksField value={brief.image_links} disabled={disabled} onChange={(v) => set("image_links", v)} />
         </Field>
         <Field label={t("referenceLinks")} hint={tb("linksHint")}>
-          <Textarea
-            dir="ltr"
-            rows={3}
-            value={(brief.reference_links ?? []).join("\n")}
-            disabled={disabled}
-            onChange={(e) => set("reference_links", linesToList(e.target.value))}
-          />
+          <LinksField value={brief.reference_links} disabled={disabled} onChange={(v) => set("reference_links", v)} />
         </Field>
       </div>
-      {!disabled ? <SaveButton onClick={onSave} pending={save.isPending} /> : null}
     </div>
   );
 }
@@ -221,22 +216,13 @@ function YesNo({ value, onChange, disabled }: { value: boolean | null | undefine
 export function LogisticsBriefForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.briefs.logistics");
   const tb = useTranslations("pipeline.briefs");
-  const { brief, set } = useBriefState<LogisticsBrief>(request, "logistics");
-  const save = useSaveBrief(request.id, "logistics");
+  const { brief, set } = useBriefDraft<LogisticsBrief>(request, "logistics");
   const disabled = !request.can_edit;
   const modes = new Set(Object.values(request.details.day_modes ?? {}));
   const includesFemale = request.details.audience === "female" || request.details.audience === "mixed";
   const venueIsListed = !brief.venue || VENUES.includes(brief.venue);
   const [otherVenue, setOtherVenue] = React.useState(!venueIsListed);
 
-  const onSave = async () => {
-    try {
-      await save.mutateAsync(brief as Record<string, unknown>);
-      toast.success(tb("saved"));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : tb("failed"));
-    }
-  };
 
   return (
     <div className="flex flex-col gap-5">
@@ -311,7 +297,6 @@ export function LogisticsBriefForm({ request }: { request: EventRequestDetail })
       <Field label={t("notes")}>
         <Textarea rows={3} value={brief.notes ?? ""} disabled={disabled} onChange={(e) => set("notes", e.target.value)} />
       </Field>
-      {!disabled ? <SaveButton onClick={onSave} pending={save.isPending} /> : null}
     </div>
   );
 }

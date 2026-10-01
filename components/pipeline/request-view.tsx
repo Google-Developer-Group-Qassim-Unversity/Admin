@@ -12,6 +12,7 @@ import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-pan
 import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
 import { DetailsForm } from "@/components/pipeline/details-form";
+import { DraftSaveProvider, DraftSaveStatus } from "@/components/pipeline/draft-autosave";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { SubmitBar } from "@/components/pipeline/submit-bar";
 import { TeamActions } from "@/components/pipeline/team-actions";
@@ -23,6 +24,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCancelRequest, usePipelineRequest, useRedate } from "@/hooks/use-pipeline";
 import type { EventRequestDetail, PipelineMe } from "@/lib/pipeline-types";
+
+const TAB_PANEL = "bg-card border-border rounded-xl border p-5 data-[state=inactive]:hidden";
 
 export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
   const t = useTranslations("pipeline.request");
@@ -36,6 +39,7 @@ export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
   const canAct = me.is_super_admin || me.departments.some((d) => d.id === request.department.id);
 
   return (
+    <DraftSaveProvider>
     <div className="flex flex-col gap-5">
       <RequestHeader request={request} me={me} />
       {request.stage === "draft" && canAct ? <SubmitBar request={request} /> : null}
@@ -50,17 +54,19 @@ export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
           <TabsTrigger value="design">{t("tabs.design")}</TabsTrigger>
           <TabsTrigger value="logistics">{t("tabs.logistics")}</TabsTrigger>
         </TabsList>
-        <TabsContent value="details" className="bg-card border-border rounded-xl border p-5">
+        {/* Every tab stays mounted, so switching tabs never drops what was typed. */}
+        <TabsContent value="details" forceMount className={TAB_PANEL}>
           <DetailsForm request={request} />
         </TabsContent>
-        <TabsContent value="design" className="bg-card border-border rounded-xl border p-5">
+        <TabsContent value="design" forceMount className={TAB_PANEL}>
           <DesignBriefForm request={request} />
         </TabsContent>
-        <TabsContent value="logistics" className="bg-card border-border rounded-xl border p-5">
+        <TabsContent value="logistics" forceMount className={TAB_PANEL}>
           <LogisticsBriefForm request={request} />
         </TabsContent>
       </Tabs>
     </div>
+    </DraftSaveProvider>
   );
 }
 
@@ -102,6 +108,7 @@ function RequestHeader({ request, me }: { request: EventRequestDetail; me: Pipel
               {request.start_date ? `${request.start_date} → ${request.end_date}` : t("noDates")}
             </span>
             <span>{t("createdBy", { name: request.created_by.name })}</span>
+            {request.can_edit ? <DraftSaveStatus /> : null}
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">

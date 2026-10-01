@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
-import type { EventRequestDetail, PipelineTeam, PipelineTeamsInput, UpdateDetailsInput } from "@/lib/pipeline-types";
+import type { EventRequestDetail, PipelineTeam, UpdateDetailsInput } from "@/lib/pipeline-types";
 
 export const pipelineKeys = {
   all: ["pipeline"] as const,
@@ -15,15 +15,6 @@ export const pipelineKeys = {
 export function usePipelineMe() {
   const api = useApi();
   return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000 });
-}
-
-export function useSetPipelineTeams() {
-  const api = useApi();
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: (body: PipelineTeamsInput) => api.pipeline.setTeams(body),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
-  });
 }
 
 export function usePipelineCalendar(from: string, to: string) {

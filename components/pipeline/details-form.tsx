@@ -3,11 +3,9 @@
 import * as React from "react";
 import { addDays, format, parseISO } from "date-fns";
 import { useTranslations } from "next-intl";
-import { Save } from "lucide-react";
-import { toast } from "sonner";
 
+import { useAutosavedDraft } from "@/components/pipeline/draft-autosave";
 import { useDepartmentName } from "@/components/pipeline/shared";
-import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -76,42 +74,44 @@ function bookedDays(request: EventRequestDetail): string[] {
   return days;
 }
 
-/** The event itself, filled in once by the requesting team. Nothing is required until submit. */
+type DetailsDraft = { details: EventDetails; partners: number[] };
+
+/** The event itself, filled in once by the requesting team. Nothing is required until submit; it saves as you type. */
 export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.details");
   const api = useApi();
   const departmentName = useDepartmentName();
   const update = useUpdateDetails(request.id);
   const disabled = !request.can_edit;
-  const [form, setForm] = React.useState<EventDetails>(request.details);
-  const [partners, setPartners] = React.useState<number[]>(request.partners.map((p) => p.id));
   const { data: departments } = useQuery({ queryKey: ["departments"], queryFn: () => api.departments.list() });
-
-  React.useEffect(() => {
-    setForm(request.details);
-    setPartners(request.partners.map((p) => p.id));
-  }, [request.details, request.partners]);
-
-  const set = <K extends keyof EventDetails>(key: K, value: EventDetails[K]) => setForm((f) => ({ ...f, [key]: value }));
   const days = bookedDays(request);
 
-  const onSave = async () => {
-    try {
-      const modes = form.day_modes
-        ? Object.fromEntries(Object.entries(form.day_modes).filter(([day]) => days.includes(day)))
+  const draft = useAutosavedDraft<DetailsDraft>({
+    key: "details",
+    server: { details: request.details, partners: request.partners.map((p) => p.id) },
+    enabled: !disabled,
+    save: ({ details, partners }) => {
+      const modes = details.day_modes
+        ? Object.fromEntries(Object.entries(details.day_modes).filter(([day]) => days.includes(day)))
         : null;
-      await update.mutateAsync({
-        ...form,
+      return update.mutateAsync({
+        ...details,
         day_modes: modes && Object.keys(modes).length ? modes : null,
-        title: form.title?.trim() || null,
-        presenter_email: form.presenter_email?.trim() || null,
+        title: details.title || null,
+        presenter_name: details.presenter_name || null,
+        presenter_email: details.presenter_email?.trim() || null,
+        description: details.description || null,
+        help_needed: details.help_needed || null,
         partner_department_ids: partners,
       });
-      toast.success(t("saved"));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("failed"));
-    }
-  };
+    },
+  });
+  const form = draft.value.details;
+  const partners = draft.value.partners;
+  const set = <K extends keyof EventDetails>(key: K, value: EventDetails[K]) =>
+    draft.update((d) => ({ ...d, details: { ...d.details, [key]: value } }));
+  const setPartners = (next: (current: number[]) => number[]) =>
+    draft.update((d) => ({ ...d, partners: next(d.partners) }));
 
   return (
     <div className="flex flex-col gap-5">
@@ -211,10 +211,12 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
             value={form.location_scope}
             options={LOCATION_SCOPES}
             label={(o) => t(`locationScopes.${o}`)}
-            onChange={(v) => {
-              set("location_scope", v);
-              if (v === "outside") set("is_official", false);
-            }}
+            onChange={(v) =>
+              draft.update((d) => ({
+                ...d,
+                details: { ...d.details, location_scope: v, ...(v === "outside" ? { is_official: false } : {}) },
+              }))
+            }
             disabled={disabled}
             placeholder={t("choose")}
           />
@@ -291,14 +293,6 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
         </Field>
       </div>
 
-      {!disabled ? (
-        <div>
-          <Button onClick={onSave} disabled={update.isPending}>
-            <Save className="h-4 w-4" />
-            {t("save")}
-          </Button>
-        </div>
-      ) : null}
     </div>
   );
 }
