@@ -2,10 +2,11 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
+import { Info } from "lucide-react";
 
-import { ChoiceSelect, Field } from "@/components/pipeline/details-form";
 import { useAutosavedDraft } from "@/components/pipeline/draft-autosave";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Chips, ChoiceSelect, Field, FormSection, YesNo } from "@/components/pipeline/form-kit";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useSaveBrief } from "@/hooks/use-pipeline";
@@ -66,69 +67,87 @@ export function DesignBriefForm({ request }: { request: EventRequestDetail }) {
   const disabled = !request.can_edit;
 
   return (
-    <div className="flex flex-col gap-5">
-      <p className="bg-brand-yellow-soft text-brand-yellow-ink rounded-lg px-3 py-2 text-sm">{t("rule")}</p>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label={t("designType")}>
-          <ChoiceSelect
-            value={brief.design_type}
-            options={["poster", "slides", "posts", "reports", "prints", "other"] as const}
-            label={(o) => t(`designTypes.${o}`)}
-            onChange={(v) => set("design_type", v)}
-            disabled={disabled}
-            placeholder={tb("choose")}
-          />
+    <div className="flex flex-col gap-6">
+      <p className="bg-brand-blue-soft text-brand-blue-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
+        <Info className="mt-0.5 h-4 w-4 shrink-0" />
+        {t("rule")}
+      </p>
+      <FormSection title={t("sections.what")}>
+        <div className="grid gap-4 md:grid-cols-3">
+          <Field label={t("designType")} name="design.design_type">
+            <ChoiceSelect
+              value={brief.design_type}
+              options={["poster", "slides", "posts", "reports", "prints", "other"] as const}
+              label={(o) => t(`designTypes.${o}`)}
+              onChange={(v) => set("design_type", v)}
+              disabled={disabled}
+              placeholder={tb("choose")}
+            />
+          </Field>
+          <Field label={t("size")} optional>
+            <ChoiceSelect
+              value={brief.size}
+              options={["square", "landscape", "portrait", "other"] as const}
+              label={(o) => t(`sizes.${o}`)}
+              onChange={(v) => set("size", v)}
+              disabled={disabled}
+              placeholder={tb("choose")}
+            />
+          </Field>
+          <Field label={t("fileType")} optional>
+            <ChoiceSelect
+              value={brief.file_type}
+              options={["png", "jpeg", "pdf", "powerpoint", "other"] as const}
+              label={(o) => t(`fileTypes.${o}`)}
+              onChange={(v) => set("file_type", v)}
+              disabled={disabled}
+              placeholder={tb("choose")}
+            />
+          </Field>
           {brief.design_type === "other" ? (
-            <Input
-              value={brief.design_type_other ?? ""}
-              disabled={disabled}
-              placeholder={tb("otherPlaceholder")}
-              onChange={(e) => set("design_type_other", e.target.value)}
-            />
+            <Field label={t("designTypeOther")} name="design.design_type_other">
+              <Input
+                value={brief.design_type_other ?? ""}
+                disabled={disabled}
+                placeholder={tb("otherPlaceholder")}
+                onChange={(e) => set("design_type_other", e.target.value)}
+              />
+            </Field>
           ) : null}
-        </Field>
-        <Field label={t("size")}>
-          <ChoiceSelect
-            value={brief.size}
-            options={["square", "landscape", "portrait", "other"] as const}
-            label={(o) => t(`sizes.${o}`)}
-            onChange={(v) => set("size", v)}
-            disabled={disabled}
-            placeholder={tb("optional")}
-          />
           {brief.size === "other" ? (
-            <Input
-              value={brief.size_other ?? ""}
-              disabled={disabled}
-              placeholder={tb("otherPlaceholder")}
-              onChange={(e) => set("size_other", e.target.value)}
-            />
+            <Field label={t("sizeOther")} name="design.size_other">
+              <Input
+                value={brief.size_other ?? ""}
+                disabled={disabled}
+                placeholder={tb("otherPlaceholder")}
+                onChange={(e) => set("size_other", e.target.value)}
+              />
+            </Field>
           ) : null}
-        </Field>
-        <Field label={t("fileType")}>
-          <ChoiceSelect
-            value={brief.file_type}
-            options={["png", "jpeg", "pdf", "powerpoint", "other"] as const}
-            label={(o) => t(`fileTypes.${o}`)}
-            onChange={(v) => set("file_type", v)}
-            disabled={disabled}
-            placeholder={tb("optional")}
-          />
           {brief.file_type === "other" ? (
-            <Input
-              value={brief.file_type_other ?? ""}
-              disabled={disabled}
-              placeholder={tb("otherPlaceholder")}
-              onChange={(e) => set("file_type_other", e.target.value)}
-            />
+            <Field label={t("fileTypeOther")} name="design.file_type_other">
+              <Input
+                value={brief.file_type_other ?? ""}
+                disabled={disabled}
+                placeholder={tb("otherPlaceholder")}
+                onChange={(e) => set("file_type_other", e.target.value)}
+              />
+            </Field>
           ) : null}
+        </div>
+        <Field label={t("idea")} name="design.idea">
+          <Textarea
+            rows={3}
+            value={brief.idea ?? ""}
+            disabled={disabled}
+            placeholder={t("ideaPlaceholder")}
+            onChange={(e) => set("idea", e.target.value)}
+          />
         </Field>
-      </div>
-      <Field label={t("idea")}>
-        <Textarea rows={3} value={brief.idea ?? ""} disabled={disabled} onChange={(e) => set("idea", e.target.value)} />
-      </Field>
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label={t("contentStatus")}>
+      </FormSection>
+
+      <FormSection title={t("sections.content")}>
+        <Field label={t("contentStatus")} name="design.content_status" className="md:max-w-md">
           <ChoiceSelect
             value={brief.content_status}
             options={["final", "needs_wording"] as const}
@@ -138,82 +157,45 @@ export function DesignBriefForm({ request }: { request: EventRequestDetail }) {
             placeholder={tb("choose")}
           />
         </Field>
-        <div className="md:col-span-2">
-          <Field label={t("content")}>
-            <Textarea
-              rows={4}
-              value={brief.content ?? ""}
-              disabled={disabled}
-              onChange={(e) => set("content", e.target.value)}
-            />
+        <Field label={t("content")} name="design.content">
+          <Textarea
+            rows={5}
+            value={brief.content ?? ""}
+            disabled={disabled}
+            onChange={(e) => set("content", e.target.value)}
+          />
+        </Field>
+      </FormSection>
+
+      <FormSection title={t("sections.extras")}>
+        <Field label={t("instructions")} optional>
+          <Textarea
+            rows={3}
+            value={brief.instructions ?? ""}
+            disabled={disabled}
+            onChange={(e) => set("instructions", e.target.value)}
+          />
+        </Field>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label={t("imageLinks")} hint={tb("linksHint")} optional>
+            <LinksField value={brief.image_links} disabled={disabled} onChange={(v) => set("image_links", v)} />
+          </Field>
+          <Field label={t("referenceLinks")} hint={tb("linksHint")} optional>
+            <LinksField value={brief.reference_links} disabled={disabled} onChange={(v) => set("reference_links", v)} />
           </Field>
         </div>
-      </div>
-      <Field label={t("instructions")}>
-        <Textarea
-          rows={3}
-          value={brief.instructions ?? ""}
-          disabled={disabled}
-          onChange={(e) => set("instructions", e.target.value)}
-        />
-      </Field>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label={t("imageLinks")} hint={tb("linksHint")}>
-          <LinksField value={brief.image_links} disabled={disabled} onChange={(v) => set("image_links", v)} />
-        </Field>
-        <Field label={t("referenceLinks")} hint={tb("linksHint")}>
-          <LinksField value={brief.reference_links} disabled={disabled} onChange={(v) => set("reference_links", v)} />
-        </Field>
-      </div>
+      </FormSection>
     </div>
   );
 }
 
-function Multi<T extends string>({
-  values,
-  options,
-  label,
-  onChange,
-  disabled,
+export function LogisticsBriefForm({
+  request,
+  onGoToDetails,
 }: {
-  values: T[] | undefined;
-  options: readonly T[];
-  label: (o: T) => string;
-  onChange: (v: T[]) => void;
-  disabled: boolean;
+  request: EventRequestDetail;
+  onGoToDetails?: () => void;
 }) {
-  const current = values ?? [];
-  return (
-    <div className="flex flex-wrap gap-3 pt-1">
-      {options.map((o) => (
-        <label key={o} className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={current.includes(o)}
-            disabled={disabled}
-            onCheckedChange={(v) => onChange(v === true ? [...current, o] : current.filter((x) => x !== o))}
-          />
-          {label(o)}
-        </label>
-      ))}
-    </div>
-  );
-}
-
-function YesNo({ value, onChange, disabled }: { value: boolean | null | undefined; onChange: (v: boolean) => void; disabled: boolean }) {
-  const tb = useTranslations("pipeline.briefs");
-  return (
-    <ChoiceSelect
-      value={value === undefined || value === null ? null : value ? "yes" : "no"}
-      options={["yes", "no"] as const}
-      label={(o) => tb(o)}
-      onChange={(v) => onChange(v === "yes")}
-      disabled={disabled}
-      placeholder={tb("choose")}
-    />
-  );
-}
-
-export function LogisticsBriefForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.briefs.logistics");
   const tb = useTranslations("pipeline.briefs");
   const { brief, set } = useBriefDraft<LogisticsBrief>(request, "logistics");
@@ -223,23 +205,34 @@ export function LogisticsBriefForm({ request }: { request: EventRequestDetail })
   const venueIsListed = !brief.venue || VENUES.includes(brief.venue);
   const [otherVenue, setOtherVenue] = React.useState(!venueIsListed);
 
-
   return (
-    <div className="flex flex-col gap-5">
-      {modes.size === 0 ? <p className="text-muted-foreground text-sm">{t("pickModesFirst")}</p> : null}
+    <div className="flex flex-col gap-6">
+      {modes.size === 0 ? (
+        <div className="bg-muted/50 flex flex-col items-start gap-3 rounded-lg px-4 py-3 text-sm sm:flex-row sm:items-center">
+          <span className="text-muted-foreground flex-1">{t("pickModesFirst")}</span>
+          {onGoToDetails ? (
+            <Button variant="outline" size="sm" onClick={onGoToDetails}>
+              {t("goToDetails")}
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
       {modes.has("online") ? (
-        <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold">{t("onlineSection")}</h3>
-          <Field label={t("meetLink")}>
-            <YesNo value={brief.meet_link_by_logistics} onChange={(v) => set("meet_link_by_logistics", v)} disabled={disabled} />
+        <FormSection title={t("onlineSection")}>
+          <Field label={t("meetLink")} name="logistics.meet_link_by_logistics" className="md:max-w-sm">
+            <YesNo
+              ariaLabel={t("meetLink")}
+              value={brief.meet_link_by_logistics}
+              onChange={(v) => set("meet_link_by_logistics", v)}
+              disabled={disabled}
+            />
           </Field>
-        </section>
+        </FormSection>
       ) : null}
       {modes.has("on_site") ? (
-        <section className="flex flex-col gap-3">
-          <h3 className="text-sm font-semibold">{t("onSiteSection")}</h3>
+        <FormSection title={t("onSiteSection")}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label={t("venue")}>
+            <Field label={t("venue")} name="logistics.venue">
               <ChoiceSelect
                 value={otherVenue ? "__other" : (brief.venue ?? null)}
                 options={[...VENUES, "__other"]}
@@ -265,38 +258,45 @@ export function LogisticsBriefForm({ request }: { request: EventRequestDetail })
                 />
               ) : null}
             </Field>
-            <Field label={t("room")}>
+            <Field label={t("room")} optional>
               <Input value={brief.room ?? ""} disabled={disabled} onChange={(e) => set("room", e.target.value)} />
             </Field>
-            <Field label={t("services")}>
-              <Multi
-                values={brief.services}
-                options={["sponsorship", "organizing", "volunteers"] as const}
-                label={(o) => t(`serviceOptions.${o}`)}
-                onChange={(v) => set("services", v)}
-                disabled={disabled}
-              />
-            </Field>
-            <Field label={t("venueNeeds")}>
-              <Multi
-                values={brief.venue_needs}
-                options={["devices", "internet", "audio"] as const}
-                label={(o) => t(`venueNeedOptions.${o}`)}
-                onChange={(v) => set("venue_needs", v)}
-                disabled={disabled}
-              />
-            </Field>
-            {includesFemale ? (
-              <Field label={t("buses")}>
-                <YesNo value={brief.buses_needed} onChange={(v) => set("buses_needed", v)} disabled={disabled} />
-              </Field>
-            ) : null}
           </div>
-        </section>
+          <Field label={t("services")} optional>
+            <Chips
+              values={brief.services}
+              options={["sponsorship", "organizing", "volunteers"] as const}
+              label={(o) => t(`serviceOptions.${o}`)}
+              onChange={(v) => set("services", v)}
+              disabled={disabled}
+            />
+          </Field>
+          <Field label={t("venueNeeds")} optional>
+            <Chips
+              values={brief.venue_needs}
+              options={["devices", "internet", "audio"] as const}
+              label={(o) => t(`venueNeedOptions.${o}`)}
+              onChange={(v) => set("venue_needs", v)}
+              disabled={disabled}
+            />
+          </Field>
+          {includesFemale ? (
+            <Field label={t("buses")} name="logistics.buses_needed" className="md:max-w-sm">
+              <YesNo
+                ariaLabel={t("buses")}
+                value={brief.buses_needed}
+                onChange={(v) => set("buses_needed", v)}
+                disabled={disabled}
+              />
+            </Field>
+          ) : null}
+        </FormSection>
       ) : null}
-      <Field label={t("notes")}>
-        <Textarea rows={3} value={brief.notes ?? ""} disabled={disabled} onChange={(e) => set("notes", e.target.value)} />
-      </Field>
+      <FormSection title={t("notesSection")}>
+        <Field label={t("notes")} optional>
+          <Textarea rows={3} value={brief.notes ?? ""} disabled={disabled} onChange={(e) => set("notes", e.target.value)} />
+        </Field>
+      </FormSection>
     </div>
   );
 }

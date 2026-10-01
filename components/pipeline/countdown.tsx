@@ -30,9 +30,13 @@ export function Countdown({ until, serverNow }: { until: string | null; serverNo
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
   const seconds = Math.floor((left % 60000) / 1000);
+  // Seconds only matter in the last hour; before that they just make it look urgent.
+  const urgent = hours === 0;
   return (
-    <span className="tabular font-semibold">
-      {t("left", { hours, minutes: String(minutes).padStart(2, "0"), seconds: String(seconds).padStart(2, "0") })}
+    <span className={`tabular font-semibold ${urgent ? "text-brand-red-ink" : ""}`}>
+      {urgent
+        ? t("leftMinutes", { minutes, seconds: String(seconds).padStart(2, "0") })
+        : t("left", { hours, minutes: String(minutes).padStart(2, "0") })}
     </span>
   );
 }

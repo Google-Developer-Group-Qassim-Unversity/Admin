@@ -2,16 +2,15 @@
 
 import * as React from "react";
 import { addDays, format, parseISO } from "date-fns";
-import { useTranslations } from "next-intl";
+import { useQuery } from "@tanstack/react-query";
+import { useLocale, useTranslations } from "next-intl";
+import { CircleCheck, TriangleAlert } from "lucide-react";
 
 import { useAutosavedDraft } from "@/components/pipeline/draft-autosave";
+import { Chips, Choice, ChoiceSelect, Field, FormSection } from "@/components/pipeline/form-kit";
 import { useDepartmentName } from "@/components/pipeline/shared";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { useQuery } from "@tanstack/react-query";
 import { useUpdateDetails } from "@/hooks/use-pipeline";
 import { useApi } from "@/lib/api/client";
 import {
@@ -23,47 +22,6 @@ import {
   type EventDetails,
   type EventRequestDetail,
 } from "@/lib/pipeline-types";
-
-export function Field({ label, hint, children }: { label: string; hint?: string; children: React.ReactNode }) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <Label className="text-sm font-medium">{label}</Label>
-      {children}
-      {hint ? <p className="text-muted-foreground text-xs">{hint}</p> : null}
-    </div>
-  );
-}
-
-export function ChoiceSelect<T extends string>({
-  value,
-  options,
-  label,
-  onChange,
-  disabled,
-  placeholder,
-}: {
-  value: T | null | undefined;
-  options: readonly T[];
-  label: (option: T) => string;
-  onChange: (value: T) => void;
-  disabled?: boolean;
-  placeholder?: string;
-}) {
-  return (
-    <Select value={value ?? ""} onValueChange={(v) => onChange(v as T)} disabled={disabled}>
-      <SelectTrigger>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {label(option)}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  );
-}
 
 function bookedDays(request: EventRequestDetail): string[] {
   if (!request.start_date || !request.end_date) return [];
@@ -79,6 +37,7 @@ type DetailsDraft = { details: EventDetails; partners: number[] };
 /** The event itself, filled in once by the requesting team. Nothing is required until submit; it saves as you type. */
 export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.details");
+  const locale = useLocale();
   const api = useApi();
   const departmentName = useDepartmentName();
   const update = useUpdateDetails(request.id);
@@ -113,186 +72,201 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const setPartners = (next: (current: number[]) => number[]) =>
     draft.update((d) => ({ ...d, partners: next(d.partners) }));
 
+  const dayLabel = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
+  const otherDepartments = (departments ?? []).filter((d) => d.id !== request.department.id);
+  const official = request.within_official_hours;
+
   return (
-    <div className="flex flex-col gap-5">
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label={t("title")}>
-          <Input value={form.title ?? ""} maxLength={150} disabled={disabled} onChange={(e) => set("title", e.target.value)} />
-        </Field>
-        <Field label={t("eventType")}>
-          <ChoiceSelect
-            value={form.event_type}
-            options={EVENT_TYPES}
-            label={(o) => t(`eventTypes.${o}`)}
-            onChange={(v) => set("event_type", v)}
-            disabled={disabled}
-            placeholder={t("choose")}
-          />
-        </Field>
-        <div className="md:col-span-2">
-          <Field label={t("description")}>
+    <div className="flex flex-col gap-6">
+      <FormSection title={t("sections.basics")}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label={t("title")} name="details.title">
+            <Input
+              value={form.title ?? ""}
+              maxLength={150}
+              disabled={disabled}
+              placeholder={t("titlePlaceholder")}
+              onChange={(e) => set("title", e.target.value)}
+            />
+          </Field>
+          <Field label={t("eventType")} name="details.event_type">
+            <ChoiceSelect
+              value={form.event_type}
+              options={EVENT_TYPES}
+              label={(o) => t(`eventTypes.${o}`)}
+              onChange={(v) => set("event_type", v)}
+              disabled={disabled}
+              placeholder={t("choose")}
+            />
+          </Field>
+          <Field label={t("description")} name="details.description" className="md:col-span-2">
             <Textarea
               rows={4}
               value={form.description ?? ""}
               disabled={disabled}
+              placeholder={t("descriptionPlaceholder")}
               onChange={(e) => set("description", e.target.value)}
             />
           </Field>
-        </div>
-        <Field label={t("presenterName")}>
-          <Input
-            value={form.presenter_name ?? ""}
-            disabled={disabled}
-            onChange={(e) => set("presenter_name", e.target.value)}
-          />
-        </Field>
-        <Field label={t("presenterEmail")} hint={t("presenterEmailHint")}>
-          <Input
-            type="email"
-            dir="ltr"
-            value={form.presenter_email ?? ""}
-            disabled={disabled}
-            onChange={(e) => set("presenter_email", e.target.value)}
-          />
-        </Field>
-      </div>
-
-      <div className="flex flex-col gap-2">
-        <Label className="text-sm font-medium">{t("dayModes")}</Label>
-        {days.length === 0 ? <p className="text-muted-foreground text-sm">{t("noDaysYet")}</p> : null}
-        <div className="grid gap-2 sm:grid-cols-2">
-          {days.map((day) => (
-            <div key={day} className="border-border flex items-center justify-between gap-3 rounded-lg border px-3 py-2">
-              <span className="tabular text-sm">{day}</span>
-              <ChoiceSelect<DayMode>
-                value={form.day_modes?.[day]}
-                options={["on_site", "online"]}
-                label={(o) => t(`modes.${o}`)}
-                onChange={(v) => set("day_modes", { ...(form.day_modes ?? {}), [day]: v })}
-                disabled={disabled}
-                placeholder={t("choose")}
-              />
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label={t("startTime")}>
-          <Input
-            type="time"
-            value={form.daily_start_time?.slice(0, 5) ?? ""}
-            disabled={disabled}
-            onChange={(e) => set("daily_start_time", e.target.value || null)}
-          />
-        </Field>
-        <Field label={t("endTime")}>
-          <Input
-            type="time"
-            value={form.daily_end_time?.slice(0, 5) ?? ""}
-            disabled={disabled}
-            onChange={(e) => set("daily_end_time", e.target.value || null)}
-          />
-        </Field>
-        <Field label={t("officialHours")}>
-          <p className="text-muted-foreground pt-2 text-sm">
-            {request.within_official_hours === null
-              ? t("officialHoursUnknown")
-              : request.within_official_hours
-                ? t("officialHoursInside")
-                : t("officialHoursOutside")}
-          </p>
-        </Field>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <Field label={t("locationScope")} hint={t("locationScopeHint")}>
-          <ChoiceSelect
-            value={form.location_scope}
-            options={LOCATION_SCOPES}
-            label={(o) => t(`locationScopes.${o}`)}
-            onChange={(v) =>
-              draft.update((d) => ({
-                ...d,
-                details: { ...d.details, location_scope: v, ...(v === "outside" ? { is_official: false } : {}) },
-              }))
-            }
-            disabled={disabled}
-            placeholder={t("choose")}
-          />
-        </Field>
-        <Field label={t("audience")}>
-          <ChoiceSelect
-            value={form.audience}
-            options={AUDIENCES}
-            label={(o) => t(`audiences.${o}`)}
-            onChange={(v) => set("audience", v)}
-            disabled={disabled}
-            placeholder={t("choose")}
-          />
-        </Field>
-        <Field label={t("registration")}>
-          <ChoiceSelect
-            value={form.registration}
-            options={REGISTRATIONS}
-            label={(o) => t(`registrations.${o}`)}
-            onChange={(v) => set("registration", v)}
-            disabled={disabled}
-            placeholder={t("choose")}
-          />
-        </Field>
-        <Field label={t("isOfficial")}>
-          <label className="flex items-center gap-2 pt-2 text-sm">
-            <Checkbox
-              checked={!!form.is_official}
-              disabled={disabled || form.location_scope === "outside"}
-              onCheckedChange={(v) => set("is_official", v === true)}
-            />
-            {t("isOfficialLabel")}
-          </label>
-        </Field>
-        {form.registration === "acceptance" ? (
-          <Field label={t("expectedAccepted")}>
+          <Field label={t("presenterName")} name="details.presenter_name">
             <Input
-              type="number"
-              min={1}
-              value={form.expected_accepted ?? ""}
+              value={form.presenter_name ?? ""}
               disabled={disabled}
-              onChange={(e) => set("expected_accepted", e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) => set("presenter_name", e.target.value)}
             />
           </Field>
-        ) : null}
-      </div>
+          <Field
+            label={t("presenterEmail")}
+            name="details.presenter_email"
+            hint={t("presenterEmailHint")}
+            optional={!Object.values(form.day_modes ?? {}).includes("online")}
+          >
+            <Input
+              type="email"
+              dir="ltr"
+              value={form.presenter_email ?? ""}
+              disabled={disabled}
+              placeholder="name@example.com"
+              onChange={(e) => set("presenter_email", e.target.value)}
+            />
+          </Field>
+        </div>
+      </FormSection>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label={t("partners")}>
-          <div className="border-border flex max-h-40 flex-col gap-1.5 overflow-y-auto rounded-lg border p-2">
-            {(departments ?? [])
-              .filter((d) => d.id !== request.department.id)
-              .map((d) => (
-                <label key={d.id} className="flex items-center gap-2 text-sm">
-                  <Checkbox
-                    checked={partners.includes(d.id)}
+      <FormSection title={t("sections.schedule")}>
+        <Field label={t("dayModes")} name="details.day_modes">
+          {days.length === 0 ? <p className="text-muted-foreground text-sm">{t("noDaysYet")}</p> : null}
+          <div className="flex flex-col gap-2">
+            {days.map((day) => (
+              <div key={day} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+                <span className="text-sm font-medium sm:w-44">{dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
+                <div className="sm:w-72">
+                  <Choice<DayMode>
+                    ariaLabel={dayLabel.format(new Date(`${day}T00:00:00Z`))}
+                    value={form.day_modes?.[day]}
+                    options={["on_site", "online"]}
+                    label={(o) => t(`modes.${o}`)}
+                    onChange={(v) => set("day_modes", { ...(form.day_modes ?? {}), [day]: v })}
                     disabled={disabled}
-                    onCheckedChange={(v) =>
-                      setPartners((p) => (v === true ? [...p, d.id] : p.filter((id) => id !== d.id)))
-                    }
                   />
-                  {departmentName(d)}
-                </label>
-              ))}
+                </div>
+              </div>
+            ))}
           </div>
         </Field>
-        <Field label={t("helpNeeded")}>
+        <div className="grid grid-cols-2 gap-4 md:max-w-md">
+          <Field label={t("startTime")} name="details.daily_start_time">
+            <Input
+              type="time"
+              value={form.daily_start_time?.slice(0, 5) ?? ""}
+              disabled={disabled}
+              onChange={(e) => set("daily_start_time", e.target.value || null)}
+            />
+          </Field>
+          <Field label={t("endTime")} name="details.daily_end_time">
+            <Input
+              type="time"
+              value={form.daily_end_time?.slice(0, 5) ?? ""}
+              disabled={disabled}
+              onChange={(e) => set("daily_end_time", e.target.value || null)}
+            />
+          </Field>
+        </div>
+        {official === null ? null : (
+          <p
+            className={`flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
+              official ? "bg-brand-green-soft text-brand-green-ink" : "bg-brand-yellow-soft text-brand-yellow-ink"
+            }`}
+          >
+            {official ? <CircleCheck className="h-3.5 w-3.5" /> : <TriangleAlert className="h-3.5 w-3.5" />}
+            {official ? t("officialHoursInside") : t("officialHoursOutside")}
+          </p>
+        )}
+      </FormSection>
+
+      <FormSection title={t("sections.audience")}>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label={t("locationScope")} name="details.location_scope" hint={t("locationScopeHint")}>
+            <Choice
+              ariaLabel={t("locationScope")}
+              value={form.location_scope}
+              options={LOCATION_SCOPES}
+              label={(o) => t(`locationScopes.${o}`)}
+              onChange={(v) =>
+                draft.update((d) => ({
+                  ...d,
+                  details: { ...d.details, location_scope: v, ...(v === "outside" ? { is_official: false } : {}) },
+                }))
+              }
+              disabled={disabled}
+            />
+          </Field>
+          <Field label={t("isOfficial")} name="details.is_official">
+            <Choice
+              ariaLabel={t("isOfficial")}
+              value={form.is_official === null || form.is_official === undefined ? null : form.is_official ? "yes" : "no"}
+              options={["yes", "no"] as const}
+              label={(o) => t(`official.${o}`)}
+              onChange={(v) => set("is_official", v === "yes")}
+              disabled={disabled || form.location_scope === "outside"}
+            />
+          </Field>
+          <Field label={t("audience")} name="details.audience">
+            <ChoiceSelect
+              value={form.audience}
+              options={AUDIENCES}
+              label={(o) => t(`audiences.${o}`)}
+              onChange={(v) => set("audience", v)}
+              disabled={disabled}
+              placeholder={t("choose")}
+            />
+          </Field>
+          <Field label={t("registration")} name="details.registration">
+            <ChoiceSelect
+              value={form.registration}
+              options={REGISTRATIONS}
+              label={(o) => t(`registrations.${o}`)}
+              onChange={(v) => set("registration", v)}
+              disabled={disabled}
+              placeholder={t("choose")}
+            />
+          </Field>
+          {form.registration === "acceptance" ? (
+            <Field label={t("expectedAccepted")} name="details.expected_accepted">
+              <Input
+                type="number"
+                inputMode="numeric"
+                min={1}
+                value={form.expected_accepted ?? ""}
+                disabled={disabled}
+                onChange={(e) => set("expected_accepted", e.target.value ? Number(e.target.value) : null)}
+              />
+            </Field>
+          ) : null}
+        </div>
+      </FormSection>
+
+      <FormSection title={t("sections.collaboration")}>
+        <Field label={t("partners")} optional>
+          {otherDepartments.length ? (
+            <Chips
+              values={partners}
+              options={otherDepartments.map((d) => d.id)}
+              label={(id) => departmentName(otherDepartments.find((d) => d.id === id))}
+              onChange={(next) => setPartners(() => next)}
+              disabled={disabled}
+            />
+          ) : null}
+        </Field>
+        <Field label={t("helpNeeded")} optional>
           <Textarea
-            rows={4}
+            rows={3}
             value={form.help_needed ?? ""}
             disabled={disabled}
             onChange={(e) => set("help_needed", e.target.value)}
           />
         </Field>
-      </div>
-
+      </FormSection>
     </div>
   );
 }

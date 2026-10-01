@@ -101,7 +101,7 @@ export function BookPanel({ me, onDone }: { me: PipelineMe; onDone: () => void }
         {/* One department is the answer already; only ask when there is a choice. */}
         {me.departments.length > 1 ? (
           <Select value={departmentId} onValueChange={setDepartmentId}>
-            <SelectTrigger className="sm:w-56">
+            <SelectTrigger className="w-full sm:w-56">
               <SelectValue placeholder={t("pickDepartment")} />
             </SelectTrigger>
             <SelectContent>

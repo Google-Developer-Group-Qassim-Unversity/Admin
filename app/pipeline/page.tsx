@@ -36,6 +36,11 @@ function PipelineHome({ me }: { me: PipelineMe }) {
   const [mode, setMode] = React.useState<"view" | "book" | "bans">("view");
   const isLogistics = me.is_super_admin || me.departments.some((d) => d.teams.includes("logistics"));
   const hasTeam = me.is_super_admin || me.departments.some((d) => d.teams.length > 0);
+  const calendarRef = React.useRef<HTMLElement>(null);
+  // On a phone the calendar sits below the requests; bring it up when picking days.
+  React.useEffect(() => {
+    if (mode !== "view") calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [mode]);
 
   const toolbar =
     mode === "view" ? (
@@ -56,7 +61,8 @@ function PipelineHome({ me }: { me: PipelineMe }) {
   return (
     <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(320px,400px)]">
       <section
-        className={`bg-card flex flex-col gap-4 rounded-xl border p-4 transition-colors sm:p-5 max-lg:order-2 ${
+        ref={calendarRef}
+        className={`bg-card flex scroll-mt-20 flex-col gap-4 rounded-xl border p-4 transition-colors sm:p-5 max-lg:order-2 ${
           mode === "view" ? "border-border" : "border-primary/40 ring-primary/15 ring-4"
         }`}
       >
