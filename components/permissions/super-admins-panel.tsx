@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ClubMemberPicker } from "@/components/club-structure/member-picker";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { Button } from "@/components/ui/button";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { useAddSuperAdmin, useRemoveSuperAdmin, useSuperAdmins } from "@/hooks/use-permissions";
@@ -63,7 +64,9 @@ export function SuperAdminsPanel() {
         {data.map((row) => (
           <li key={row.member_id} className="flex items-center justify-between gap-3 px-3 py-2.5">
             <div className="flex min-w-0 flex-col gap-0.5">
-              <span className="truncate text-sm font-medium">{row.name}</span>
+              <span className="truncate text-sm font-medium">
+                <MemberDetailsTrigger member={{ id: row.member_id, name: row.name }} />
+              </span>
               <span className="text-muted-foreground text-xs">
                 {row.added_by
                   ? t("addedBy", { name: row.added_by.name, date: format.dateTime(new Date(row.added_at), { dateStyle: "medium" }) })

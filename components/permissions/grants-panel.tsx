@@ -6,6 +6,7 @@ import { History, UserMinus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
@@ -161,7 +162,8 @@ function GrantRow({ row, onRevoke, pending }: { row: GrantEntry; onRevoke: () =>
     <li className="flex items-center justify-between gap-3 px-3 py-2.5">
       <div className="flex min-w-0 flex-col gap-0.5">
         <span className={`truncate text-sm font-medium ${revoked ? "text-muted-foreground line-through" : ""}`}>
-          {row.member.name} · {label(row.permission)}
+          <MemberDetailsTrigger member={{ id: row.member.member_id, name: row.member.name }} /> ·{" "}
+          {label(row.permission)}
         </span>
         <span className="text-muted-foreground text-xs">
           {t("grantedBy", { name: row.granted_by.name, date: when(row.granted_at) })}

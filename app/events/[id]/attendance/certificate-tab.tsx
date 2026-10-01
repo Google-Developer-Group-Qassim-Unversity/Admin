@@ -12,6 +12,7 @@ import { config } from "@/lib/config";
 import { useApi } from "@/lib/api/client";
 import { parseSSEStream } from "@/lib/sse";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
@@ -303,7 +304,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                     <div key={member.id} className="flex items-start gap-3 px-3 py-2.5">
                       <Users className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-medium"><bdi>{member.name}</bdi></p>
+                        <p className="truncate text-sm font-medium"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
                         <p className="truncate text-[13px] text-muted-foreground sm:text-xs">{member.email}</p>
                       </div>
                     </div>

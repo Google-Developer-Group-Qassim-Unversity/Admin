@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { ClubDepartment, ClubRole, ClubRoleKey } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
+import { memberInitials } from "@/components/member-details";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useClubError } from "@/components/club-structure/use-club-error";
 import { useIsFetching, useIsMutating } from "@tanstack/react-query";
@@ -73,13 +74,7 @@ export function DepartmentIcon({ icon, color }: Pick<ClubDepartment, "icon" | "c
 }
 
 export function MemberAvatar({ name, small = false }: { name: string; small?: boolean }) {
-  const initials = name
-    .trim()
-    .split(/\s+/)
-    .map((part) => Array.from(part)[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
+  const initials = memberInitials(name);
   return (
     <span
       aria-hidden="true"

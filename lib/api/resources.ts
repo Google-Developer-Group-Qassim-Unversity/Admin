@@ -226,6 +226,8 @@ export function createApi(request: Requester) {
       }),
 
     stats: () => request.json<MemberStats>("/members/stats", { revalidate: CACHE_TTL, tags: ["members"] }),
+
+    get: (id: number) => request.json<Member>(`/members/${id}`),
   };
 
   // Reads default to the current semester when `semesterId` is omitted; writes

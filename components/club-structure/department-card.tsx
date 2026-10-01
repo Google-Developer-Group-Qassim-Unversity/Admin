@@ -10,6 +10,7 @@ import {
   MemberAvatar,
   useDepartmentName,
 } from "@/components/club-structure/shared";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import type { ClubDepartmentCard, ClubRoleKey } from "@/lib/club-structure-types";
 
 export function DepartmentCard({
@@ -51,8 +52,10 @@ export function DepartmentCard({
             seats.holders.map((holder) => (
               <div key={`${seats.key}-${holder.id}`} className="flex items-center gap-2 text-xs">
                 <span className="w-14 shrink-0 text-muted-foreground">{roleName(seats.key)}</span>
-                <MemberAvatar small name={holder.name} />
-                <bdi className="min-w-0 wrap-anywhere">{holder.name}</bdi>
+                <MemberDetailsTrigger member={holder} className="flex min-w-0 items-center gap-2">
+                  <MemberAvatar small name={holder.name} />
+                  <bdi className="min-w-0 wrap-anywhere group-hover/member:underline">{holder.name}</bdi>
+                </MemberDetailsTrigger>
               </div>
             ))
           ) : (

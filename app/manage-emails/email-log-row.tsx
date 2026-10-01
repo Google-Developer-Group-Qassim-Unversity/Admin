@@ -18,6 +18,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { EnrichedEmailLog } from "@/lib/api-types";
 import { normalizeArabic } from "@/lib/search-utils";
+import { MemberDetailsTrigger } from "@/components/member-details";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
 import type { AcceptanceData, BlastData, CertificateData } from "./types";
@@ -294,6 +295,8 @@ function CertificateRow({ log }: EmailLogRowProps) {
                       <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
                     </TooltipContent>
                   </Tooltip>
+                ) : log.member_id ? (
+                  <MemberDetailsTrigger member={{ id: log.member_id, name: memberName }} />
                 ) : (
                   memberName
                 )}
@@ -485,6 +488,8 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
                       <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
                     </TooltipContent>
                   </Tooltip>
+                ) : log.member_id ? (
+                  <MemberDetailsTrigger member={{ id: log.member_id, name: memberName }} />
                 ) : (
                   memberName
                 )}
@@ -529,7 +534,13 @@ function DefaultRow({ log }: EmailLogRowProps) {
         {log.member_name && (
           <div className="flex items-center gap-1 text-xs">
             <span className="text-muted-foreground/60">{t("member")}</span>
-            <span className="truncate" dir="auto">{log.member_name}</span>
+            <span className="truncate" dir="auto">
+              {log.member_id ? (
+                <MemberDetailsTrigger member={{ id: log.member_id, name: log.member_name }} />
+              ) : (
+                log.member_name
+              )}
+            </span>
           </div>
         )}
         {log.member_email && (
@@ -696,7 +707,13 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
           <dl className="space-y-1 text-[13px]">
             {s.memberName && (
               <DetailLine label={t("member")}>
-                <span dir="auto">{s.memberName}</span>
+                <span dir="auto">
+                  {log.member_id ? (
+                    <MemberDetailsTrigger member={{ id: log.member_id, name: s.memberName }} />
+                  ) : (
+                    s.memberName
+                  )}
+                </span>
               </DetailLine>
             )}
             {s.memberEmail && <DetailLine label={t("email")}>{s.memberEmail}</DetailLine>}
