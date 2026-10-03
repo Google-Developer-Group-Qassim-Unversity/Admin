@@ -44,7 +44,7 @@ export function RequestList({
             <div className="flex min-w-0 flex-1 flex-col gap-1">
               <div className="flex items-center gap-2">
                 <span className="min-w-0 flex-1 truncate text-sm font-semibold">
-                  {r.title || t("untitled", { id: r.id })}
+                  {r.title || t("untitled")}
                 </span>
                 <StageBadge stage={r.stage} className="shrink-0" />
               </div>

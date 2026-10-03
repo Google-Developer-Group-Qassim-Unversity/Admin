@@ -1879,9 +1879,8 @@
     "requests": {
       "mine": "Your department's requests",
       "none": "No requests yet. Book dates on the calendar to start one.",
-      "untitled": "Request #{id}",
+      "untitled": "Untitled request",
       "noDates": "No dates",
-      "pageTitle": "Event request #{id}",
       "tab": "Yours",
       "title": "Requests"
     },

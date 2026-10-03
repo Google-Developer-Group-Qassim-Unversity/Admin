@@ -30,7 +30,7 @@ export interface SuperAdminEntry extends PersonRef {
 }
 
 export interface GrantEntry {
-  id: number;
+  id: string;
   member: PersonRef;
   permission: Perm;
   granted_by: PersonRef;

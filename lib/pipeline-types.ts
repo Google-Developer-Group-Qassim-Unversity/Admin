@@ -32,7 +32,7 @@ export interface PipelineMe {
 export type CalendarDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
 
 export interface CalendarDayRequest {
-  id: number;
+  id: string;
   department: PipelineDepartment;
   title: string | null;
   stage: string;
@@ -84,7 +84,7 @@ export interface EventDetails {
 export type UpdateDetailsInput = Partial<EventDetails> & { partner_department_ids?: number[] };
 
 export interface EventRequestSummary {
-  id: number;
+  id: string;
   department: PipelineDepartment;
   stage: EventRequestStage;
   title: string | null;
@@ -198,10 +198,10 @@ export type NotificationKind =
   | "ready_to_publish";
 
 export interface PipelineNotification {
-  id: number;
+  id: string;
   kind: NotificationKind;
   department: PipelineDepartment;
-  request: { id: number; title: string | null; stage: EventRequestStage };
+  request: { id: string; title: string | null; stage: EventRequestStage };
   payload: Record<string, unknown> | null;
   created_at: string;
   read: boolean;

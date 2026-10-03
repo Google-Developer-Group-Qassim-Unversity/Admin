@@ -86,6 +86,6 @@ export const useGrant = () =>
     api.permissions.grant(v.departmentId, v.memberId, v.perm),
   );
 export const useRevoke = () =>
-  usePermissionMutation((api, v: { departmentId: number; grantId: number }) =>
+  usePermissionMutation((api, v: { departmentId: number; grantId: string }) =>
     api.permissions.revoke(v.departmentId, v.grantId),
   );

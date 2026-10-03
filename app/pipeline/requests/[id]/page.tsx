@@ -7,7 +7,7 @@ import { PipelineGate } from "@/components/pipeline/shared";
 
 export default function PipelineRequestPage() {
   const params = useParams<{ id: string }>();
-  const id = Number(params.id);
+  const id = params.id;
 
   return (
     <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5">
