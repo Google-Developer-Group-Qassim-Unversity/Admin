@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions }
 import { useApi } from '@/lib/api/client';
 import type { Event, UpdateEventPayload, BackfillMember, AttendanceType, EventsPageParams } from '@/lib/api-types';
 import type { Api, EventsFilters } from '@/lib/api/resources';
+import { pipelineKeys } from './use-pipeline';
 
 // Query keys
 const eventKeysAll = ['events'] as const;
@@ -347,6 +348,8 @@ export function useDeleteEvent() {
       queryClient.removeQueries({ queryKey: eventKeys.detail(id) });
       queryClient.removeQueries({ queryKey: eventKeys.fullDetail(id) });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      // A pipeline request it was published from goes too, and frees its days.
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.all });
     },
   });
 }
