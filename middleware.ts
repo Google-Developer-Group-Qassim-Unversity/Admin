@@ -11,6 +11,13 @@ const isPublicRoute = createRouteMatcher([
 
 const isApiRoute = createRouteMatcher(['/api/(.*)']);
 
+const isSignInRoute = createRouteMatcher(['/sign-in(.*)']);
+
+/** Only same-origin paths, so `redirect_url` cannot send anyone off-site. */
+function safeRedirectPath(value: string | null): string {
+  return value && value.startsWith('/') && !value.startsWith('//') ? value : '/';
+}
+
 /**
  * The door: only staff (on the current semester's roster, or a super admin)
  * get in, as the backend's GET /access/me says. Everyone else is denied, on
@@ -27,8 +34,15 @@ export default clerkMiddleware(async (auth, req) => {
     return NextResponse.next();
   }
 
+  if (isSignInRoute(req)) {
+    if (!userId) return NextResponse.next();
+    const target = safeRedirectPath(req.nextUrl.searchParams.get('redirect_url'));
+    return NextResponse.redirect(new URL(target, req.url));
+  }
+
   if (!userId) {
-    const signInUrl = `${envConfig.authFrontendUrl}/sign-in?redirect_url=${encodeURIComponent(envConfig.thisAppUrl + req.nextUrl.pathname)}`;
+    const signInUrl = new URL('/sign-in', req.url);
+    signInUrl.searchParams.set('redirect_url', req.nextUrl.pathname + req.nextUrl.search);
     return NextResponse.redirect(signInUrl);
   }
 

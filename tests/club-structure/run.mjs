@@ -40,7 +40,6 @@ const bundle = await build({
     "process.env": JSON.stringify({
       NODE_ENV: "development",
       NEXT_PUBLIC_BACKEND_API_URL: apiURL,
-      NEXT_PUBLIC_AUTH_FRONTEND_URL: "http://auth.example.test",
       NEXT_PUBLIC_THIS_APP_URL: "http://app.example.test",
       NEXT_PUBLIC_MEMBER_APP_URL: "http://members.example.test",
       NEXT_PUBLIC_UPLOAD_SOURCE: "test",

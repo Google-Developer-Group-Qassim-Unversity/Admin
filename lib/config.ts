@@ -7,7 +7,6 @@ function assertEnv<T extends string>(key: string, value: T | undefined): T {
 
 export const config = {
   backendApiUrl: assertEnv('NEXT_PUBLIC_BACKEND_API_URL', process.env.NEXT_PUBLIC_BACKEND_API_URL),
-  authFrontendUrl: assertEnv('NEXT_PUBLIC_AUTH_FRONTEND_URL', process.env.NEXT_PUBLIC_AUTH_FRONTEND_URL),
   thisAppUrl: assertEnv('NEXT_PUBLIC_THIS_APP_URL', process.env.NEXT_PUBLIC_THIS_APP_URL),
   memberAppUrl: assertEnv('NEXT_PUBLIC_MEMBER_APP_URL', process.env.NEXT_PUBLIC_MEMBER_APP_URL),
   uploadSource: assertEnv('NEXT_PUBLIC_UPLOAD_SOURCE', process.env.NEXT_PUBLIC_UPLOAD_SOURCE),

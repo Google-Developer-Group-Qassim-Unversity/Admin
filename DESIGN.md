@@ -118,7 +118,7 @@ Layout:
   it automatically. A new nav entry goes in `NAV_GROUPS` (`app-shell.tsx`) under
   the right group (Operate / People / Engage / System) with a Lucide icon; add
   the matching label to `messages/{en,ar}.json` under `nav`. Full-bleed routes
-  (projector, access-denied) are listed in `MINIMAL_ROUTES`.
+  (projector, access-denied, sign-in) are listed in `MINIMAL_ROUTES`.
 
 ---
 
