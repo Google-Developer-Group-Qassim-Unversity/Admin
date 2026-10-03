@@ -2237,29 +2237,22 @@
       "loadFailed": "تعذّر تحميل صلاحيات هذا العضو.",
       "retry": "إعادة المحاولة",
       "status": {
-        "superAdmin": "مشرف عام · يستطيع فعل كل شيء",
+        "superAdmin": "مشرف عام",
         "staff": "ضمن فريق {semester}",
-        "regular": "ليس ضمن فريق هذا الفصل · لا يدخل لوحة الإدارة"
+        "regular": "لا يدخل لوحة الإدارة"
       },
-      "rolesTitle": "أدواره هذا الفصل",
       "roles": {
         "leader": "قائد",
         "vp": "نائب",
         "member": "عضو"
       },
-      "listTitle": "الصلاحيات",
-      "listHint": "تظهر بجانب كل صلاحية القسم الذي جاءت منه بلون ذلك القسم. صلاحيات الفعاليات والأعضاء تنطبق على تلك الأقسام فقط، والبقية على مستوى النادي.",
+      "listTitle": "ما يستطيع فعله",
       "showMissing": "عرض ما لا يملكه",
-      "nothing": "لا يملك أي صلاحية.",
-      "notHeld": "لا يملكها",
       "why": {
-        "superAdmin": "مشرف عام",
-        "staff": "كل أعضاء الفريق",
         "shared": "كل قائد ونائب",
         "department": "قادة هذا القسم ونوابه",
         "team": "فريق في مسار الفعاليات",
-        "grant": "ممنوحة",
-        "grantBy": "منحها <bdi>{name}</bdi>، <bdi>{date}</bdi>"
+        "grant": "ممنوحة"
       },
       "groups": {
         "basics": "الأساسيات",
@@ -2270,8 +2263,6 @@
         "pipeline": "مسار الفعاليات",
         "system": "النظام"
       },
-      "heldLabel": "الصلاحيات التي يملكها",
-      "heldValue": "{held} من {total}",
       "groupCount": "{held} من {total}",
       "legend": "معنى الأيقونات",
       "legendItems": {
@@ -2280,7 +2271,22 @@
         "department": "خاصة بالقسم",
         "team": "فريق في مسار الفعاليات",
         "grant": "ممنوحة له"
-      }
+      },
+      "roleIn": "{role} في {department}",
+      "sentence": {
+        "superAdmin": "يستطيع المشرف العام فعل كل شيء في كل الأقسام، أيًا كانت أدواره.",
+        "regular": "ليس ضمن فريق هذا الفصل، لذا لا يستطيع فتح لوحة الإدارة ولا يملك أي صلاحية.",
+        "staff": "يملك {held} من {total} صلاحية بصفته {through}.",
+        "staffOnly": "يملك {held} من {total} صلاحية، وهي ما يحصل عليه كل أعضاء الفريق."
+      },
+      "noAccessTitle": "لا شيء لعرضه بعد",
+      "noAccessHint": "تأتي الصلاحيات من فريق هذا الفصل. أضفه إلى قسم في الهيكل التنظيمي وستظهر صلاحياته هنا.",
+      "openClubStructure": "فتح الهيكل التنظيمي",
+      "tableCaption": "الصلاحيات والقسم الذي جاءت منه كل صلاحية",
+      "permissionColumn": "الصلاحية",
+      "staffColumn": "الفريق",
+      "markLabel": "{department}: {why}",
+      "grantNote": "منحها <bdi>{name}</bdi> في {department}، <bdi>{date}</bdi>"
     },
     "superAdmins": {
       "title": "المشرفون العامون",

@@ -2237,29 +2237,22 @@
       "loadFailed": "Couldn't load this member's permissions.",
       "retry": "Try again",
       "status": {
-        "superAdmin": "Super admin · can do everything",
+        "superAdmin": "Super admin",
         "staff": "On the {semester} roster",
-        "regular": "Not on this semester's roster · no admin app access"
+        "regular": "No admin app access"
       },
-      "rolesTitle": "Roles this semester",
       "roles": {
         "leader": "Leader",
         "vp": "VP",
         "member": "Member"
       },
-      "listTitle": "Permissions",
-      "listHint": "Each permission shows the department it comes from, in that department's colour. Event and roster permissions only apply to those departments; the rest work club-wide.",
+      "listTitle": "What they can do",
       "showMissing": "Show the ones they don't have",
-      "nothing": "They don't hold any permissions.",
-      "notHeld": "Doesn't have this",
       "why": {
-        "superAdmin": "Super admin",
-        "staff": "Everyone on staff",
         "shared": "every leader & VP",
         "department": "this department's leaders & VPs",
         "team": "pipeline team",
-        "grant": "granted",
-        "grantBy": "granted by <bdi>{name}</bdi>, <bdi>{date}</bdi>"
+        "grant": "granted"
       },
       "groups": {
         "basics": "Basics",
@@ -2270,8 +2263,6 @@
         "pipeline": "Events pipeline",
         "system": "System"
       },
-      "heldLabel": "Permissions held",
-      "heldValue": "{held} of {total}",
       "groupCount": "{held} of {total}",
       "legend": "What the icons mean",
       "legendItems": {
@@ -2280,7 +2271,22 @@
         "department": "The department's own",
         "team": "Pipeline team",
         "grant": "Granted to them"
-      }
+      },
+      "roleIn": "{role} of {department}",
+      "sentence": {
+        "superAdmin": "Super admins can do everything, in every department, whatever their roles.",
+        "regular": "They're not on this semester's roster, so they can't open the admin app and hold no permissions.",
+        "staff": "Holds {held} of {total} permissions as {through}.",
+        "staffOnly": "Holds {held} of {total} permissions, the ones everyone on staff gets."
+      },
+      "noAccessTitle": "Nothing to show yet",
+      "noAccessHint": "Access comes from this semester's roster. Add them to a department in Club Structure and their permissions will show up here.",
+      "openClubStructure": "Open Club Structure",
+      "tableCaption": "Permissions, and the department each one comes from",
+      "permissionColumn": "Permission",
+      "staffColumn": "Staff",
+      "markLabel": "{department}: {why}",
+      "grantNote": "Granted by <bdi>{name}</bdi> in {department}, <bdi>{date}</bdi>"
     },
     "superAdmins": {
       "title": "Super admins",
