@@ -202,7 +202,15 @@ export function createApi(request: Requester) {
   };
 
   const departments = {
-    list: () => request.json<Department[]>("/departments", { revalidate: CACHE_TTL, tags: ["departments"] }),
+    list: (params?: { endDate?: string }) =>
+      request.json<Department[]>("/departments", {
+        query: { end_date: params?.endDate || undefined },
+        revalidate: CACHE_TTL,
+        tags: ["departments"],
+      }),
+
+    get: (id: number) =>
+      request.json<Department>(`/departments/${id}`, { revalidate: CACHE_TTL, tags: ["departments"] }),
   };
 
   const forms = {
