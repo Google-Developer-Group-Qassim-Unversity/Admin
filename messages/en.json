@@ -2181,6 +2181,7 @@
     "tabs": {
       "grants": "Member grants",
       "leaders": "Leaders & VPs",
+      "member": "Member lookup",
       "superAdmins": "Super admins"
     },
     "grants": {
@@ -2227,6 +2228,51 @@
       "saved": "Saved",
       "failed": "Something went wrong"
     },
+    "member": {
+      "pick": "Pick a member",
+      "pickTitle": "Look up a member's permissions",
+      "change": "Change member",
+      "emptyTitle": "See what anyone can do",
+      "emptyHint": "Pick a member to see every permission they hold in the admin app, and where each one comes from.",
+      "loadFailed": "Couldn't load this member's permissions.",
+      "retry": "Try again",
+      "count": "Holds {held} of {total} permissions",
+      "countAll": "Holds every permission",
+      "status": {
+        "superAdmin": "Super admin: can do everything, in every department.",
+        "staff": "On the {semester} roster, so they can open the admin app.",
+        "regular": "Not on this semester's roster, so they can't open the admin app."
+      },
+      "rolesTitle": "This semester",
+      "roles": {
+        "leader": "Leader",
+        "vp": "VP",
+        "member": "Member"
+      },
+      "listTitle": "Permissions",
+      "listHint": "Each one shows the department it comes from and why. Event and roster permissions only apply to the departments shown; the rest work club-wide.",
+      "showMissing": "Show the ones they don't have",
+      "nothing": "They don't hold any permissions.",
+      "notHeld": "Doesn't have this",
+      "why": {
+        "superAdmin": "Super admin",
+        "staff": "Everyone on staff",
+        "shared": "every leader & VP",
+        "department": "this department's leaders & VPs",
+        "team": "pipeline team",
+        "grant": "granted",
+        "grantBy": "granted by <bdi>{name}</bdi>, <bdi>{date}</bdi>"
+      },
+      "groups": {
+        "basics": "Basics",
+        "events": "Events and attendance",
+        "emails": "Emails and certificates",
+        "points": "Points",
+        "people": "People and structure",
+        "pipeline": "Events pipeline",
+        "system": "System"
+      }
+    },
     "superAdmins": {
       "title": "Super admins",
       "hint": "Super admins can do anything, to any department. They add and remove each other.",
@@ -2256,6 +2302,7 @@
     "updated": "Last updated",
     "notProvided": "Not provided",
     "memberPage": "View member page",
+    "permissions": "Permissions",
     "sendEmail": "Send email",
     "copy": "Copy {field}",
     "copied": "{field} copied"

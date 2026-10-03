@@ -2,7 +2,8 @@
 
 import { useState, type ReactNode } from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, Copy, ExternalLink, Mail } from "lucide-react";
+import Link from "next/link";
+import { Check, Copy, ExternalLink, KeyRound, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,6 +82,7 @@ function MemberDetailsDialog({ member, onClose }: { member: MemberRef; onClose: 
   const t = useTranslations("memberDetails");
   const common = useTranslations("common");
   const format = useFormatter();
+  const { isSuperAdmin } = useAccess();
   const query = useMemberDetails(member.id);
   const details = query.data;
   const date = (iso: string | null | undefined) =>
@@ -148,6 +150,14 @@ function MemberDetailsDialog({ member, onClose }: { member: MemberRef; onClose: 
                   {t("memberPage")}
                 </a>
               </Button>
+              {isSuperAdmin && (
+                <Button variant="outline" asChild>
+                  <Link href={`/permissions?tab=member&member=${details.id}`} onClick={onClose}>
+                    <KeyRound />
+                    {t("permissions")}
+                  </Link>
+                </Button>
+              )}
               {details.email && (
                 <Button asChild>
                   <a href={`mailto:${details.email}`}>

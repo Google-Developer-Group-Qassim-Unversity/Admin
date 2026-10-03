@@ -12,6 +12,7 @@ export const permissionKeys = {
   catalogue: ["permissions", "catalogue"] as const,
   assignments: ["permissions", "assignments"] as const,
   superAdmins: ["permissions", "super-admins"] as const,
+  member: (memberId: number) => ["permissions", "member", memberId] as const,
   grants: (departmentId: number, history: boolean) => ["permissions", "grants", departmentId, history] as const,
 };
 
@@ -39,6 +40,15 @@ export function useAssignments(enabled: boolean) {
 export function useSuperAdmins(enabled: boolean) {
   const api = useApi();
   return useQuery({ queryKey: permissionKeys.superAdmins, queryFn: () => api.permissions.superAdmins(), enabled });
+}
+
+export function useMemberAccess(memberId: number | null) {
+  const api = useApi();
+  return useQuery({
+    queryKey: permissionKeys.member(memberId ?? 0),
+    queryFn: () => api.permissions.member(memberId as number),
+    enabled: memberId !== null,
+  });
 }
 
 export function useDepartmentGrants(departmentId: number | null, history: boolean) {
