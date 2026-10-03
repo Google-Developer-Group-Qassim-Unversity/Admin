@@ -2,19 +2,20 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { SignOutButton } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
-import { LogIn, RotateCcw } from "lucide-react";
+import { LogIn, LogOut, RotateCcw } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { AccessDenied } from "@/components/ui/access-denied";
-import { config } from "@/lib/config";
 
 /**
  * Where the middleware sends anyone it will not let in.
  *
  * - `not_staff`: signed in, but not on this semester's roster. Denied, full
- *   stop: no link onward, nothing about who to ask.
+ *   stop: no link onward, nothing about who to ask - only a way to sign out
+ *   and try a different account.
  * - `unavailable`: access could not be checked (the backend did not answer).
  * - no reason: not signed in.
  */
@@ -26,6 +27,15 @@ export default function AccessDeniedPage() {
     return (
       <Shell>
         <AccessDenied title={t("notStaff.title")} description={t("notStaff.description")} />
+        <CardContent className="flex flex-col gap-3">
+          <p className="text-muted-foreground text-center text-sm">{t("notStaff.switchAccount")}</p>
+          <SignOutButton redirectUrl="/sign-in">
+            <Button variant="outline" className="w-full gap-2">
+              <LogOut className="h-4 w-4" />
+              {t("notStaff.signOut")}
+            </Button>
+          </SignOutButton>
+        </CardContent>
       </Shell>
     );
   }
@@ -46,16 +56,15 @@ export default function AccessDeniedPage() {
     );
   }
 
-  const signInUrl = `${config.authFrontendUrl}/sign-in?redirect_url=${encodeURIComponent(config.thisAppUrl)}`;
   return (
     <Shell>
       <AccessDenied title={t("default.title")} description={t("default.description")} />
       <CardContent>
         <Button asChild className="w-full gap-2">
-          <a href={signInUrl}>
+          <Link href="/sign-in">
             <LogIn className="h-4 w-4" />
             {t("signInButton")}
-          </a>
+          </Link>
         </Button>
       </CardContent>
     </Shell>

@@ -269,8 +269,11 @@
   },
   "auth": {
     "logIn": "Log In",
-    "signUp": "Sign Up",
     "backToMainApp": "Back to Main App"
+  },
+  "signIn": {
+    "title": "Sign in to the admin console",
+    "subtitle": "For club staff. Use the account you use on the GDG Qassim app."
   },
   "home": {
     "clubStructure": {
@@ -316,7 +319,9 @@
     },
     "notStaff": {
       "title": "No access",
-      "description": "You don't have access to this app."
+      "description": "You don't have access to this app.",
+      "switchAccount": "Wrong account? Sign out and sign in with another one.",
+      "signOut": "Sign out"
     },
     "unavailable": {
       "title": "Couldn't check your access",

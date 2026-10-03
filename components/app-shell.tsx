@@ -37,8 +37,8 @@ import {
 import { AccessDenied } from "@/components/ui/access-denied";
 import { useAccess } from "@/hooks/use-access";
 
-/** Routes that render bare - the QR projector screen and the access wall. */
-const MINIMAL_ROUTES = ["/qr-display", "/access-denied"];
+/** Routes that render bare - the QR projector screen, the access wall and sign-in. */
+const MINIMAL_ROUTES = ["/qr-display", "/access-denied", "/sign-in"];
 
 type NavItem = { href: string; key: string; icon: LucideIcon };
 type NavGroup = { key: string; items: NavItem[] };
@@ -393,7 +393,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const [searchOpen, setSearchOpen] = React.useState(false);
 
-  const minimal = MINIMAL_ROUTES.includes(pathname);
+  const minimal = MINIMAL_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 
   // Bound before the early return so the hook order never changes between the
   // projector route and the rest of the app.

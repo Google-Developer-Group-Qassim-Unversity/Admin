@@ -4,7 +4,8 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { LogIn, UserPlus, ArrowLeftRight } from "lucide-react";
+import Link from "next/link";
+import { LogIn, ArrowLeftRight } from "lucide-react";
 import { config } from "@/lib/config";
 
 export function AuthButton() {
@@ -39,30 +40,13 @@ export function AuthButton() {
     );
   }
 
-  // Not signed in - show sign up and log in buttons
-  const authUrl = config.authFrontendUrl;
-  const appUrl = config.thisAppUrl;
-  const redirectParam = appUrl
-    ? `?redirect_url=${encodeURIComponent(appUrl)}`
-    : "";
-
-  const signInUrl = `${authUrl}/sign-in${redirectParam}`;
-  const signUpUrl = `${authUrl}/sign-up${redirectParam}`;
-
+  // Not signed in - the middleware normally gets here first.
   return (
-    <div className="flex gap-2">
-      <Button variant="outline" size="sm" asChild className="gap-2">
-        <a href={signInUrl}>
-          <LogIn className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("logIn")}</span>
-        </a>
-      </Button>
-      <Button variant="default" size="sm" asChild className="gap-2">
-        <a href={signUpUrl}>
-          <UserPlus className="h-4 w-4" />
-          <span className="hidden sm:inline">{t("signUp")}</span>
-        </a>
-      </Button>
-    </div>
+    <Button variant="outline" size="sm" asChild className="gap-2">
+      <Link href="/sign-in">
+        <LogIn className="h-4 w-4" />
+        <span className="hidden sm:inline">{t("logIn")}</span>
+      </Link>
+    </Button>
   );
 }
