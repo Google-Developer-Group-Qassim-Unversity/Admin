@@ -60,6 +60,10 @@ export interface MemberDepartmentAccess {
   department_id: number;
   name: string;
   ar_name: string;
+  /** `#rrggbb`, as on the club structure page. */
+  color: string;
+  /** A key of `DEPARTMENT_ICON_COMPONENTS`. */
+  icon: string;
   roles: string[];
   permissions: HeldPermission[];
 }
