@@ -7,6 +7,7 @@ import type {
   CataloguePermission,
   DepartmentGrants,
   GrantEntry,
+  MemberAccess,
   SuperAdminEntry,
 } from "@/lib/permissions-types";
 import type {
@@ -360,6 +361,8 @@ export function createApi(request: Requester) {
     setDepartment: (departmentId: number, permissions: Perm[]) =>
       request.json<Assignments>(`/permissions/departments/${departmentId}`, { method: "PUT", body: { permissions } }),
     superAdmins: () => request.json<SuperAdminEntry[]>("/permissions/super-admins"),
+    /** What one member can do, and why. Super admins only. */
+    member: (memberId: number) => request.json<MemberAccess>(`/permissions/members/${memberId}`),
     addSuperAdmin: (memberId: number) =>
       request.json<SuperAdminEntry[]>("/permissions/super-admins", { method: "POST", body: { member_id: memberId } }),
     removeSuperAdmin: (memberId: number) =>

@@ -45,3 +45,31 @@ export interface DepartmentGrants {
   members: PersonRef[];
   grants: GrantEntry[];
 }
+
+/** Why a member holds a permission in a department (see the backend's `explain_access`). */
+export type PermissionSource = "shared" | "department" | "team" | "grant";
+
+export interface HeldPermission {
+  permission: Perm;
+  sources: PermissionSource[];
+  granted_by: PersonRef | null;
+  granted_at: string | null;
+}
+
+export interface MemberDepartmentAccess {
+  department_id: number;
+  name: string;
+  ar_name: string;
+  roles: string[];
+  permissions: HeldPermission[];
+}
+
+export interface MemberAccess {
+  member: PersonRef;
+  is_super_admin: boolean;
+  is_staff: boolean;
+  semester: { id: string; name: string } | null;
+  basics: Perm[];
+  departments: MemberDepartmentAccess[];
+  permissions: Perm[];
+}
