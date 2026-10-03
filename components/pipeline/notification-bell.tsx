@@ -60,6 +60,7 @@ export function NotificationBell() {
 
 function NotificationPopover() {
   const t = useTranslations("pipeline.notifications");
+  const tr = useTranslations("pipeline.requests");
   const departmentName = useDepartmentName();
   const timeAgo = useTimeAgo();
   const [open, setOpen] = React.useState(false);
@@ -129,7 +130,7 @@ function NotificationPopover() {
                   <UrgencyDot urgency={URGENCY[n.kind]} className="mt-1.5" />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className={`text-sm leading-snug ${n.read ? "text-muted-foreground" : "font-medium"}`}>
-                      {t(`kinds.${n.kind}`, { title: n.request.title || `#${n.request.id}` })}
+                      {t(`kinds.${n.kind}`, { title: n.request.title || tr("untitled") })}
                     </span>
                     <span className="text-muted-foreground text-xs">
                       {departmentName(n.department)} · {timeAgo(n.created_at)}

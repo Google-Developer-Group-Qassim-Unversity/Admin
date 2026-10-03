@@ -46,7 +46,7 @@ const TAB_PANEL = "bg-card border-border rounded-xl border p-4 sm:p-6 data-[stat
  * One request, top to bottom: what it is, where it stands, what to do now,
  * then the three forms. A draft gets a bar that follows the page with Submit.
  */
-export function RequestView({ id, me }: { id: number; me: PipelineMe }) {
+export function RequestView({ id, me }: { id: string; me: PipelineMe }) {
   const t = useTranslations("pipeline.request");
   const { data: request, isPending, error } = usePipelineRequest(id);
 

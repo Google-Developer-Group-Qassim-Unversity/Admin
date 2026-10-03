@@ -8,7 +8,7 @@ export const pipelineKeys = {
   me: () => [...pipelineKeys.all, "me"] as const,
   calendar: (from: string, to: string) => [...pipelineKeys.all, "calendar", from, to] as const,
   requests: () => [...pipelineKeys.all, "requests"] as const,
-  request: (id: number) => [...pipelineKeys.all, "requests", id] as const,
+  request: (id: string) => [...pipelineKeys.all, "requests", id] as const,
 };
 
 /** Which departments the signed-in person acts for, and which department is which team. */
@@ -40,7 +40,7 @@ export function usePipelineRequests(page = 1) {
   });
 }
 
-export function usePipelineRequest(id: number) {
+export function usePipelineRequest(id: string) {
   const api = useApi();
   return useQuery({ queryKey: pipelineKeys.request(id), queryFn: () => api.pipelineRequests.get(id) });
 }
@@ -49,7 +49,7 @@ export function usePipelineRequest(id: number) {
  * Every write on a request returns the fresh request; it replaces the cached
  * one, and the calendar and lists refetch because days may have changed hands.
  */
-export function useRequestMutation<V>(id: number, fn: (vars: V) => Promise<EventRequestDetail>) {
+export function useRequestMutation<V>(id: string, fn: (vars: V) => Promise<EventRequestDetail>) {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: fn,
@@ -61,12 +61,12 @@ export function useRequestMutation<V>(id: number, fn: (vars: V) => Promise<Event
   });
 }
 
-export function useUpdateDetails(id: number) {
+export function useUpdateDetails(id: string) {
   const api = useApi();
   return useRequestMutation(id, (body: UpdateDetailsInput) => api.pipelineRequests.updateDetails(id, body));
 }
 
-export function useRedate(id: number) {
+export function useRedate(id: string) {
   const api = useApi();
   return useRequestMutation(id, ({ start, end }: { start: string; end: string }) =>
     api.pipelineRequests.redate(id, start, end),
@@ -87,17 +87,17 @@ export function useCancelRequest() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number) => api.pipelineRequests.cancel(id),
+    mutationFn: (id: string) => api.pipelineRequests.cancel(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }
 
-export function useSaveBrief(id: number, team: PipelineTeam) {
+export function useSaveBrief(id: string, team: PipelineTeam) {
   const api = useApi();
   return useRequestMutation(id, (brief: Record<string, unknown>) => api.pipelineRequests.saveBrief(id, team, brief));
 }
 
-export function useSubmitRequest(id: number) {
+export function useSubmitRequest(id: string) {
   const api = useApi();
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
 }
@@ -117,7 +117,7 @@ export function useReadNotifications() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: number | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
+    mutationFn: (id: string | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...pipelineKeys.all, "notifications"] }),
   });
 }
@@ -131,22 +131,22 @@ export function useInbox(enabled = true) {
   });
 }
 
-export function useReturnRequest(id: number) {
+export function useReturnRequest(id: string) {
   const api = useApi();
   return useRequestMutation(id, (notes: string) => api.pipelineRequests.returnToTeam(id, notes));
 }
 
-export function useResubmit(id: number) {
+export function useResubmit(id: string) {
   const api = useApi();
   return useRequestMutation<void>(id, () => api.pipelineRequests.resubmit(id));
 }
 
-export function useCompleteTask(id: number) {
+export function useCompleteTask(id: string) {
   const api = useApi();
   return useRequestMutation(id, (team: PipelineTeam) => api.pipelineRequests.complete(id, team));
 }
 
-export function usePublishRequest(id: number) {
+export function usePublishRequest(id: string) {
   const api = useApi();
   return useRequestMutation(
     id,
