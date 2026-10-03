@@ -52,8 +52,12 @@ export default function CreateCustomEventPage() {
   React.useEffect(() => {
     async function fetchData() {
       setIsLoadingData(true);
+      // Departments scoped to the current semester (the club's roster),
+      // minus the ones hidden from the leaderboard, like the event form.
+      const today = new Date();
+      const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const [deptsRes, membersRes, actionsRes] = await Promise.all([
-        getDepartments(),
+        getDepartments({ endDate }),
         getMembers(getToken),
         getActions(),
       ]);

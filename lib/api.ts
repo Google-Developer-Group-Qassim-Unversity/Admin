@@ -388,8 +388,9 @@ export async function deleteAction(
   }, getToken);
 }
 
-export async function getDepartments(): Promise<ApiResponse<Department[]>> {
-  return apiFetch<Department[]>("/departments");
+export async function getDepartments(params?: { endDate?: string }): Promise<ApiResponse<Department[]>> {
+  const query = params?.endDate ? `?end_date=${encodeURIComponent(params.endDate)}` : "";
+  return apiFetch<Department[]>(`/departments${query}`);
 }
 
 // =============================================================================

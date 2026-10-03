@@ -98,8 +98,8 @@ export function useClubMutation<T, R>(mutation: (api: Api["clubStructure"], valu
       await Promise.all([
         refresh(),
         queryClient
-          .cancelQueries({ queryKey: eventKeys.departments() })
-          .then(() => queryClient.invalidateQueries({ queryKey: eventKeys.departments() })),
+          .cancelQueries({ queryKey: eventKeys.departmentsRoot })
+          .then(() => queryClient.invalidateQueries({ queryKey: eventKeys.departmentsRoot })),
         error instanceof ApiRequestError && (error.status === 404 || error.status === 409)
           ? queryClient.invalidateQueries({ queryKey: memberKeys.all })
           : Promise.resolve(),
