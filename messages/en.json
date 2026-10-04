@@ -1160,7 +1160,7 @@
     "subtitle": "Update the event details and configuration.",
     "deleteDraft": "Delete Draft",
     "deleteTitle": "Delete Event",
-    "deleteDescription": "This action cannot be undone. All associated data (forms, logs, submissions) will be permanently removed.",
+    "deleteDescription": "This action cannot be undone. All associated data (forms, logs, points, submissions) will be permanently removed. If it was published from the events pipeline, its request and any late penalty go too, and its booked days are free again.",
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "confirmDelete": "Are you sure you want to delete <strong>{name}</strong>?"
