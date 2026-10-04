@@ -70,10 +70,20 @@ export interface UpdateEventPayload {
   actions: [EventAction, EventAction]; // [department_action, member_action]
 }
 
+// A member named on an event (who is responsible for it, who created it)
+export interface EventPerson {
+  member_id: number;
+  name: string;
+}
+
 // Extended event details returned from GET /events/{id}/details
 export interface EventDetails {
   event: EventApiPayload;
   actions: [EventAction, EventAction]; // [department_action, member_action]
+  // Null on events created before these were recorded. For a pipeline event the
+  // responsible member is the requester and created_by whoever published it.
+  responsible: EventPerson | null;
+  created_by: EventPerson | null;
 }
 
 // Upload types

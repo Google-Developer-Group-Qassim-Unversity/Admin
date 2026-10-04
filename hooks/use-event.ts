@@ -76,11 +76,12 @@ export function useEventsPaginated(params: EventsPageParams) {
   });
 }
 
-export function useEventDetails(id: number | string) {
+export function useEventDetails(id: number | string, enabled = true) {
   const api = useApi();
   return useQuery({
     queryKey: eventKeys.fullDetail(id),
     queryFn: () => api.events.details(id),
+    enabled,
   });
 }
 

@@ -1126,7 +1126,10 @@
     "date": "Date",
     "time": "Time",
     "eventType": "Event type",
-    "details": "Details"
+    "details": "Details",
+    "responsible": "Responsible",
+    "responsibleUnknown": "Not recorded",
+    "createdBy": "Created by {name}"
   },
   "eventLayout": {
     "backToPoints": "Back to Points",

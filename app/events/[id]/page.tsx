@@ -4,8 +4,8 @@ import * as React from "react";
 import Image from "next/image";
 import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
-import { useEventAttendance } from "@/hooks/use-event";
-import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, type LucideIcon } from "lucide-react";
+import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
@@ -42,6 +42,8 @@ export default function EventInfoPage() {
     !!event,
     "count"
   );
+  // Who is responsible lives on /details (staff-only), not on the public event row.
+  const { data: details } = useEventDetails(event?.id ?? 0, !!event);
 
   if (!event) {
     return null;
@@ -162,6 +164,21 @@ export default function EventInfoPage() {
                 <span className="tabular">
                   {t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}
                 </span>
+              </Fact>
+            )}
+
+            {details && (
+              <Fact icon={UserRound} label={t("responsible")}>
+                {details.responsible ? (
+                  <span dir="auto">{details.responsible.name}</span>
+                ) : (
+                  <span className="text-muted-foreground font-normal">{t("responsibleUnknown")}</span>
+                )}
+                {details.created_by && details.created_by.member_id !== details.responsible?.member_id && (
+                  <span dir="auto" className="text-muted-foreground block text-[13px] font-normal">
+                    {t("createdBy", { name: details.created_by.name })}
+                  </span>
+                )}
               </Fact>
             )}
 
