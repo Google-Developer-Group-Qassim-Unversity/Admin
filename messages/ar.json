@@ -1129,7 +1129,10 @@
     "date": "التاريخ",
     "time": "الوقت",
     "eventType": "نوع الفعالية",
-    "details": "التفاصيل"
+    "details": "التفاصيل",
+    "responsible": "المسؤول",
+    "responsibleUnknown": "غير مسجل",
+    "createdBy": "أنشأها {name}"
   },
   "eventLayout": {
     "backToPoints": "رجوع للنقاط",
