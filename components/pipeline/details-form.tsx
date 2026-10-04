@@ -2,7 +2,6 @@
 
 import * as React from "react";
 import { addDays, format, parseISO } from "date-fns";
-import { useQuery } from "@tanstack/react-query";
 import { useLocale, useTranslations } from "next-intl";
 import { CircleCheck, TriangleAlert } from "lucide-react";
 
@@ -11,8 +10,8 @@ import { Chips, Choice, ChoiceSelect, Field, FormSection } from "@/components/pi
 import { useDepartmentName } from "@/components/pipeline/shared";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useDepartments } from "@/hooks/use-event";
 import { useUpdateDetails } from "@/hooks/use-pipeline";
-import { useApi } from "@/lib/api/client";
 import {
   AUDIENCES,
   EVENT_TYPES,
@@ -38,11 +37,12 @@ type DetailsDraft = { details: EventDetails; partners: number[] };
 export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.details");
   const locale = useLocale();
-  const api = useApi();
   const departmentName = useDepartmentName();
   const update = useUpdateDetails(request.id);
   const disabled = !request.can_edit;
-  const { data: departments } = useQuery({ queryKey: ["departments"], queryFn: () => api.departments.list() });
+  // Partners come from this semester's departments, the same list an event's departments are picked from.
+  const [today] = React.useState(() => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date()));
+  const { data: departments } = useDepartments(today);
   const days = bookedDays(request);
 
   const draft = useAutosavedDraft<DetailsDraft>({
@@ -61,7 +61,8 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
         presenter_email: details.presenter_email?.trim() || null,
         description: details.description || null,
         help_needed: details.help_needed || null,
-        partner_department_ids: partners,
+        // A partner from an older semester can't be saved again; until the list loads, leave partners alone.
+        partner_department_ids: departments ? partners.filter((id) => departments.some((d) => d.id === id)) : undefined,
       });
     },
   });
