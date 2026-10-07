@@ -5,10 +5,17 @@ import Image from "next/image";
 import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
-import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, SignalLow, SignalMedium, SignalHigh, type LucideIcon } from "lucide-react";
+import type { EventLevel } from "@/lib/api-types";
 import { useLocale, useTranslations } from "next-intl";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
+const LEVEL_ICON: Record<EventLevel, LucideIcon> = {
+  beginner: SignalLow,
+  intermediate: SignalMedium,
+  advanced: SignalHigh,
+};
+
 function Fact({
   icon: Icon,
   label,
@@ -33,6 +40,7 @@ function Fact({
 
 export default function EventInfoPage() {
   const t = useTranslations("eventInfo");
+  const tl = useTranslations("eventLevels");
   const locale = useLocale();
   const { event } = useEventContext();
 
@@ -185,6 +193,12 @@ export default function EventInfoPage() {
             <Fact icon={event.is_official ? Trophy : Users} label={t("eventType")}>
               {event.is_official ? t("official") : t("unofficial")}
             </Fact>
+
+            {event.level && (
+              <Fact icon={LEVEL_ICON[event.level]} label={t("level")}>
+                {tl(event.level)}
+              </Fact>
+            )}
           </dl>
         </section>
 

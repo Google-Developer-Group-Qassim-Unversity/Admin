@@ -412,7 +412,8 @@
       "startDateRequired": "تاريخ البداية مطلوب",
       "endDateRequired": "تاريخ النهاية مطلوب",
       "departmentRequired": "القسم مطلوب",
-      "compositeActionRequired": "إجراء القسم مطلوب"
+      "compositeActionRequired": "إجراء القسم مطلوب",
+      "levelRequired": "اختر مستوى الفعالية"
     },
     "submit": {
       "create": "أنشئ الفعالية",
@@ -444,7 +445,9 @@
       "departmentAdministrative": "الأقسام الإدارية",
       "departmentAction": "إجراء القسم *",
       "departmentActionPlaceholder": "اختر إجراء القسم...",
-      "attendanceAccess": "آلية الحضور"
+      "attendanceAccess": "آلية الحضور",
+      "level": "المستوى",
+      "levelPlaceholder": "اختر مستوى الفعالية"
     },
     "registration": {
       "requiredHint": "الأعضاء لازم يسجلون قبل الفعالية. بس المسجلين يقدرون يحضرون ويكسبون نقاط.",
@@ -1132,7 +1135,8 @@
     "details": "التفاصيل",
     "responsible": "المسؤول",
     "responsibleUnknown": "غير مسجل",
-    "createdBy": "أنشأها {name}"
+    "createdBy": "أنشأها {name}",
+    "level": "المستوى"
   },
   "eventLayout": {
     "backToPoints": "رجوع للنقاط",
@@ -2162,7 +2166,9 @@
       "published": "تم النشر",
       "failed": "تعذر النشر",
       "done": "نُشرت كفعالية رقم {id} (مسودة يراجعها المشرفون).",
-      "open": "فتح الفعالية"
+      "open": "فتح الفعالية",
+      "level": "المستوى",
+      "levelHint": "مقدار المعرفة المسبقة المطلوبة من الأعضاء. يظهر في بطاقة الفعالية."
     },
     "autosave": {
       "saving": "جارٍ الحفظ…",
@@ -2320,5 +2326,10 @@
     "sendEmail": "إرسال بريد",
     "copy": "نسخ {field}",
     "copied": "تم نسخ {field}"
+  },
+  "eventLevels": {
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "advanced": "متقدم"
   }
 }

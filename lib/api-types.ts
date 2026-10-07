@@ -9,6 +9,10 @@ export type LocationType = "online" | "on-site" | "none" | "hidden";
 //  'active' means registeration is closed but the event is ongoing and taking attendance
 export type EventStatus = "draft" | "open" | "active" | "closed";
 
+/** How much prior knowledge an event assumes. Shown on the member app's event cards. */
+export const EVENT_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+export type EventLevel = (typeof EVENT_LEVELS)[number];
+
 export interface Event {
   id: number;
   name: string;
@@ -18,6 +22,7 @@ export interface Event {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
+  level: EventLevel;
   image_url: string | null;
   /** Join link for remote events. Set from the "Google Form & Publish" tab. */
   meeting_url: string | null;
@@ -34,7 +39,7 @@ export interface Event {
 }
 
 export interface CreateEventPayload {
-  event: Omit<EventApiPayload, 'created_at' | 'id'> & { id: number | null };
+  event: Omit<EventApiPayload, 'created_at' | 'id' | 'level'> & { id: number | null; level: EventLevel };
   form_type: FormType;
   department_action_id: number;
   member_action_id: number;
@@ -60,6 +65,8 @@ export interface EventApiPayload {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
+  /** Required when creating; an update without it keeps the event's level. */
+  level?: EventLevel;
   image_url: string | null;
   is_official: number;
   created_at?: string;

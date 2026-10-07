@@ -21,6 +21,7 @@ import type {
   Department,
   Event,
   EventDetails,
+  EventLevel,
   EventStatus,
   EventsPageParams,
   Form,
@@ -349,7 +350,10 @@ export function createApi(request: Requester) {
     complete: (id: string, team: PipelineTeam) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
     inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
-    publish: (id: string, body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
+    publish: (
+      id: string,
+      body: { department_action_id: number; member_action_id: number; image_url: string | null; level: EventLevel },
+    ) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
   };
 

@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/select";
 import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
-import type { Action, Department, LocationType } from "@/lib/api-types";
+import { EVENT_LEVELS, type Action, type Department, type LocationType } from "@/lib/api-types";
+import { EventLevelSelect } from "@/components/event-level-select";
 import { formatLocalDateTime } from "@/lib/utils";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
@@ -49,6 +50,7 @@ export const buildEventFormSchema = (t: (key: string) => string) =>
     startDate: z.date({ message: t("startDateRequired") }),
     endDate: z.date({ message: t("endDateRequired") }),
     is_official: z.boolean(),
+    level: z.enum(EVENT_LEVELS, { required_error: t("levelRequired") }),
     /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
     requireRegistration: z.boolean(),
     image_url: z.string().nullable(),
@@ -113,6 +115,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      level: initialData?.level,
       requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
       department_id: initialData?.department_id,
@@ -311,6 +314,30 @@ export function EventForm({
         {(errors.startDate || errors.endDate) && (
           <p role="alert" className="text-sm text-destructive">
             {errors.startDate?.message || errors.endDate?.message}
+          </p>
+        )}
+      </div>
+
+      {/* Level - required, shown on the member app's event cards */}
+      <div className="space-y-2 md:w-1/2 md:pe-2">
+        <Label htmlFor="level">{t("fields.level")} *</Label>
+        <Controller
+          name="level"
+          control={control}
+          render={({ field }) => (
+            <EventLevelSelect
+              id="level"
+              value={field.value}
+              onChange={field.onChange}
+              placeholder={t("fields.levelPlaceholder")}
+              invalid={!!errors.level}
+              describedBy={errors.level ? "level-error" : undefined}
+            />
+          )}
+        />
+        {errors.level && (
+          <p id="level-error" role="alert" className="text-sm text-destructive">
+            {errors.level.message}
           </p>
         )}
       </div>

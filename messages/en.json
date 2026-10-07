@@ -412,7 +412,8 @@
       "startDateRequired": "Start date is required",
       "endDateRequired": "End date is required",
       "departmentRequired": "Department is required",
-      "compositeActionRequired": "Composite action is required"
+      "compositeActionRequired": "Composite action is required",
+      "levelRequired": "Choose the event level"
     },
     "submit": {
       "create": "Create Event",
@@ -444,7 +445,9 @@
       "departmentAdministrative": "Administrative departments",
       "departmentAction": "Department Action *",
       "departmentActionPlaceholder": "Select a department action...",
-      "attendanceAccess": "Attendance Access"
+      "attendanceAccess": "Attendance Access",
+      "level": "Level",
+      "levelPlaceholder": "Choose the event level"
     },
     "registration": {
       "requiredHint": "Members must register beforehand. Only registered members can attend and earn points.",
@@ -1132,7 +1135,8 @@
     "details": "Details",
     "responsible": "Responsible",
     "responsibleUnknown": "Not recorded",
-    "createdBy": "Created by {name}"
+    "createdBy": "Created by {name}",
+    "level": "Level"
   },
   "eventLayout": {
     "backToPoints": "Back to Points",
@@ -2162,7 +2166,9 @@
       "published": "Published",
       "failed": "Could not publish",
       "done": "Published as event #{id} (a draft for admins to review).",
-      "open": "Open the event"
+      "open": "Open the event",
+      "level": "Level",
+      "levelHint": "How much prior knowledge members need. Shown on the event card."
     },
     "autosave": {
       "saving": "Saving…",
@@ -2320,5 +2326,10 @@
     "sendEmail": "Send email",
     "copy": "Copy {field}",
     "copied": "{field} copied"
+  },
+  "eventLevels": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
   }
 }
