@@ -29,7 +29,8 @@ import {
 } from "@/components/ui/select";
 import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
-import type { Action, Department, LocationType } from "@/lib/api-types";
+import { EVENT_LEVELS, type Action, type Department, type LocationType } from "@/lib/api-types";
+import { EventLevelSelect } from "@/components/event-level-select";
 import { formatLocalDateTime } from "@/lib/utils";
 import { isolate } from "@/lib/format";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -50,6 +51,7 @@ export const buildEventFormSchema = (t: (key: string) => string) =>
     startDate: z.date({ message: t("startDateRequired") }),
     endDate: z.date({ message: t("endDateRequired") }),
     is_official: z.boolean(),
+    level: z.enum(EVENT_LEVELS),
     /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
     requireRegistration: z.boolean(),
     image_url: z.string().nullable(),
@@ -114,6 +116,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      level: initialData?.level ?? "beginner",
       requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
       department_id: initialData?.department_id,
@@ -314,6 +317,16 @@ export function EventForm({
             {errors.startDate?.message || errors.endDate?.message}
           </p>
         )}
+      </div>
+
+      {/* Level - starts as beginner, shown on the member app's event cards */}
+      <div className="space-y-2 md:w-1/2 md:pe-2">
+        <Label htmlFor="level">{t("fields.level")}</Label>
+        <Controller
+          name="level"
+          control={control}
+          render={({ field }) => <EventLevelSelect id="level" value={field.value} onChange={field.onChange} />}
+        />
       </div>
 
       {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}

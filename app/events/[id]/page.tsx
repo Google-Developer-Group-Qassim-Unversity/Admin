@@ -6,12 +6,19 @@ import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEnd
 import { EventHistory } from "@/components/events/event-history";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
-import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, type LucideIcon } from "lucide-react";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, SignalLow, SignalMedium, SignalHigh, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SectionHead } from "@/components/najdi";
 import { isolate, useFormatters } from "@/lib/format";
+import type { EventLevel } from "@/lib/api-types";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
+const LEVEL_ICON: Record<EventLevel, LucideIcon> = {
+  beginner: SignalLow,
+  intermediate: SignalMedium,
+  advanced: SignalHigh,
+};
+
 function Fact({
   icon: Icon,
   label,
@@ -35,6 +42,7 @@ function Fact({
 export default function EventInfoPage() {
   const t = useTranslations("eventInfo");
   const fmt = useFormatters();
+  const tl = useTranslations("eventLevels");
   const { event } = useEventContext();
 
   const { data: attendanceData } = useEventAttendance(
@@ -172,6 +180,12 @@ export default function EventInfoPage() {
             <Fact icon={event.is_official ? Trophy : Users} label={t("eventType")}>
               {event.is_official ? t("official") : t("unofficial")}
             </Fact>
+
+            {event.level && (
+              <Fact icon={LEVEL_ICON[event.level]} label={t("level")}>
+                {tl(event.level)}
+              </Fact>
+            )}
           </dl>
         </section>
 
