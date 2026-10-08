@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
+import type { EventLevel } from "@/lib/api-types";
 import type { EventRequestDetail, PipelineTeam, UpdateDetailsInput } from "@/lib/pipeline-types";
 
 export const pipelineKeys = {
@@ -150,7 +151,7 @@ export function usePublishRequest(id: string) {
   const api = useApi();
   return useRequestMutation(
     id,
-    (body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
+    (body: { department_action_id: number; member_action_id: number; image_url: string | null; level: EventLevel }) =>
       api.pipelineRequests.publish(id, body),
   );
 }

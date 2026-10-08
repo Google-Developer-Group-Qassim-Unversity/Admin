@@ -11,9 +11,11 @@ import { Field } from "@/components/pipeline/form-kit";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { EventLevelSelect } from "@/components/event-level-select";
 import { usePublishRequest } from "@/hooks/use-pipeline";
 import { useAccess } from "@/hooks/use-access";
 import { useApi } from "@/lib/api/client";
+import type { EventLevel } from "@/lib/api-types";
 import type { EventRequestDetail } from "@/lib/pipeline-types";
 
 /**
@@ -22,12 +24,14 @@ import type { EventRequestDetail } from "@/lib/pipeline-types";
  */
 export function PublishPanel({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.publish");
+  const tf = useTranslations("eventForm.fields");
   const locale = useLocale();
   const api = useApi();
   const { can } = useAccess();
   const publish = usePublishRequest(request.id);
   const [pair, setPair] = React.useState("");
   const [imageUrl, setImageUrl] = React.useState("");
+  const [level, setLevel] = React.useState<EventLevel>();
   const { data: actions } = useQuery({
     queryKey: ["actions"],
     queryFn: () => api.actions.list(),
@@ -57,12 +61,14 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
   const pairs = (actions?.composite_actions ?? []).filter((p) => p.length === 2);
 
   const onPublish = async () => {
+    if (!level) return;
     const [departmentActionId, memberActionId] = pair.split(":").map(Number);
     try {
       await publish.mutateAsync({
         department_action_id: departmentActionId,
         member_action_id: memberActionId,
         image_url: imageUrl.trim() || null,
+        level,
       });
       toast.success(t("published"));
     } catch (error) {
@@ -96,12 +102,15 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
             </SelectContent>
           </Select>
         </Field>
+        <Field label={t("level")} hint={t("levelHint")}>
+          <EventLevelSelect value={level} onChange={setLevel} placeholder={tf("levelPlaceholder")} />
+        </Field>
         <Field label={t("image")} hint={t("imageHint")} optional>
           <Input dir="ltr" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />
         </Field>
       </div>
       <div className="flex">
-        <Button className="max-sm:flex-1" onClick={onPublish} disabled={!pair || publish.isPending}>
+        <Button className="max-sm:flex-1" onClick={onPublish} disabled={!pair || !level || publish.isPending}>
           <Rocket className="h-4 w-4" />
           {t("button")}
         </Button>
