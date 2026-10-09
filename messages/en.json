@@ -273,7 +273,17 @@
   },
   "signIn": {
     "title": "Sign in to the admin console",
-    "subtitle": "For club staff. Use the account you use on the GDG Qassim app."
+    "subtitle": "For club staff. Use the account you use on the GDG Qassim app.",
+    "staging": {
+      "title": "Staging sign-in",
+      "notice": "No email is sent here. Use a developer email and the staging code.",
+      "email": "Email",
+      "code": "Staging code",
+      "submit": "Sign in",
+      "wrongCode": "That is not the staging code.",
+      "notADeveloper": "This email is not on the staging developer list.",
+      "failed": "Could not sign in. Try again."
+    }
   },
   "home": {
     "clubStructure": {
