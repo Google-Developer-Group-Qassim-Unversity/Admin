@@ -3,12 +3,13 @@
 import * as React from "react";
 import Image from "next/image";
 import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
+import { EventHistory } from "@/components/events/event-history";
 import { useEventContext } from "@/contexts/event-context";
-import { useEventAttendance } from "@/hooks/use-event";
-import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, type LucideIcon } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, type LucideIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { SectionHead } from "@/components/najdi";
-import { intlLocale } from "@/lib/format";
+import { isolate, useFormatters } from "@/lib/format";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
 function Fact({
@@ -33,7 +34,7 @@ function Fact({
 
 export default function EventInfoPage() {
   const t = useTranslations("eventInfo");
-  const locale = useLocale();
+  const fmt = useFormatters();
   const { event } = useEventContext();
 
   const { data: attendanceData } = useEventAttendance(
@@ -42,6 +43,8 @@ export default function EventInfoPage() {
     !!event,
     "count"
   );
+  // Who is responsible lives on /details (staff-only), not on the public event row.
+  const { data: details } = useEventDetails(event?.id ?? 0, !!event);
 
   if (!event) {
     return null;
@@ -50,25 +53,15 @@ export default function EventInfoPage() {
   const imageUrl = event.image_url?.startsWith('http') ? event.image_url : null;
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
-  // Gregorian calendar with Latin digits in Arabic, matching the event cards.
-  const dateLocale = intlLocale(locale);
 
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
-    return date.toLocaleDateString(dateLocale, {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+    return fmt.custom(date, { weekday: "long", year: "numeric", month: "long", day: "numeric" });
   };
 
   const formatTime = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
-    return date.toLocaleTimeString(dateLocale, {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+    return fmt.custom(date, { hour: "2-digit", minute: "2-digit" });
   };
 
   const startDate = formatDate(event.start_datetime);
@@ -161,6 +154,21 @@ export default function EventInfoPage() {
               </Fact>
             )}
 
+            {details && (
+              <Fact icon={UserRound} label={t("responsible")}>
+                {details.responsible ? (
+                  <bdi>{details.responsible.name}</bdi>
+                ) : (
+                  <span className="text-ink-2 font-normal">{t("responsibleUnknown")}</span>
+                )}
+                {details.created_by && details.created_by.member_id !== details.responsible?.member_id && (
+                  <span className="text-ink-2 block text-[13px] font-normal">
+                    {t("createdBy", { name: isolate(details.created_by.name) })}
+                  </span>
+                )}
+              </Fact>
+            )}
+
             <Fact icon={event.is_official ? Trophy : Users} label={t("eventType")}>
               {event.is_official ? t("official") : t("unofficial")}
             </Fact>
@@ -177,6 +185,8 @@ export default function EventInfoPage() {
             <p className="text-ink-2 text-sm">{t("noDescription")}</p>
           )}
         </section>
+
+        <EventHistory eventId={event.id} />
       </div>
     </div>
   );

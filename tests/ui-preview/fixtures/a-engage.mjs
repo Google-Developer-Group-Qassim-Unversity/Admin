@@ -110,6 +110,8 @@ const eventDetails = (id) => {
       { action_id: 2, ar_action_name: "تنظيم فعالية", department_id: 11, department_ar_name: "تطوير التطبيقات" },
       { action_id: 3, ar_action_name: "حضور فعالية", department_id: 11, department_ar_name: "تطوير التطبيقات" },
     ],
+    responsible: { member_id: 1, name: "Ibrahim" },
+    created_by: { member_id: 9, name: "Abdullah" },
   };
 };
 

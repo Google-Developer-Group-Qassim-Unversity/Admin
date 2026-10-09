@@ -21,13 +21,17 @@ import { EventImageUpload } from "@/components/event-image-upload";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
-import type { Action, LocationType } from "@/lib/api-types";
+import type { Action, Department, LocationType } from "@/lib/api-types";
+import { formatLocalDateTime } from "@/lib/utils";
+import { isolate } from "@/lib/format";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
 
@@ -62,6 +66,9 @@ export interface EventFormProps {
   initialData?: Partial<EventFormData>;
   /** Event ID for edit mode (reserved for future use) */
   eventId?: number;
+  /** The event's current department, offered even when it is not in the
+   * picker's semester list - so editing an old event still saves. */
+  extraDepartment?: Department;
   onSubmit: (data: EventFormData) => Promise<void>;
   isSubmitting?: boolean;
   getToken: () => Promise<string | null>;
@@ -73,6 +80,7 @@ export function EventForm({
   mode,
   initialData,
   eventId,
+  extraDepartment,
   onSubmit,
   isSubmitting = false,
   getToken,
@@ -115,6 +123,7 @@ export function EventForm({
 
   const watchName = watch("name");
   const watchLocationType = watch("location_type");
+  const watchEndDate = watch("endDate");
 
   const { isLoadingData, locationOptions } = useEventForm({
     watchName,
@@ -122,9 +131,24 @@ export function EventForm({
     setValue,
   });
 
+  // The department list is the roster of the semester the event's end date
+  // falls into (the same semester the event itself is filed under). It
+  // refreshes as the end date changes; before a date is typed, today's
+  // semester is the sensible default.
+  const departmentEndDate = formatLocalDateTime(watchEndDate ?? new Date()).slice(0, 10);
+
   // Fetch actions and departments
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
-  const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
+  const { data: departments, isLoading: isLoadingDepartments } = useDepartments(departmentEndDate);
+
+  // Keep an option for the event's existing department when it is no longer in
+  // the semester's roster (archived or left the semester), labelled as such.
+  const departmentOptions = React.useMemo(() => {
+    if (extraDepartment && departments && !departments.some((dept) => dept.id === extraDepartment.id)) {
+      return [...departments, extraDepartment].sort((a, b) => a.id - b.id);
+    }
+    return departments;
+  }, [departments, extraDepartment]);
 
 
   // Get composite actions directly
@@ -357,11 +381,26 @@ export function EventForm({
                   <SelectValue placeholder={t("fields.departmentPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {departments?.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id.toString()}>
-                      <bdi>{dept.ar_name}</bdi>
-                    </SelectItem>
-                  ))}
+                  {[["practical", t("fields.departmentSpecialized")], ["administrative", t("fields.departmentAdministrative")] as const].map(
+                    ([type, label]) => {
+                      const inGroup = departmentOptions?.filter((dept) => dept.type === type) ?? [];
+                      if (inGroup.length === 0) return null;
+                      return (
+                        <SelectGroup key={type}>
+                          <SelectLabel>{label}</SelectLabel>
+                          {inGroup.map((dept) => (
+                            <SelectItem key={dept.id} value={dept.id.toString()}>
+                              {extraDepartment?.id === dept.id ? (
+                                t("fields.departmentArchived", { name: isolate(dept.ar_name) })
+                              ) : (
+                                <bdi>{dept.ar_name}</bdi>
+                              )}
+                            </SelectItem>
+                          ))}
+                        </SelectGroup>
+                      );
+                    }
+                  )}
                 </SelectContent>
               </Select>
             )}

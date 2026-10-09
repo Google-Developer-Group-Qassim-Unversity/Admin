@@ -21,6 +21,7 @@ import type {
   Department,
   Event,
   EventDetails,
+  EventHistory,
   EventStatus,
   EventsPageParams,
   Form,
@@ -119,6 +120,9 @@ export function createApi(request: Requester) {
     details: (id: number | string) =>
       request.json<EventDetails>(`/events/${id}/details`, { revalidate: CACHE_TTL, tags: ["events", `event-${id}`] }),
 
+    /** Who did what to the event from /events, oldest first. Never cached: it changes with every edit. */
+    history: (id: number | string) => request.json<EventHistory>(`/events/${id}/history`),
+
     create: (payload: CreateEventPayload) => request.json<Event>("/events", { method: "POST", body: payload }),
 
     update: (id: number, payload: UpdateEventPayload) =>
@@ -202,7 +206,15 @@ export function createApi(request: Requester) {
   };
 
   const departments = {
-    list: () => request.json<Department[]>("/departments", { revalidate: CACHE_TTL, tags: ["departments"] }),
+    list: (params?: { endDate?: string }) =>
+      request.json<Department[]>("/departments", {
+        query: { end_date: params?.endDate || undefined },
+        revalidate: CACHE_TTL,
+        tags: ["departments"],
+      }),
+
+    get: (id: number) =>
+      request.json<Department>(`/departments/${id}`, { revalidate: CACHE_TTL, tags: ["departments"] }),
   };
 
   const forms = {
@@ -334,6 +346,12 @@ export function createApi(request: Requester) {
     cancel: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
     saveBrief: (id: string, team: PipelineTeam, brief: Record<string, unknown>) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
+    saveDeliverable: (id: string, team: PipelineTeam, deliverable: Record<string, unknown>) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/deliverables/${team}`, {
+        method: "PUT",
+        body: { deliverable },
+      }),
+    uploadPoster: (id: string, file: File) => request.file<EventRequestDetail>(`/pipeline/requests/${id}/poster`, file),
     submit: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
     returnToTeam: (id: string, notes: string) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),
@@ -341,8 +359,7 @@ export function createApi(request: Requester) {
     complete: (id: string, team: PipelineTeam) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
     inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
-    publish: (id: string, body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
-      request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
+    publish: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST" }),
   };
 
   const access = {

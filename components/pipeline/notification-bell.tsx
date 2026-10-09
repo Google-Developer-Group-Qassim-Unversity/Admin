@@ -3,10 +3,10 @@
 import * as React from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Ban, Bell, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, type LucideIcon } from "lucide-react";
+import { Ban, Bell, CalendarClock, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, type LucideIcon } from "lucide-react";
 
 import { useDepartmentName } from "@/components/pipeline/shared";
-import { Plate, type DoorTone } from "@/components/najdi";
+import { Plate, type Tone } from "@/components/najdi";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -15,8 +15,8 @@ import { usePipelineNotifications, useReadNotifications } from "@/hooks/use-pipe
 import type { NotificationKind } from "@/lib/pipeline-types";
 import { useTimeAgo } from "@/lib/format";
 
-/** Each kind on its plate: ochre is waiting on the reader, madder went wrong, green moved on. */
-const KIND: Record<NotificationKind, { tone: DoorTone; icon: LucideIcon }> = {
+/** Each kind on its plate: ochre is waiting on the reader, madder went wrong, green moved on, neutral is news. */
+const KIND: Record<NotificationKind, { tone: Tone; icon: LucideIcon }> = {
   request_received: { tone: "ochre", icon: Inbox },
   media_received: { tone: "ochre", icon: Megaphone },
   ready_to_publish: { tone: "ochre", icon: Send },
@@ -24,6 +24,8 @@ const KIND: Record<NotificationKind, { tone: DoorTone; icon: LucideIcon }> = {
   dates_banned: { tone: "madder", icon: Ban },
   hold_expired: { tone: "madder", icon: Hourglass },
   task_done: { tone: "green", icon: CheckCheck },
+  // News, not a state: the dates moved, nothing is asked of the reader.
+  dates_changed: { tone: "neutral", icon: CalendarClock },
 };
 
 

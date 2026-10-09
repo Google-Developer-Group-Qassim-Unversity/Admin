@@ -86,6 +86,18 @@ const details = (eventId) => {
 const action = (id, name, ar, type, points) => ({ id, action_name: name, ar_action_name: ar, action_type: type, action_description: "", points });
 
 export default [
+  {
+    path: /^\/events\/\d+\/history$/,
+    body: {
+      items: [
+        { action: "created", at: new Date(Date.now() - 9 * 86_400_000).toISOString(), actor: { member_id: 1, name: "Ibrahim" }, details: null },
+        { action: "edited", at: new Date(Date.now() - 5 * 86_400_000).toISOString(), actor: { member_id: 1, name: "Ibrahim" }, details: { name: ["ورشة Git", "ورشة Git و GitHub"], description: ["", "أساسيات التحكم بالإصدارات."] } },
+        { action: "status_changed", at: new Date(Date.now() - 2 * 86_400_000).toISOString(), actor: { member_id: 9, name: "Abdullah" }, details: { status: ["open", "active"] } },
+        { action: "attendance_marked", at: new Date(Date.now() - 3_600_000).toISOString(), actor: { member_id: 9, name: "Abdullah" }, details: { members: [{ member_id: 3, name: "سارة" }, { member_id: 4, name: "خالد" }] } },
+      ],
+      pipeline_request_id: "r6",
+    },
+  },
   { path: /^\/events\/\d+\/details$/, body: ({ pathname }) => details(Number(pathname.split("/")[2])) },
   {
     path: /^\/events\/\d+\/form$/,

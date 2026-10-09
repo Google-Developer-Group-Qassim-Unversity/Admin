@@ -443,6 +443,9 @@
       "official": "فعالية رسمية",
       "department": "القسم *",
       "departmentPlaceholder": "اختر القسم...",
+      "departmentArchived": "{name} (غير نشط)",
+      "departmentSpecialized": "الأقسام التخصصية",
+      "departmentAdministrative": "الأقسام الإدارية",
       "departmentAction": "إجراء القسم *",
       "departmentActionPlaceholder": "اختر إجراء القسم...",
       "attendanceAccess": "آلية الحضور"
@@ -1141,7 +1144,10 @@
     "date": "التاريخ",
     "time": "الوقت",
     "eventType": "نوع الفعالية",
-    "details": "التفاصيل"
+    "details": "التفاصيل",
+    "responsible": "المسؤول",
+    "responsibleUnknown": "غير مسجل",
+    "createdBy": "أنشأها {name}"
   },
   "eventLayout": {
     "backToPoints": "رجوع للنقاط",
@@ -1179,7 +1185,7 @@
     "subtitle": "حدّث تفاصيل الفعالية وإعداداتها.",
     "deleteDraft": "حذف المسودة",
     "deleteTitle": "حذف الفعالية",
-    "deleteDescription": "ما تقدر تتراجع بعد هذا الإجراء. كل البيانات المرتبطة (النماذج، السجلات، الردود) بتُحذف نهائيًا.",
+    "deleteDescription": "ما تقدر تتراجع بعد هذا الإجراء. كل البيانات المرتبطة (النماذج، السجلات، النقاط، الردود) بتُحذف نهائيًا. وإذا انتشرت الفعالية من مسار الفعاليات، ينحذف طلبها وأي خصم تأخير معه، وترجع أيامها المحجوزة متاحة.",
     "saveChanges": "حفظ التغييرات",
     "saving": "جاري الحفظ...",
     "confirmDelete": "متأكد إنك تبي تحذف <strong>{name}</strong>؟"
@@ -1836,6 +1842,10 @@
         "returned": "عدّله",
         "lost": "اختر أيامًا جديدة",
         "ready": "انشر"
+      },
+      "teamDo": {
+        "design": "ارفع البوستر",
+        "logistics": "أكّد الفعالية"
       }
     },
     "tiles": {
@@ -1959,7 +1969,6 @@
       "back": "مسار الفعاليات",
       "untitled": "فعالية بلا عنوان",
       "noDates": "بلا تواريخ",
-      "createdBy": "بدأه {name}",
       "cancel": "إلغاء الطلب",
       "cancelConfirm": "ستصبح أيامه متاحة للأقسام الأخرى. لا يمكن التراجع عن ذلك.",
       "cancelled": "تم إلغاء الطلب",
@@ -1982,7 +1991,8 @@
       "moreActions": "إجراءات أخرى",
       "keep": "إبقاء الطلب",
       "whatsLeft": "ما الذي بقي",
-      "sectionDone": "مكتمل"
+      "sectionDone": "مكتمل",
+      "requestedBy": "طلبه {name}"
     },
     "details": {
       "title": "عنوان الفعالية",
@@ -2046,7 +2056,10 @@
       "official": {
         "yes": "رسمية",
         "no": "غير رسمية"
-      }
+      },
+      "pointsTier": "فئة النقاط",
+      "pointsTierHint": "نوع الفعالية من ناحية النقاط: ما يكسبه القسم وكل حاضر.",
+      "pointsTierOption": "{name} · {points} نقاط لكل حاضر"
     },
     "submit": {
       "title": "الإرسال للتصميم واللوجستيات",
@@ -2090,7 +2103,18 @@
       "design_content": "التصميم: المحتوى",
       "logistics_meet_link_by_logistics": "اللوجستيات: رابط Google Meet",
       "logistics_venue": "اللوجستيات: المكان",
-      "logistics_buses_needed": "اللوجستيات: الباصات"
+      "logistics_buses_needed": "اللوجستيات: الباصات",
+      "details_points_tier": "فئة النقاط",
+      "confirm_start_date": "التأكيد: اليوم الأول",
+      "confirm_end_date": "التأكيد: اليوم الأخير",
+      "confirm_day_modes": "التأكيد: نوع كل يوم",
+      "confirm_daily_start_time": "التأكيد: وقت البداية",
+      "confirm_daily_end_time": "التأكيد: وقت النهاية (بعد البداية)",
+      "confirm_venue": "التأكيد: المكان",
+      "confirm_meet_link": "التأكيد: رابط Google Meet",
+      "confirm_event_type": "التأكيد: نوع الفعالية",
+      "confirm_description": "التأكيد: الوصف",
+      "poster_poster_url": "التصميم: البوستر"
     },
     "briefs": {
       "choose": "اختر…",
@@ -2182,7 +2206,8 @@
         "returned": "أعاد التصميم {title} مع ملاحظات",
         "task_done": "أنهى قسم دوره في {title}",
         "media_received": "{title} جاهز للإعلام",
-        "ready_to_publish": "{title} جاهز للنشر"
+        "ready_to_publish": "{title} جاهز للنشر",
+        "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى"
       }
     },
     "inbox": {
@@ -2222,16 +2247,20 @@
     },
     "publish": {
       "title": "نشر الفعالية",
-      "hint": "أنهت كل الأقسام عملها. النشر ينشئ الفعالية في صفحة الفعاليات كمسودة؛ يراجعها مشرف ثم يفتح التسجيل.",
-      "tier": "فئة النقاط",
-      "pickTier": "اختر فئة نقاط الفعالية",
-      "image": "رابط صورة الإعلان",
-      "imageHint": "يمكن إضافتها لاحقًا من صفحة الفعالية.",
+      "hint": "أنهت كل الأقسام عملها. النشر يطلق الفعالية بما أكّدته الأقسام تمامًا، دون أي إدخال هنا.",
       "button": "نشر",
-      "published": "تم النشر",
-      "failed": "تعذر النشر",
-      "done": "نُشرت كفعالية رقم {id} (مسودة يراجعها المشرفون).",
-      "open": "فتح الفعالية"
+      "published": "تم النشر. الفعالية متاحة الآن.",
+      "failed": "تعذّر النشر",
+      "done": "نُشرت كفعالية رقم {id}. وهي متاحة الآن: يراها الأعضاء ويمكنهم التسجيل.",
+      "open": "فتح الفعالية",
+      "online": "عن بعد",
+      "noPoster": "لا يوجد بوستر: ستُنشر الفعالية بلا صورة.",
+      "confirmTitle": "نشر هذه الفعالية للجميع؟",
+      "confirmBody": "سيجعل هذا الفعالية عامة فورًا. يراها الأعضاء مباشرة ويمكنهم بدء التسجيل. لا توجد مراجعة من الإدارة بعد ذلك.",
+      "confirmFinal": "لا يمكن التراجع عن هذا من مسار الفعاليات. تأكدوا من التاريخ والوقت والمكان والبوستر قبل المتابعة.",
+      "confirmCheck": "راجعت كل شيء والفعالية جاهزة للنشر العام.",
+      "confirmCancel": "ليس الآن",
+      "confirmButton": "نعم، انشرها الآن"
     },
     "autosave": {
       "saving": "جارٍ الحفظ…",
@@ -2247,6 +2276,84 @@
       "label": "سير الطلب",
       "step": "الخطوة {current} من {total}",
       "cancelled": "أُلغي هذا الطلب."
+    },
+    "confirm": {
+      "title": "تأكيد الفعالية",
+      "hint": "هذه البيانات من الطلب. عدّلوا ما اختلف في الحجز الفعلي ثم أكّدوا. تُنشر الفعالية بهذه البيانات كما هي.",
+      "sections": {
+        "when": "متى",
+        "where": "أين",
+        "what": "ماذا"
+      },
+      "startDate": "اليوم الأول",
+      "endDate": "اليوم الأخير",
+      "datesMoved": "التاريخ المطلوب {requested}. تأكيد تواريخ أخرى ينقل الطلب في التقويم ويرسل بريدًا للقسم.",
+      "requestedTime": "المطلوب: {time}",
+      "meetLink": "رابط Google Meet",
+      "meetLinkHint": "يدخل الأعضاء بهذا الرابط في الأيام عن بُعد.",
+      "pickModes": "اختاروا نوع كل يوم في الأعلى.",
+      "button": "تأكيد",
+      "confirmed": "تم التأكيد. انتهى دور اللوجستيات.",
+      "incomplete": "{count, plural, one {بقي شيء واحد} two {بقي شيئان} few {بقيت # أشياء} many {بقي # شيئًا} other {بقي # شيء}}",
+      "failed": "تعذّر التأكيد",
+      "summary": {
+        "title": "أكّدتها اللوجستيات",
+        "by": "أكّدها {name}",
+        "dates": "التواريخ",
+        "time": "الوقت (كل يوم)",
+        "mode": "النوع",
+        "place": "المكان",
+        "meet": "Google Meet",
+        "type": "نوع الفعالية"
+      },
+      "pickDates": "حدّد تاريخي البداية والنهاية أولًا."
+    },
+    "poster": {
+      "title": "البوستر",
+      "hint": "ارفعوا البوستر النهائي. يصبح صورة الفعالية عند نشرها، ويمكنكم استبداله حتى ذلك الحين.",
+      "viewHint": "قسم التصميم يعمل عليه.",
+      "by": "صممه {name}",
+      "alt": "بوستر {title}",
+      "openFull": "فتح بالحجم الكامل",
+      "pick": "رفع البوستر",
+      "formats": "PNG أو JPEG أو WebP، حتى ١٠ ميجابايت",
+      "replace": "استبدال البوستر",
+      "needsPoster": "ارفعوا البوستر أولًا.",
+      "finish": "إنهاء التصميم",
+      "finished": "انتهى التصميم، وانتقل الطلب إلى الإعلام.",
+      "uploaded": "تم رفع البوستر",
+      "wrongType": "يجب أن يكون البوستر صورة PNG أو JPEG أو WebP.",
+      "tooLarge": "يجب ألا يتجاوز البوستر ١٠ ميجابايت.",
+      "failed": "حدث خطأ"
+    },
+    "history": {
+      "title": "من فعل ماذا",
+      "hint": "كل خطوة وتعديل وتغيير تلقائي على هذا الطلب، ومن قام به ومتى. الأحدث أولًا.",
+      "automatic": "تلقائيًا",
+      "showAll": "عرض الكل ({count})",
+      "actions": {
+        "booked": "حجز {dates}",
+        "redated": "اختار تواريخ جديدة: {dates}",
+        "detailsEdited": "عدّل بيانات الفعالية",
+        "detailsEditedAfterSubmit": "عدّل بيانات الفعالية بعد إرسال الطلب",
+        "briefEdited": "عدّل طلب {team}",
+        "submitted": "أرسل الطلب",
+        "returned": "أعاد الطلب مع ملاحظات",
+        "resubmitted": "أعاد إرسال الطلب",
+        "late": "تأخير {days} يوم: خصم {points} نقطة عند النشر",
+        "cancelled": "ألغى الطلب",
+        "confirmation_edited": "عدّل تأكيد اللوجستيات",
+        "datesMoved": "نقل التواريخ من {from} إلى {to}",
+        "posterUploaded": "رفع البوستر",
+        "posterReplaced": "استبدل البوستر",
+        "taskDone": "أنهى دور {team}",
+        "published": "نشر الفعالية (رقم {id})",
+        "holdExpired": "ألغى حجز التواريخ: انتهت مهلة الـ٢٤ ساعة",
+        "datesBanned": "أغلق يومًا من {dates}، ففقد الطلب تواريخه",
+        "penaltyGrown": "زاد خصم التأخير إلى {points} نقطة (تأخير {days} يوم)",
+        "eventDeleted": "حذف الفعالية المنشورة (رقم {id})",
+        "briefEditedAfterSubmit": "عدّل طلب {team} بعد إرسال الطلب"
+      }
     }
   },
   "permissions": {
@@ -2389,5 +2496,56 @@
     "sendEmail": "إرسال بريد",
     "copy": "نسخ {field}",
     "copied": "تم نسخ {field}"
+  },
+  "eventHistory": {
+    "title": "من فعل ماذا",
+    "hint": "كل ما غيّره المسؤولون في هذه الفعالية، ومن قام به ومتى. الأحدث أولًا.",
+    "unknown": "شخص ما",
+    "showAll": "عرض الكل ({count})",
+    "pipeline": "خطواتها قبل النشر",
+    "empty": "(فارغ)",
+    "reviewNote": "قُبل {accepted}، ولم يُقبل {rejected}",
+    "statuses": {
+      "draft": "مسودة",
+      "open": "مفتوحة",
+      "active": "جارية",
+      "closed": "مغلقة"
+    },
+    "fields": {
+      "name": "الاسم",
+      "status": "الحالة",
+      "description": "الوصف",
+      "location_type": "حضوري أو عن بعد",
+      "location": "المكان",
+      "start_datetime": "البداية",
+      "end_datetime": "النهاية",
+      "image_url": "الصورة",
+      "is_official": "رسمية أو لا",
+      "semester_id": "الفصل",
+      "department_id": "القسم",
+      "department_action_id": "فئة النقاط (القسم)",
+      "member_action_id": "فئة النقاط (الحضور)",
+      "form_type": "نوع النموذج",
+      "google_form_id": "نموذج Google",
+      "google_responders_url": "رابط النموذج",
+      "admin_google_email": "محرر النموذج"
+    },
+    "actions": {
+      "created": "أنشأ الفعالية",
+      "edited": "عدّل {count} من البيانات",
+      "statusChanged": "غيّر الحالة من {from} إلى {to}",
+      "meetSet": "أضاف رابط Meet",
+      "meetChanged": "غيّر رابط Meet",
+      "meetCleared": "حذف رابط Meet",
+      "deleted": "حذف الفعالية",
+      "attendanceMarked": "سجّل حضور {count} شخص",
+      "attendanceScanned": "مسح بطاقة: سجّل حضور {count} شخص",
+      "attendanceBackfilled": "أضاف حضورًا سابقًا لـ{count} شخص",
+      "attendanceRemoved": "ألغى حضور {count} شخص",
+      "submissionsReviewed": "راجع {count} تسجيل",
+      "form_updated": "غيّر نموذج التسجيل",
+      "formAttached": "ربط نموذج Google",
+      "form_detached": "فصل نموذج Google"
+    }
   }
 }

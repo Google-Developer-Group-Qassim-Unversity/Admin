@@ -443,6 +443,9 @@
       "official": "Official Event",
       "department": "Department *",
       "departmentPlaceholder": "Select a department...",
+      "departmentArchived": "{name} (archived)",
+      "departmentSpecialized": "Specialized departments",
+      "departmentAdministrative": "Administrative departments",
       "departmentAction": "Department Action *",
       "departmentActionPlaceholder": "Select a department action...",
       "attendanceAccess": "Attendance Access"
@@ -1141,7 +1144,10 @@
     "date": "Date",
     "time": "Time",
     "eventType": "Event type",
-    "details": "Details"
+    "details": "Details",
+    "responsible": "Responsible",
+    "responsibleUnknown": "Not recorded",
+    "createdBy": "Created by {name}"
   },
   "eventLayout": {
     "backToPoints": "Back to Points",
@@ -1179,7 +1185,7 @@
     "subtitle": "Update the event details and configuration.",
     "deleteDraft": "Delete Draft",
     "deleteTitle": "Delete Event",
-    "deleteDescription": "This action cannot be undone. All associated data (forms, logs, submissions) will be permanently removed.",
+    "deleteDescription": "This action cannot be undone. All associated data (forms, logs, points, submissions) will be permanently removed. If it was published from the events pipeline, its request and any late penalty go too, and its booked days are free again.",
     "saveChanges": "Save Changes",
     "saving": "Saving...",
     "confirmDelete": "Are you sure you want to delete <strong>{name}</strong>?"
@@ -1836,6 +1842,10 @@
         "returned": "Fix it",
         "lost": "Pick new dates",
         "ready": "Publish"
+      },
+      "teamDo": {
+        "design": "Upload the poster",
+        "logistics": "Confirm the event"
       }
     },
     "tiles": {
@@ -1959,7 +1969,6 @@
       "back": "Pipeline",
       "untitled": "Untitled event",
       "noDates": "No dates",
-      "createdBy": "Started by {name}",
       "cancel": "Cancel request",
       "cancelConfirm": "Its dates become free for other departments. This can't be undone.",
       "cancelled": "Request cancelled",
@@ -1982,7 +1991,8 @@
       "moreActions": "More actions",
       "keep": "Keep it",
       "whatsLeft": "What is left",
-      "sectionDone": "All filled in"
+      "sectionDone": "All filled in",
+      "requestedBy": "Requested by {name}"
     },
     "details": {
       "title": "Event title",
@@ -2046,7 +2056,10 @@
       "official": {
         "yes": "Official",
         "no": "Unofficial"
-      }
+      },
+      "pointsTier": "Points tier",
+      "pointsTierHint": "The kind of event, for points: what the department and each attendee earn.",
+      "pointsTierOption": "{name} · {points} points per attendee"
     },
     "submit": {
       "title": "Submit to Design and Logistics",
@@ -2090,7 +2103,18 @@
       "design_content": "Design: content",
       "logistics_meet_link_by_logistics": "Logistics: Google Meet link",
       "logistics_venue": "Logistics: venue",
-      "logistics_buses_needed": "Logistics: buses"
+      "logistics_buses_needed": "Logistics: buses",
+      "details_points_tier": "Points tier",
+      "confirm_start_date": "Confirmation: first day",
+      "confirm_end_date": "Confirmation: last day",
+      "confirm_day_modes": "Confirmation: each day's mode",
+      "confirm_daily_start_time": "Confirmation: start time",
+      "confirm_daily_end_time": "Confirmation: end time (after the start)",
+      "confirm_venue": "Confirmation: venue",
+      "confirm_meet_link": "Confirmation: Google Meet link",
+      "confirm_event_type": "Confirmation: event type",
+      "confirm_description": "Confirmation: description",
+      "poster_poster_url": "Design: the poster"
     },
     "briefs": {
       "choose": "Choose…",
@@ -2182,7 +2206,8 @@
         "returned": "Design returned {title} with notes",
         "task_done": "A team finished its part of {title}",
         "media_received": "{title} is ready for Media",
-        "ready_to_publish": "{title} is ready to publish"
+        "ready_to_publish": "{title} is ready to publish",
+        "dates_changed": "Logistics moved {title} to other dates"
       }
     },
     "inbox": {
@@ -2222,16 +2247,20 @@
     },
     "publish": {
       "title": "Publish the event",
-      "hint": "Every team is done. Publishing creates the event in Events as a draft; an admin reviews it and opens registration.",
-      "tier": "Points tier",
-      "pickTier": "Choose the event's points tier",
-      "image": "Poster image link",
-      "imageHint": "You can also add it later from the event page.",
+      "hint": "Every team is done. Publishing puts the event live with exactly what the teams confirmed: nothing to fill in here.",
       "button": "Publish",
-      "published": "Published",
+      "published": "Published. The event is live.",
       "failed": "Could not publish",
-      "done": "Published as event #{id} (a draft for admins to review).",
-      "open": "Open the event"
+      "done": "Published as event #{id}. It is live: members can see it and register.",
+      "open": "Open the event",
+      "online": "Online",
+      "noPoster": "No poster: the event will go out without an image.",
+      "confirmTitle": "Publish this event to everyone?",
+      "confirmBody": "This makes the event public right now. Members see it straight away and can start registering. There is no admin review after this.",
+      "confirmFinal": "You cannot undo this from the pipeline. Check the date, time, place and poster before you continue.",
+      "confirmCheck": "I checked everything and the event is ready to go public.",
+      "confirmCancel": "Not yet",
+      "confirmButton": "Yes, publish it now"
     },
     "autosave": {
       "saving": "Saving…",
@@ -2247,6 +2276,84 @@
       "label": "Progress",
       "step": "Step {current} of {total}",
       "cancelled": "This request was cancelled."
+    },
+    "confirm": {
+      "title": "Confirm the event",
+      "hint": "This is filled in from the request. Change whatever the booking turned out differently, then confirm. The event is published with exactly this.",
+      "sections": {
+        "when": "When",
+        "where": "Where",
+        "what": "What"
+      },
+      "startDate": "First day",
+      "endDate": "Last day",
+      "datesMoved": "Requested for {requested}. Confirming other dates moves the request on the calendar and emails the department.",
+      "requestedTime": "Requested: {time}",
+      "meetLink": "Google Meet link",
+      "meetLinkHint": "Members join with this link on the online days.",
+      "pickModes": "Choose each day's mode above.",
+      "button": "Confirm",
+      "confirmed": "Confirmed. Logistics is done.",
+      "incomplete": "{count, plural, one {# thing is} other {# things are}} still missing.",
+      "failed": "Could not confirm",
+      "summary": {
+        "title": "Confirmed by Logistics",
+        "by": "Confirmed by {name}",
+        "dates": "Dates",
+        "time": "Time (every day)",
+        "mode": "Mode",
+        "place": "Place",
+        "meet": "Google Meet",
+        "type": "Event type"
+      },
+      "pickDates": "Set the start and end dates first."
+    },
+    "poster": {
+      "title": "The poster",
+      "hint": "Upload the finished poster. It becomes the event's image when the event is published; you can replace it until then.",
+      "viewHint": "Design is working on it.",
+      "by": "By {name}",
+      "alt": "Poster for {title}",
+      "openFull": "Open full size",
+      "pick": "Upload the poster",
+      "formats": "PNG, JPEG or WebP, up to 10 MB",
+      "replace": "Replace the poster",
+      "needsPoster": "Upload the poster first.",
+      "finish": "Finish Design",
+      "finished": "Design is done; the request went to Media.",
+      "uploaded": "Poster uploaded",
+      "wrongType": "The poster must be a PNG, JPEG or WebP image.",
+      "tooLarge": "The poster must be 10 MB or smaller.",
+      "failed": "Something went wrong"
+    },
+    "history": {
+      "title": "Who did what",
+      "hint": "Every step, edit and automatic change on this request, with who did it and when. Newest first.",
+      "automatic": "Automatic",
+      "showAll": "Show all {count}",
+      "actions": {
+        "booked": "booked {dates}",
+        "redated": "picked new dates: {dates}",
+        "detailsEdited": "edited the event details",
+        "detailsEditedAfterSubmit": "edited the event details after the request was submitted",
+        "briefEdited": "edited the {team} brief",
+        "submitted": "submitted the request",
+        "returned": "returned the request with notes",
+        "resubmitted": "resubmitted the request",
+        "late": "{days, plural, one {# day} other {# days}} late: {points, plural, one {# point} other {# points}} off at publish",
+        "cancelled": "cancelled the request",
+        "confirmation_edited": "edited the Logistics confirmation",
+        "datesMoved": "moved the dates from {from} to {to}",
+        "posterUploaded": "uploaded the poster",
+        "posterReplaced": "replaced the poster",
+        "taskDone": "finished the {team} part",
+        "published": "published the event (#{id})",
+        "holdExpired": "released the dates: the 24-hour hold ran out",
+        "datesBanned": "closed a day of {dates}, so the request lost its dates",
+        "penaltyGrown": "grew the late penalty to {points, plural, one {# point} other {# points}} ({days, plural, one {# day} other {# days}} late)",
+        "eventDeleted": "deleted the published event (#{id})",
+        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted"
+      }
     }
   },
   "permissions": {
@@ -2389,5 +2496,56 @@
     "sendEmail": "Send email",
     "copy": "Copy {field}",
     "copied": "{field} copied"
+  },
+  "eventHistory": {
+    "title": "Who did what",
+    "hint": "Everything admins changed on this event, with who did it and when. Newest first.",
+    "unknown": "Someone",
+    "showAll": "Show all {count}",
+    "pipeline": "Its steps before publishing",
+    "empty": "(empty)",
+    "reviewNote": "{accepted} accepted, {rejected} not accepted",
+    "statuses": {
+      "draft": "Draft",
+      "open": "Open",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "fields": {
+      "name": "Name",
+      "status": "Status",
+      "description": "Description",
+      "location_type": "On-site or online",
+      "location": "Location",
+      "start_datetime": "Start",
+      "end_datetime": "End",
+      "image_url": "Image",
+      "is_official": "Official or not",
+      "semester_id": "Semester",
+      "department_id": "Department",
+      "department_action_id": "Points tier (department)",
+      "member_action_id": "Points tier (attendees)",
+      "form_type": "Form type",
+      "google_form_id": "Google Form",
+      "google_responders_url": "Form link",
+      "admin_google_email": "Form editor"
+    },
+    "actions": {
+      "created": "created the event",
+      "edited": "edited {count, plural, one {# thing} other {# things}}",
+      "statusChanged": "changed the status from {from} to {to}",
+      "meetSet": "set the Meet link",
+      "meetChanged": "changed the Meet link",
+      "meetCleared": "removed the Meet link",
+      "deleted": "deleted the event",
+      "attendanceMarked": "marked {count, plural, one {# person} other {# people}} as attended",
+      "attendanceScanned": "scanned a card: marked {count, plural, one {# person} other {# people}} as attended",
+      "attendanceBackfilled": "back-filled attendance for {count, plural, one {# person} other {# people}}",
+      "attendanceRemoved": "removed attendance for {count, plural, one {# person} other {# people}}",
+      "submissionsReviewed": "reviewed {count, plural, one {# registration} other {# registrations}}",
+      "form_updated": "changed the registration form",
+      "formAttached": "attached a Google Form",
+      "form_detached": "detached the Google Form"
+    }
   }
 }

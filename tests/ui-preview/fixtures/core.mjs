@@ -67,7 +67,7 @@ function summary(id, dept, stage, title, start, end, extra = {}) {
     end_date: end,
     hold_expires_at: null,
     undated_reason: null,
-    created_at: at(-3 * DAY),
+    requested_at: at(-3 * DAY),
     ...extra,
   };
 }
@@ -89,7 +89,7 @@ const TASKS = {
     { team: "logistics", status: "brief" },
   ],
   r7: [
-    { team: "design", status: "done", completed_by: { member_id: 5, name: "Reem Alharbi" } },
+    { team: "design", status: "done", done_by: { member_id: 5, name: "Reem Alharbi" } },
     { team: "logistics", status: "open" },
   ],
   r6: [
@@ -117,12 +117,48 @@ const TASKS = {
   ],
 };
 
+// A stand-in poster: a mud-coloured square with the title area, as a data URI.
+const POSTER =
+  "data:image/svg+xml;utf8," +
+  encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="#2b4a7e"/><rect x="60" y="60" width="480" height="300" fill="#f8f3ea"/><rect x="60" y="400" width="300" height="40" fill="#d39a1c"/><rect x="60" y="460" width="220" height="24" fill="#f8f3ea"/></svg>');
+
+function confirmation(s) {
+  return {
+    start_date: s.start_date,
+    end_date: s.end_date,
+    day_modes: s.start_date ? { [s.start_date]: "on_site", ...(s.end_date && s.end_date !== s.start_date ? { [s.end_date]: "online" } : {}) } : null,
+    daily_start_time: "18:00:00",
+    daily_end_time: "20:00:00",
+    venue: "التيك فالي (60)",
+    room: "قاعة 2",
+    meet_link: s.end_date && s.end_date !== s.start_date ? "https://meet.google.com/abc-defg-hij" : null,
+    event_type: "workshop",
+    description: "وصف الفعالية.",
+  };
+}
+
+const HISTORY = (s) => [
+  { action: "booked", at: at(-4 * DAY), actor: { member_id: 1, name: "Ibrahim" }, details: { start_date: s.start_date, end_date: s.end_date } },
+  { action: "submitted", at: at(-2 * DAY), actor: { member_id: 1, name: "Ibrahim" }, details: null },
+  { action: "brief_edited", at: at(-40 * H), actor: { member_id: 1, name: "Ibrahim" }, details: { team: "design", after_submit: true } },
+  { action: "returned", at: at(-30 * H), actor: { member_id: 5, name: "Reem Alharbi" }, details: { notes: "أضيفوا أسماء المتحدثين." } },
+  { action: "resubmitted", at: at(-26 * H), actor: { member_id: 1, name: "Ibrahim" }, details: { late_days: 0 } },
+  { action: "poster_uploaded", at: at(-20 * H), actor: { member_id: 5, name: "Reem Alharbi" }, details: { replaced: false } },
+  { action: "task_done", at: at(-19 * H), actor: { member_id: 5, name: "Reem Alharbi" }, details: { team: "design" } },
+  { action: "hold_expired", at: at(-10 * H), actor: null, details: null },
+];
+
 function detail(id) {
   const s = byId[id] ?? REQUESTS[0];
   const draft = s.stage === "draft";
   return {
     ...s,
-    created_by: { member_id: 1, name: "Ibrahim" },
+    requested_by: { member_id: 1, name: "Ibrahim" },
+    submitted_by: draft ? null : { member_id: 1, name: "Ibrahim" },
+    returned_by: s.stage === "returned" ? { member_id: 5, name: "Reem Alharbi" } : null,
+    published_at: s.stage === "published" ? at(-DAY) : null,
+    published_by: s.stage === "published" ? { member_id: 9, name: "Abdullah" } : null,
+    history: draft ? [{ action: "booked", at: at(-3 * DAY), actor: { member_id: 1, name: "Ibrahim" }, details: { start_date: s.start_date, end_date: s.end_date } }] : HISTORY(s),
     details: {
       title: s.title,
       description: draft ? "ورشة عملية نبني فيها أول تطبيق Flutter من الصفر." : "وصف الفعالية.",
@@ -149,8 +185,10 @@ function detail(id) {
       brief: t.team === "design" ? { design_type: "poster", size: "square", file_type: "png", content_status: draft ? undefined : "final", idea: "ألوان التطبيق، ونفس روح شعار GDG." } : t.team === "logistics" ? { venue: draft ? null : "التيك فالي (60)", services: ["organizing", "volunteers"], venue_needs: ["devices", "internet"], buses_needed: false } : null,
       brief_version: 1,
       opened_at: t.status === "brief" ? null : at(-DAY),
-      completed_at: t.status === "done" ? at(-5 * H) : null,
-      completed_by: t.completed_by ?? (t.status === "done" ? { member_id: 7, name: "Sara" } : null),
+      done_at: t.status === "done" ? at(-5 * H) : null,
+      done_by: t.done_by ?? (t.status === "done" ? { member_id: 7, name: "Sara" } : null),
+      deliverable: t.status === "brief" ? null : t.team === "design" ? (t.status === "done" ? { poster_url: POSTER } : null) : t.team === "logistics" ? confirmation(s) : null,
+      deliverable_missing: t.team === "design" && t.status !== "done" ? ["poster.poster_url"] : [],
       ...t,
     })),
     missing: draft ? ["details.presenter_email", "design.content", "logistics.venue"] : [],
@@ -166,6 +204,7 @@ function detail(id) {
       can_resubmit: s.stage === "returned",
       complete: id === "r2" ? ["design"] : id === "r7" ? ["logistics"] : id === "r4" ? ["media"] : [],
       can_publish: s.stage === "ready",
+      can_upload_poster: id === "r2",
     },
     now: new Date().toISOString(),
   };

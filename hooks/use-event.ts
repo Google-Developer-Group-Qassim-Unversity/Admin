@@ -2,19 +2,22 @@ import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions }
 import { useApi } from '@/lib/api/client';
 import type { Event, UpdateEventPayload, BackfillMember, AttendanceType, EventsPageParams } from '@/lib/api-types';
 import type { Api, EventsFilters } from '@/lib/api/resources';
+import { pipelineKeys } from './use-pipeline';
 
 // Query keys
+const eventKeysAll = ['events'] as const;
 export const eventKeys = {
-  all: ['events'] as const,
-  lists: () => [...eventKeys.all, 'list'] as const,
+  all: eventKeysAll,
+  lists: () => [...eventKeysAll, 'list'] as const,
   list: (filters?: EventsFilters) => [...eventKeys.lists(), filters] as const,
-  details: () => [...eventKeys.all, 'detail'] as const,
+  details: () => [...eventKeysAll, 'detail'] as const,
   detail: (id: number | string) => [...eventKeys.details(), id] as const,
-  fullDetails: () => [...eventKeys.all, 'fullDetail'] as const,
+  fullDetails: () => [...eventKeysAll, 'fullDetail'] as const,
   fullDetail: (id: number | string) => [...eventKeys.fullDetails(), id] as const,
-  actions: () => [...eventKeys.all, 'actions'] as const,
-  departments: () => [...eventKeys.all, 'departments'] as const,
-  attendance: (id: number | string, day: string, type?: string) => [...eventKeys.all, 'attendance', id, day, type] as const,
+  actions: () => [...eventKeysAll, 'actions'] as const,
+  departmentsRoot: [...eventKeysAll, 'departments'] as const,
+  departments: (endDate?: string) => [...eventKeys.departmentsRoot, endDate ?? 'all'] as const,
+  attendance: (id: number | string, day: string, type?: string) => [...eventKeysAll, 'attendance', id, day, type] as const,
 };
 
 /**
@@ -76,11 +79,22 @@ export function useEventsPaginated(params: EventsPageParams) {
   });
 }
 
-export function useEventDetails(id: number | string) {
+export function useEventDetails(id: number | string, enabled = true) {
   const api = useApi();
   return useQuery({
     queryKey: eventKeys.fullDetail(id),
     queryFn: () => api.events.details(id),
+    enabled,
+  });
+}
+
+/** Who did what to the event. Under the full-detail key, so whatever refreshes the event refreshes this too. */
+export function useEventHistory(id: number | string, enabled = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.fullDetail(id), "history"],
+    queryFn: () => api.events.history(id),
+    enabled,
   });
 }
 
@@ -131,11 +145,30 @@ export function useActions() {
   });
 }
 
-export function useDepartments() {
+/**
+ * Departments for the department picker. With an `endDate` ("YYYY-MM-DD"),
+ * the list is the departments enrolled in the semester that date falls in,
+ * minus the ones hidden from the leaderboard; without it, every department.
+ */
+export function useDepartments(endDate?: string) {
   const api = useApi();
   return useQuery({
-    queryKey: eventKeys.departments(),
-    queryFn: () => api.departments.list(),
+    queryKey: eventKeys.departments(endDate),
+    queryFn: () => api.departments.list(endDate ? { endDate } : undefined),
+    // Changing the event's end date moves the list to another semester;
+    // keep the current options on screen while the new one loads.
+    placeholderData: keepPreviousData,
+  });
+}
+
+/** One department by id - used to keep an option for an event's existing
+ * department when it no longer qualifies for the picker's semester. */
+export function useDepartment(id: number | undefined) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.departmentsRoot, 'byId', id] as const,
+    queryFn: () => api.departments.get(id!),
+    enabled: id != null,
   });
 }
 
@@ -326,6 +359,8 @@ export function useDeleteEvent() {
       queryClient.removeQueries({ queryKey: eventKeys.detail(id) });
       queryClient.removeQueries({ queryKey: eventKeys.fullDetail(id) });
       queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      // A pipeline request it was published from goes too, and frees its days.
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.all });
     },
   });
 }

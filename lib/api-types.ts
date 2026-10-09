@@ -70,10 +70,49 @@ export interface UpdateEventPayload {
   actions: [EventAction, EventAction]; // [department_action, member_action]
 }
 
+// A member named on an event (who is responsible for it, who created it)
+export interface EventPerson {
+  member_id: number;
+  name: string;
+}
+
 // Extended event details returned from GET /events/{id}/details
 export interface EventDetails {
   event: EventApiPayload;
   actions: [EventAction, EventAction]; // [department_action, member_action]
+  // Null on events created before these were recorded. For a pipeline event the
+  // responsible member is the requester and created_by whoever published it.
+  responsible: EventPerson | null;
+  created_by: EventPerson | null;
+}
+
+/** Mirrors `EventHistoryAction` in Backend/app/DB/schema.py. */
+export type EventHistoryAction =
+  | "created"
+  | "edited"
+  | "status_changed"
+  | "meeting_url_changed"
+  | "deleted"
+  | "attendance_marked"
+  | "attendance_scanned"
+  | "attendance_backfilled"
+  | "attendance_removed"
+  | "submissions_reviewed"
+  | "form_updated"
+  | "form_attached"
+  | "form_detached";
+
+// GET /events/{id}/history: who did what to the event from /events, oldest first.
+export interface EventHistory {
+  items: {
+    action: EventHistoryAction;
+    at: string;
+    actor: EventPerson | null;
+    /** An edit lists each changed field as `[before, after]`. */
+    details: Record<string, unknown> | null;
+  }[];
+  /** The pipeline request that published the event; its history has the steps before. */
+  pipeline_request_id: string | null;
 }
 
 // Upload types

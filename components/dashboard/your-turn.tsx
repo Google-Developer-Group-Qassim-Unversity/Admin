@@ -221,6 +221,7 @@ function TeamTaskDoor({ item, more, big }: { item: InboxItem; more: number; big:
   const request = item.request;
   const { data: detail } = usePipelineRequest(request.id);
   const TeamIcon = TEAM_ICON[item.team];
+  const media = item.team === "media";
 
   return (
     <Door tone="ochre" aria-labelledby="team-task">
@@ -247,12 +248,34 @@ function TeamTaskDoor({ item, more, big }: { item: InboxItem; more: number; big:
           {item.opened_at ? <span className="ms-auto font-medium opacity-80">{t("teamArrived", { ago: timeAgo(item.opened_at) })}</span> : null}
         </div>
       </DoorPanel>
-      {detail ? <TeamActionButtons request={detail} /> : <Skeleton className="h-11 w-full rounded-lg bg-black/10" />}
+      {/* Media finishes with one button, right here. Design finishes with its
+          poster and Logistics by confirming the event, both on the request. */}
+      {media ? (
+        detail ? (
+          <TeamActionButtons request={detail} />
+        ) : (
+          <Skeleton className="h-11 w-full rounded-lg bg-black/10" />
+        )
+      ) : (
+        <div className="grid gap-2 sm:flex sm:flex-wrap">
+          <Button asChild size="lg" className="bg-on-door-ochre hover:bg-on-door-ochre/85 text-white">
+            <Link href={`/pipeline/requests/${request.id}`}>
+              {t(`teamDo.${item.team}`)}
+              <ArrowLeft className="ltr:-scale-x-100" />
+            </Link>
+          </Button>
+          {detail ? <TeamActionButtons request={detail} /> : null}
+        </div>
+      )}
       <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-        <Link href={`/pipeline/requests/${request.id}`} className="inline-flex min-h-11 items-center gap-1.5 text-[14px] font-bold underline underline-offset-3">
-          {t("teamOpen")}
-          <ArrowLeft className="size-4 ltr:-scale-x-100" aria-hidden="true" />
-        </Link>
+        {media ? (
+          <Link href={`/pipeline/requests/${request.id}`} className="inline-flex min-h-11 items-center gap-1.5 text-[14px] font-bold underline underline-offset-3">
+            {t("teamOpen")}
+            <ArrowLeft className="size-4 ltr:-scale-x-100" aria-hidden="true" />
+          </Link>
+        ) : (
+          <span />
+        )}
         {more > 0 ? (
           <Link href="/pipeline" className="text-[13px] font-bold underline underline-offset-3">
             {t("teamMore", { count: more })}

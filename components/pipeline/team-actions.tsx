@@ -24,16 +24,20 @@ import { intlLocale } from "@/lib/format";
 /**
  * The caller's team's turn: mark its part done, or (Design, once, early on)
  * send the request back with notes. Nothing renders when it is not their turn.
+ * Design finishes with its poster (design-poster) and Logistics by confirming
+ * the event (logistics-confirmation), so only Media's button is left here.
  */
 export function TeamActions({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
   const tt = useTranslations("pipeline.teams");
   const locale = useLocale();
   const formatter = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeStyle: "short" });
-  const teams = request.actions.complete;
+  const teams = request.actions.complete.filter((team) => team === "media");
   const canReturn = request.actions.can_return;
 
   if (!teams.length && !canReturn) return null;
+  // On Design's turn the poster's door carries "Return with notes" too: one door, not two.
+  if (!teams.length && request.actions.complete.includes("design")) return null;
 
   const formatTeams = teams.map((team) => tt(team)).join(" · ");
 
@@ -74,7 +78,10 @@ export function TeamActionButtons({ request }: { request: EventRequestDetail }) 
   const tt = useTranslations("pipeline.teams");
   const complete = useCompleteTask(request.id);
   const [returning, setReturning] = React.useState(false);
-  const teams = request.actions.complete;
+  // Design finishes with its poster (design-poster) and Logistics by
+  // confirming the event (logistics-confirmation), so only Media's button is
+  // left here.
+  const teams = request.actions.complete.filter((team) => team === "media");
   const canReturn = request.actions.can_return;
 
   if (!teams.length && !canReturn) return null;

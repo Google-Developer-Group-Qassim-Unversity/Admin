@@ -21,7 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { EventForm, type EventFormData } from "@/components/event-form";
-import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDeleteEvent } from "@/hooks/use-event";
+import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDepartment, useDeleteEvent } from "@/hooks/use-event";
 import { shouldContactSupport } from "@/lib/api/errors";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
@@ -45,7 +45,15 @@ export default function EventEditPage() {
   
   const { data: actionsData, isLoading: isLoadingActions } = useActions();
   
+  // The event's current department, offered in the picker even when it is not
+  // in the semester's roster anymore, so a re-save never breaks.
+  const existingDepartmentId = eventDetails?.actions[0]?.department_id ?? undefined;
   const { data: departments, isLoading: isLoadingDepartments } = useDepartments();
+  const { data: existingDepartment, isLoading: isLoadingExistingDepartment } = useDepartment(
+    departments && existingDepartmentId != null && !departments.some((d) => d.id === existingDepartmentId)
+      ? existingDepartmentId
+      : undefined
+  );
   
   const updateEventMutation = useUpdateEvent();
   const deleteEventMutation = useDeleteEvent();
@@ -96,7 +104,7 @@ export default function EventEditPage() {
 
   const handleSubmit = async (data: EventFormData) => {
     try {
-      const selectedDepartment = departments?.find(d => d.id === data.department_id);
+      const selectedDepartment = departments?.find(d => d.id === data.department_id) ?? existingDepartment;
       
       const departmentAction: EventAction = {
         action_id: data.composite_action[0].id,
@@ -163,7 +171,7 @@ export default function EventEditPage() {
     }
   };
 
-  if (isLoadingDetails || isLoadingActions || isLoadingDepartments) {
+  if (isLoadingDetails || isLoadingActions || isLoadingDepartments || isLoadingExistingDepartment) {
     return (
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-4" aria-busy="true" aria-label={t("loadingDetails")}>
         <Skeleton className="h-8 w-1/3" />
@@ -242,6 +250,7 @@ export default function EventEditPage() {
           mode="edit"
           eventId={event.id}
           initialData={initialFormData}
+          extraDepartment={existingDepartment}
           onSubmit={handleSubmit}
           isSubmitting={updateEventMutation.isPending}
           getToken={getToken}
