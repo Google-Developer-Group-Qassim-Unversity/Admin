@@ -2,7 +2,8 @@ export const locales = ["en", "ar"] as const;
 
 export type Locale = (typeof locales)[number];
 
-export const defaultLocale: Locale = "en";
+// Arabic until someone picks a language; the choice is then kept in LOCALE_COOKIE.
+export const defaultLocale: Locale = "ar";
 
 export const LOCALE_COOKIE = "NEXT_LOCALE";
 
