@@ -95,7 +95,7 @@ export interface EventRequestSummary {
   end_date: string | null;
   hold_expires_at: string | null;
   undated_reason: "hold_expired" | "day_banned" | null;
-  created_at: string;
+  requested_at: string;
 }
 
 export type TaskStatus = "brief" | "open" | "returned" | "done";
@@ -110,8 +110,44 @@ export interface RequestTask {
   /** What the team still has to hand over before it can finish: `confirm.venue`, `poster.poster_url`. */
   deliverable_missing: string[];
   opened_at: string | null;
-  completed_at: string | null;
-  completed_by: { member_id: number; name: string } | null;
+  /** Who marked this team's part done, and when. */
+  done_at: string | null;
+  done_by: PersonRef | null;
+}
+
+export interface PersonRef {
+  member_id: number;
+  name: string;
+}
+
+/** Mirrors `PipelineHistoryAction` in Backend/app/DB/schema.py. */
+export type HistoryAction =
+  | "booked"
+  | "redated"
+  | "details_edited"
+  | "brief_edited"
+  | "submitted"
+  | "returned"
+  | "resubmitted"
+  | "cancelled"
+  | "confirmation_edited"
+  | "dates_moved"
+  | "poster_uploaded"
+  | "task_done"
+  | "published"
+  | "hold_expired"
+  | "dates_banned"
+  | "penalty_grown"
+  | "days_banned"
+  | "days_unbanned"
+  | "event_deleted";
+
+export interface HistoryItem {
+  action: HistoryAction;
+  at: string;
+  /** Null for what the sweep did on its own. */
+  actor: PersonRef | null;
+  details: Record<string, unknown> | null;
 }
 
 export interface DesignBrief {
@@ -168,7 +204,14 @@ export const VENUES = [
 ];
 
 export interface EventRequestDetail extends EventRequestSummary {
-  created_by: { member_id: number; name: string };
+  /** Who did each step, and when. Each task says who marked its part done. */
+  requested_by: PersonRef;
+  submitted_by: PersonRef | null;
+  returned_by: PersonRef | null;
+  published_at: string | null;
+  published_by: PersonRef | null;
+  /** Everything that happened to the request, oldest first. */
+  history: HistoryItem[];
   details: EventDetails;
   partners: PipelineDepartment[];
   within_official_hours: boolean | null;

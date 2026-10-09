@@ -308,8 +308,8 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
         </span>
         <div className="flex flex-col gap-0.5">
           <h2 className="font-display text-base font-semibold tracking-tight">{t("summary.title")}</h2>
-          {task.completed_by ? (
-            <p className="text-muted-foreground text-[13px]">{t("summary.by", { name: task.completed_by.name })}</p>
+          {task.done_by ? (
+            <p className="text-muted-foreground text-[13px]">{t("summary.by", { name: task.done_by.name })}</p>
           ) : null}
         </div>
       </div>
