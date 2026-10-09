@@ -49,7 +49,6 @@ import type {
   InboxItem,
   PaginatedNotifications,
   PaginatedRequests,
-  PersonRef,
   PipelineCalendar,
   PipelineMe,
   PipelineTeam,
@@ -312,8 +311,6 @@ export function createApi(request: Requester) {
   // departments they act for), so none of them opt into the shared Data Cache.
   const pipeline = {
     me: () => request.json<PipelineMe>("/pipeline/me"),
-    /** This semester's club members: who can be named responsible for an event. */
-    people: () => request.json<PersonRef[]>("/pipeline/people"),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
     ban: (dates: string[], reason: string | null) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),

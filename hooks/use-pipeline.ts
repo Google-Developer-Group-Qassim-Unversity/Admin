@@ -17,17 +17,6 @@ export function usePipelineMe() {
   return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000 });
 }
 
-/** This semester's club members, to name one responsible for an event. */
-export function usePipelinePeople(enabled = true) {
-  const api = useApi();
-  return useQuery({
-    queryKey: [...pipelineKeys.all, "people"],
-    queryFn: () => api.pipeline.people(),
-    staleTime: 5 * 60_000,
-    enabled,
-  });
-}
-
 export function usePipelineCalendar(from: string, to: string) {
   const api = useApi();
   return useQuery({ queryKey: pipelineKeys.calendar(from, to), queryFn: () => api.pipeline.calendar(from, to) });
