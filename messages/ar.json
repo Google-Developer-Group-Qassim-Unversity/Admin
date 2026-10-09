@@ -2416,5 +2416,56 @@
     "sendEmail": "إرسال بريد",
     "copy": "نسخ {field}",
     "copied": "تم نسخ {field}"
+  },
+  "eventHistory": {
+    "title": "من فعل ماذا",
+    "hint": "كل ما غيّره المسؤولون في هذه الفعالية، ومن قام به ومتى. الأحدث أولًا.",
+    "unknown": "شخص ما",
+    "showAll": "عرض الكل ({count})",
+    "pipeline": "خطواتها قبل النشر",
+    "empty": "(فارغ)",
+    "reviewNote": "قُبل {accepted}، ولم يُقبل {rejected}",
+    "statuses": {
+      "draft": "مسودة",
+      "open": "مفتوحة",
+      "active": "جارية",
+      "closed": "مغلقة"
+    },
+    "fields": {
+      "name": "الاسم",
+      "status": "الحالة",
+      "description": "الوصف",
+      "location_type": "حضوري أو عن بعد",
+      "location": "المكان",
+      "start_datetime": "البداية",
+      "end_datetime": "النهاية",
+      "image_url": "الصورة",
+      "is_official": "رسمية أو لا",
+      "semester_id": "الفصل",
+      "department_id": "القسم",
+      "department_action_id": "فئة النقاط (القسم)",
+      "member_action_id": "فئة النقاط (الحضور)",
+      "form_type": "نوع النموذج",
+      "google_form_id": "نموذج Google",
+      "google_responders_url": "رابط النموذج",
+      "admin_google_email": "محرر النموذج"
+    },
+    "actions": {
+      "created": "أنشأ الفعالية",
+      "edited": "عدّل {count} من البيانات",
+      "statusChanged": "غيّر الحالة من {from} إلى {to}",
+      "meetSet": "أضاف رابط Meet",
+      "meetChanged": "غيّر رابط Meet",
+      "meetCleared": "حذف رابط Meet",
+      "deleted": "حذف الفعالية",
+      "attendanceMarked": "سجّل حضور {count} شخص",
+      "attendanceScanned": "مسح بطاقة: سجّل حضور {count} شخص",
+      "attendanceBackfilled": "أضاف حضورًا سابقًا لـ{count} شخص",
+      "attendanceRemoved": "ألغى حضور {count} شخص",
+      "submissionsReviewed": "راجع {count} تسجيل",
+      "form_updated": "غيّر نموذج التسجيل",
+      "formAttached": "ربط نموذج Google",
+      "form_detached": "فصل نموذج Google"
+    }
   }
 }

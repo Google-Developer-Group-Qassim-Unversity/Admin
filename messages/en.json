@@ -2416,5 +2416,56 @@
     "sendEmail": "Send email",
     "copy": "Copy {field}",
     "copied": "{field} copied"
+  },
+  "eventHistory": {
+    "title": "Who did what",
+    "hint": "Everything admins changed on this event, with who did it and when. Newest first.",
+    "unknown": "Someone",
+    "showAll": "Show all {count}",
+    "pipeline": "Its steps before publishing",
+    "empty": "(empty)",
+    "reviewNote": "{accepted} accepted, {rejected} not accepted",
+    "statuses": {
+      "draft": "Draft",
+      "open": "Open",
+      "active": "Active",
+      "closed": "Closed"
+    },
+    "fields": {
+      "name": "Name",
+      "status": "Status",
+      "description": "Description",
+      "location_type": "On-site or online",
+      "location": "Location",
+      "start_datetime": "Start",
+      "end_datetime": "End",
+      "image_url": "Image",
+      "is_official": "Official or not",
+      "semester_id": "Semester",
+      "department_id": "Department",
+      "department_action_id": "Points tier (department)",
+      "member_action_id": "Points tier (attendees)",
+      "form_type": "Form type",
+      "google_form_id": "Google Form",
+      "google_responders_url": "Form link",
+      "admin_google_email": "Form editor"
+    },
+    "actions": {
+      "created": "created the event",
+      "edited": "edited {count, plural, one {# thing} other {# things}}",
+      "statusChanged": "changed the status from {from} to {to}",
+      "meetSet": "set the Meet link",
+      "meetChanged": "changed the Meet link",
+      "meetCleared": "removed the Meet link",
+      "deleted": "deleted the event",
+      "attendanceMarked": "marked {count, plural, one {# person} other {# people}} as attended",
+      "attendanceScanned": "scanned a card: marked {count, plural, one {# person} other {# people}} as attended",
+      "attendanceBackfilled": "back-filled attendance for {count, plural, one {# person} other {# people}}",
+      "attendanceRemoved": "removed attendance for {count, plural, one {# person} other {# people}}",
+      "submissionsReviewed": "reviewed {count, plural, one {# registration} other {# registrations}}",
+      "form_updated": "changed the registration form",
+      "formAttached": "attached a Google Form",
+      "form_detached": "detached the Google Form"
+    }
   }
 }

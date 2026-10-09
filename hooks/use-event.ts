@@ -88,6 +88,16 @@ export function useEventDetails(id: number | string, enabled = true) {
   });
 }
 
+/** Who did what to the event. Under the full-detail key, so whatever refreshes the event refreshes this too. */
+export function useEventHistory(id: number | string, enabled = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.fullDetail(id), "history"],
+    queryFn: () => api.events.history(id),
+    enabled,
+  });
+}
+
 export function useUpdateEvent() {
   const api = useApi();
   const onEventChanged = useEventCacheUpdates();

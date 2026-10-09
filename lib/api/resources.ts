@@ -21,6 +21,7 @@ import type {
   Department,
   Event,
   EventDetails,
+  EventHistory,
   EventStatus,
   EventsPageParams,
   Form,
@@ -118,6 +119,9 @@ export function createApi(request: Requester) {
 
     details: (id: number | string) =>
       request.json<EventDetails>(`/events/${id}/details`, { revalidate: CACHE_TTL, tags: ["events", `event-${id}`] }),
+
+    /** Who did what to the event from /events, oldest first. Never cached: it changes with every edit. */
+    history: (id: number | string) => request.json<EventHistory>(`/events/${id}/history`),
 
     create: (payload: CreateEventPayload) => request.json<Event>("/events", { method: "POST", body: payload }),
 

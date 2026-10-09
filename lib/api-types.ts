@@ -86,6 +86,35 @@ export interface EventDetails {
   created_by: EventPerson | null;
 }
 
+/** Mirrors `EventHistoryAction` in Backend/app/DB/schema.py. */
+export type EventHistoryAction =
+  | "created"
+  | "edited"
+  | "status_changed"
+  | "meeting_url_changed"
+  | "deleted"
+  | "attendance_marked"
+  | "attendance_scanned"
+  | "attendance_backfilled"
+  | "attendance_removed"
+  | "submissions_reviewed"
+  | "form_updated"
+  | "form_attached"
+  | "form_detached";
+
+// GET /events/{id}/history: who did what to the event from /events, oldest first.
+export interface EventHistory {
+  items: {
+    action: EventHistoryAction;
+    at: string;
+    actor: EventPerson | null;
+    /** An edit lists each changed field as `[before, after]`. */
+    details: Record<string, unknown> | null;
+  }[];
+  /** The pipeline request that published the event; its history has the steps before. */
+  pipeline_request_id: string | null;
+}
+
 // Upload types
 export interface UploadResponse {
   url: string;
