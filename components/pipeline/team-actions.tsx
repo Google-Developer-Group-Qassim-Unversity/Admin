@@ -22,7 +22,8 @@ import type { EventRequestDetail, PipelineTeam } from "@/lib/pipeline-types";
 /**
  * The caller's team's turn: mark its part done, or (Design, once, early on)
  * send the request back with notes. Nothing renders when it is not their turn.
- * Logistics finishes by confirming the event instead (logistics-confirmation).
+ * Design finishes with its poster (design-poster) and Logistics by confirming
+ * the event (logistics-confirmation), so only Media's button is left here.
  */
 export function TeamActions({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
@@ -31,7 +32,7 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
   const complete = useCompleteTask(request.id);
   const [returning, setReturning] = React.useState(false);
   const formatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
-  const teams = request.actions.complete.filter((team) => team !== "logistics");
+  const teams = request.actions.complete.filter((team) => team === "media");
   const canReturn = request.actions.can_return;
 
   if (!teams.length && !canReturn) return null;

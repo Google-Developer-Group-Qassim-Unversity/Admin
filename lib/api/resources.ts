@@ -350,6 +350,7 @@ export function createApi(request: Requester) {
         method: "PUT",
         body: { deliverable },
       }),
+    uploadPoster: (id: string, file: File) => request.file<EventRequestDetail>(`/pipeline/requests/${id}/poster`, file),
     submit: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
     returnToTeam: (id: string, notes: string) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),

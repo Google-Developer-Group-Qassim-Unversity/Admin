@@ -12,6 +12,7 @@ import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-panel";
 import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
+import { DesignPoster } from "@/components/pipeline/design-poster";
 import { DetailsForm } from "@/components/pipeline/details-form";
 import { DraftSaveProvider } from "@/components/pipeline/draft-autosave";
 import { MissingProvider, READ_ONLY, focusField } from "@/components/pipeline/form-kit";
@@ -138,6 +139,7 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         {isReturned ? <ReturnedNotice request={request} /> : null}
         <PenaltyNote request={request} />
         <TeamActions request={request} />
+        <DesignPoster request={request} />
         <LogisticsConfirmation request={request} />
         <PublishPanel request={request} />
 

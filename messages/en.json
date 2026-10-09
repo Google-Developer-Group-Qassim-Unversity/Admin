@@ -2035,7 +2035,8 @@
       "confirm_meet_link": "Confirmation: Google Meet link",
       "confirm_responsible_member_id": "Confirmation: responsible person",
       "confirm_event_type": "Confirmation: event type",
-      "confirm_description": "Confirmation: description"
+      "confirm_description": "Confirmation: description",
+      "poster_poster_url": "Design: the poster"
     },
     "briefs": {
       "choose": "Choose…",
@@ -2229,6 +2230,24 @@
         "responsible": "Responsible",
         "type": "Event type"
       }
+    },
+    "poster": {
+      "title": "The poster",
+      "hint": "Upload the finished poster. It becomes the event's image when the event is published; you can replace it until then.",
+      "viewHint": "Design is working on it.",
+      "by": "By {name}",
+      "alt": "Poster for {title}",
+      "openFull": "Open full size",
+      "pick": "Upload the poster",
+      "formats": "PNG, JPEG or WebP, up to 10 MB",
+      "replace": "Replace the poster",
+      "needsPoster": "Upload the poster first.",
+      "finish": "Finish Design",
+      "finished": "Design is done; the request went to Media.",
+      "uploaded": "Poster uploaded",
+      "wrongType": "The poster must be a PNG, JPEG or WebP image.",
+      "tooLarge": "The poster must be 10 MB or smaller.",
+      "failed": "Something went wrong"
     }
   },
   "permissions": {
