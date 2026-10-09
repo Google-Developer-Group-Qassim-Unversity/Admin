@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-import { formatDistanceToNow } from "date-fns";
-import { Award, ChevronDown, Eye, Mail, MailCheck, Megaphone, PenLine, Search, Users } from "lucide-react";
+import { Award, ChevronDown, Eye, Mail, MailCheck, Megaphone, PenLine, Search, Users, type LucideIcon } from "lucide-react";
+import { Plate } from "@/components/najdi";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import { MemberDetailsTrigger } from "@/components/member-details";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
 import type { AcceptanceData, BlastData, CertificateData } from "./types";
+import { isolate, useFormatters } from "@/lib/format";
 
 interface EmailLogRowProps {
   log: EnrichedEmailLog;
@@ -49,12 +49,12 @@ function getBlastData(log: EnrichedEmailLog): BlastData | null {
 
 // An email's type is a category, not a state, so it stays neutral: the icon
 // tells the types apart and the brand colours are left to mean something.
-const TYPE_ICON_CLASS = "text-muted-foreground";
-const TYPE_BADGE_CLASS = "bg-muted text-muted-foreground border-transparent";
+const TYPE_ICON_CLASS = "text-ink-2";
+const TYPE_BADGE_CLASS = "bg-sunk text-ink-2 border-transparent";
 
 export const TYPE_CONFIG: Record<
   string,
-  { icon: React.ElementType; color: string; badgeClass: string }
+  { icon: LucideIcon; color: string; badgeClass: string }
 > = {
   "event-certificate": { icon: Award, color: TYPE_ICON_CLASS, badgeClass: TYPE_BADGE_CLASS },
   "manual-certificate": { icon: PenLine, color: TYPE_ICON_CLASS, badgeClass: TYPE_BADGE_CLASS },
@@ -64,7 +64,7 @@ export const TYPE_CONFIG: Record<
 };
 
 // A value that changed after the email went out - the admin may want to look.
-const CHANGED_CLASS = "text-brand-yellow-ink decoration-brand-yellow";
+const CHANGED_CLASS = "text-door-ochre-ink decoration-door-ochre";
 
 // Maps a raw email_type to the key under manageEmails.logRow.types (and
 // manageEmails.jobs.types, which shares the same taxonomy).
@@ -81,9 +81,7 @@ function RowIcon({ type }: { type: string }) {
   if (!cfg) return null;
   const Icon = cfg.icon;
   return (
-    <div className={`mt-0.5 shrink-0 ${cfg.color}`}>
-      <Icon className="h-4 w-4" />
-    </div>
+    <Plate tone="neutral" size="sm" icon={Icon} className="mt-0.5" />
   );
 }
 
@@ -148,7 +146,7 @@ function EventNameWithTooltip({
           )}
           {hasDiff && (
             <div className="border-t pt-1 mt-1">
-              <p className="text-brand-yellow font-medium mb-0.5">{t("valuesAtSendTime")}</p>
+              <p className="text-door-ochre-ink font-medium mb-0.5">{t("valuesAtSendTime")}</p>
               {nameChanged && (
                 <p>
                   <span className="text-muted-foreground">{t("name")}</span>{" "}
@@ -171,23 +169,26 @@ function EventNameWithTooltip({
 
 function MetaColumn({ log }: { log: EnrichedEmailLog }) {
   const t = useTranslations("manageEmails.logRow");
+  const format = useFormatter();
+  const fmt = useFormatters();
+  const now = useNow({ updateInterval: 60_000 });
   const sentAt = new Date(log.sent_at);
   return (
     <div className="text-end shrink-0 space-y-1 min-w-[140px]">
       <Tooltip>
         <TooltipTrigger asChild>
           <p className="tabular text-xs text-muted-foreground cursor-default">
-            {formatDistanceToNow(sentAt, { addSuffix: true })}
+            {format.relativeTime(sentAt, now)}
           </p>
         </TooltipTrigger>
         <TooltipContent side="bottom" align="end">
-          <p className="text-xs">{format(sentAt, "MMM d, yyyy HH:mm:ss")}</p>
+          <p className="tabular text-xs">{fmt.custom(sentAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>
         </TooltipContent>
       </Tooltip>
-      <p className="text-xs text-muted-foreground/70" dir="auto">
-        {t("sentBy", { name: log.sender_name ?? t("unknown") })}
+      <p className="text-xs text-ink-2" dir="auto">
+        {t("sentBy", { name: isolate(log.sender_name ?? t("unknown")) })}
       </p>
-      <p className="text-xs text-muted-foreground/70 truncate max-w-[160px] ms-auto">
+      <p className="text-xs text-ink-2 truncate max-w-[160px] ms-auto">
         {t("fromAddress", { address: log.from_address })}
       </p>
       <TypeBadge type={log.email_type} />
@@ -244,7 +245,7 @@ function MemberListDialog({
             </div>
           </div>
         )}
-        <div className="bg-muted/50 text-muted-foreground hidden grid-cols-2 gap-4 border-t px-6 py-2 text-xs font-medium sm:grid">
+        <div className="bg-sunk text-muted-foreground hidden grid-cols-2 gap-4 border-t px-6 py-2 text-xs font-medium sm:grid">
           <span>{t("columnName")}</span>
           <span>{t("columnEmail")}</span>
         </div>
@@ -254,7 +255,7 @@ function MemberListDialog({
               <span dir="auto" className="truncate text-sm sm:text-xs">
                 {m.name}
               </span>
-              <span className="text-muted-foreground truncate text-[13px] sm:text-xs">{m.email}</span>
+              <span className="text-muted-foreground truncate text-[13px] sm:text-xs"><bdi>{m.email}</bdi></span>
             </li>
           ))}
           {filtered.length === 0 && (
@@ -276,13 +277,13 @@ function CertificateRow({ log }: EmailLogRowProps) {
   const nameDiffers = memberName !== (snapshot?.member.name ?? memberName);
 
   return (
-    <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-background">
       <RowIcon type={log.email_type} />
       <div className="flex-1 min-w-0 space-y-0.5">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1 text-sm">
-              <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
+              <span className="text-ink-2 text-xs">{t("member")}</span>
               <span className="font-medium truncate" dir="auto">
                 {nameDiffers ? (
                   <Tooltip>
@@ -292,7 +293,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: isolate(snapshot?.member.name ?? "") })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : log.member_id ? (
@@ -304,14 +305,14 @@ function CertificateRow({ log }: EmailLogRowProps) {
             </div>
             {memberEmail && (
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                <span className="text-muted-foreground/60">{t("email")}</span>
+                <span className="text-ink-2">{t("email")}</span>
                 <span className="truncate">{memberEmail}</span>
               </div>
             )}
           </div>
         </div>
         <div className="flex items-center gap-1 text-xs">
-          <span className="text-muted-foreground/60">{t("event")}</span>
+          <span className="text-ink-2">{t("event")}</span>
           <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={snapshot?.event} />
         </div>
       </div>
@@ -331,17 +332,17 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
 
   return (
     <>
-      <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-background">
         <RowIcon type={log.email_type} />
         <div className="flex-1 min-w-0 space-y-0.5">
           <div className="flex items-center gap-1 text-xs">
-          <span className="text-muted-foreground/60">{t("event")}</span>
+          <span className="text-ink-2">{t("event")}</span>
           <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={data?.event} />
         </div>
           <div className="flex items-center gap-1.5 text-xs text-muted-foreground flex-wrap">
             {subject && (
               <span className="truncate max-w-[280px]">
-                <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
+                <span className="text-ink-2">{t("subjectLine")}</span>{" "}
                 <bdi className="italic">&ldquo;{subject}&rdquo;</bdi>
               </span>
             )}
@@ -360,10 +361,10 @@ function AcceptanceRow({ log, onViewHtml }: EmailLogRowProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-1.5 text-xs shrink-0"
+                className="shrink-0"
                 onClick={() => onViewHtml(data.html_content, data.subject ?? "")}
               >
-                <Eye className="h-3 w-3 me-0.5" />
+                <Eye />
                 {t("html")}
               </Button>
             )}
@@ -394,18 +395,18 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
 
   return (
     <>
-      <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+      <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-background">
         <RowIcon type={log.email_type} />
         <div className="flex-1 min-w-0 space-y-0.5">
           {subject && (
             <div className="text-xs text-muted-foreground truncate max-w-[320px]">
-              <span className="text-muted-foreground/60">{t("subjectLine")}</span>{" "}
+              <span className="text-ink-2">{t("subjectLine")}</span>{" "}
               <bdi className="italic">&ldquo;{subject}&rdquo;</bdi>
             </div>
           )}
           {data && (
             <div className="text-xs text-muted-foreground">
-              <span className="text-muted-foreground/60">{t("orderedBy")}</span>{" "}
+              <span className="text-ink-2">{t("orderedBy")}</span>{" "}
               {data.order_by === "activity" ? t("mostRecentlyActive") : t("alphabetical")}
             </div>
           )}
@@ -432,10 +433,10 @@ function BlastRow({ log, onViewHtml }: EmailLogRowProps) {
               <Button
                 variant="ghost"
                 size="sm"
-                className="h-6 px-1.5 text-xs shrink-0"
+                className="shrink-0"
                 onClick={() => onViewHtml(data.html_content, data.subject ?? "")}
               >
-                <Eye className="h-3 w-3 me-0.5" />
+                <Eye />
                 {t("html")}
               </Button>
             )}
@@ -469,13 +470,13 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
   const nameDiffers = memberName !== (snapshot?.member.name ?? memberName);
 
   return (
-    <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-background">
       <RowIcon type={log.email_type} />
       <div className="flex-1 min-w-0 space-y-0.5">
         <div className="min-w-0">
           {memberName ? (
             <div className="flex items-center gap-1 text-sm">
-              <span className="text-muted-foreground/60 text-xs">{t("member")}</span>
+              <span className="text-ink-2 text-xs">{t("member")}</span>
               <span className="font-medium truncate" dir="auto">
                 {nameDiffers ? (
                   <Tooltip>
@@ -485,7 +486,7 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: isolate(snapshot?.member.name ?? "") })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : log.member_id ? (
@@ -500,21 +501,21 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
           )}
           {memberEmail && (
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <span className="text-muted-foreground/60">{t("email")}</span>
+              <span className="text-ink-2">{t("email")}</span>
               <span className="truncate">{memberEmail}</span>
             </div>
           )}
         </div>
         {eventName ? (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">{t("event")}</span>
+            <span className="text-ink-2">{t("event")}</span>
             <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} snapshotEvent={snapshot?.event} />
           </div>
         ) : (
           <p className="text-xs text-muted-foreground italic">{t("noEventLinked")}</p>
         )}
         {hasNoJoins && snapshot && (
-          <p className="text-xs text-muted-foreground/60">{t("fromSnapshot")}</p>
+          <p className="text-xs text-ink-2">{t("fromSnapshot")}</p>
         )}
       </div>
       <MetaColumn log={log} />
@@ -527,13 +528,13 @@ function DefaultRow({ log }: EmailLogRowProps) {
   const eventName = log.event_name;
   const eventOfficial = log.event_is_official != null ? !!log.event_is_official : undefined;
   return (
-    <div className="flex items-start gap-2.5 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+    <div className="flex items-start gap-3 px-3 py-3 transition-colors hover:bg-background">
       <RowIcon type={log.email_type} />
       <div className="flex-1 min-w-0 space-y-0.5">
         <p className="text-sm font-medium">{t("emailNumber", { id: log.id })}</p>
         {log.member_name && (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">{t("member")}</span>
+            <span className="text-ink-2">{t("member")}</span>
             <span className="truncate" dir="auto">
               {log.member_id ? (
                 <MemberDetailsTrigger member={{ id: log.member_id, name: log.member_name }} />
@@ -545,13 +546,13 @@ function DefaultRow({ log }: EmailLogRowProps) {
         )}
         {log.member_email && (
           <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <span className="text-muted-foreground/60">{t("email")}</span>
+            <span className="text-ink-2">{t("email")}</span>
             <span className="truncate">{log.member_email}</span>
           </div>
         )}
         {eventName && (
           <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground/60">{t("event")}</span>
+            <span className="text-ink-2">{t("event")}</span>
             <EventNameWithTooltip eventName={eventName} eventOfficial={eventOfficial} />
           </div>
         )}
@@ -633,7 +634,7 @@ function useLogSummary(log: EnrichedEmailLog) {
 function DetailLine({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex min-w-0 gap-1.5">
-      <dt className="text-muted-foreground/70 shrink-0">{label}</dt>
+      <dt className="text-ink-2 shrink-0">{label}</dt>
       <dd className="min-w-0 break-words">{children}</dd>
     </div>
   );
@@ -666,14 +667,12 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
         aria-expanded={open}
         aria-controls={detailsId}
         onClick={() => setOpen((v) => !v)}
-        className="active:bg-muted/60 focus-visible:ring-ring/50 flex min-h-14 w-full items-center gap-3 px-3 py-2.5 text-start outline-none focus-visible:ring-[3px] focus-visible:ring-inset"
+        className="active:bg-sunk focus-visible:ring-ring/50 flex min-h-14 w-full items-center gap-3 px-3 py-2.5 text-start outline-none focus-visible:ring-[3px] focus-visible:ring-inset"
       >
-        <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-          <Icon className="size-4" />
-        </span>
+        <Plate tone="neutral" size="sm" icon={Icon} />
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
-            <span dir="auto" className={`truncate text-sm font-medium ${s.nameChanged ? CHANGED_CLASS : ""}`}>
+            <span dir="auto" className={`truncate text-sm font-bold ${s.nameChanged ? CHANGED_CLASS : ""}`}>
               {s.primary}
             </span>
             <time
@@ -703,7 +702,7 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
       </button>
 
       {open && (
-        <div id={detailsId} className="space-y-3 px-3 pb-3 ps-15">
+        <div id={detailsId} className="space-y-3 px-3 pb-3 ps-14">
           <dl className="space-y-1 text-[13px]">
             {s.memberName && (
               <DetailLine label={t("member")}>
@@ -752,10 +751,10 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
           </dl>
 
           {(s.nameChanged || s.eventChanged) && (
-            <div className="bg-brand-yellow-soft text-brand-yellow-ink space-y-0.5 rounded-lg px-3 py-2 text-[13px]">
-              <p className="font-medium">{t("valuesAtSendTime")}</p>
+            <div className="bg-door-ochre-soft text-door-ochre-ink space-y-0.5 rounded-lg px-3 py-2 text-[13px]">
+              <p className="font-bold">{t("valuesAtSendTime")}</p>
               {s.nameChanged && s.snapshotMemberName && (
-                <p dir="auto">{t("nameAtSendTime", { name: s.snapshotMemberName })}</p>
+                <p dir="auto">{t("nameAtSendTime", { name: isolate(s.snapshotMemberName) })}</p>
               )}
               {s.eventChanged && s.snapEvent && (
                 <p>
@@ -835,7 +834,7 @@ export function EmailLogRow({ log, onViewHtml, isNew }: EmailLogRowProps) {
   return (
     <div
       className={`transition-colors duration-700 ${
-        isNew ? "animate-in slide-in-from-top-2 fade-in duration-500 bg-brand-green-soft" : ""
+        isNew ? "animate-in slide-in-from-top-2 fade-in duration-500 bg-door-green-soft" : ""
       }`}
     >
       <div className="md:hidden">

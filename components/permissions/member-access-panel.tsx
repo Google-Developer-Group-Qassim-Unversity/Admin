@@ -17,7 +17,6 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-import { BrandRail } from "@/components/brand-mark";
 import { ClubMemberPicker } from "@/components/club-structure/member-picker";
 import { MemberDetailsTrigger, memberInitials } from "@/components/member-details";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -45,9 +44,9 @@ const SOURCE_ICONS: Record<PermissionSource | "staff", LucideIcon> = {
 
 /** Full class strings for the member's standing - Tailwind cannot see built-up names. */
 const STATUS = {
-  superAdmin: { icon: Crown, pill: "bg-brand-blue-soft text-brand-blue-ink" },
-  staff: { icon: ShieldCheck, pill: "bg-brand-green-soft text-brand-green-ink" },
-  regular: { icon: Ban, pill: "bg-brand-red-soft text-brand-red-ink" },
+  superAdmin: { icon: Crown, pill: "bg-door-indigo-soft text-door-indigo-ink", meter: "bg-door-indigo" },
+  staff: { icon: ShieldCheck, pill: "bg-door-green-soft text-door-green-ink", meter: "bg-door-green" },
+  regular: { icon: Ban, pill: "bg-door-madder-soft text-door-madder-ink", meter: "bg-door-madder" },
 } as const;
 
 /**
@@ -80,14 +79,13 @@ export function MemberAccessPanel({
 
   if (memberId === null) {
     return (
-      <section className="bg-card border-border overflow-hidden rounded-xl border">
-        <BrandRail />
+      <section className="border-adobe overflow-hidden rounded-xl border border-dashed">
         <Empty>
           <EmptyHeader>
-            <EmptyMedia variant="icon" className="bg-brand-blue-soft text-brand-blue-ink">
+            <EmptyMedia variant="icon">
               <UserRound />
             </EmptyMedia>
-            <EmptyTitle className="font-display text-lg font-semibold tracking-tight">{t("emptyTitle")}</EmptyTitle>
+            <EmptyTitle>{t("emptyTitle")}</EmptyTitle>
             <EmptyDescription>{t("emptyHint")}</EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
@@ -133,26 +131,25 @@ function Summary({ data, onChange }: { data: MemberAccess; onChange: () => void 
   const t = useTranslations("permissions.member");
   const total = usePermissionCatalogue().data?.length ?? data.permissions.length;
   const status = data.is_super_admin ? "superAdmin" : data.is_staff ? "staff" : "regular";
-  const { icon: StatusIcon, pill } = STATUS[status];
+  const { icon: StatusIcon, pill, meter } = STATUS[status];
   const held = data.is_super_admin ? total : data.permissions.length;
 
   return (
-    <section className="bg-card border-border overflow-hidden rounded-xl border">
-      <BrandRail />
+    <section className="bg-card ring-rule overflow-hidden rounded-xl ring-1">
       <div className="flex flex-col gap-5 p-4 sm:p-5">
         <div className="flex items-start gap-3.5">
           <span
             aria-hidden="true"
-            className="bg-brand-blue-soft text-brand-blue-ink flex size-14 shrink-0 items-center justify-center rounded-full text-base font-semibold max-sm:size-12 max-sm:text-sm"
+            className="bg-foreground text-background flex size-14 shrink-0 items-center justify-center rounded-[4px] text-base font-bold max-sm:size-12 max-sm:text-sm"
           >
             {memberInitials(data.member.name)}
           </span>
           <div className="flex min-w-0 flex-1 flex-col items-start gap-1.5">
             <MemberDetailsTrigger
               member={{ id: data.member.member_id, name: data.member.name }}
-              className="font-display text-xl leading-tight font-semibold tracking-tight wrap-anywhere max-sm:text-lg"
+              className="font-display text-[22px] leading-tight font-semibold wrap-anywhere max-sm:text-xl"
             />
-            <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium", pill)}>
+            <span className={cn("inline-flex items-center gap-1.5 rounded-sm px-2 py-1 text-xs font-bold", pill)}>
               <StatusIcon className="h-3.5 w-3.5" />
               {status === "staff" && data.semester
                 ? t("status.staff", { semester: data.semester.name })
@@ -167,11 +164,11 @@ function Summary({ data, onChange }: { data: MemberAccess; onChange: () => void 
 
         <div className="flex flex-col gap-1.5">
           <div className="flex items-baseline justify-between gap-3 text-sm">
-            <span className="text-muted-foreground">{t("heldLabel")}</span>
-            <span className="tabular font-medium">{t("heldValue", { held, total })}</span>
+            <span className="text-ink-2">{t("heldLabel")}</span>
+            <span className="tabular font-bold">{t("heldValue", { held, total })}</span>
           </div>
           <div
-            className="bg-muted h-1.5 overflow-hidden rounded-full"
+            className="bg-sunk h-2 overflow-hidden rounded-[1px] shadow-[inset_0_0_0_1px_var(--rule)]"
             role="meter"
             aria-label={t("heldLabel")}
             aria-valuemin={0}
@@ -179,7 +176,7 @@ function Summary({ data, onChange }: { data: MemberAccess; onChange: () => void 
             aria-valuenow={held}
           >
             <div
-              className={cn("h-full rounded-full", status === "regular" ? "bg-brand-red" : "bg-brand-blue")}
+              className={cn("h-full rounded-[1px]", meter)}
               style={{ width: `${total ? Math.max((held / total) * 100, held ? 2 : 0) : 0}%` }}
             />
           </div>
@@ -187,7 +184,7 @@ function Summary({ data, onChange }: { data: MemberAccess; onChange: () => void 
 
         {data.departments.length > 0 ? (
           <div className="flex flex-col gap-2">
-            <h3 className="text-sm font-medium">{t("rolesTitle")}</h3>
+            <h3 className="text-sm font-bold">{t("rolesTitle")}</h3>
             <ul className="flex flex-wrap gap-2">
               {data.departments.map((d) => (
                 <DepartmentRole key={d.department_id} department={d} />
@@ -211,19 +208,19 @@ function DepartmentRole({ department }: { department: MemberDepartmentAccess }) 
 
   return (
     <li
-      className="flex items-center gap-2.5 rounded-lg border py-1.5 ps-1.5 pe-3"
-      style={{ borderColor: `${department.color}55`, backgroundColor: `${department.color}12` }}
+      className="flex items-center gap-2.5 rounded-lg py-1.5 ps-1.5 pe-3"
+      style={{ boxShadow: `inset 0 0 0 1px ${department.color}66`, backgroundColor: `${department.color}14` }}
     >
       <span
         aria-hidden="true"
-        className="flex size-7 items-center justify-center rounded-md"
-        style={{ backgroundColor: `${department.color}26`, color: department.color }}
+        className="plate-depth flex h-8 w-7 items-center justify-center rounded-t-[3px] rounded-b-[2px] text-white"
+        style={{ backgroundColor: department.color }}
       >
         <Icon className="h-4 w-4" />
       </span>
       <span className="flex flex-col leading-tight">
-        <span className="text-sm font-medium">{locale === "ar" ? department.ar_name : department.name}</span>
-        <span className="text-muted-foreground text-xs">{roles.join(", ")}</span>
+        <span className="text-sm font-bold">{locale === "ar" ? department.ar_name : department.name}</span>
+        <span className="text-ink-2 text-xs">{roles.join(", ")}</span>
       </span>
     </li>
   );
@@ -259,22 +256,22 @@ function PermissionList({ data }: { data: MemberAccess }) {
   const sources = new Set(data.departments.flatMap((d) => d.permissions.flatMap((p) => p.sources)));
 
   return (
-    <section className="bg-card border-border flex flex-col gap-6 rounded-xl border p-4 sm:p-5">
+    <section className="flex flex-col gap-6">
       <div className="flex flex-col gap-3">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div className="flex flex-col gap-1">
-            <h2 className="font-display text-lg font-semibold tracking-tight">{t("listTitle")}</h2>
-            <p className="text-muted-foreground max-w-prose text-[13px]">{t("listHint")}</p>
+            <h2 className="text-base font-bold">{t("listTitle")}</h2>
+            <p className="text-ink-2 max-w-prose text-[13px]">{t("listHint")}</p>
           </div>
           {!data.is_super_admin ? (
-            <label className="text-muted-foreground flex shrink-0 cursor-pointer items-center gap-2 text-sm">
+            <label className="text-ink-2 flex min-h-11 shrink-0 cursor-pointer items-center gap-2.5 text-sm font-medium">
               <Switch checked={showMissing} onCheckedChange={setShowMissing} />
               {t("showMissing")}
             </label>
           ) : null}
         </div>
         {!data.is_super_admin && reasons.size > 0 ? (
-          <ul className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1.5 text-xs" aria-label={t("legend")}>
+          <ul className="text-ink-2 flex flex-wrap gap-x-4 gap-y-1.5 text-[12.5px]" aria-label={t("legend")}>
             {(["staff", "shared", "department", "team", "grant"] as const)
               .filter((s) => s === "staff" ? data.basics.length > 0 : sources.has(s))
               .map((s) => {
@@ -291,16 +288,16 @@ function PermissionList({ data }: { data: MemberAccess }) {
       </div>
 
       {groups.length === 0 ? (
-        <div className="text-muted-foreground flex flex-col items-center gap-2 py-6 text-center text-sm">
+        <div className="text-ink-2 flex flex-col items-center gap-2 py-6 text-center text-sm">
           <Ban className="h-5 w-5" />
           {t("nothing")}
         </div>
       ) : (
         groups.map(({ group, rows, held, total }) => (
           <div key={group} className="flex flex-col gap-2.5">
-            <div className="flex items-baseline justify-between gap-3">
-              <h3 className="text-sm font-semibold">{t(`groups.${group}`)}</h3>
-              <span className="text-muted-foreground tabular text-xs">{t("groupCount", { held, total })}</span>
+            <div className="border-foreground flex items-baseline justify-between gap-3 border-b pb-2">
+              <h3 className="text-[15px] font-bold">{t(`groups.${group}`)}</h3>
+              <span className="text-ink-2 tabular text-[12.5px] font-bold">{t("groupCount", { held, total })}</span>
             </div>
             <ul className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {rows.map((perm) => (
@@ -336,19 +333,19 @@ function PermissionTile({
   return (
     <li
       className={cn(
-        "flex flex-col gap-2 rounded-lg border px-3 py-2.5",
-        held ? "border-border bg-background/40" : "border-border/70 border-dashed",
+        "flex flex-col gap-2 rounded-lg px-3 py-2.5",
+        held ? "bg-card ring-rule ring-1" : "border-adobe/70 border border-dashed",
       )}
     >
-      <span className={cn("text-sm font-medium", !held && "text-muted-foreground")}>{label}</span>
+      <span className={cn("text-sm font-bold", !held && "text-ink-2 font-medium")}>{label}</span>
       <div className="flex flex-wrap gap-1.5">
         {!held ? (
-          <span className="text-muted-foreground inline-flex items-center gap-1 text-xs">
+          <span className="text-ink-2 inline-flex items-center gap-1 text-xs">
             <Minus className="h-3.5 w-3.5" />
             {t("notHeld")}
           </span>
         ) : superAdmin ? (
-          <span className="bg-brand-blue-soft text-brand-blue-ink inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium">
+          <span className="bg-door-indigo-soft text-door-indigo-ink inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-bold">
             <Crown className="h-3.5 w-3.5" />
             {t("why.superAdmin")}
           </span>
@@ -367,7 +364,7 @@ function ReasonChips({ reason }: { reason: Reason }) {
 
   if (!reason) {
     return (
-      <span className="bg-muted text-muted-foreground inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs">
+      <span className="bg-sunk text-ink-2 inline-flex items-center gap-1 rounded-sm px-2 py-0.5 text-xs font-medium">
         <BadgeCheck className="h-3.5 w-3.5" />
         {t("why.staff")}
       </span>
@@ -390,12 +387,12 @@ function ReasonChips({ reason }: { reason: Reason }) {
           <span
             key={source}
             title={granter ? `${granter.name} · ${date}` : undefined}
-            className="inline-flex max-w-full items-center gap-1 rounded-md border px-2 py-0.5 text-xs"
-            style={{ borderColor: `${department.color}50`, backgroundColor: `${department.color}14` }}
+            className="inline-flex max-w-full items-center gap-1 rounded-sm px-2 py-0.5 text-xs"
+            style={{ boxShadow: `inset 0 0 0 1px ${department.color}55`, backgroundColor: `${department.color}14` }}
           >
             <Icon className="h-3.5 w-3.5 shrink-0" style={{ color: department.color }} />
             <span className="truncate">
-              <span className="font-medium">{name}</span> <span className="text-muted-foreground">· {why}</span>
+              <span className="font-bold">{name}</span> <span className="text-ink-2">· {why}</span>
             </span>
           </span>
         );

@@ -60,7 +60,7 @@ export function MemberSelectionTab({
           the rest of the sheet. sm+: the two lists side by side. */}
       <div className="flex min-h-0 flex-1 flex-col gap-3 sm:min-h-[400px] sm:flex-row sm:gap-4">
         <div className="flex min-h-0 flex-1 flex-col rounded-lg border">
-          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-muted/50 px-3 py-1.5">
+          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-sunk/60 px-3 py-1.5">
             <span className="tabular text-sm font-medium">
               {isRemoveMode ? t("attended") : t("available")} ({totalAvailable})
             </span>
@@ -78,7 +78,7 @@ export function MemberSelectionTab({
           </div>
           <div className="border-b px-3 py-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute start-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
               <Input
                 type="search"
                 inputMode="search"
@@ -91,7 +91,7 @@ export function MemberSelectionTab({
               />
             </div>
             {showLimitHint && (
-              <p className="mt-1.5 text-xs text-muted-foreground">
+              <p className="mt-1.5 text-xs text-ink-2">
                 {t("limitHint", { shown: DISPLAY_LIMIT, total: totalAvailable })}
               </p>
             )}
@@ -104,7 +104,7 @@ export function MemberSelectionTab({
                 ))}
               </div>
             ) : availableMembers.length === 0 ? (
-              <div className="p-4 text-center text-sm text-muted-foreground">
+              <div className="p-4 text-center text-sm text-ink-2">
                 {searchQuery.trim()
                   ? t("noMembersFound")
                   : isRemoveMode
@@ -117,17 +117,17 @@ export function MemberSelectionTab({
                   <button
                     key={member.id}
                     type="button"
-                    className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-start hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none active:bg-muted"
+                    className="flex min-h-12 w-full items-center gap-3 px-3 py-2 text-start hover:bg-sunk/60 focus-visible:bg-sunk/60 focus-visible:outline-none active:bg-sunk"
                     onClick={() => onAdd(member.id)}
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm"><bdi>{member.name}</bdi></p>
-                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">
+                      <p className="truncate text-[13px] text-ink-2 sm:text-xs">
                         <span className="tabular" dir="ltr">{member.uni_id ?? member.email}</span>
                       </p>
                     </div>
-                    <Plus className="h-5 w-5 shrink-0 text-muted-foreground sm:hidden" />
-                    <ChevronRight className="hidden h-4 w-4 shrink-0 text-muted-foreground rtl:-scale-x-100 sm:block" />
+                    <Plus className="h-5 w-5 shrink-0 text-ink-2 sm:hidden" />
+                    <ChevronRight className="hidden h-4 w-4 shrink-0 text-ink-2 rtl:-scale-x-100 sm:block" />
                   </button>
                 ))}
               </div>
@@ -136,7 +136,7 @@ export function MemberSelectionTab({
         </div>
 
         <div className="order-first flex max-h-[30%] shrink-0 flex-col rounded-lg border sm:order-none sm:max-h-none sm:min-h-0 sm:flex-1 sm:shrink">
-          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-muted/50 px-3 py-1.5">
+          <div className="flex min-h-11 items-center justify-between gap-2 border-b bg-sunk/60 px-3 py-1.5">
             <span className="tabular text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
             {selectedMembers.length > 0 && (
               <Button
@@ -151,17 +151,17 @@ export function MemberSelectionTab({
           </div>
           <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {selectedMembers.length === 0 ? (
-              <div className="p-3 text-center text-sm text-muted-foreground sm:p-4">
+              <div className="p-3 text-center text-sm text-ink-2 sm:p-4">
                 {t("noneSelected")}
               </div>
             ) : (
               <div className="divide-y">
                 {selectedMembers.map((member) => (
-                  <div key={member.id} className="flex min-h-12 items-center gap-2 px-3 py-1.5 hover:bg-muted/50">
-                    <Check className="h-4 w-4 shrink-0 text-primary" />
+                  <div key={member.id} className="flex min-h-12 items-center gap-2 px-3 py-1.5 hover:bg-sunk/60">
+                    <Check className="text-door-green-ink h-4 w-4 shrink-0" />
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm"><bdi>{member.name}</bdi></p>
-                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">
+                      <p className="truncate text-[13px] text-ink-2 sm:text-xs">
                         <span className="tabular" dir="ltr">{member.uni_id ?? member.email}</span>
                       </p>
                     </div>

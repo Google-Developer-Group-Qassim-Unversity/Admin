@@ -12,6 +12,7 @@ import { useAssignments, usePermissionCatalogue, useSetDepartment, useSetShared 
 import { DEPARTMENT_SCOPED, PERM_GROUPS, STAFF_BASICS, type Perm, type PermGroup } from "@/lib/access";
 import type { CataloguePermission } from "@/lib/permissions-types";
 import { cn } from "@/lib/utils";
+import { isolate } from "@/lib/format";
 
 /** "all" edits the shared permissions; a number edits that department's extras. */
 type Target = "all" | number;
@@ -37,13 +38,13 @@ export function LeadersPanel() {
   const name = (d: { name: string; ar_name: string }) => (locale === "ar" ? d.ar_name : d.name);
 
   return (
-    <section className="bg-card border-border flex flex-col gap-5 rounded-xl border p-4 sm:p-5">
-      <div className="flex flex-col gap-1">
-        <h2 className="font-display text-lg font-semibold tracking-tight">{t("title")}</h2>
-        <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
+    <section className="flex flex-col gap-5">
+      <div className="border-foreground flex flex-col gap-1 border-b pb-3">
+        <h2 className="text-base font-bold">{t("title")}</h2>
+        <p className="text-ink-2 max-w-[70ch] text-[13px]">{t("hint")}</p>
       </div>
 
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label={t("pickTarget")}>
+      <div className="bg-mortar flex flex-wrap gap-1 rounded-lg p-1" role="radiogroup" aria-label={t("pickTarget")}>
         <TargetChip active={target === "all"} onClick={() => setTarget("all")} count={shared.size}>
           {t("everyDepartment")}
         </TargetChip>
@@ -60,7 +61,7 @@ export function LeadersPanel() {
         ))}
       </div>
 
-      <p className="bg-muted/60 rounded-lg px-3 py-2.5 text-sm">
+      <p className="bg-door-indigo-soft text-door-indigo-ink rounded-lg px-3.5 py-3 text-sm font-medium">
         {department
           ? t("departmentSummary", {
               department: name(department),
@@ -102,17 +103,15 @@ function TargetChip({
       aria-checked={active}
       onClick={onClick}
       className={cn(
-        "flex h-9 items-center gap-2 rounded-full border px-3.5 text-sm font-medium transition-colors",
-        active
-          ? "bg-primary text-primary-foreground border-primary"
-          : "border-border hover:bg-muted text-foreground",
+        "flex min-h-10 items-center gap-2 rounded-sm px-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        active ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground",
       )}
     >
       {children}
       <span
         className={cn(
-          "rounded-full px-1.5 text-xs tabular-nums",
-          active ? "bg-primary-foreground/20" : "bg-muted text-muted-foreground",
+          "rounded-[2px] px-1.5 text-xs tabular-nums",
+          active ? "bg-background/20" : "bg-sunk text-ink-2",
         )}
       >
         {plus ? `+${count}` : count}
@@ -175,7 +174,7 @@ function PermissionChecklist({
       {groups.map(({ group, rows }) =>
         rows.length === 0 ? null : (
           <fieldset key={group} className="flex flex-col gap-2">
-            <legend className="text-muted-foreground mb-2 text-xs font-semibold tracking-wide uppercase">
+            <legend className="border-foreground mb-2 w-full border-b pb-2 text-[15px] font-bold">
               {t(`groups.${group}`)}
             </legend>
             <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -185,8 +184,8 @@ function PermissionChecklist({
                   <label
                     key={p.key}
                     className={cn(
-                      "border-border flex items-start gap-2.5 rounded-lg border px-3 py-2.5 text-sm",
-                      locked ? "bg-muted/40" : "hover:bg-muted/30 cursor-pointer",
+                      "flex min-h-12 items-start gap-2.5 rounded-lg px-3 py-2.5 text-sm",
+                      locked ? "bg-sunk" : "bg-card ring-rule hover:ring-adobe cursor-pointer ring-1 has-[[data-state=checked]]:ring-foreground",
                     )}
                   >
                     <Checkbox
@@ -196,17 +195,17 @@ function PermissionChecklist({
                       onCheckedChange={(v) => toggle(p.key, v === true)}
                     />
                     <span className="flex min-w-0 flex-col gap-0.5">
-                      <span className={cn("font-medium", locked && "text-muted-foreground")}>
+                      <span className={cn("font-bold", locked && "text-ink-2 font-medium")}>
                         {locale === "ar" ? p.ar_label : p.label}
                       </span>
                       {locked ? (
-                        <span className="text-muted-foreground flex items-center gap-1 text-xs">
+                        <span className="text-ink-2 flex items-center gap-1 text-xs">
                           <Lock className="h-3 w-3" />
                           {t(locked === "staff" ? "lockedStaff" : "lockedShared")}
                         </span>
                       ) : DEPARTMENT_SCOPED.has(p.key) ? (
-                        <span className="text-muted-foreground text-xs">
-                          {departmentName ? t("ownDepartmentNamed", { department: departmentName }) : t("ownDepartment")}
+                        <span className="text-ink-2 text-xs">
+                          {departmentName ? t("ownDepartmentNamed", { department: isolate(departmentName) }) : t("ownDepartment")}
                         </span>
                       ) : null}
                     </span>
@@ -217,9 +216,9 @@ function PermissionChecklist({
           </fieldset>
         ),
       )}
-      <div className="bg-card border-border sticky bottom-0 -mx-4 flex items-center gap-3 border-t px-4 py-3 sm:-mx-5 sm:px-5">
+      <div className="bg-card border-foreground sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center gap-3 border-t px-4 py-3 sm:mx-0 sm:rounded-b-lg md:bottom-0">
         <Button onClick={onSave} disabled={!dirty || pending}>
-          {departmentName ? t("saveDepartment", { department: departmentName }) : t("saveShared")}
+          {departmentName ? t("saveDepartment", { department: isolate(departmentName) }) : t("saveShared")}
         </Button>
         {dirty ? (
           <Button variant="ghost" onClick={() => setChosen(new Set(initial))} disabled={pending}>

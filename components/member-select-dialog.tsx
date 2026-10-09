@@ -142,7 +142,7 @@ export function MemberSelectDialog({
           </DialogHeader>
 
           {isLoading && (
-            <div role="status" className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
+            <div role="status" className="flex flex-1 items-center justify-center text-sm text-ink-2">
               {t("loading")}
             </div>
           )}
@@ -161,7 +161,7 @@ export function MemberSelectDialog({
             <div className="flex-1 min-h-0 flex flex-col md:flex-row gap-3">
               {/* Available Members Column */}
               <div className="min-h-0 min-w-0 flex-1 flex flex-col border rounded-lg">
-                <div className="shrink-0 px-3 py-2 border-b bg-muted/50 flex flex-wrap gap-1 items-center justify-between">
+                <div className="shrink-0 px-3 py-2 border-b bg-sunk/60 flex flex-wrap gap-1 items-center justify-between">
                   <span className="text-sm font-medium">{t("available", { count: totalAvailable })}</span>
                   {allowCreate && (
                     <Button
@@ -177,7 +177,7 @@ export function MemberSelectDialog({
                 </div>
                 <div className="shrink-0 px-3 py-2 border-b">
                   <div className="relative">
-                    <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute start-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-ink-2" />
                     <Input
                       type="search"
                       inputMode="search"
@@ -190,14 +190,14 @@ export function MemberSelectDialog({
                     />
                   </div>
                   {(showLimitHint || showSearchLimitHint) && (
-                    <p className="text-xs text-muted-foreground mt-1.5">
+                    <p className="text-xs text-ink-2 mt-1.5">
                       {t("showingLimit", { limit: DISPLAY_LIMIT, total: totalAvailable })}
                     </p>
                   )}
                 </div>
                 <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                   {availableMembers.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">
+                    <div className="p-4 text-center text-sm text-ink-2">
                       {searchQuery.trim()
                         ? t("noneFound")
                         : memberOptions.length === 0
@@ -210,7 +210,7 @@ export function MemberSelectDialog({
                         <button
                           type="button"
                           key={member.id}
-                          className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-start hover:bg-muted/50 focus-visible:bg-muted focus-visible:outline-ring cursor-pointer"
+                          className="flex min-h-11 w-full items-center gap-2 px-3 py-2 text-start hover:bg-sunk/60 focus-visible:bg-sunk focus-visible:outline-ring cursor-pointer"
                           onClick={() => handleAddMember(member.id)}
                         >
                           <div className="size-5 shrink-0 rounded border sm:size-4" />
@@ -218,7 +218,7 @@ export function MemberSelectDialog({
                             <p className="text-sm wrap-anywhere">
                               <bdi>{member.label}</bdi>
                             </p>
-                            <p className="text-[13px] text-muted-foreground wrap-anywhere sm:text-xs">
+                            <p className="text-[13px] text-ink-2 wrap-anywhere sm:text-xs">
                               <bdi>{member.uni_id ?? member.email}</bdi>
                             </p>
                           </div>
@@ -231,13 +231,13 @@ export function MemberSelectDialog({
 
               {/* Selected Members Column */}
               <div className="min-h-0 min-w-0 max-h-32 shrink-0 flex flex-col border rounded-lg md:max-h-none md:flex-1">
-                <div className="shrink-0 px-3 py-2 border-b bg-muted/50 flex flex-wrap gap-1 items-center justify-between">
+                <div className="shrink-0 px-3 py-2 border-b bg-sunk/60 flex flex-wrap gap-1 items-center justify-between">
                   <span className="text-sm font-medium">{t("selected", { count: selectedMembers.length })}</span>
                   {selectedMembers.length > 0 && (
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="h-7 text-xs text-muted-foreground hover:text-destructive pointer-coarse:h-9 pointer-coarse:text-sm"
+                      className="h-7 text-xs text-ink-2 hover:text-destructive pointer-coarse:h-9 pointer-coarse:text-sm"
                       onClick={() => setPendingSelectedIds(new Set())}
                     >
                       {tc("clearAll")}
@@ -246,17 +246,17 @@ export function MemberSelectDialog({
                 </div>
                 <div className="flex-1 overflow-y-auto overscroll-contain min-h-0">
                   {selectedMembers.length === 0 ? (
-                    <div className="p-4 text-center text-sm text-muted-foreground">{t("noneSelected")}</div>
+                    <div className="p-4 text-center text-sm text-ink-2">{t("noneSelected")}</div>
                   ) : (
                     <div className="divide-y">
                       {selectedMembers.map((member) => (
-                        <div key={member.id} className="flex items-center gap-2 px-3 py-2 hover:bg-muted/50">
-                          <Check className="h-4 w-4 text-primary shrink-0" />
+                        <div key={member.id} className="flex items-center gap-2 px-3 py-2 hover:bg-sunk/60">
+                          <Check className="text-door-green-ink h-4 w-4 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="text-sm wrap-anywhere">
                               <bdi>{member.label}</bdi>
                             </p>
-                            <p className="text-[13px] text-muted-foreground wrap-anywhere sm:text-xs">
+                            <p className="text-[13px] text-ink-2 wrap-anywhere sm:text-xs">
                               <bdi>{member.uni_id ?? member.email}</bdi>
                             </p>
                           </div>

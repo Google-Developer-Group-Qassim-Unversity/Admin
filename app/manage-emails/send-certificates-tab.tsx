@@ -54,22 +54,11 @@ import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
 import { useTranslations } from "next-intl";
+import { useFormatters } from "@/lib/format";
 
-function formatEventDate(event: Event): string {
-  const start = new Date(event.start_datetime);
-  const end = new Date(event.end_datetime);
-  const startStr = start.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  if (start.toDateString() === end.toDateString()) return startStr;
-  const endStr = end.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return `${startStr} - ${endStr}`;
+/** "9 Oct 2026", or a range written the way the reader's language writes ranges. */
+function formatEventDate(event: Event, fmt: ReturnType<typeof useFormatters>): string {
+  return fmt.range(event.start_datetime, event.end_datetime);
 }
 
 function toDateString(datetime: string): string {
@@ -78,6 +67,7 @@ function toDateString(datetime: string): string {
 
 export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const t = useTranslations("manageEmails.sendCertificates");
+  const fmt = useFormatters();
   const tf = useTranslations("common.fields");
   const tDirect = useTranslations("manageEmails.directEmail");
   const tc = useTranslations("common.actions");
@@ -233,9 +223,10 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
       type="button"
       onClick={handleSend}
       disabled={isSubmitting || validRecipientCount === 0 || !isEventValid}
-      className="gap-2 shadow-sm"
+      variant="ochre"
+      size="lg"
     >
-      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+      {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Send className="h-4 w-4" />}
       {t("sendCertificatesButton", { count: validRecipientCount })}
     </Button>
   );
@@ -251,7 +242,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
 
   if (error) {
     return (
-      <Alert variant="destructive" className="rounded-xl border-destructive/20 bg-destructive/5">
+      <Alert variant="destructive">
         <AlertCircle className="h-4 w-4" />
         <AlertTitle>{t("errorLoadingEvents")}</AlertTitle>
         <AlertDescription>{error}</AlertDescription>
@@ -275,10 +266,10 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
 
         <TabsContent value="individual" className="mt-4 space-y-4">
           <div className="grid gap-4 md:grid-cols-12">
-            <Card className="md:col-span-4 shadow-sm">
+            <Card className="md:col-span-4">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-primary" />
+                  <Calendar className="h-4 w-4 text-ink-2" />
                   {t("event")}
                 </CardTitle>
                 <CardDescription className="text-xs">
@@ -302,7 +293,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                       <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0 shadow-lg" align="start">
+                  <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0" align="start">
                     <Command filter={(value, search) => {
                       const normValue = normalizeArabic(value);
                       const normSearch = normalizeArabic(search);
@@ -329,7 +320,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                               <div className="flex flex-col">
                                 <span dir="auto">{event.name}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {formatEventDate(event)}
+                                  {formatEventDate(event, fmt)}
                                 </span>
                               </div>
                             </CommandItem>
@@ -342,7 +333,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
 
                 <div className="space-y-2">
                   <div>
-                    <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    <Label className="text-ink-2 text-xs font-bold mb-1 block">
                       {t("eventName")}
                     </Label>
                     <Input
@@ -354,7 +345,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    <Label className="text-ink-2 text-xs font-bold mb-1 block">
                       {tf("date")}
                     </Label>
                     <Input
@@ -365,7 +356,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                     />
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    <Label className="text-ink-2 text-xs font-bold mb-1 block">
                       {t("type")}
                     </Label>
                     <Select
@@ -382,7 +373,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                     </Select>
                   </div>
                   <div>
-                    <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                    <Label className="text-ink-2 text-xs font-bold mb-1 block">
                       {t("language")}
                     </Label>
                     <Select
@@ -403,13 +394,13 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
               </CardContent>
             </Card>
 
-            <Card className="md:col-span-8 shadow-sm flex flex-col">
+            <Card className="md:col-span-8 flex flex-col">
               <CardHeader className="p-4 pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Users className="h-4 w-4 text-primary" />
+                  <Users className="h-4 w-4 text-ink-2" />
                   {t("recipients")}
                   {validRecipientCount > 0 && (
-                    <Badge variant="outline" className="tabular text-[11px] font-bold">
+                    <Badge variant="secondary" className="tabular">
                       {validRecipientCount}
                     </Badge>
                   )}
@@ -443,7 +434,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                   {recipients.map((recipient, index) => (
                     <div
                       key={index}
-                      className="relative grid grid-cols-1 md:grid-cols-12 gap-3 p-3 rounded-lg border bg-muted/30"
+                      className="relative grid grid-cols-1 md:grid-cols-12 gap-3 p-3 rounded-lg bg-sunk ring-1 ring-rule"
                     >
                       {recipients.length > 1 && (
                         <Button
@@ -452,13 +443,13 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                           size="icon"
                           onClick={() => removeRecipient(index)}
                           aria-label={tc("remove")}
-                          className="absolute -end-2 -top-2 size-8 rounded-full bg-background border shadow-sm hover:text-destructive md:size-6"
+                          className="absolute -end-2 -top-2 size-8 rounded-sm bg-card ring-1 ring-rule hover:text-door-madder-ink md:size-6"
                         >
                           <X className="h-3 w-3" />
                         </Button>
                       )}
                       <div className="md:col-span-5">
-                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                        <Label className="text-ink-2 text-xs font-bold mb-1 block">
                           {tf("name")}
                         </Label>
                         <Input
@@ -471,7 +462,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                         />
                       </div>
                       <div className="md:col-span-4">
-                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                        <Label className="text-ink-2 text-xs font-bold mb-1 block">
                           {tf("email")}
                         </Label>
                         <Input
@@ -485,7 +476,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                         />
                       </div>
                       <div className="md:col-span-3">
-                        <Label className="text-xs font-semibold text-muted-foreground mb-1 block">
+                        <Label className="text-ink-2 text-xs font-bold mb-1 block">
                           {tf("gender")}
                         </Label>
                         <Select

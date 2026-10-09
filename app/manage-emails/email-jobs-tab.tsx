@@ -16,9 +16,13 @@ import {
   PenLine,
   Send,
   XCircle,
+  type LucideIcon,
 } from "lucide-react";
 
-import { URGENCY_STYLES, type Urgency } from "@/components/status-badge";
+import { JobCourse } from "@/components/email-job-status-card";
+import { Plate } from "@/components/najdi";
+import type { Urgency } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -29,7 +33,7 @@ import { useFormatter, useNow, useTranslations } from "next-intl";
 
 // A job's type is a category, not a state: the icon tells them apart and the
 // brand colours are kept for the status pill.
-const TYPE_ICON: Record<EmailJobType, React.ElementType> = {
+const TYPE_ICON: Record<EmailJobType, LucideIcon> = {
   "event-certificate": Award,
   "manual-certificate": PenLine,
   "custom-email": Mail,
@@ -49,11 +53,17 @@ const TYPE_LABEL_KEY: Record<EmailJobType, string> = {
 };
 
 // Colour = state (DESIGN.md): queued/running are in flight on the server, not
-// waiting on an admin, so they read as info (blue); a partial send needs an
-// admin to check who was missed (yellow); failed is red; succeeded is done.
+// waiting on an admin, so they read indigo; a partial send needs an admin to
+// check who was missed (ochre); failed is madder; succeeded is green.
+const BADGE: Record<Urgency, "indigo" | "green" | "ochre" | "madder"> = {
+  info: "indigo",
+  done: "green",
+  waiting: "ochre",
+  overdue: "madder",
+};
 const STATUS_CONFIG: Record<
   EmailJobStatus,
-  { icon: React.ElementType; urgency: Urgency; spin?: boolean }
+  { icon: LucideIcon; urgency: Urgency; spin?: boolean }
 > = {
   queued: { icon: Clock, urgency: "info" },
   running: { icon: Loader2, urgency: "info", spin: true },
@@ -72,22 +82,18 @@ function JobRow({ job }: { job: EmailJobModel }) {
 
   return (
     <div className="flex items-start gap-3 px-3 py-3">
-      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-        <TypeIcon className="h-4 w-4" />
-      </span>
+      <Plate tone="neutral" size="sm" icon={TypeIcon} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
-          <p className="min-w-0 flex-1 truncate text-sm font-medium">
+          <p className="min-w-0 flex-1 truncate text-sm font-bold">
             {t(`types.${TYPE_LABEL_KEY[job.job_type]}`)}
           </p>
-          <span
-            className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${URGENCY_STYLES[status.urgency].pill}`}
-          >
-            <StatusIcon className={`h-3 w-3 ${status.spin ? "animate-spin" : ""}`} />
+          <Badge variant={BADGE[status.urgency]} className="shrink-0">
+            <StatusIcon className={status.spin ? "motion-safe:animate-spin" : undefined} />
             {t(`statuses.${job.status}`)}
-          </span>
+          </Badge>
         </div>
-        <p className="text-muted-foreground mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px] sm:text-xs">
+        <p className="text-ink-2 mt-0.5 flex flex-wrap items-center gap-x-1.5 text-[13px]">
           <span className="tabular">
             {t("sentCount", { succeeded: job.succeeded, total: job.total })}
             {job.failed > 0 ? t("failedSuffix", { failed: job.failed }) : ""}
@@ -97,11 +103,14 @@ function JobRow({ job }: { job: EmailJobModel }) {
             {format.relativeTime(new Date(job.created_at), now)}
           </time>
           <span aria-hidden="true">·</span>
-          <span className="tabular text-muted-foreground/70">#{job.id}</span>
+          <span className="tabular text-ink-2">#{job.id}</span>
         </p>
-        {job.error && (
-          <p className="text-brand-red-ink mt-1 line-clamp-2 text-[13px] break-words sm:text-xs">{job.error}</p>
-        )}
+        {(job.status === "running" || job.status === "queued") && job.total > 0 ? (
+          <div className="mt-2">
+            <JobCourse done={job.succeeded + job.failed} total={job.total} label={t("sentCount", { succeeded: job.succeeded, total: job.total })} />
+          </div>
+        ) : null}
+        {job.error && <p className="text-door-madder-ink mt-1 line-clamp-2 text-[13px] break-words">{job.error}</p>}
       </div>
     </div>
   );
@@ -137,23 +146,19 @@ export function EmailJobsTab() {
   return (
     <div className="space-y-3">
       {unfinished.length > 0 && (
-        <Alert className="border-brand-yellow/40 bg-brand-yellow-soft">
-          <AlertTriangle className="h-4 w-4 text-brand-yellow-ink" />
-          <AlertTitle className="text-brand-yellow-ink">
-            {t("unfinishedTitle", { count: unfinished.length })}
-          </AlertTitle>
-          <AlertDescription className="text-[13px] text-brand-yellow-ink/80 sm:text-xs">
+        <Alert variant="warning">
+          <AlertTriangle />
+          <AlertTitle>{t("unfinishedTitle", { count: unfinished.length })}</AlertTitle>
+          <AlertDescription className="text-[13px]">
             {t("unfinishedDescription")}
           </AlertDescription>
         </Alert>
       )}
 
       <div className="flex items-center justify-between gap-3">
-        <span className="tabular text-xs text-muted-foreground">
-          {t("jobsCount", { count: jobs.length })}
-        </span>
+        <span className="tabular text-sm font-bold">{t("jobsCount", { count: jobs.length })}</span>
         <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v as EmailJobStatus | "all")}>
-          <SelectTrigger aria-label={t("filterByStatus")} className="w-[160px] sm:h-8 sm:text-xs">
+          <SelectTrigger aria-label={t("filterByStatus")} className="w-[170px]">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -167,27 +172,27 @@ export function EmailJobsTab() {
         </Select>
       </div>
 
-      <div className="rounded-lg border bg-card">
+      <div className="bg-card ring-rule overflow-hidden rounded-xl ring-1">
         <ScrollArea className="md:h-[480px] [&_[data-slot=scroll-area-viewport]>div]:block!">
           {jobsQuery.isLoading ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="text-ink-2 flex items-center justify-center gap-2 py-12 text-sm">
+              <Loader2 className="size-4 animate-spin" />
               {t("loading")}
             </div>
           ) : jobs.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+            <div className="text-ink-2 flex items-center justify-center py-12 text-sm">
               {t("noneFound")}
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-rule divide-y">
               {jobs.map((job) => (
                 <JobRow key={job.id} job={job} />
               ))}
             </div>
           )}
         </ScrollArea>
-        <div className="flex items-center justify-between border-t px-3 py-2">
-          <span className="tabular text-xs text-muted-foreground">{tp("page", { page })}</span>
+        <div className="border-rule flex items-center justify-between border-t px-3 py-2">
+          <span className="tabular text-ink-2 text-xs">{tp("page", { page })}</span>
           <div className="flex items-center gap-2">
             <Button
               variant="outline"

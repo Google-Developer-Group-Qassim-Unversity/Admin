@@ -2,9 +2,10 @@
 
 import * as React from "react";
 import { useLocale, useTranslations } from "next-intl";
-import { CheckCircle2, ClipboardCheck, CornerUpLeft, TriangleAlert } from "lucide-react";
+import { CheckCircle2, ClipboardCheck, CornerUpLeft, Timer, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
+import { Door, DoorPanel } from "@/components/najdi";
 import { Countdown } from "@/components/pipeline/countdown";
 import { Button } from "@/components/ui/button";
 import {
@@ -18,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCompleteTask, useReturnRequest } from "@/hooks/use-pipeline";
 import type { EventRequestDetail, PipelineTeam } from "@/lib/pipeline-types";
+import { intlLocale } from "@/lib/format";
 
 /**
  * The caller's team's turn: mark its part done, or (Design, once, early on)
@@ -29,9 +31,56 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
   const tt = useTranslations("pipeline.teams");
   const locale = useLocale();
+  const formatter = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeStyle: "short" });
+  const teams = request.actions.complete.filter((team) => team === "media");
+  const canReturn = request.actions.can_return;
+
+  if (!teams.length && !canReturn) return null;
+  // On Design's turn the poster's door carries "Return with notes" too: one door, not two.
+  if (!teams.length && request.actions.complete.includes("design")) return null;
+
+  const formatTeams = teams.map((team) => tt(team)).join(" · ");
+
+  return (
+    <Door tone="ochre" aria-labelledby="team-turn">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="team-turn" className="font-display text-[21px] leading-tight font-semibold">
+          {t("yourTurn")}
+        </h2>
+        {formatTeams ? (
+          <span className="bg-on-door-ochre text-white inline-flex h-7 items-center gap-1.5 rounded-sm px-2.5 text-[13px] font-bold">
+            <ClipboardCheck className="size-4" />
+            {formatTeams}
+          </span>
+        ) : null}
+      </div>
+      <DoorPanel>
+        <p className="text-sm font-medium">{t("yourTurnHint")}</p>
+        {canReturn && request.return_deadline ? (
+          <p className="mt-1 flex items-center gap-1.5 text-[13px] font-bold">
+            <CornerUpLeft className="size-4 shrink-0" />
+            {t("returnUntil", { date: formatter.format(new Date(request.return_deadline)) })}
+          </p>
+        ) : null}
+      </DoorPanel>
+      <TeamActionButtons request={request} />
+    </Door>
+  );
+}
+
+/**
+ * The buttons alone, for an ochre door that is already open: one green
+ * "Mark <team> done" per team whose turn it is, and "Return with notes" when
+ * Design still may. Shared by the request view and the dashboard's door.
+ */
+export function TeamActionButtons({ request }: { request: EventRequestDetail }) {
+  const t = useTranslations("pipeline.review");
+  const tt = useTranslations("pipeline.teams");
   const complete = useCompleteTask(request.id);
   const [returning, setReturning] = React.useState(false);
-  const formatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
+  // Design finishes with its poster (design-poster) and Logistics by
+  // confirming the event (logistics-confirmation), so only Media's button is
+  // left here.
   const teams = request.actions.complete.filter((team) => team === "media");
   const canReturn = request.actions.can_return;
 
@@ -47,63 +96,53 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
   };
 
   return (
-    <section className="bg-card border-brand-blue/30 flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="bg-brand-blue-soft text-brand-blue-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          <ClipboardCheck className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("yourTurn")}</h2>
-          <p className="text-muted-foreground text-[13px]">{t("yourTurnHint")}</p>
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
-        {teams.map((team) => (
-          <Button key={team} onClick={() => onComplete(team)} disabled={complete.isPending}>
-            <CheckCircle2 className="h-4 w-4" />
-            {t("markTeamDone", { team: tt(team) })}
-          </Button>
-        ))}
-        {canReturn ? (
-          <Button variant="outline" onClick={() => setReturning(true)}>
-            <CornerUpLeft className="h-4 w-4" />
-            {t("return")}
-          </Button>
-        ) : null}
-        {canReturn && request.return_deadline ? (
-          <span className="text-muted-foreground text-xs sm:ms-1">
-            {t("returnUntil", { date: formatter.format(new Date(request.return_deadline)) })}
-          </span>
-        ) : null}
-      </div>
+    <div className="grid gap-2 sm:flex sm:flex-wrap">
+      {teams.map((team) => (
+        <Button key={team} variant="green" size="lg" onClick={() => onComplete(team)} disabled={complete.isPending}>
+          <CheckCircle2 />
+          {t("markTeamDone", { team: tt(team) })}
+        </Button>
+      ))}
+      {canReturn ? (
+        <Button
+          variant="outline"
+          size="lg"
+          className="text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"
+          onClick={() => setReturning(true)}
+        >
+          <CornerUpLeft />
+          {t("return")}
+        </Button>
+      ) : null}
       <ReturnDialog request={request} open={returning} onOpenChange={setReturning} />
-    </section>
+    </div>
   );
 }
 
-/** Design sent it back: the notes, the clock, and any late penalty. */
+/** Design sent it back: the notes, the clock, and what to do. */
 export function ReturnedNotice({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
   return (
-    <section className="bg-brand-red-soft text-brand-red-ink border-brand-red/30 flex flex-col gap-3 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <CornerUpLeft className="mt-0.5 h-5 w-5 shrink-0" />
-        <div className="flex min-w-0 flex-col gap-1">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("returnedTitle")}</h2>
-          {request.return_due_at ? (
-            <span className="text-sm">
-              {t("fixWithin")} <Countdown until={request.return_due_at} serverNow={request.now} />
-            </span>
-          ) : null}
-        </div>
+    <Door tone="madder" aria-labelledby="returned-title">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <h2 id="returned-title" className="font-display text-[21px] leading-tight font-semibold">
+          {t("returnedTitle")}
+        </h2>
+        {request.return_due_at ? (
+          <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
+            <Timer className="size-4" />
+            {t("fixWithin")}
+            <Countdown until={request.return_due_at} serverNow={request.now} format="clock" plain className="text-[15px]" />
+          </span>
+        ) : null}
       </div>
       {request.return_notes ? (
-        <blockquote className="bg-card text-foreground rounded-lg px-4 py-3 text-sm whitespace-pre-wrap">
-          {request.return_notes}
-        </blockquote>
+        <DoorPanel>
+          <blockquote className="text-[15px] leading-relaxed font-medium whitespace-pre-wrap">{request.return_notes}</blockquote>
+        </DoorPanel>
       ) : null}
-      <p className="text-sm">{t("returnedHint")}</p>
-    </section>
+      <p className="text-sm font-medium">{t("returnedHint")}</p>
+    </Door>
   );
 }
 
@@ -112,8 +151,8 @@ export function PenaltyNote({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
   if (!request.penalty) return null;
   return (
-    <p className="bg-brand-red-soft text-brand-red-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
-      <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+    <p className="bg-door-madder-soft text-door-madder-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium">
+      <TriangleAlert className="mt-0.5 size-4 shrink-0" />
       {t("penalty", { points: request.penalty.points, days: request.penalty.late_days })}
     </p>
   );
@@ -155,8 +194,8 @@ function ReturnDialog({
           <Button variant="ghost" onClick={() => onOpenChange(false)}>
             {t("cancel")}
           </Button>
-          <Button onClick={onConfirm} disabled={!notes.trim() || mutation.isPending}>
-            <CornerUpLeft className="h-4 w-4" />
+          <Button variant="madder" onClick={onConfirm} disabled={!notes.trim() || mutation.isPending}>
+            <CornerUpLeft />
             {t("returnConfirm")}
           </Button>
         </DialogFooter>

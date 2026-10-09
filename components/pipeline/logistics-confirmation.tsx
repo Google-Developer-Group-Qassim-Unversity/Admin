@@ -4,9 +4,10 @@ import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarCheck2, CircleCheck, ExternalLink, Info } from "lucide-react";
+import { CircleCheck, ExternalLink, Info } from "lucide-react";
 import { toast } from "sonner";
 
+import { Door, Fact, Mark, SectionHead } from "@/components/najdi";
 import { DraftSaveStatus, useAutosavedDraft, useDraftSave } from "@/components/pipeline/draft-autosave";
 import { Choice, ChoiceSelect, Field, FormSection, MissingProvider, focusField } from "@/components/pipeline/form-kit";
 import { useFormatDateRange } from "@/components/pipeline/shared";
@@ -21,6 +22,7 @@ import {
   type EventRequestDetail,
   type LogisticsConfirmation as Confirmation,
 } from "@/lib/pipeline-types";
+import { intlLocale, isolate } from "@/lib/format";
 
 // A typo in a date field must not render a year of day rows.
 const MAX_DAY_ROWS = 14;
@@ -92,7 +94,7 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   const modes = new Set(days.map((day) => form.day_modes?.[day]).filter(Boolean));
   const venueIsListed = !form.venue || VENUES.includes(form.venue);
   const [otherVenue, setOtherVenue] = React.useState(!venueIsListed);
-  const dayLabel = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
+  const dayLabel = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
   const datesMoved =
     !!form.start_date &&
     !!form.end_date &&
@@ -125,141 +127,138 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
 
   return (
     <MissingProvider missing={task.deliverable_missing} shown={shown}>
-      <section className="bg-card border-brand-blue/30 flex flex-col gap-5 rounded-xl border p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <span className="bg-brand-blue-soft text-brand-blue-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-            <CalendarCheck2 className="h-[18px] w-[18px]" />
-          </span>
-          <div className="flex flex-col gap-0.5">
-            <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
-            <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
-          </div>
-        </div>
+      <section aria-labelledby="confirm-title" className="flex flex-col gap-3">
+        {/* The door says whose turn it is; the form sits on the wall under it. */}
+        <Door tone="ochre" innerClassName="gap-1.5">
+          <h2 id="confirm-title" className="font-display text-[21px] leading-tight font-semibold">
+            {t("title")}
+          </h2>
+          <p className="text-sm font-medium">{t("hint")}</p>
+        </Door>
 
-        <FormSection title={t("sections.when")}>
-          <div className="grid grid-cols-2 gap-4 md:max-w-md">
-            <Field label={t("startDate")} name="confirm.start_date">
-              <Input
-                type="date"
-                value={form.start_date ?? ""}
-                onChange={(e) => set("start_date", e.target.value || null)}
-              />
-            </Field>
-            <Field label={t("endDate")} name="confirm.end_date">
-              <Input type="date" value={form.end_date ?? ""} onChange={(e) => set("end_date", e.target.value || null)} />
-            </Field>
-          </div>
-          {datesMoved && request.start_date ? (
-            <p className="bg-brand-yellow-soft text-brand-yellow-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
-              <Info className="mt-0.5 h-4 w-4 shrink-0" />
-              {t("datesMoved", { requested: formatRange(request.start_date, request.end_date) })}
-            </p>
-          ) : null}
-          <Field label={td("dayModes")} name="confirm.day_modes">
-            <div className="flex flex-col gap-2">
-              {days.map((day) => (
-                <div key={day} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                  <span className="text-sm font-medium sm:w-44">{dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
-                  <div className="sm:w-72">
-                    <Choice<DayMode>
-                      ariaLabel={dayLabel.format(new Date(`${day}T00:00:00Z`))}
-                      value={form.day_modes?.[day]}
-                      options={["on_site", "online"]}
-                      label={(o) => td(`modes.${o}`)}
-                      onChange={(v) => set("day_modes", { ...(form.day_modes ?? {}), [day]: v })}
-                    />
-                  </div>
-                </div>
-              ))}
+        <div className="bg-card ring-rule flex flex-col gap-6 rounded-xl p-4 ring-1 sm:p-6">
+          <FormSection title={t("sections.when")}>
+            <div className="grid grid-cols-2 gap-4 md:max-w-md">
+              <Field label={t("startDate")} name="confirm.start_date">
+                <Input type="date" value={form.start_date ?? ""} onChange={(e) => set("start_date", e.target.value || null)} />
+              </Field>
+              <Field label={t("endDate")} name="confirm.end_date">
+                <Input type="date" value={form.end_date ?? ""} onChange={(e) => set("end_date", e.target.value || null)} />
+              </Field>
             </div>
-          </Field>
-          <div className="grid grid-cols-2 gap-4 md:max-w-md">
-            <Field label={td("startTime")} name="confirm.daily_start_time">
-              <Input
-                type="time"
-                value={hhmm(form.daily_start_time)}
-                onChange={(e) => set("daily_start_time", e.target.value || null)}
-              />
+            {datesMoved && request.start_date ? (
+              <p className="bg-door-ochre-soft text-door-ochre-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium">
+                <Info className="mt-0.5 size-4 shrink-0" />
+                <span className="tabular">{t("datesMoved", { requested: formatRange(request.start_date, request.end_date) })}</span>
+              </p>
+            ) : null}
+            <Field label={td("dayModes")} name="confirm.day_modes">
+              {days.length ? (
+                <ul className="flex flex-col">
+                  {days.map((day) => {
+                    const label = dayLabel.format(new Date(`${day}T00:00:00Z`));
+                    return (
+                      <li
+                        key={day}
+                        className="border-rule flex flex-col gap-2 border-b py-2.5 last:border-b-0 sm:flex-row sm:items-center sm:gap-4"
+                      >
+                        <span className="tabular text-sm font-bold sm:w-44">{label}</span>
+                        <div className="sm:w-72">
+                          <Choice<DayMode>
+                            ariaLabel={label}
+                            value={form.day_modes?.[day]}
+                            options={["on_site", "online"]}
+                            label={(o) => td(`modes.${o}`)}
+                            onChange={(v) => set("day_modes", { ...(form.day_modes ?? {}), [day]: v })}
+                          />
+                        </div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              ) : (
+                <p className="text-ink-2 text-sm">{t("pickDates")}</p>
+              )}
             </Field>
-            <Field label={td("endTime")} name="confirm.daily_end_time">
-              <Input
-                type="time"
-                value={hhmm(form.daily_end_time)}
-                onChange={(e) => set("daily_end_time", e.target.value || null)}
-              />
-            </Field>
-          </div>
-          {timeChanged && request.details.daily_start_time ? (
-            <p className="text-muted-foreground text-xs">{t("requestedTime", { time: requestedTime })}</p>
-          ) : null}
-        </FormSection>
+            <div className="grid grid-cols-2 gap-4 md:max-w-md">
+              <Field label={td("startTime")} name="confirm.daily_start_time">
+                <Input type="time" value={hhmm(form.daily_start_time)} onChange={(e) => set("daily_start_time", e.target.value || null)} />
+              </Field>
+              <Field label={td("endTime")} name="confirm.daily_end_time">
+                <Input type="time" value={hhmm(form.daily_end_time)} onChange={(e) => set("daily_end_time", e.target.value || null)} />
+              </Field>
+            </div>
+            {timeChanged && request.details.daily_start_time ? (
+              <p className="text-ink-2 tabular text-[13px]">{t("requestedTime", { time: isolate(requestedTime) })}</p>
+            ) : null}
+          </FormSection>
 
-        <FormSection title={t("sections.where")}>
-          {modes.has("on_site") ? (
-            <div className="grid gap-4 md:grid-cols-2">
-              <Field label={tb("logistics.venue")} name="confirm.venue">
-                <ChoiceSelect
-                  value={otherVenue ? "__other" : (form.venue ?? null)}
-                  options={[...VENUES, "__other"]}
-                  label={(o) => (o === "__other" ? tb("other") : o)}
-                  onChange={(v) => {
-                    setOtherVenue(v === "__other");
-                    set("venue", v === "__other" ? "" : v);
-                  }}
-                  placeholder={tb("choose")}
-                />
-                {otherVenue ? (
-                  <Input
-                    value={form.venue ?? ""}
-                    placeholder={tb("otherPlaceholder")}
-                    onChange={(e) => set("venue", e.target.value)}
+          <FormSection title={t("sections.where")}>
+            {modes.has("on_site") ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label={tb("logistics.venue")} name="confirm.venue">
+                  <ChoiceSelect
+                    value={otherVenue ? "__other" : (form.venue ?? null)}
+                    options={[...VENUES, "__other"]}
+                    label={(o) => (o === "__other" ? tb("other") : o)}
+                    onChange={(v) => {
+                      setOtherVenue(v === "__other");
+                      set("venue", v === "__other" ? "" : v);
+                    }}
+                    placeholder={tb("choose")}
                   />
-                ) : null}
+                  {otherVenue ? (
+                    <Input value={form.venue ?? ""} placeholder={tb("otherPlaceholder")} onChange={(e) => set("venue", e.target.value)} />
+                  ) : null}
+                </Field>
+                <Field label={tb("logistics.room")} optional>
+                  <Input value={form.room ?? ""} maxLength={100} onChange={(e) => set("room", e.target.value)} />
+                </Field>
+              </div>
+            ) : null}
+            {modes.has("online") ? (
+              <Field label={t("meetLink")} name="confirm.meet_link" hint={t("meetLinkHint")} className="md:max-w-md">
+                <Input
+                  type="url"
+                  inputMode="url"
+                  dir="ltr"
+                  value={form.meet_link ?? ""}
+                  placeholder="https://meet.google.com/…"
+                  onChange={(e) => set("meet_link", e.target.value)}
+                />
               </Field>
-              <Field label={tb("logistics.room")} optional>
-                <Input value={form.room ?? ""} maxLength={100} onChange={(e) => set("room", e.target.value)} />
+            ) : null}
+            {!modes.size ? <p className="text-ink-2 text-sm">{t("pickModes")}</p> : null}
+          </FormSection>
+
+          <FormSection title={t("sections.what")}>
+            <div className="grid gap-4 md:grid-cols-2">
+              <Field label={td("eventType")} name="confirm.event_type">
+                <ChoiceSelect
+                  value={form.event_type}
+                  options={EVENT_TYPES}
+                  label={(o) => td(`eventTypes.${o}`)}
+                  onChange={(v) => set("event_type", v)}
+                  placeholder={td("choose")}
+                />
+              </Field>
+              <Field label={td("description")} name="confirm.description" className="md:col-span-2">
+                <Textarea rows={4} value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} />
               </Field>
             </div>
-          ) : null}
-          {modes.has("online") ? (
-            <Field label={t("meetLink")} name="confirm.meet_link" hint={t("meetLinkHint")} className="md:max-w-md">
-              <Input
-                type="url"
-                dir="ltr"
-                value={form.meet_link ?? ""}
-                placeholder="https://meet.google.com/…"
-                onChange={(e) => set("meet_link", e.target.value)}
-              />
-            </Field>
-          ) : null}
-          {!modes.size ? <p className="text-muted-foreground text-sm">{t("pickModes")}</p> : null}
-        </FormSection>
+          </FormSection>
 
-        <FormSection title={t("sections.what")}>
-          <div className="grid gap-4 md:grid-cols-2">
-            <Field label={td("eventType")} name="confirm.event_type">
-              <ChoiceSelect
-                value={form.event_type}
-                options={EVENT_TYPES}
-                label={(o) => td(`eventTypes.${o}`)}
-                onChange={(v) => set("event_type", v)}
-                placeholder={td("choose")}
-              />
-            </Field>
-            <Field label={td("description")} name="confirm.description" className="md:col-span-2">
-              <Textarea rows={4} value={form.description ?? ""} onChange={(e) => set("description", e.target.value)} />
-            </Field>
+          {/* Sticks to the bottom of the screen (above the phone's bottom bar)
+              while the form is in view, so Confirm is always one tap away. */}
+          <div className="bg-card border-foreground sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 -mb-4 flex items-center gap-3 border-t px-4 py-3 sm:-mx-6 sm:-mb-6 sm:px-6 md:bottom-0 md:rounded-b-xl">
+            <div className="min-w-0 flex-1">
+              <DraftSaveStatus />
+            </div>
+            <Button variant="green" size="lg" onClick={onConfirm} disabled={busy}>
+              <CircleCheck />
+              {t("button")}
+            </Button>
           </div>
-        </FormSection>
-
-        <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center sm:gap-3">
-          <div className="min-w-0 flex-1">
-            <DraftSaveStatus />
-          </div>
-          <Button onClick={onConfirm} disabled={busy}>
-            <CircleCheck className="h-4 w-4" />
-            {t("button")}
-          </Button>
         </div>
       </section>
     </MissingProvider>
@@ -277,11 +276,11 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
   const place = [confirmed.venue, confirmed.room].filter(Boolean).join(" · ");
 
   const rows: [string, React.ReactNode][] = [
-    [t("summary.dates"), confirmed.start_date ? formatRange(confirmed.start_date, confirmed.end_date) : "-"],
-    [t("summary.time"), `${hhmm(confirmed.daily_start_time)}–${hhmm(confirmed.daily_end_time)}`],
+    [t("summary.dates"), <span key="dates" className="tabular">{confirmed.start_date ? formatRange(confirmed.start_date, confirmed.end_date) : "-"}</span>],
+    [t("summary.time"), <span key="time" className="tabular" dir="ltr">{`${hhmm(confirmed.daily_start_time)}–${hhmm(confirmed.daily_end_time)}`}</span>],
     [t("summary.mode"), [...modes].map((m) => td(`modes.${m}`)).join(" + ") || "-"],
   ];
-  if (modes.has("on_site")) rows.push([t("summary.place"), place || "-"]);
+  if (modes.has("on_site")) rows.push([t("summary.place"), place ? <bdi key="place">{place}</bdi> : "-"]);
   if (modes.has("online") && confirmed.meet_link) {
     rows.push([
       t("summary.meet"),
@@ -291,38 +290,38 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
         target="_blank"
         rel="noreferrer"
         dir="ltr"
-        className="text-brand-blue-ink inline-flex items-center gap-1 break-all underline-offset-2 hover:underline"
+        className="inline-flex min-h-6 items-center gap-1 break-all underline underline-offset-2"
       >
         {confirmed.meet_link}
-        <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+        <ExternalLink className="size-3.5 shrink-0" />
       </a>,
     ]);
   }
   rows.push([t("summary.type"), confirmed.event_type ? td(`eventTypes.${confirmed.event_type}`) : "-"]);
 
   return (
-    <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="bg-brand-green-soft text-brand-green-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          <CalendarCheck2 className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("summary.title")}</h2>
-          {task.done_by ? (
-            <p className="text-muted-foreground text-[13px]">{t("summary.by", { name: task.done_by.name })}</p>
-          ) : null}
-        </div>
-      </div>
-      <dl className="grid gap-x-6 gap-y-3 text-sm sm:grid-cols-[max-content_1fr]">
+    <section aria-labelledby="confirmed-title" className="flex flex-col gap-1">
+      <SectionHead
+        id="confirmed-title"
+        title={
+          <>
+            <Mark tone="green" />
+            {t("summary.title")}
+          </>
+        }
+        action={task.done_by ? <span className="text-ink-2 font-medium">{t("summary.by", { name: isolate(task.done_by.name) })}</span> : null}
+      />
+      <dl className="grid grid-cols-[max-content_1fr]">
         {rows.map(([label, value]) => (
-          <React.Fragment key={label}>
-            <dt className="text-muted-foreground">{label}</dt>
-            <dd className="min-w-0 font-medium">{value}</dd>
-          </React.Fragment>
+          <Fact key={label} term={label}>
+            {value}
+          </Fact>
         ))}
       </dl>
       {confirmed.description ? (
-        <p className="bg-muted/40 rounded-lg px-4 py-3 text-sm whitespace-pre-wrap">{confirmed.description}</p>
+        <p className="bg-sunk mt-2 rounded-lg px-4 py-3 text-sm whitespace-pre-wrap" dir="auto">
+          {confirmed.description}
+        </p>
       ) : null}
     </section>
   );

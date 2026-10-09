@@ -2,31 +2,56 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useAuth } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { CalendarPlus, Mail, Radio, Users } from "lucide-react";
+import { CalendarPlus } from "lucide-react";
 
-import { BrandArcs, BrandRail } from "@/components/brand-mark";
-import { AttentionQueue } from "@/components/dashboard/attention-queue";
-import { PipelineCard } from "@/components/dashboard/pipeline-card";
-import { StatTile } from "@/components/dashboard/stat-tile";
+import { AttentionList, EventsNow, StageBoard, StageStrip, Stats, TeamInbox, type Stat } from "@/components/dashboard/overview";
+import { YourTurn, waitingOnYou } from "@/components/dashboard/your-turn";
+import { SectionHead } from "@/components/najdi";
+import { BookingCalendar } from "@/components/pipeline/booking-calendar";
+import { RequestList } from "@/components/pipeline/request-list";
+import { hasTeam, useOwnDepartmentIds } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
-import { useEvents } from "@/hooks/use-event";
 import { useAccess } from "@/hooks/use-access";
-import { useMembers } from "@/hooks/use-members";
+import { useAttention } from "@/hooks/use-attention";
+import { useEvents } from "@/hooks/use-event";
+import { memberStatsQuery } from "@/hooks/use-members";
+import { useInbox, usePipelineMe, usePipelineOverview } from "@/hooks/use-pipeline";
 import { getEmailDashboardStats } from "@/lib/api";
+import { useApi } from "@/lib/api/client";
+import { useFormatters } from "@/lib/format";
 
+/**
+ * Home. The event pipeline is the club's main way to make an event, so it is
+ * the heart of this page: whose turn it is (one painted door), the caller's own
+ * requests, what waits on their teams and where everything stands. Events,
+ * attention and the real numbers follow. Someone without pipeline access gets
+ * the events half.
+ */
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
-  const { getToken } = useAuth();
-  const { can } = useAccess();
-  const canSeeMembers = can("members.view");
+  const fmt = useFormatters();
+  const { user } = useUser();
+  const { can, canOpen, access } = useAccess();
+  const pipelineAllowed = Boolean(access) && canOpen("/pipeline");
 
+  const me = usePipelineMe({ enabled: pipelineAllowed });
+  const pipeline = pipelineAllowed && me.data?.has_access === true;
+  const ownIds = useOwnDepartmentIds(me.data);
+  const overview = usePipelineOverview(pipeline);
+  const withTeam = pipeline && hasTeam(me.data);
+  const inbox = useInbox(withTeam);
   const { data: events, isPending: eventsPending } = useEvents(undefined);
-  const { data: members, isPending: membersPending } = useMembers(getToken, canSeeMembers);
-
-  const { data: emailStats, isPending: emailsPending } = useQuery({
+  const attention = useAttention();
+  const canSeeMembers = can("members.view");
+  const api = useApi();
+  const members = useQuery({ ...memberStatsQuery(api), enabled: canSeeMembers });
+  // Email stats have not moved to lib/api/ yet (lib/api.ts's header lists what has).
+  const { getToken } = useAuth();
+  const { data: emailStats } = useQuery({
     queryKey: ["emails", "stats", "dashboard", 1],
     queryFn: async () => {
       const result = await getEmailDashboardStats(1, getToken);
@@ -35,103 +60,149 @@ export default function DashboardPage() {
     },
   });
 
+  const all = React.useMemo(() => (overview.data?.items ?? []).filter((r) => r.stage !== "cancelled"), [overview.data]);
+  const mine = React.useMemo(() => all.filter((r) => ownIds.has(r.department.id)), [all, ownIds]);
+  const waiting = React.useMemo(() => waitingOnYou(mine), [mine]);
+  // Oldest first, one entry per request: the door takes the task that has waited longest.
+  const teamTasks = React.useMemo(
+    () =>
+      [...new Map((inbox.data ?? []).map((item) => [item.request.id, item])).values()].sort((a, b) =>
+        (a.opened_at ?? "").localeCompare(b.opened_at ?? ""),
+      ),
+    [inbox.data],
+  );
+  const mineSorted = React.useMemo(() => {
+    const first = new Set(waiting.map((w) => w.request.id));
+    return [...mine].sort((a, b) => Number(first.has(b.id)) - Number(first.has(a.id))).slice(0, 4);
+  }, [mine, waiting]);
+  const stagesTitle = me.data?.is_super_admin ? t("stages.club") : t("stages.yours");
+
   const counts = React.useMemo(() => {
     const list = events ?? [];
-    const open = list.filter((e) => e.status === "open");
-    const active = list.filter((e) => e.status === "active");
-    return { open: open.length, active: active.length, liveName: active[0]?.name ?? null };
+    return { open: list.filter((e) => e.status === "open").length, live: list.filter((e) => e.status === "active").length };
   }, [events]);
 
-  const memberSplit = React.useMemo(() => {
-    const list = members ?? [];
-    return {
-      total: list.length,
-      verified: list.filter((m) => m.is_authenticated).length,
-    };
-  }, [members]);
+  const stats: Stat[] = [
+    { label: t("tiles.open"), value: counts.open },
+    { label: t("tiles.live"), value: counts.live },
+    ...(canSeeMembers && members.data
+      ? [
+          {
+            label: t("tiles.members"),
+            value: fmt.number(members.data.total),
+            note: t("tiles.membersHint", { verified: members.data.authenticated, pending: members.data.total - members.data.authenticated }),
+          },
+        ]
+      : []),
+    { label: t("tiles.emails"), value: emailStats?.total_24h ?? 0 },
+  ];
+
+  const greeting = (
+    <header className="flex flex-col gap-1">
+      <h1 className="font-display text-[26px] leading-tight font-semibold sm:text-[30px]">
+        {user?.firstName ? t("greeting", { name: user.firstName }) : t("title")}
+      </h1>
+      <p className="text-ink-2 max-w-[70ch] text-[15px] text-pretty">
+        {eventsPending ? t("summaryLoading") : t("summary", { live: counts.live, open: counts.open })}
+      </p>
+    </header>
+  );
+
+  const yourRequests = (
+    <section aria-labelledby="your-requests" className="flex flex-col gap-1">
+      <SectionHead
+        id="your-requests"
+        title={t("yourRequests")}
+        action={
+          <Link href="/pipeline" className="text-door-indigo-ink inline-flex min-h-8 items-center underline-offset-3 hover:underline">
+            {t("all")}
+          </Link>
+        }
+      />
+      <RequestList
+        items={mineSorted}
+        isPending={overview.isPending}
+        empty={t("noRequests")}
+        showDepartment={ownIds.size > 1}
+      />
+    </section>
+  );
+
+  if (!pipeline) {
+    return (
+      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-7">
+        {greeting}
+        <div className="grid gap-7 lg:grid-cols-2">
+          <EventsNow events={events} isPending={eventsPending} panel />
+          <AttentionList items={attention.items} isPending={attention.isPending} panel />
+        </div>
+        <Stats stats={stats} />
+      </div>
+    );
+  }
 
   return (
-    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-3 sm:gap-5">
-      {/* Hero. The arcs bleed off the trailing corner and flip with the locale. */}
-      <section className="bg-card brand-hero border-border relative overflow-hidden rounded-2xl border px-4 pt-6 pb-4 sm:px-8 sm:py-7">
-        <BrandRail className="absolute inset-x-0 top-0" />
-        <BrandArcs
-          size={380}
-          className="pointer-events-none absolute -top-28 -end-16 opacity-40 max-sm:-top-14 max-sm:-end-14 max-sm:size-[210px] rtl:-scale-x-100"
-        />
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-7">
+      {greeting}
 
-        <div className="relative flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-[28px] leading-tight font-semibold tracking-tight sm:text-4xl">
-              {t("title")}
-            </h1>
-            <p className="text-muted-foreground max-w-xl text-[15px] text-pretty">
-              {eventsPending
-                ? t("summaryLoading")
-                : t("summary", { live: counts.active, open: counts.open })}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:gap-2.5">
-            {can("events.create") ? (
-              <Button asChild>
-                <Link href="/events/create">
-                  <CalendarPlus className="h-4 w-4" />
-                  {t("newEvent")}
-                </Link>
-              </Button>
-            ) : null}
-            <Button asChild variant="outline">
-              <Link href="/events">{t("allEvents")}</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5 xl:grid-cols-4">
-        <StatTile
-          icon={CalendarPlus}
-          tone="blue"
-          label={t("tiles.open")}
-          value={counts.open}
-          hint={t("tiles.openHint")}
-          isPending={eventsPending}
-        />
-        <StatTile
-          icon={Radio}
-          tone="green"
-          label={t("tiles.live")}
-          value={counts.active}
-          hint={counts.liveName ?? t("tiles.liveNone")}
-          isPending={eventsPending}
-        />
-        {canSeeMembers ? (
-          <StatTile
-            icon={Users}
-            tone="blue"
-            label={t("tiles.members")}
-            value={memberSplit.total.toLocaleString()}
-            hint={t("tiles.membersHint", {
-              verified: memberSplit.verified,
-              pending: memberSplit.total - memberSplit.verified,
-            })}
-            isPending={membersPending}
-          />
-        ) : null}
-        <StatTile
-          icon={Mail}
-          tone="neutral"
-          label={t("tiles.emails")}
-          value={emailStats?.total_24h ?? 0}
-          hint={t("tiles.emailsHint")}
-          isPending={emailsPending}
-        />
+      {/* Phone: one column, in the order the job happens. */}
+      <div className="flex flex-col gap-7 lg:hidden">
+        <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} />
+        {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} /> : null}
+        {yourRequests}
+        <StageStrip requests={all} title={stagesTitle} isPending={overview.isPending} />
+        <EventsNow events={events} isPending={eventsPending} />
+        <AttentionList items={attention.items} isPending={attention.isPending} />
+        <Stats stats={stats} />
       </div>
 
-      <div className="grid gap-3 sm:gap-3.5 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-        <AttentionQueue />
-        <PipelineCard events={events ?? []} />
+      {/* Wide: the door and what waits beside the booking calendar, then the board. */}
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(340px,392px)_minmax(0,1fr)]">
+        <div className="flex flex-col gap-6">
+          <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} big />
+          {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} panel /> : null}
+          <div className="bg-card ring-rule rounded-xl px-5 pt-4 pb-2 ring-1">{yourRequests}</div>
+        </div>
+        <DashboardCalendar />
+        <div className="col-span-2">
+          <StageBoard requests={all} title={stagesTitle} isPending={overview.isPending} />
+        </div>
+        <EventsNow events={events} isPending={eventsPending} panel />
+        <AttentionList items={attention.items} isPending={attention.isPending} panel />
+        <div className="col-span-2">
+          <Stats stats={stats} />
+        </div>
       </div>
     </div>
+  );
+}
+
+/** The booking calendar, read-only: a booked day opens its request, Book opens booking mode. */
+function DashboardCalendar() {
+  const t = useTranslations("pipeline");
+  const router = useRouter();
+  return (
+    <section aria-labelledby="dashboard-calendar" className="bg-card ring-rule flex flex-col gap-3 self-start rounded-xl p-5 ring-1">
+      <SectionHead
+        id="dashboard-calendar"
+        title={t("calendar.title")}
+        action={
+          <Button asChild variant="ochre" size="sm">
+            <Link href="/pipeline?book=1">
+              <CalendarPlus />
+              {t("book.start")}
+            </Link>
+          </Button>
+        }
+      />
+      <BookingCalendar
+        showNotes={false}
+        onDayClick={(day) => {
+          const first = day.requests?.[0];
+          if (first) router.push(`/pipeline/requests/${first.id}`);
+        }}
+        isSelectable={(day) => Boolean(day.requests?.length)}
+      />
+    </section>
   );
 }

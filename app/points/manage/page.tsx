@@ -52,7 +52,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { SectionHead } from "@/components/najdi";
+import { PointsListSkeleton } from "@/components/points-list-states";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -95,7 +96,7 @@ const initialFormData: ActionFormData = {
 function TypeBadge({ type }: { type: ActionType }) {
   const t = useTranslations("manageActions");
   return (
-    <Badge variant="outline" className="text-muted-foreground font-medium">
+    <Badge variant="outline" className="text-ink-2">
       {t(`types.${type}`)}
     </Badge>
   );
@@ -137,29 +138,37 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`${action.is_hidden ? "opacity-50" : ""} ${isDragging ? "bg-muted" : ""}`}
+      className={`${action.is_hidden ? "text-ink-2" : ""} ${isDragging ? "bg-door-ochre-soft relative z-10 shadow-[var(--shadow-lift)]" : ""}`}
     >
       <TableCell>
         <div className="flex items-center gap-2">
-          <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-4 w-4 text-muted-foreground" />
-          </div>
-          <span className="tabular font-mono text-xs">{action.id}</span>
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            aria-label={t("dragToReorder", { name: action.action_name })}
+            className="text-ink-3 hover:text-foreground grid size-8 cursor-grab place-items-center rounded-sm active:cursor-grabbing"
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <span className="tabular text-ink-2 text-xs">#{action.id}</span>
         </div>
       </TableCell>
-      <TableCell className="font-medium">
+      <TableCell className="font-bold">
         <div className="flex items-center gap-2">
           <span dir="auto">{action.action_name}</span>
           {action.is_hidden && (
-            <Badge variant="outline" className="text-xs">
-              <EyeOff className="h-3 w-3 me-1" />
+            <Badge variant="secondary">
+              <EyeOff />
               {t("hidden")}
             </Badge>
           )}
         </div>
       </TableCell>
       <TableCell dir="rtl" lang="ar">{action.ar_action_name}</TableCell>
-      <TableCell className={`tabular font-semibold ${action.points < 0 ? "text-destructive" : ""}`}>{action.points}</TableCell>
+      <TableCell className={`tabular font-bold ${action.points < 0 ? "text-door-madder-ink" : ""}`}>
+        <span dir="ltr">{formatPoints(action.points)}</span>
+      </TableCell>
       <TableCell><TypeBadge type={action.action_type} /></TableCell>
       <TableCell className="tabular">{action.usage_count}</TableCell>
       <TableCell className="text-end">
@@ -182,17 +191,17 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
             size="sm"
             onClick={() => onEdit(action)}
           >
-            <Pencil className="h-4 w-4 me-1" />
+            <Pencil />
             {t("edit")}
           </Button>
           <Button
             variant="ghost"
-            size="sm"
+            size="icon-sm"
             onClick={() => onDelete(action)}
-            className="text-destructive hover:text-destructive"
+            className="text-ink-2 hover:text-door-madder-ink hover:bg-door-madder-soft"
             aria-label={t("delete")}
           >
-            <Trash2 className="h-4 w-4" />
+            <Trash2 />
           </Button>
         </div>
       </TableCell>
@@ -208,12 +217,10 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
 function ActionListItem({ action, onEdit, onToggleHidden, onDelete }: SortableTableRowProps) {
   const t = useTranslations("manageActions");
   return (
-    <li
-      className={`bg-card border-border flex items-center gap-3 rounded-xl border p-3 ${action.is_hidden ? "opacity-60" : ""}`}
-    >
+    <li className="border-rule flex min-h-16 items-center gap-3 border-b px-1 py-3 last:border-b-0">
       <span
-        className={`bg-muted font-display tabular flex h-11 min-w-12 shrink-0 items-center justify-center rounded-lg px-1.5 text-base font-semibold ${
-          action.points < 0 ? "text-destructive" : ""
+        className={`bg-sunk tabular flex h-11 min-w-12 shrink-0 items-center justify-center rounded-lg px-1.5 text-base font-bold ${
+          action.points < 0 ? "text-door-madder-ink" : action.is_hidden ? "text-ink-2" : ""
         }`}
         aria-label={`${t("points")}: ${action.points}`}
         dir="ltr"
@@ -222,24 +229,24 @@ function ActionListItem({ action, onEdit, onToggleHidden, onDelete }: SortableTa
       </span>
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <p className="line-clamp-2 text-[15px] leading-snug font-medium" dir="auto">
+        <p className={`line-clamp-2 text-[15px] leading-snug font-bold ${action.is_hidden ? "text-ink-2" : ""}`} dir="auto">
           {action.action_name}
         </p>
         {action.ar_action_name ? (
-          <p className="text-muted-foreground truncate text-[13px] text-start" dir="rtl" lang="ar">
+          <p className="text-ink-2 truncate text-[13px] text-start" dir="rtl" lang="ar">
             {action.ar_action_name}
           </p>
         ) : null}
-        <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
+        <div className="text-ink-2 mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-[12.5px]">
           <TypeBadge type={action.action_type} />
           {action.is_hidden && (
-            <Badge variant="outline" className="text-muted-foreground gap-1">
-              <EyeOff className="h-3 w-3" />
+            <Badge variant="secondary">
+              <EyeOff />
               {t("hidden")}
             </Badge>
           )}
           <span className="tabular">{t("usedCount", { count: action.usage_count })}</span>
-          <span className="tabular font-mono">#{action.id}</span>
+          <span className="tabular">#{action.id}</span>
         </div>
       </div>
 
@@ -248,7 +255,7 @@ function ActionListItem({ action, onEdit, onToggleHidden, onDelete }: SortableTa
           <Button
             variant="ghost"
             size="icon"
-            className="h-10 w-10 shrink-0"
+            className="shrink-0"
             aria-label={t("moreActions", { name: action.action_name })}
           >
             <EllipsisVertical className="h-4 w-4" />
@@ -540,7 +547,7 @@ export default function ManagePointsPage() {
 
   const typeFilterSelect = (
     <Select value={filterType} onValueChange={(value) => setFilterType(value as ActionType | "all")}>
-      <SelectTrigger className="bg-card w-full md:w-[150px]" aria-label={t("filter")}>
+      <SelectTrigger className="w-full md:w-[170px]" aria-label={t("filter")}>
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
@@ -564,7 +571,7 @@ export default function ManagePointsPage() {
         setSortOrder(order);
       }}
     >
-      <SelectTrigger className="bg-card w-full" aria-label={t("sortLabel")}>
+      <SelectTrigger className="w-full" aria-label={t("sortLabel")}>
         <SelectValue placeholder={t("sortLabel")} />
       </SelectTrigger>
       <SelectContent>
@@ -579,43 +586,34 @@ export default function ManagePointsPage() {
 
   return (
     <>
-      <Card className="max-md:gap-4 max-md:bg-transparent max-md:py-0 max-md:shadow-none max-md:ring-0">
-        <CardHeader className="max-md:px-0">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <CardTitle className="font-display text-lg font-semibold tracking-tight">{t("actionsTitle")}</CardTitle>
-              <CardDescription className="tabular">
-                <span className="md:hidden">{t("actionsCountShort", { count: actions.length })}</span>
-                <span className="max-md:hidden">{t("actionsCount", { count: actions.length })}</span>
-              </CardDescription>
-            </div>
-            <Button onClick={handleOpenAddDialog} disabled={isLoading} className="shrink-0">
-              <Plus className="h-4 w-4" />
+      <section className="flex flex-col gap-3">
+        <SectionHead
+          title={t("actionsTitle")}
+          count={isLoading ? undefined : actions.length}
+          action={
+            <Button onClick={handleOpenAddDialog} disabled={isLoading} size="sm">
+              <Plus />
               {t("addAction")}
             </Button>
-          </div>
-        </CardHeader>
-        <CardContent className="max-md:px-0">
-          <div className="mb-4 grid grid-cols-2 gap-2 md:hidden">
+          }
+        />
+        <div>
+          <div className="mb-3 grid grid-cols-2 gap-2 md:hidden">
             {typeFilterSelect}
             {sortSelect}
           </div>
-          <div className="mb-4 hidden items-center gap-2 md:flex">
-            <label className="text-sm font-medium">{t("filter")}</label>
+          <div className="mb-3 hidden items-center gap-2 md:flex">
+            <span className="text-ink-2 text-sm font-bold">{t("filter")}</span>
             {typeFilterSelect}
           </div>
 
           {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="animate-pulse text-muted-foreground">{t("loadingActions")}</div>
-            </div>
+            <PointsListSkeleton rows={6} />
           ) : filteredAndSortedActions.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>{filterType === "all" ? t("noneFound") : t("noneMatchFilter")}</p>
-            </div>
+            <p className="text-ink-2 py-12 text-center text-sm">{filterType === "all" ? t("noneFound") : t("noneMatchFilter")}</p>
           ) : (
             <>
-            <ul className="space-y-2 md:hidden">
+            <ul className="flex flex-col md:hidden">
               {filteredAndSortedActions.map((action) => (
                 <ActionListItem
                   key={action.id}
@@ -626,7 +624,7 @@ export default function ManagePointsPage() {
                 />
               ))}
             </ul>
-            <div className="hidden rounded-md border md:block">
+            <div className="bg-card ring-rule hidden overflow-hidden rounded-xl ring-1 md:block">
               <DndContext
                 sensors={sensors}
                 collisionDetection={closestCenter}
@@ -641,7 +639,7 @@ export default function ManagePointsPage() {
                       <TableHead className="w-[100px]">
                         <button
                           onClick={() => toggleSort("points")}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          className="hover:text-foreground flex items-center gap-1 transition-colors"
                         >
                           {t("columnPoints")}
                           {getSortIcon("points")}
@@ -651,7 +649,7 @@ export default function ManagePointsPage() {
                       <TableHead className="w-[80px]">
                         <button
                           onClick={() => toggleSort("used")}
-                          className="flex items-center gap-1 hover:text-foreground transition-colors"
+                          className="hover:text-foreground flex items-center gap-1 transition-colors"
                         >
                           {t("columnUsed")}
                           {getSortIcon("used")}
@@ -681,8 +679,8 @@ export default function ManagePointsPage() {
             </div>
             </>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </section>
 
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -695,7 +693,7 @@ export default function ManagePointsPage() {
 
           <div className="space-y-4 *:space-y-1.5">
             <div>
-              <label htmlFor="action-name" className="text-sm font-medium">{t("nameEnglish")}</label>
+              <label htmlFor="action-name" className="text-ink-2 text-[13px] font-bold">{t("nameEnglish")}</label>
               <Input
                 id="action-name"
                 dir="auto"
@@ -708,7 +706,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label htmlFor="action-ar-name" className="text-sm font-medium">{t("nameArabic")}</label>
+              <label htmlFor="action-ar-name" className="text-ink-2 text-[13px] font-bold">{t("nameArabic")}</label>
               <Input
                 id="action-ar-name"
                 dir="rtl"
@@ -722,7 +720,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label htmlFor="action-points" className="text-sm font-medium">{t("points")}</label>
+              <label htmlFor="action-points" className="text-ink-2 text-[13px] font-bold">{t("points")}</label>
               <Input
                 id="action-points"
                 type="number"
@@ -734,7 +732,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">{t("type")}</label>
+              <label className="text-ink-2 text-[13px] font-bold">{t("type")}</label>
               <Select
                 value={formData.action_type}
                 onValueChange={(value: ActionType) => setFormData({ ...formData, action_type: value })}
@@ -764,7 +762,7 @@ export default function ManagePointsPage() {
             <Button onClick={handleCreateAction} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                   {t("creating")}
                 </>
               ) : (
@@ -786,7 +784,7 @@ export default function ManagePointsPage() {
 
           <div className="space-y-4 *:space-y-1.5">
             <div>
-              <label htmlFor="action-name" className="text-sm font-medium">{t("nameEnglish")}</label>
+              <label htmlFor="action-name" className="text-ink-2 text-[13px] font-bold">{t("nameEnglish")}</label>
               <Input
                 id="action-name"
                 dir="auto"
@@ -799,7 +797,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label htmlFor="action-ar-name" className="text-sm font-medium">{t("nameArabic")}</label>
+              <label htmlFor="action-ar-name" className="text-ink-2 text-[13px] font-bold">{t("nameArabic")}</label>
               <Input
                 id="action-ar-name"
                 dir="rtl"
@@ -813,7 +811,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label htmlFor="action-points" className="text-sm font-medium">{t("points")}</label>
+              <label htmlFor="action-points" className="text-ink-2 text-[13px] font-bold">{t("points")}</label>
               <Input
                 id="action-points"
                 type="number"
@@ -825,7 +823,7 @@ export default function ManagePointsPage() {
               />
             </div>
             <div>
-              <label className="text-sm font-medium">{t("type")}</label>
+              <label className="text-ink-2 text-[13px] font-bold">{t("type")}</label>
               <Select
                 value={formData.action_type}
                 onValueChange={(value: ActionType) => setFormData({ ...formData, action_type: value })}
@@ -849,13 +847,13 @@ export default function ManagePointsPage() {
                 checked={formData.is_hidden}
                 onChange={(e) => setFormData({ ...formData, is_hidden: e.target.checked })}
                 disabled={isSubmitting || formData.action_type === "bonus"}
-                className="accent-primary h-5 w-5"
+                className="size-5 accent-[var(--foreground)]"
               />
               <label htmlFor="is_hidden" className="py-2 text-sm font-medium">
                 {t("hideThisAction")}
               </label>
               {formData.action_type === "bonus" && (
-                <span className="text-xs text-muted-foreground">{t("bonusAlwaysHidden")}</span>
+                <span className="text-ink-2 text-xs">{t("bonusAlwaysHidden")}</span>
               )}
             </div>
           </div>
@@ -871,7 +869,7 @@ export default function ManagePointsPage() {
             <Button onClick={handleUpdateAction} disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                   {t("updating")}
                 </>
               ) : (
@@ -895,11 +893,11 @@ export default function ManagePointsPage() {
                     </p>
                     {deletingAction.usage_count > 0 ? (
                       <div className="space-y-3">
-                        <p className="text-destructive font-medium">
+                        <p className="text-door-madder-ink font-bold">
                           {t("usedTimesWarning", { count: deletingAction.usage_count })}
                         </p>
                         <div>
-                          <label className="text-sm font-medium">{t("replacementAction")}</label>
+                          <label className="text-ink-2 text-[13px] font-bold">{t("replacementAction")}</label>
                           <Select
                             value={replacementActionId?.toString() || ""}
                             onValueChange={(value) => setReplacementActionId(parseInt(value))}
@@ -913,7 +911,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.composite")}</SelectLabel>
                                   {groupedReplacements.composite.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -923,7 +921,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.department")}</SelectLabel>
                                   {groupedReplacements.department.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -933,7 +931,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.member")}</SelectLabel>
                                   {groupedReplacements.member.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -943,7 +941,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.bonus")}</SelectLabel>
                                   {groupedReplacements.bonus.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -965,11 +963,11 @@ export default function ManagePointsPage() {
             <AlertDialogAction
               onClick={handleDeleteAction}
               disabled={isDeleting || (deletingAction !== null && deletingAction.usage_count > 0 && !replacementActionId)}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              variant="madder"
             >
               {isDeleting ? (
                 <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                   {t("deleting")}
                 </>
               ) : deletingAction && deletingAction.usage_count > 0 ? (

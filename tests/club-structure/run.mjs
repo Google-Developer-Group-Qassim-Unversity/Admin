@@ -346,9 +346,18 @@ try {
   const createCard = page.locator('[data-slot="card"]');
   await expect(createCard).toHaveCSS("max-width", "672px");
   await expect(createCard).toHaveCSS("position", "static");
+  // Resolve --card through a probe so the comparison does not depend on how
+  // the token is written (hex, rgb, oklch) versus how computed colours print.
   assert.equal(
     await createCard.evaluate((el) => getComputedStyle(el).backgroundColor),
-    await createCard.evaluate((el) => getComputedStyle(el).getPropertyValue("--card").trim()),
+    await createCard.evaluate((el) => {
+      const probe = document.createElement("span");
+      probe.style.backgroundColor = "var(--card)";
+      el.append(probe);
+      const colour = getComputedStyle(probe).backgroundColor;
+      probe.remove();
+      return colour;
+    }),
     "Create page uses the same Card background as Create Event",
   );
   await page.screenshot({ path: path.join(artifacts, "create-ar-desktop.png"), fullPage: true });

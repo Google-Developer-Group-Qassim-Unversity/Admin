@@ -11,7 +11,6 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
 import {
@@ -113,7 +112,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
-          <Trash2 className="me-2 h-4 w-4" />
+          <Trash2 />
           {t('unattach')}
         </DropdownMenuItem>
       </DropdownMenuContent>
@@ -122,28 +121,22 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
 
   const itemContent = (
     <Item
-      variant="outline"
-      className={`bg-card ${isReady ? 'border-brand-green/40' : ''} ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
+      className={`px-0 py-0 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
     >
-      <ItemMedia>
-        {/* Green = done: the form exists and this browser can edit it. */}
-        <div className={`flex size-10 items-center justify-center rounded-lg ${isReady ? 'bg-brand-green-soft text-brand-green-ink' : 'bg-muted'}`}>
-          <GoogleFormsIcon className="h-5 w-5" />
-        </div>
-      </ItemMedia>
       <ItemContent className="min-w-0">
-        <ItemTitle>
+        <ItemTitle className="text-[15px] font-bold">
+          <GoogleFormsIcon className="size-4 shrink-0" aria-hidden="true" />
           {isReady ? t('attached') : t('attachForm')}
         </ItemTitle>
-        <ItemDescription className="line-clamp-none sm:max-w-100">
+        <ItemDescription className="text-ink-2 line-clamp-none sm:max-w-100">
           {isReady ? (
             <span className="flex flex-col gap-1">
               <span>{t('attachedDescription')}</span>
-              <span className="text-[13px] text-muted-foreground">{t('attachedEditHint')}</span>
-              <span className="text-[13px] text-muted-foreground break-all">{t('sharedWith', { email: savedEmail ?? '' })}</span>
+              <span className="text-[13px] text-ink-2">{t('attachedEditHint')}</span>
+              <span className="text-[13px] text-ink-2 break-all">{t('sharedWith', { email: savedEmail ?? '' })}</span>
               <button
                 type="button"
-                className="-my-1.5 w-fit py-1.5 text-start text-[13px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
+                className="-my-1.5 w-fit py-1.5 text-start text-[13px] text-ink-2 underline underline-offset-2 hover:text-foreground"
                 onClick={() => setRequestingDifferentEmail(true)}
               >
                 {t('requestDifferentEmail')}
@@ -153,7 +146,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
             <span className="flex flex-col gap-1">
               <span>{hasExistingForm ? t('requestAccessDescription') : t('createDescription')}</span>
               {hasExistingForm && sharedWithEmail && (
-                <span className="text-[13px] text-muted-foreground break-all">{t('sharedWith', { email: sharedWithEmail })}</span>
+                <span className="text-[13px] text-ink-2 break-all">{t('sharedWith', { email: sharedWithEmail })}</span>
               )}
             </span>
           )}
@@ -183,7 +176,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
               <Button type="submit" className="flex-1 sm:flex-none" disabled={isLoading || disabled || !email.trim()}>
                 {attachForm.isPending ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {hasExistingForm ? t('requestingAccess') : t('creatingForm')}
                   </>
                 ) : hasExistingForm ? (
@@ -217,7 +210,7 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
                 rel="noopener noreferrer"
               >
                 {t('openForm')}
-                <ExternalLink className="ms-2 h-4 w-4 rtl:-scale-x-100" />
+                <ExternalLink className="rtl:-scale-x-100" />
               </a>
             </Button>
             {moreMenu}

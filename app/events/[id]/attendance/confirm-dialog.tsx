@@ -38,13 +38,13 @@ export function ConfirmDialog({ dialog, onOpenChange, isSubmitting }: ConfirmDia
         {dialog.items.length > 0 && (
           <div className="max-h-[150px] overflow-y-auto border rounded-md p-2 text-sm space-y-1">
             {dialog.items.slice(0, 10).map((item, i) => (
-              <div key={i} className="text-muted-foreground flex items-center gap-2">
+              <div key={i} className="text-ink-2 flex items-center gap-2">
                 <span className="text-xs">•</span>
                 <span dir="auto">{item}</span>
               </div>
             ))}
             {dialog.items.length > 10 && (
-              <div className="text-muted-foreground italic text-xs">
+              <div className="text-ink-2 italic text-xs">
                 {t("andMore", { count: dialog.items.length - 10 })}
               </div>
             )}
@@ -57,7 +57,7 @@ export function ConfirmDialog({ dialog, onOpenChange, isSubmitting }: ConfirmDia
             disabled={isSubmitting}
             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
           >
-            {isSubmitting && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+            {isSubmitting && <Loader2 className="animate-spin" />}
             {t("confirm")}
           </AlertDialogAction>
         </AlertDialogFooter>

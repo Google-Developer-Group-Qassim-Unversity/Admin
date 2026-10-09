@@ -2,51 +2,32 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
-import { Bell, CheckCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { Ban, Bell, CalendarClock, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, type LucideIcon } from "lucide-react";
 
 import { useDepartmentName } from "@/components/pipeline/shared";
-import { UrgencyDot, type Urgency } from "@/components/status-badge";
+import { Plate, type Tone } from "@/components/najdi";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { usePipelineNotifications, useReadNotifications } from "@/hooks/use-pipeline";
 import type { NotificationKind } from "@/lib/pipeline-types";
+import { useTimeAgo } from "@/lib/format";
 
-const URGENCY: Record<NotificationKind, Urgency> = {
-  request_received: "waiting",
-  media_received: "waiting",
-  returned: "overdue",
-  dates_banned: "overdue",
-  hold_expired: "overdue",
-  task_done: "done",
-  ready_to_publish: "info",
-  dates_changed: "info",
+/** Each kind on its plate: ochre is waiting on the reader, madder went wrong, green moved on, neutral is news. */
+const KIND: Record<NotificationKind, { tone: Tone; icon: LucideIcon }> = {
+  request_received: { tone: "ochre", icon: Inbox },
+  media_received: { tone: "ochre", icon: Megaphone },
+  ready_to_publish: { tone: "ochre", icon: Send },
+  returned: { tone: "madder", icon: CornerUpLeft },
+  dates_banned: { tone: "madder", icon: Ban },
+  hold_expired: { tone: "madder", icon: Hourglass },
+  task_done: { tone: "green", icon: CheckCheck },
+  // News, not a state: the dates moved, nothing is asked of the reader.
+  dates_changed: { tone: "neutral", icon: CalendarClock },
 };
 
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ["day", 86_400],
-  ["hour", 3_600],
-  ["minute", 60],
-];
-
-/** "3 hours ago" - a notification's age matters more than its timestamp. */
-function useTimeAgo() {
-  const locale = useLocale();
-  return React.useMemo(() => {
-    const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-    const absolute = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
-    return (iso: string) => {
-      const seconds = (new Date(iso).getTime() - Date.now()) / 1000;
-      if (seconds < -7 * 86_400) return absolute.format(new Date(iso));
-      for (const [unit, size] of UNITS) {
-        if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
-      }
-      return relative.format(0, "minute");
-    };
-  }, [locale]);
-}
 
 /**
  * The pipeline's notifications, in the top bar so they reach people on every
@@ -76,9 +57,9 @@ function NotificationPopover() {
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
-          <Bell className="h-5 w-5 md:h-[18px] md:w-[18px]" />
+          <Bell className="size-5" strokeWidth={1.75} />
           {unread > 0 ? (
-            <span className="bg-brand-red ring-card tabular absolute top-1 end-1 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] leading-none font-bold text-white ring-2">
+            <span className="bg-door-madder text-on-door tabular absolute top-1 end-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-sm px-1 text-[11px] leading-none font-bold shadow-[0_0_0_2px_var(--card)]">
               {unread > 9 ? "9+" : unread}
             </span>
           ) : null}
@@ -91,13 +72,13 @@ function NotificationPopover() {
       <PopoverContent
         align="end"
         collisionPadding={8}
-        className="w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-xl p-0 sm:w-96"
+        className="w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-xl p-0 sm:w-[400px]"
       >
-        <div className="border-border flex items-center justify-between gap-2 border-b py-2 ps-4 pe-2">
-          <h2 className="font-display text-[15px] font-semibold tracking-tight">{t("title")}</h2>
+        <div className="border-foreground flex min-h-12 items-center justify-between gap-2 border-b py-1.5 ps-4 pe-2">
+          <h2 className="font-display text-[17px] font-semibold">{t("title")}</h2>
           {unread > 0 ? (
-            <Button variant="ghost" size="sm" onClick={() => read.mutate("all")} disabled={read.isPending}>
-              <CheckCheck className="h-4 w-4" />
+            <Button variant="link" size="sm" onClick={() => read.mutate("all")} disabled={read.isPending}>
+              <CheckCheck />
               {t("readAll")}
             </Button>
           ) : (
@@ -110,12 +91,12 @@ function NotificationPopover() {
             <Skeleton className="h-10 w-full" />
           </div>
         ) : !data?.items.length ? (
-          <div className="text-muted-foreground flex flex-col items-center gap-2 px-4 py-10 text-sm">
-            <Bell className="h-6 w-6 opacity-40" />
+          <div className="text-ink-2 flex flex-col items-center gap-2 px-4 py-10 text-sm">
+            <Bell className="size-6 opacity-50" />
             {t("none")}
           </div>
         ) : (
-          <ul className="divide-border max-h-[min(28rem,70dvh)] divide-y overflow-y-auto overscroll-contain">
+          <ul className="divide-rule max-h-[min(30rem,70dvh)] divide-y overflow-y-auto overscroll-contain">
             {data.items.map((n) => (
               <li key={n.id}>
                 <Link
@@ -124,21 +105,19 @@ function NotificationPopover() {
                     if (!n.read) read.mutate(n.id);
                     setOpen(false);
                   }}
-                  className={`hover:bg-muted/60 focus-visible:bg-muted/60 flex items-start gap-3 px-4 py-3 outline-none transition-colors ${
-                    n.read ? "" : "bg-brand-blue-soft/40"
-                  }`}
+                  className="hover:bg-sunk focus-visible:bg-sunk flex items-center gap-3 px-4 py-3 outline-none transition-colors"
                 >
-                  <UrgencyDot urgency={URGENCY[n.kind]} className="mt-1.5" />
+                  <Plate tone={KIND[n.kind].tone} icon={KIND[n.kind].icon} size="sm" className={n.read ? "opacity-55" : undefined} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className={`text-sm leading-snug ${n.read ? "text-muted-foreground" : "font-medium"}`}>
-                      {t(`kinds.${n.kind}`, { title: n.request.title || tr("untitled") })}
+                    <span className={`text-sm leading-snug ${n.read ? "text-ink-2 font-medium" : "font-bold"}`}>
+                      {t(`kinds.${n.kind}`, { title: `\u2068${n.request.title || tr("untitled")}\u2069` })}
                     </span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-ink-2 text-xs">
                       {departmentName(n.department)} · {timeAgo(n.created_at)}
                     </span>
                   </div>
                   {n.read ? null : (
-                    <span className="bg-brand-blue mt-2 h-2 w-2 shrink-0 rounded-full" aria-hidden="true" />
+                    <span className="bg-door-ochre size-2 shrink-0 rounded-[1px]" aria-hidden="true" />
                   )}
                 </Link>
               </li>

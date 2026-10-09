@@ -89,12 +89,12 @@ export function CopyTab({
         </div>
       </div>
 
-      <div className="border rounded-lg p-4 bg-muted/30">
+      <div className="border rounded-lg p-4 bg-sunk/60">
         <h4 className="text-sm font-medium mb-2">{t("preview")}</h4>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-ink-2">
           {t("previewCount", { count: preview.sourceCount, day: sourceDay })}
         </p>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-xs text-ink-2 mt-1">
           {t("skipHint")}
         </p>
       </div>

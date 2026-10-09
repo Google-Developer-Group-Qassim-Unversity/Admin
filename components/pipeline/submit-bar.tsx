@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Clock, Send } from "lucide-react";
+import { CircleCheck, Clock, ListTodo, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { DraftSaveStatus, useDraftSave } from "@/components/pipeline/draft-autosave";
@@ -51,8 +51,8 @@ export function MissingList({
 
   if (!missing.length) {
     return (
-      <p className="text-brand-green-ink flex items-center gap-1.5 text-sm font-medium">
-        <CircleCheck className="h-4 w-4" />
+      <p className="text-door-green-ink flex items-center gap-1.5 text-sm font-bold">
+        <CircleCheck className="size-4" />
         {t("complete")}
       </p>
     );
@@ -60,7 +60,7 @@ export function MissingList({
 
   return (
     <div className="flex flex-col gap-2">
-      <span className={cn("text-sm font-medium", shown && "text-brand-red-ink")}>
+      <span className={cn("text-sm font-bold", shown ? "text-door-madder-ink" : "text-door-ochre-ink")}>
         {t("stillMissing", { count: missing.length })}
       </span>
       <ul className="flex flex-wrap gap-1.5">
@@ -70,8 +70,8 @@ export function MissingList({
               type="button"
               onClick={() => onJump(field)}
               className={cn(
-                "focus-visible:ring-ring/50 rounded-full px-2.5 py-1 text-xs font-medium transition-colors outline-none hover:underline focus-visible:ring-[3px]",
-                shown ? "bg-brand-red-soft text-brand-red-ink" : "bg-brand-yellow-soft text-brand-yellow-ink",
+                "inline-flex min-h-8 items-center rounded-sm px-2.5 text-[13px] font-bold transition-colors outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-h-10",
+                shown ? "bg-door-madder-soft text-door-madder-ink" : "bg-door-ochre-soft text-door-ochre-ink",
               )}
             >
               {label(field)}
@@ -83,7 +83,7 @@ export function MissingList({
             <button
               type="button"
               onClick={() => setExpanded(true)}
-              className="text-muted-foreground hover:text-foreground rounded-full px-2.5 py-1 text-xs font-medium underline-offset-2 hover:underline"
+              className="text-ink-2 hover:text-foreground inline-flex min-h-8 items-center rounded-sm px-2.5 text-[13px] font-bold underline-offset-2 hover:underline pointer-coarse:min-h-10"
             >
               {t("more", { count: missing.length - visible.length })}
             </button>
@@ -149,20 +149,40 @@ export function DraftBar({
     router.push("/pipeline");
   };
 
+  const left = request.missing.length;
+
+  // On a phone this is one line above the bottom bar, so the form keeps the
+  // screen: a short count, Finish later and Submit. Wider screens get the full
+  // sentence and the autosave status.
   return (
-    <div className="bg-card/95 border-border supports-backdrop-filter:bg-card/85 sticky bottom-4 z-20 flex flex-col gap-2 rounded-xl border p-3 shadow-[0_8px_24px_-8px_oklch(0_0_0/0.18)] supports-backdrop-filter:backdrop-blur-lg sm:flex-row sm:items-center sm:gap-3 sm:ps-4 max-md:bottom-[calc(4.5rem+env(safe-area-inset-bottom))]">
-      <div className="min-w-0 flex-1">
-        <DraftSaveStatus />
+    <div className="bg-card border-foreground z-30 flex items-center gap-2 border-t px-3 py-2.5 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] md:sticky md:bottom-4 md:gap-4 md:rounded-xl md:border-0 md:px-5 md:py-3 md:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)] md:ring-1 md:ring-rule">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        {left ? (
+          <p className="text-door-ochre-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
+            <ListTodo className="size-[18px] shrink-0" />
+            <span className="md:hidden">{t("leftShort", { count: left })}</span>
+            <span className="max-md:hidden">{t("stillMissing", { count: left })}</span>
+          </p>
+        ) : (
+          <p className="text-door-green-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
+            <CircleCheck className="size-[18px] shrink-0" />
+            <span className="md:hidden">{t("readyShort")}</span>
+            <span className="max-md:hidden">{t("complete")}</span>
+          </p>
+        )}
+        <span className="max-md:hidden">
+          <DraftSaveStatus />
+        </span>
       </div>
-      <div className="flex gap-2 *:flex-1 sm:*:flex-none">
+      <div className="flex shrink-0 gap-2">
         {!isReturned ? (
-          <Button variant="outline" onClick={onFinishLater} disabled={busy}>
-            <Clock className="h-4 w-4" />
+          <Button variant="outline" size="lg" className="max-md:h-11 max-md:px-3" onClick={onFinishLater} disabled={busy}>
+            <Clock className="max-[359px]:hidden" />
             {t("finishLater")}
           </Button>
         ) : null}
-        <Button onClick={onSubmit} disabled={busy}>
-          <Send className="h-4 w-4 rtl:-scale-x-100" />
+        <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
+          <Send className="rtl:-scale-x-100" />
           {isReturned ? tr("resubmit") : t("button")}
         </Button>
       </div>

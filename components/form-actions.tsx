@@ -15,8 +15,8 @@ export function FormActions({
   return (
     <div
       className={cn(
-        "bg-background/95 supports-backdrop-filter:bg-background/80 border-border sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 -mx-4 flex gap-2 border-t px-4 py-3 supports-backdrop-filter:backdrop-blur-lg *:flex-1",
-        "md:static md:mx-0 md:justify-end md:border-0 md:bg-transparent md:px-0 md:py-0 md:backdrop-blur-none md:*:flex-none",
+        "bg-card border-foreground sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 -mx-4 flex gap-2 border-t px-4 py-3 *:flex-1",
+        "md:static md:mx-0 md:justify-end md:border-rule md:bg-transparent md:px-0 md:pt-4 md:pb-0 md:*:flex-none",
         className,
       )}
     >

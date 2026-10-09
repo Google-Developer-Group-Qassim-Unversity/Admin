@@ -6,6 +6,12 @@ import { arSA, enUS } from "@clerk/localizations";
 import { useLocale, useTranslations } from "next-intl";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { Pencil } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 
 /** The fixed staging code (STAGING_OTP); the boxes are drawn for this many digits. */
 const CODE_LENGTH = 4;
@@ -66,7 +72,7 @@ function GoogleIcon() {
 
 function ClerkWordmark() {
   return (
-    <span className="inline-flex items-center gap-0.5 font-semibold tracking-tight text-[#212126]/65 dark:text-white/65">
+    <span className="inline-flex items-center gap-0.5 font-bold tracking-tight">
       <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
         <circle cx="8" cy="8" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
         <circle cx="8" cy="8" r="2.5" fill="currentColor" />
@@ -76,14 +82,14 @@ function ClerkWordmark() {
   );
 }
 
-const card = "flex flex-col gap-8 px-10 py-8 text-[#212126] dark:text-white";
-const primaryButton =
-  "flex h-8 w-full items-center justify-center gap-2 rounded-md bg-[#2f3037] bg-gradient-to-b from-white/10 to-transparent px-3 text-[13px] font-medium text-white shadow-[0_0_0_1px_#2f3037,inset_0_1px_1px_rgba(255,255,255,0.07),0_2px_3px_rgba(34,42,53,0.2),0_1px_1px_rgba(0,0,0,0.24)] transition-opacity hover:opacity-90 disabled:opacity-60 dark:bg-white dark:from-transparent dark:text-[#212126] dark:shadow-none";
-const subtle = "text-[13px] leading-[18px] text-[#212126]/65 dark:text-white/65";
+// Clerk's card as the provider themes it (clerk-provider-wrapper.tsx): the
+// house's limewash and mud ink, Reem Kufi title, 4px corners.
+const card = "flex flex-col gap-8 px-6 py-8 sm:px-10";
+const subtle = "text-ink-2 text-[13px] leading-[18px]";
 
 function Caret() {
   return (
-    <svg viewBox="0 0 16 16" className="size-2.5 opacity-60 rtl:rotate-180" aria-hidden>
+    <svg viewBox="0 0 16 16" className="size-2.5 opacity-70 rtl:rotate-180" aria-hidden>
       <path fill="currentColor" d="M5 3.5v9l7-4.5-7-4.5Z" />
     </svg>
   );
@@ -196,9 +202,9 @@ function StagingSignInFlow() {
     return (
       <div className={card}>
         <div className="flex flex-col items-center gap-1 text-center">
-          <h1 className="font-sans text-[17px] leading-6 font-bold">{copy.codeTitle}</h1>
+          <h1 className="font-display text-2xl leading-tight font-semibold">{copy.codeTitle}</h1>
           <p className={subtle}>{copy.codeSubtitle}</p>
-          <p className={`${subtle} flex items-center gap-2`}>
+          <p className={`${subtle} flex items-center gap-1`}>
             <span dir="ltr">{email}</span>
             <button
               type="button"
@@ -207,17 +213,9 @@ function StagingSignInFlow() {
                 setStep("email");
                 setError(null);
               }}
-              className="text-[#212126] hover:opacity-70 dark:text-white"
+              className="text-foreground hover:bg-sunk inline-flex size-8 items-center justify-center rounded-sm"
             >
-              <svg viewBox="0 0 16 16" className="size-3.5" aria-hidden>
-                <path
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.3"
-                  strokeLinejoin="round"
-                  d="M10.5 2.5l3 3-8 8H2.5v-3l8-8ZM9 4l3 3"
-                />
-              </svg>
+              <Pencil className="size-3.5" aria-hidden />
             </button>
           </p>
         </div>
@@ -246,20 +244,21 @@ function StagingSignInFlow() {
             {Array.from({ length: CODE_LENGTH }, (_, i) => (
               <span
                 key={i}
-                className={`flex size-10 items-center justify-center rounded-md bg-white text-[17px] font-medium dark:bg-white/5 ${
+                className={cn(
+                  "bg-card tabular flex size-12 items-center justify-center rounded-lg text-xl font-bold",
                   error
-                    ? "shadow-[0_0_0_1px_#ef4444]"
+                    ? "ring-door-madder ring-2"
                     : i === Math.min(code.length, CODE_LENGTH - 1) && !pending
-                      ? "shadow-[0_0_0_1px_rgba(0,0,0,0.3),0_0_0_4px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.4)]"
-                      : "shadow-[0_0_0_1px_rgba(0,0,0,0.11),0_0_1px_rgba(0,0,0,0.07)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
-                }`}
+                      ? "ring-foreground ring-2"
+                      : "ring-rule ring-1",
+                )}
               >
                 {code[i] ?? ""}
               </span>
             ))}
           </label>
           {error ? (
-            <p role="alert" className="text-[13px] leading-[18px] text-[#ef4444]">
+            <p role="alert" className="text-door-madder-ink text-[13px] leading-[18px] font-bold">
               {error}
             </p>
           ) : (
@@ -267,7 +266,7 @@ function StagingSignInFlow() {
               type="button"
               disabled={resendIn > 0}
               onClick={() => setResendIn(30)}
-              className={`${subtle} disabled:opacity-60`}
+              className={`${subtle} tabular min-h-8 disabled:opacity-60`}
             >
               {copy.resend}
               {resendIn > 0 ? ` (${resendIn})` : ""}
@@ -275,26 +274,21 @@ function StagingSignInFlow() {
           )}
         </div>
 
-        <div className="flex flex-col items-center gap-4">
-          <button
-            type="button"
-            disabled={pending}
-            onClick={() => void submitCode(code)}
-            className={primaryButton}
-          >
+        <div className="flex flex-col items-center gap-3">
+          <Button type="button" size="lg" className="w-full" disabled={pending} onClick={() => void submitCode(code)}>
             {copy.continue}
             <Caret />
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="ghost"
             onClick={() => {
               setStep("email");
               setError(null);
             }}
-            className="text-[13px] font-medium hover:opacity-70"
           >
             {copy.anotherMethod}
-          </button>
+          </Button>
         </div>
       </div>
     );
@@ -306,70 +300,63 @@ function StagingSignInFlow() {
         {/* eslint-disable-next-line @next/next/no-img-element -- Clerk's hosted logo, as its own page loads it */}
         <img src={LOGO_URL} alt="" className="size-12" />
         <div className="flex flex-col gap-1">
-          <h1 className="font-sans text-[17px] leading-6 font-bold">{t("title")}</h1>
+          <h1 className="font-display text-2xl leading-tight font-semibold">{t("title")}</h1>
           <p className={subtle}>{t("subtitle")}</p>
         </div>
       </div>
 
       <div className="flex flex-col gap-6">
-        <button
-          type="button"
-          onClick={() => void continueWithGoogle()}
-          className="flex h-8 w-full items-center justify-center gap-4 rounded-md px-3 text-[13px] font-medium text-black/60 shadow-[0_0_0_1px_rgba(0,0,0,0.07),0_2px_3px_-1px_rgba(0,0,0,0.08),0_1px_0_rgba(0,0,0,0.02)] hover:bg-black/[0.03] dark:text-white/80 dark:shadow-[0_0_0_1px_rgba(255,255,255,0.15)] dark:hover:bg-white/5"
-        >
+        <Button type="button" variant="outline" size="lg" className="w-full gap-3" onClick={() => void continueWithGoogle()}>
           <GoogleIcon />
           {copy.google}
-        </button>
+        </Button>
 
         <div className="flex items-center gap-4">
-          <span className="h-px flex-1 bg-black/[0.07] dark:bg-white/10" />
+          <span className="bg-rule h-px flex-1" />
           <span className={subtle}>{copy.or}</span>
-          <span className="h-px flex-1 bg-black/[0.07] dark:bg-white/10" />
+          <span className="bg-rule h-px flex-1" />
         </div>
 
-        <form onSubmit={submitEmail} className="flex flex-col gap-8">
+        <form onSubmit={submitEmail} className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label htmlFor="staging-email" className="text-[13px] leading-[18px] font-medium">
-              {copy.emailLabel}
-            </label>
-            <input
+            <Label htmlFor="staging-email">{copy.emailLabel}</Label>
+            <Input
               id="staging-email"
               type="email"
               autoComplete="email"
+              inputMode="email"
+              enterKeyHint="go"
+              dir="ltr"
               required
               value={email}
               placeholder={copy.emailPlaceholder}
+              aria-invalid={error ? true : undefined}
               onChange={(event) => {
                 setEmail(event.target.value);
                 setError(null);
               }}
-              className={`h-8 w-full rounded-md bg-white px-3 text-[13px] text-[#131316] outline-none placeholder:text-black/40 dark:bg-white/5 dark:text-white dark:placeholder:text-white/40 ${
-                error
-                  ? "shadow-[0_0_0_1px_#ef4444]"
-                  : "shadow-[0_0_0_1px_rgba(0,0,0,0.11),0_0_1px_rgba(0,0,0,0.07)] focus:shadow-[0_0_0_1px_rgba(0,0,0,0.3),0_0_0_4px_rgba(0,0,0,0.08)] dark:shadow-[0_0_0_1px_rgba(255,255,255,0.15)]"
-              }`}
             />
             {error && (
-              <p role="alert" className="text-[13px] leading-[18px] text-[#ef4444]">
+              <p role="alert" className="text-door-madder-ink text-[13px] leading-[18px] font-bold">
                 {error}
               </p>
             )}
           </div>
-          <button type="submit" disabled={pending} className={primaryButton}>
+          <Button type="submit" size="lg" className="w-full" disabled={pending}>
             {copy.continue}
             <Caret />
-          </button>
+          </Button>
         </form>
       </div>
     </div>
   );
 }
 
-/** The grey "Secured by Clerk" strip under Clerk's card. */
+/** The "Secured by Clerk" strip under Clerk's card. */
 export function StagingSignInFooter() {
   const copy = useClerkCopy();
   return (
-    <div className="flex items-center justify-center gap-1.5 bg-black/[0.03] py-4 text-xs font-medium text-[#212126]/65 dark:bg-white/5 dark:text-white/65">
+    <div className="bg-sunk text-ink-2 flex items-center justify-center gap-1.5 py-4 text-xs font-medium">
       {copy.securedBy}
       <ClerkWordmark />
     </div>

@@ -15,11 +15,11 @@ export function TableSkeleton() {
   return (
     <>
       {/* Summary Statistics Skeleton */}
-      <div className="mb-5 grid grid-cols-2 gap-2 sm:mb-6 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+      <div className="bg-mortar mb-5 grid grid-cols-2 gap-1 rounded-lg p-1 sm:mb-6 sm:grid-cols-3 lg:grid-cols-5">
         {Array.from({ length: 5 }).map((_, i) => (
           <div
             key={i}
-            className={`rounded-xl border bg-muted/40 px-3.5 py-3 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`}
+            className={`bg-card rounded-sm px-3.5 py-3 ${i === 0 ? "col-span-2 sm:col-span-1" : ""}`}
           >
             <Skeleton className="h-3.5 w-16" />
             <Skeleton className="mt-2 h-6 w-10" />
@@ -34,9 +34,9 @@ export function TableSkeleton() {
       </div>
 
       {/* Card list skeleton (phones) */}
-      <div className="space-y-2 md:hidden">
+      <div className="flex flex-col md:hidden">
         {Array.from({ length: 5 }).map((_, i) => (
-          <div key={i} className="flex items-center gap-3 rounded-xl border p-3">
+          <div key={i} className="border-rule flex items-center gap-3 border-b px-1 py-3">
             <Skeleton className="h-5 w-5 rounded" />
             <div className="flex-1 space-y-2">
               <Skeleton className="h-4 w-2/3" />
@@ -47,7 +47,7 @@ export function TableSkeleton() {
       </div>
 
       {/* Table Skeleton */}
-      <div className="hidden rounded-lg border md:block">
+      <div className="bg-card ring-rule hidden overflow-hidden rounded-xl ring-1 md:block">
         <Table>
           <TableHeader>
             <TableRow>

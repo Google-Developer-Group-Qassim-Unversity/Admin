@@ -1,14 +1,11 @@
 "use client";
 
-import * as React from "react";
-import { useLocale, useTranslations } from "next-intl";
-import { History } from "lucide-react";
+import { useTranslations } from "next-intl";
 
+import { HistoryList, type HistoryEntry } from "@/components/history-list";
+import type { Tone } from "@/components/najdi";
 import { useFormatDateRange } from "@/components/pipeline/shared";
-import { Button } from "@/components/ui/button";
 import type { EventRequestDetail, HistoryItem, PipelineTeam } from "@/lib/pipeline-types";
-
-const COLLAPSED = 6;
 
 /**
  * Who did what to the request, newest first: every step, edit and automatic
@@ -17,60 +14,37 @@ const COLLAPSED = 6;
  */
 export function RequestHistory({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.history");
-  const locale = useLocale();
   const describe = useDescribe();
-  const [expanded, setExpanded] = React.useState(false);
-  const formatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
-  const items = [...request.history].reverse();
-  const visible = expanded ? items : items.slice(0, COLLAPSED);
 
-  if (!items.length) return null;
+  if (!request.history.length) return null;
+  const entries: HistoryEntry[] = [...request.history].reverse().map((item) => ({
+    at: item.at,
+    actor: item.actor?.name ?? t("automatic"),
+    tone: TONE[item.action],
+    ...describe(item),
+  }));
 
   return (
-    <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="bg-muted text-muted-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          <History className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
-        </div>
-      </div>
-      <ol className="flex flex-col">
-        {visible.map((item, index) => {
-          const { text, note } = describe(item);
-          return (
-            <li key={`${item.at}-${index}`} className="relative flex gap-3 pb-4 last:pb-0">
-              <span className="flex w-2.5 shrink-0 flex-col items-center pt-1.5">
-                <span className="bg-brand-blue h-2.5 w-2.5 rounded-full" />
-                {index < visible.length - 1 ? <span className="bg-border mt-1 w-px flex-1" /> : null}
-              </span>
-              <div className="flex min-w-0 flex-col gap-0.5">
-                <p className="text-sm">
-                  <span className="font-semibold">{item.actor?.name ?? t("automatic")}</span> {text}
-                </p>
-                {note ? (
-                  <p className="text-muted-foreground text-xs break-words whitespace-pre-wrap">{note}</p>
-                ) : null}
-                <time dateTime={item.at} className="text-muted-foreground tabular text-xs">
-                  {formatter.format(new Date(item.at))}
-                </time>
-              </div>
-            </li>
-          );
-        })}
-      </ol>
-      {items.length > visible.length ? (
-        <div>
-          <Button variant="ghost" size="sm" onClick={() => setExpanded(true)}>
-            {t("showAll", { count: items.length })}
-          </Button>
-        </div>
-      ) : null}
-    </section>
+    <HistoryList
+      id="request-history"
+      title={t("title")}
+      hint={t("hint")}
+      entries={entries}
+      showAll={(count) => t("showAll", { count })}
+    />
   );
 }
+
+/** The steps that changed the request's state get its colour; the rest are neutral. */
+const TONE: Partial<Record<HistoryItem["action"], Tone>> = {
+  returned: "madder",
+  dates_banned: "madder",
+  hold_expired: "madder",
+  penalty_grown: "madder",
+  event_deleted: "madder",
+  task_done: "green",
+  published: "green",
+};
 
 /** One history row in words: what was done, and any detail worth a second line. */
 function useDescribe() {

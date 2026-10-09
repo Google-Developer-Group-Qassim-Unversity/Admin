@@ -49,6 +49,9 @@ ENV CLERK_SECRET_KEY=build-placeholder \
     TEMPLATE_FORM_FILE_ID=build-placeholder
 
 ENV NEXT_TELEMETRY_DISABLED=1
+# Thmanyah Sans may not be re-hosted, so it is fetched from its own site here;
+# if that fails the app falls back to Tajawal.
+RUN node scripts/fetch-thmanyah.mjs
 RUN pnpm build
 
 # --- runner ---

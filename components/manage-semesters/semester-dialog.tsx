@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import type { Semester, SemesterInput, SemesterTerm } from "@/lib/api-types";
 import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
+import { isolate, useFormatters } from "@/lib/format";
 
 /** Semesters get added ahead of time and back-filled for past terms, so allow a wide range. */
 const CALENDAR_START = new Date(2020, 0);
@@ -54,6 +54,7 @@ interface DateFieldProps {
 
 function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldProps) {
   const t = useTranslations("semesterDialog");
+  const fmt = useFormatters();
   const [open, setOpen] = React.useState(false);
   const selected = parseIsoDate(value);
 
@@ -70,7 +71,7 @@ function DateField({ id, label, value, onChange, minDate, invalid }: DateFieldPr
             className={cn("w-full justify-start text-start font-normal", !selected && "text-muted-foreground")}
           >
             <CalendarIcon className="me-2 h-4 w-4" />
-            {selected ? format(selected, "PPP") : t("selectDate")}
+            {selected ? fmt.custom(selected, { day: "numeric", month: "long", year: "numeric" }) : t("selectDate")}
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
@@ -197,7 +198,7 @@ export function SemesterDialog({ open, onOpenChange, semester, onSubmit, isLoadi
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditing ? t("editTitle", { name: semester.name }) : t("addTitle")}</DialogTitle>
+            <DialogTitle>{isEditing ? t("editTitle", { name: isolate(semester.name) }) : t("addTitle")}</DialogTitle>
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
 

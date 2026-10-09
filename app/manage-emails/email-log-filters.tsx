@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { Count } from "@/components/najdi";
 import { Activity, CalendarIcon, Filter, Search, SlidersHorizontal, User, X } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
@@ -27,6 +28,7 @@ import { useTranslations } from "next-intl";
 
 import type { EmailLogFilters, EmailType } from "./types";
 import { TYPE_CONFIG, TYPE_LABEL_KEY } from "./email-log-row";
+import { useFormatters } from "@/lib/format";
 
 interface EmailLogFiltersBarProps {
   filters: EmailLogFilters;
@@ -40,6 +42,7 @@ const MAX_DISPLAY = 50;
 export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveToggle }: EmailLogFiltersBarProps) {
   const t = useTranslations("manageEmails.logFilters");
   const tt = useTranslations("manageEmails.logRow.types");
+  const fmtDate = useFormatters();
   const { getToken } = useAuth();
   const [events, setEvents] = React.useState<Event[]>([]);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
@@ -92,15 +95,14 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
 
   const dateRangeLabel = React.useMemo(() => {
     if (!filters.start_date && !filters.end_date) return t("period");
-    const fmt = (iso: string) =>
-      new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const fmt = (iso: string) => fmtDate.custom(iso, { month: "short", day: "numeric" });
     if (filters.start_date && filters.end_date) {
       return `${fmt(filters.start_date)} – ${fmt(filters.end_date)}`;
     }
     if (filters.start_date) return t("from", { date: fmt(filters.start_date) });
     if (filters.end_date) return t("until", { date: fmt(filters.end_date) });
     return t("period");
-  }, [filters.start_date, filters.end_date, t]);
+  }, [filters.start_date, filters.end_date, t, fmtDate]);
 
   const dateRange = filters.start_date && filters.end_date
     ? { from: new Date(filters.start_date), to: new Date(filters.end_date) }
@@ -111,16 +113,16 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
   const sheetFilterCount = [filters.email_type, filters.event_id, filters.member_id].filter(Boolean).length;
 
   const liveToggle = (
-    <div className="flex min-w-0 flex-1 items-center gap-1 rounded-lg bg-muted p-1 md:flex-none">
+    <div className="bg-mortar flex min-w-0 flex-1 items-center gap-1 rounded-lg p-1 md:flex-none">
       <button
         type="button"
         aria-pressed={isLive}
         onClick={() => onLiveToggle(true)}
-        className={`flex flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors pointer-coarse:min-h-8 md:flex-none ${
-          isLive ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+        className={`flex flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-[13px] font-bold transition-colors min-h-9 pointer-coarse:min-h-10 md:flex-none ${
+          isLive ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground"
         }`}
       >
-        <Activity className="h-3 w-3" />
+        <Activity className="size-3.5" />
         {t("live")}
       </button>
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -129,11 +131,11 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
             type="button"
             aria-pressed={!isLive}
             onClick={() => onLiveToggle(false)}
-            className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-colors pointer-coarse:min-h-8 md:flex-none ${
-              !isLive ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+            className={`flex min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-[13px] font-bold transition-colors min-h-9 pointer-coarse:min-h-10 md:flex-none ${
+              !isLive ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground"
             }`}
           >
-            <CalendarIcon className="h-3 w-3 shrink-0" />
+            <CalendarIcon className="size-3.5 shrink-0" />
             <span className="truncate">{dateRangeLabel}</span>
           </button>
         </PopoverTrigger>
@@ -162,7 +164,7 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
         <SelectTrigger
           size="sm"
           aria-label={t("type")}
-          className={wide ? "w-full" : "w-[140px] h-7 text-xs"}
+          className={wide ? "w-full" : "w-[170px] text-[13px]"}
         >
           <SelectValue placeholder={t("allTypes")} />
         </SelectTrigger>
@@ -187,7 +189,7 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
           <Button
             variant="outline"
             size="sm"
-            className={wide ? "w-full justify-start gap-2" : "h-7 text-xs gap-1.5"}
+            className={wide ? "bg-card w-full justify-start gap-2" : "bg-card gap-1.5 text-[13px]"}
           >
             <Filter className={wide ? "h-4 w-4" : "h-3 w-3"} />
             <span dir="auto" className="truncate">
@@ -259,9 +261,7 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
           <SlidersHorizontal className="h-4 w-4" />
           {t("filters")}
           {sheetFilterCount > 0 && (
-            <span className="bg-primary text-primary-foreground tabular inline-flex min-w-5 items-center justify-center rounded-full px-1.5 text-xs">
-              {sheetFilterCount}
-            </span>
+            <Count>{sheetFilterCount}</Count>
           )}
         </Button>
       </div>
@@ -288,8 +288,8 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
         {liveToggle}
         {renderControls(false)}
         {activeFilterCount > 0 && (
-          <Button variant="ghost" size="sm" className="h-7 text-xs text-muted-foreground" onClick={clearFilters}>
-            <X className="h-3 w-3 me-1" />
+          <Button variant="ghost" size="sm" className="text-ink-2" onClick={clearFilters}>
+            <X />
             {t("clear", { count: activeFilterCount })}
           </Button>
         )}
@@ -353,7 +353,7 @@ function MemberFilterButton({
       <Button
         variant="outline"
         size="sm"
-        className={wide ? "w-full justify-start gap-2" : "h-7 text-xs gap-1.5"}
+        className={wide ? "bg-card w-full justify-start gap-2" : "bg-card gap-1.5 text-[13px]"}
         onClick={() => setOpen(true)}
       >
         <User className={wide ? "h-4 w-4" : "h-3 w-3"} />
@@ -424,7 +424,7 @@ function MemberFilterButton({
                 {displayMembers.map((member) => (
                   <button
                     key={member.id}
-                    className="w-full flex items-center gap-3 px-5 py-2.5 pointer-coarse:py-3 hover:bg-muted/50 active:bg-muted/60 transition-colors text-start sm:px-6"
+                    className="w-full flex items-center gap-3 px-5 py-2.5 pointer-coarse:py-3 hover:bg-sunk active:bg-sunk transition-colors text-start sm:px-6"
                     onClick={() => {
                       onSelect({ id: member.id, name: member.name });
                       setOpen(false);

@@ -259,7 +259,10 @@
     "pipeline": "مسار الفعاليات",
     "more": "المزيد",
     "appearance": "المظهر",
-    "permissions": "الصلاحيات"
+    "permissions": "الصلاحيات",
+    "brand": "GDG القصيم",
+    "pipelineShort": "المسار",
+    "waitingCount": "{count, plural, one {طلب واحد ينتظر فريقك} two {طلبان ينتظران فريقك} few {# طلبات تنتظر فريقك} other {# طلبًا تنتظر فريقك}}"
   },
   "theme": {
     "toggle": "تغيير المظهر",
@@ -380,8 +383,9 @@
     "unofficial": "داخلية",
     "showing": "{count, plural, one {فعالية وحدة} other {# فعالية}}",
     "view": {
-      "table": "عرض جدول",
-      "cards": "عرض بطاقات"
+      "label": "طريقة العرض",
+      "table": "جدول",
+      "cards": "الملصقات"
     },
     "columns": {
       "event": "الفعالية",
@@ -479,7 +483,8 @@
     "searchCustom": "ابحث في فعاليات النقاط...",
     "clearFilters": "مسح الفلاتر",
     "noMatchCustom": "لا توجد فعاليات مخصصة تطابق بحثك.",
-    "noMatchFull": "لا توجد فعاليات كاملة تطابق بحثك."
+    "noMatchFull": "لا توجد فعاليات كاملة تطابق بحثك.",
+    "shownCount": "{shown} من {total}"
   },
   "manageEmails": {
     "title": "إدارة البريد",
@@ -503,6 +508,8 @@
       "byType": "الاستخدام حسب نوع البريد",
       "noData": "لا توجد بيانات استخدام",
       "total": "الإجمالي",
+      "refresh": "تحديث الاستخدام",
+      "loadFailed": "تعذّر تحميل الاستخدام. جرّب التحديث.",
       "types": {
         "eventCertificate": "شهادات الفعاليات",
         "manualCertificate": "شهادات يدوية",
@@ -850,6 +857,12 @@
     "addedMembers": "{count, plural, =0 {ما تم إضافة أحد} one {تمت إضافة عضو وحد} two {تمت إضافة عضوين} few {تمت إضافة # أعضاء} many {تمت إضافة # عضو} other {تمت إضافة # عضو}}"
   },
   "attendance": {
+    "qrDisplay": {
+      "title": "امسح الرمز لتسجيل حضورك",
+      "hint": "افتح كاميرا جوالك ووجّهها على الرمز.",
+      "missingTitle": "ما فيه رمز للعرض",
+      "missingBody": "أنشئ الرمز من تبويب الحضور في صفحة الفعالية بلوحة الإدارة."
+    },
     "confirmDialog": {
       "confirm": "تأكيد",
       "andMore": "{count, plural, =0 {} one {...وواحد إضافي} two {...واثنان إضافيان} few {...و# إضافيين} many {...و# إضافي} other {...و# إضافي}}"
@@ -857,6 +870,7 @@
     "statusItem": {
       "reopenTitle": "إعادة فتح الفعالية",
       "closeTitle": "إغلاق الفعالية",
+      "overdueTitle": "الفعالية انتهت: اقفلها",
       "reopenDescription": "أعد فتح الفعالية عشان تكمل استقبال الحضور.",
       "closeDescription": "إذا خلص تسجيل الحضور، أغلق الفعالية عشان تعتمد سجلات الحضور نهائيًا.",
       "opening": "جاري الفتح...",
@@ -1089,7 +1103,8 @@
     "notRequiredHint": "أي أحد يقدر يشارك بدون تسجيل. إذا فيه نموذج Google مرفق، يبقى مرفق.",
     "registrationRequired": "صار التسجيل مطلوب لهذي الفعالية.",
     "registrationNotRequired": "التسجيل ما عاد مطلوب.",
-    "updateFailed": "تعذر تحديث إعداد التسجيل."
+    "updateFailed": "تعذر تحديث إعداد التسجيل.",
+    "stepDone": "تم"
   },
   "sendCustomEmail": {
     "title": "إرسال بريد مخصص",
@@ -1141,6 +1156,12 @@
     "eventNotFoundDescription": "الفعالية اللي تدور عليها مو موجودة أو تم حذفها.",
     "goBackToEvents": "ارجع للفعاليات",
     "errorPrefix": "خطأ: {message}",
+    "tabsLabel": "أقسام الفعالية",
+    "overdue": {
+      "title": "الحضور ما انقفل",
+      "body": "الفعالية انتهت. اقفلها عشان تنمنح النقاط وتنرسل الشهادات.",
+      "action": "اقفل الفعالية"
+    },
     "tabs": {
       "info": "معلومات الفعالية",
       "manage": "نموذج Google والنشر",
@@ -1150,6 +1171,7 @@
     }
   },
   "editEvent": {
+    "editHeading": "تعديل الفعالية",
     "updatedSuccess": "تم تحديث الفعالية.",
     "unknownError": "خطأ غير معروف",
     "updateFailedContactSupport": "تعذر تحديث الفعالية. يرجى التواصل مع الدعم.",
@@ -1278,6 +1300,7 @@
     "delete": "حذف",
     "usedCount": "{count, plural, =0 {لم يُستخدم بعد} one {استُخدم مرة واحدة} two {استُخدم مرتين} few {استُخدم # مرات} many {استُخدم # مرة} other {استُخدم # مرة}}",
     "moreActions": "مزيد من الإجراءات لـ {name}",
+    "dragToReorder": "اسحب لإعادة ترتيب {name}",
     "sortLabel": "الترتيب",
     "actionsCountShort": "{count, plural, zero {لا إجراءات} one {إجراء واحد} two {إجراءان} few {# إجراءات} many {# إجراءً} other {# إجراء}}",
     "sort": {
@@ -1343,7 +1366,8 @@
       "authenticated": "موثقين",
       "manual": "يدويين",
       "male": "ذكور",
-      "female": "إناث"
+      "female": "إناث",
+      "summary": "{total} عضو · {authenticated} موثّق · {manual} يدوي"
     },
     "searchPlaceholder": "ابحث بالاسم أو البريد أو الرقم الجامعي أو الجوال...",
     "memberCount": "{count, plural, =0 {لا يوجد أعضاء} one {عضو وحد} two {عضوان} few {# أعضاء} many {# عضو} other {# عضو}}",
@@ -1713,7 +1737,8 @@
     "reason": "السبب",
     "optional": "(اختياري)",
     "delete": "حذف",
-    "removeRow": "حذف الصف"
+    "removeRow": "حذف الصف",
+    "compositeLocked": "محدد بإجراء مركّب"
   },
   "actionReasonSelect": {
     "selectAction": "اختر الإجراء...",
@@ -1768,6 +1793,7 @@
     "actions": "إجراءات",
     "goTo": "انتقل إلى",
     "events": "الفعاليات",
+    "bookDates": "احجز موعدًا لفعالية",
     "newEvent": "إنشاء فعالية",
     "grantPoints": "منح نقاط مخصصة",
     "addMember": "إضافة عضو",
@@ -1784,6 +1810,44 @@
     "eventCount": "{count, plural, one {فعالية وحدة} other {# فعالية}}",
     "allClearTitle": "ما فيه شيء ينتظرك",
     "allClearBody": "ما فيه فعاليات متأخرة ولا مسودات معلّقة ولا شهادات ما انرسلت. استمتع.",
+    "greeting": "أهلًا {name}",
+    "yourRequests": "طلبات قسمك",
+    "all": "الكل",
+    "noRequests": "ما فيه طلبات للحين. احجز موعدًا وابدأ واحد.",
+    "openInbox": "افتح",
+    "events": "الفعاليات",
+    "noEvents": "ما فيه فعالية شغالة ولا تسجيل مفتوح.",
+    "stages": {
+      "club": "المسار في النادي",
+      "yours": "المسار في أقسامك",
+      "open": "المسار",
+      "returned": "{count, plural, one {طلب واحد رجع لقسمه للتعديل} two {طلبان رجعا لأقسامهما للتعديل} few {# طلبات رجعت لأقسامها للتعديل} other {# طلبًا رجعت لأقسامها للتعديل}}",
+      "moreInStep": "+{count} غيرها"
+    },
+    "yourTurn": {
+      "title": "دورك الآن",
+      "holdEnds": "ينتهي الحجز بعد",
+      "noneTitle": "ما فيه شيء ينتظرك",
+      "noneBody": "طلباتك عند الأقسام. احجز موعدًا وابدأ طلبًا جديدًا.",
+      "book": "احجز موعدًا",
+      "readyNote": "خلّصت كل الأقسام. اختر فئة النقاط وانشر.",
+      "returnedNote": "عدّل اللي طلبه التصميم، ثم أعد الإرسال.",
+      "more": "{count, plural, one {+طلب ثاني ينتظرك} two {+طلبان ينتظرونك} few {+# طلبات تنتظرك} other {+# طلبًا تنتظرك}}",
+      "teamTitle": "دور فريقك",
+      "teamArrived": "وصل {ago}",
+      "teamOpen": "افتح الطلب",
+      "teamMore": "{count, plural, one {+طلب ثاني ينتظر فريقك} two {+طلبان ينتظران فريقك} few {+# طلبات تنتظر فريقك} other {+# طلبًا تنتظر فريقك}}",
+      "action": {
+        "hold": "أكمل الطلب",
+        "returned": "عدّله",
+        "lost": "اختر أيامًا جديدة",
+        "ready": "انشر"
+      },
+      "teamDo": {
+        "design": "ارفع البوستر",
+        "logistics": "أكّد الفعالية"
+      }
+    },
     "tiles": {
       "open": "التسجيل مفتوح",
       "openHint": "الأعضاء يقدرون يسجلون",
@@ -1820,6 +1884,13 @@
   "pipeline": {
     "title": "مسار الفعاليات",
     "subtitle": "احجز موعدًا، وأرسل الطلب للتصميم واللوجستيات، ثم انشر فعاليتك",
+    "stepNames": {
+      "draft": "مسودة",
+      "in_review": "التصميم واللوجستيات",
+      "media": "الإعلام",
+      "ready": "جاهز للنشر",
+      "published": "منشور"
+    },
     "teams": {
       "design": "التصميم",
       "logistics": "اللوجستيات",
@@ -1835,6 +1906,7 @@
       "previous": "الشهر السابق",
       "next": "الشهر التالي",
       "firstBookable": "أول يوم يمكنك حجزه هو {date}.",
+      "yourPick": "اختيارك",
       "status": {
         "locked": "قريب جدًا",
         "banned": "مغلق من اللوجستيات",
@@ -1880,7 +1952,9 @@
       "book": "احجز",
       "cancel": "إلغاء",
       "booked": "تم حجز الأيام لمدة ٢٤ ساعة",
-      "failed": "تعذر حجز هذه الأيام"
+      "failed": "تعذر حجز هذه الأيام",
+      "days": "{count, plural, one {يوم واحد} two {يومان} few {# أيام} other {# يومًا}}",
+      "heldFor": "نحجزها ٢٤ ساعة"
     },
     "requests": {
       "mine": "طلبات قسمك",
@@ -1900,7 +1974,7 @@
       "cancelled": "تم إلغاء الطلب",
       "failed": "حدث خطأ",
       "holdTitle": "الأيام محجوزة",
-      "holdBody": "أكمل بيانات الفعالية والطلبين ثم أرسل قبل انتهاء الحجز:",
+      "holdBody": "أكمل بيانات الفعالية والطلبين ثم أرسل قبل انتهاء الحجز.",
       "lostDatesExpired": "انتهت مهلة الـ٢٤ ساعة فأُلغي حجز الأيام",
       "lostDatesBanned": "أغلقت اللوجستيات أحد أيامك ففقد الطلب تواريخه",
       "lostDatesBody": "كل ما عبأته محفوظ. اختر أيامًا جديدة لتكمل.",
@@ -1914,7 +1988,10 @@
         "logistics": "طلب اللوجستيات"
       },
       "cancelTitle": "إلغاء هذا الطلب؟",
+      "moreActions": "إجراءات أخرى",
       "keep": "إبقاء الطلب",
+      "whatsLeft": "ما الذي بقي",
+      "sectionDone": "مكتمل",
       "requestedBy": "طلبه {name}"
     },
     "details": {
@@ -1997,6 +2074,8 @@
       "finishLaterSavedHold": "تم حفظ المسودة. ارجع وأرسل الطلب قبل انتهاء مهلة الحجز (٢٤ ساعة).",
       "finishLaterFailed": "تعذّر حفظ بعض التعديلات. راجع الرسالة الظاهرة وحاول مرة أخرى.",
       "stillMissing": "{count, plural, one {بقي شيء واحد قبل الإرسال} two {بقي شيئان قبل الإرسال} few {بقيت # أشياء قبل الإرسال} other {بقي # شيئًا قبل الإرسال}}",
+      "leftShort": "بقي {count}",
+      "readyShort": "جاهز",
       "incomplete": "{count, plural, one {حقل واحد ما زال ناقصًا} two {حقلان ما زالا ناقصين} few {# حقول ما زالت ناقصة} other {# حقلًا ما زال ناقصًا}}",
       "more": "+{count} أخرى"
     },
@@ -2226,7 +2305,8 @@
         "place": "المكان",
         "meet": "Google Meet",
         "type": "نوع الفعالية"
-      }
+      },
+      "pickDates": "حدّد تاريخي البداية والنهاية أولًا."
     },
     "poster": {
       "title": "البوستر",

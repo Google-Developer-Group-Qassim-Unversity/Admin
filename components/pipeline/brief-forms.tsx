@@ -67,8 +67,8 @@ export function DesignBriefForm({ request }: { request: EventRequestDetail }) {
   const disabled = !request.can_edit;
 
   return (
-    <div className="flex flex-col gap-6">
-      <p className="bg-brand-blue-soft text-brand-blue-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm">
+    <div className="flex flex-col gap-8">
+      <p className="bg-door-indigo-soft text-door-indigo-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-bold">
         <Info className="mt-0.5 h-4 w-4 shrink-0" />
         {t("rule")}
       </p>
@@ -206,10 +206,10 @@ export function LogisticsBriefForm({
   const [otherVenue, setOtherVenue] = React.useState(!venueIsListed);
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       {modes.size === 0 ? (
-        <div className="bg-muted/50 flex flex-col items-start gap-3 rounded-lg px-4 py-3 text-sm sm:flex-row sm:items-center">
-          <span className="text-muted-foreground flex-1">{t("pickModesFirst")}</span>
+        <div className="bg-sunk flex flex-col items-start gap-3 rounded-lg px-4 py-3 text-sm sm:flex-row sm:items-center">
+          <span className="text-ink-2 flex-1">{t("pickModesFirst")}</span>
           {onGoToDetails ? (
             <Button variant="outline" size="sm" onClick={onGoToDetails}>
               {t("goToDetails")}

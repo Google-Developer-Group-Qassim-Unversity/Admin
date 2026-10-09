@@ -188,7 +188,7 @@ export function DraftSaveStatus() {
   const { state } = useDraftSave();
   if (state === "saving" || state === "dirty") {
     return (
-      <span className="text-muted-foreground flex items-center gap-1.5 text-xs">
+      <span className="text-ink-2 flex items-center gap-1.5 text-xs font-medium">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
         {t("saving")}
       </span>
@@ -196,14 +196,14 @@ export function DraftSaveStatus() {
   }
   if (state === "error") {
     return (
-      <span className="text-brand-red-ink flex items-center gap-1.5 text-xs">
+      <span className="text-door-madder-ink flex items-center gap-1.5 text-xs font-bold">
         <AlertCircle className="h-3.5 w-3.5" />
         {t("error")}
       </span>
     );
   }
   return (
-    <span className="text-brand-green-ink flex items-center gap-1.5 text-xs">
+    <span className="text-door-green-ink flex items-center gap-1.5 text-xs font-medium">
       <Check className="h-3.5 w-3.5" />
       {t("saved")}
     </span>

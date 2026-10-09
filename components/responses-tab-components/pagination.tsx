@@ -41,7 +41,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
   return (
     <div className="flex flex-col items-center justify-between gap-3 py-4 sm:flex-row sm:gap-4">
       <div className="flex w-full items-center justify-between gap-4 sm:w-auto sm:justify-start">
-        <div className="tabular text-[13px] text-muted-foreground sm:text-sm">
+        <div className="tabular text-[13px] text-ink-2 sm:text-sm">
           {t("showingRange", {
             from: table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1,
             to: Math.min(
@@ -52,7 +52,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
           })}
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-muted-foreground">{tm("rows")}</span>
+          <span className="text-sm text-ink-2">{tm("rows")}</span>
           <Select value={String(currentPageSize)} onValueChange={handlePageSizeChange}>
             <SelectTrigger className="w-[70px] pointer-coarse:w-20" size="sm">
               <SelectValue />
@@ -84,7 +84,7 @@ export function Pagination<TData>({ table }: PaginationProps<TData>) {
         >
           <ChevronLeft className="h-4 w-4 rtl:-scale-x-100" />
         </Button>
-        <span className="tabular px-3 text-sm">
+        <span className="tabular px-3 text-sm font-bold">
           {tm("page", { current: table.getState().pagination.pageIndex + 1, total: table.getPageCount() })}
         </span>
         <Button

@@ -1,133 +1,113 @@
 "use client";
 
-import { useTranslations } from "next-intl";
-import { Check, CornerUpLeft, XCircle } from "lucide-react";
+import type * as React from "react";
 
+import { useTranslations } from "next-intl";
+import { XCircle } from "lucide-react";
+
+import { INK, SectionHead, type DoorTone } from "@/components/najdi";
+import { STAGE_STEP, STAGE_TONE } from "@/components/status-badge";
 import { cn } from "@/lib/utils";
-import type { EventRequestDetail, EventRequestStage, PipelineTeam, TaskStatus } from "@/lib/pipeline-types";
+import type { EventRequestDetail, PipelineTeam, TaskStatus } from "@/lib/pipeline-types";
 
 /** The path every request walks. "Returned" is a detour inside the review step. */
 const STEPS = ["draft", "in_review", "media", "ready", "published"] as const;
-
-const STEP_OF: Record<EventRequestStage, number> = {
-  draft: 0,
-  in_review: 1,
-  returned: 1,
-  media: 2,
-  ready: 3,
-  published: 4,
-  cancelled: -1,
-};
 
 const TEAMS_OF_STEP: Partial<Record<(typeof STEPS)[number], PipelineTeam[]>> = {
   in_review: ["design", "logistics"],
   media: ["media"],
 };
 
-const TASK_TONE: Record<TaskStatus, string> = {
-  brief: "text-muted-foreground",
-  open: "text-brand-yellow-ink",
-  returned: "text-brand-red-ink",
-  done: "text-brand-green-ink",
+const TASK_TONE: Record<TaskStatus, DoorTone> = {
+  brief: "umber",
+  open: "indigo",
+  returned: "madder",
+  done: "green",
 };
 
-/** Where the request is on its way to an event, and how each team is doing. */
+const STROKE: Record<DoorTone, string> = {
+  green: "stroke-door-green",
+  ochre: "stroke-door-ochre",
+  madder: "stroke-door-madder",
+  indigo: "stroke-door-indigo-ink",
+  umber: "stroke-door-umber",
+};
+const SOFT_FILL: Record<DoorTone, string> = {
+  green: "fill-door-green-soft",
+  ochre: "fill-door-ochre-soft",
+  madder: "fill-door-madder-soft",
+  indigo: "fill-door-indigo-soft",
+  umber: "fill-door-umber-soft",
+};
+
+/**
+ * Where the request is on its way to an event: five tarma openings, filled
+ * green as each step is done, the current one outlined in whoever's colour it
+ * is, and under each team step how that team is doing.
+ */
 export function RequestProgress({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline");
-  const current = STEP_OF[request.stage];
+  const current = STAGE_STEP[request.stage];
 
   if (current < 0) {
     return (
-      <div className="bg-muted/60 text-muted-foreground flex items-center gap-2 rounded-xl px-4 py-3 text-sm font-medium">
-        <XCircle className="h-4 w-4" />
+      <div className="bg-sunk text-ink-2 flex items-center gap-2 rounded-lg px-4 py-3 text-sm font-bold">
+        <XCircle className="size-4" />
         {t("progress.cancelled")}
       </div>
     );
   }
 
   const returned = request.stage === "returned";
+  const published = request.stage === "published";
+  const tone = STAGE_TONE[request.stage];
   const tasks = new Map(request.tasks.map((task) => [task.team, task]));
 
-  const teamLines = (step: (typeof STEPS)[number]) =>
-    (TEAMS_OF_STEP[step] ?? [])
-      .map((team) => tasks.get(team))
-      .filter((task) => !!task)
-      .map((task) => (
-        <span key={task.team} className={cn("text-xs", TASK_TONE[task.status])}>
-          {t(`teams.${task.team}`)} · {t(`review.status.${task.status}`)}
-        </span>
-      ));
-
   return (
-    <section aria-label={t("progress.label")} className="bg-card border-border rounded-xl border p-4 sm:p-5">
-      {/* Phone: one bar and the current step in words. */}
-      <div className="flex flex-col gap-2.5 md:hidden">
-        <div className="flex gap-1" aria-hidden="true">
-          {STEPS.map((step, i) => (
-            <span
-              key={step}
-              className={cn(
-                "h-1.5 flex-1 rounded-full",
-                i < current || request.stage === "published"
-                  ? "bg-brand-green"
-                  : i === current
-                    ? returned
-                      ? "bg-brand-red"
-                      : "bg-brand-blue"
-                    : "bg-muted",
-              )}
-            />
-          ))}
-        </div>
-        <div className="flex flex-col gap-0.5">
-          <span className="text-muted-foreground text-xs">
-            {t("progress.step", { current: current + 1, total: STEPS.length })}
-          </span>
-          <span className={cn("text-sm font-semibold", returned && "text-brand-red-ink")}>{t(`stage.${request.stage}`)}</span>
-          <div className="flex flex-wrap gap-x-3">{teamLines(STEPS[current])}</div>
-        </div>
-      </div>
-
-      {/* Wider: the whole path. */}
-      <ol className="hidden md:flex md:items-start">
+    <section aria-labelledby="request-progress" className="flex flex-col gap-3">
+      <SectionHead
+        id="request-progress"
+        title={t("progress.label")}
+        action={<span className="text-ink-2 font-medium">{t("progress.step", { current: current + 1, total: STEPS.length })}</span>}
+      />
+      <ol className="grid grid-cols-5 gap-1">
         {STEPS.map((step, i) => {
-          const done = i < current || request.stage === "published";
+          const done = published || i < current;
           const active = i === current && !done;
-          const isReturned = active && returned;
+          const teams = (TEAMS_OF_STEP[step] ?? []).map((team) => tasks.get(team)).filter((task) => !!task);
           return (
-            <li key={step} className="relative flex flex-1 flex-col items-center gap-2 text-center">
-              {i > 0 ? (
-                <span
-                  aria-hidden="true"
+            <li
+              key={step}
+              aria-current={active ? "step" : undefined}
+              className={cn(
+                "flex flex-col items-center gap-1.5 text-center text-[11.5px] leading-tight sm:text-[13px]",
+                active ? "text-foreground font-bold" : "text-ink-2 font-medium",
+              )}
+            >
+              <svg viewBox="-1 -1 24 21" width="26" height="23" aria-hidden="true" className="overflow-visible">
+                <polygon
+                  points="0,19 22,19 11,0.5"
+                  strokeLinejoin="round"
+                  strokeWidth={active ? 2.2 : 1.6}
+                  style={{ "--i": i } as React.CSSProperties}
                   className={cn(
-                    "absolute top-4 h-0.5 w-[calc(100%-2.5rem)] -translate-y-1/2 end-[calc(50%+1.25rem)]",
-                    i <= current ? "bg-brand-green" : "bg-border",
+                    "animate-tarma",
+                    done && "fill-door-green stroke-door-green",
+                    active && (returned ? "fill-door-madder stroke-door-madder" : cn(SOFT_FILL[tone], STROKE[tone])),
+                    !done && !active && "stroke-adobe fill-none",
                   )}
                 />
-              ) : null}
-              <span
-                className={cn(
-                  "relative flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold",
-                  done && "bg-brand-green text-white",
-                  active && !isReturned && "bg-brand-blue-soft text-brand-blue-ink ring-brand-blue ring-2",
-                  isReturned && "bg-brand-red-soft text-brand-red-ink ring-brand-red ring-2",
-                  !done && !active && "bg-muted text-muted-foreground",
-                )}
-              >
-                {done ? <Check className="h-4 w-4" /> : isReturned ? <CornerUpLeft className="h-4 w-4" /> : i + 1}
-              </span>
-              <div className="flex flex-col gap-0.5 px-1">
-                <span
-                  className={cn(
-                    "text-[13px] leading-tight",
-                    active ? "font-semibold" : "text-muted-foreground font-medium",
-                    isReturned && "text-brand-red-ink",
-                  )}
-                >
-                  {t(`stage.${isReturned ? "returned" : step}`)}
+              </svg>
+              <span className={cn(active && returned && INK.madder)}>{t(`stage.${active && returned ? "returned" : step}`)}</span>
+              {teams.length && i <= current ? (
+                <span className="flex flex-col gap-0.5">
+                  {teams.map((task) => (
+                    <span key={task.team} className={cn("text-[11px] font-bold sm:text-xs", INK[TASK_TONE[task.status]])}>
+                      {t(`teams.${task.team}`)} · {t(`review.status.${task.status}`)}
+                    </span>
+                  ))}
                 </span>
-                {i <= current ? <div className="flex flex-col">{teamLines(step)}</div> : null}
-              </div>
+              ) : null}
             </li>
           );
         })}

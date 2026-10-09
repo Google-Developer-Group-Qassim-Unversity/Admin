@@ -22,13 +22,14 @@ export function SendAcceptanceButton({
   const t = useTranslations("responses");
   return (
     <Button
-      variant="default"
+      // Accepted members still waiting for their email are waiting on you.
+      variant={recipientCount > 0 ? "ochre" : "outline"}
       size="sm"
       onClick={onClick}
       disabled={disabled || isLoading}
       className={className}
     >
-      <Mail className="me-2 h-4 w-4" />
+      <Mail />
       {t("sendAcceptance", { count: recipientCount })}
     </Button>
   );

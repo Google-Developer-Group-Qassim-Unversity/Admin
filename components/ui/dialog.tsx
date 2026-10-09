@@ -38,7 +38,7 @@ function DialogOverlay({
   return (
     <DialogPrimitive.Overlay
       data-slot="dialog-overlay"
-      className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-black/10 duration-100 supports-backdrop-filter:backdrop-blur-xs max-sm:bg-black/30 max-sm:duration-200 fixed inset-0 isolate z-50", className)}
+      className={cn("data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 bg-[rgb(27_22_18/0.42)] duration-100 max-sm:duration-200 fixed inset-0 isolate z-50", className)}
       {...props}
     />
   )
@@ -62,10 +62,10 @@ function DialogContent({
         className={cn(
           // Phones: a bottom sheet pinned to the lower edge, in thumb reach, that
           // scrolls inside itself. sm and up: the centred dialog.
-          "bg-background data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-foreground/10 grid sm:max-w-lg rounded-xl text-sm ring-1 duration-100 fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
+          "bg-card data-open:animate-in data-closed:animate-out data-closed:fade-out-0 data-open:fade-in-0 data-closed:zoom-out-95 data-open:zoom-in-95 ring-rule grid sm:max-w-lg rounded-xl text-sm ring-1 duration-100 fixed top-1/2 left-1/2 z-50 w-full -translate-x-1/2 -translate-y-1/2 outline-none",
           "[--dialog-gap:--spacing(6)] [--dialog-px:--spacing(6)] [--dialog-pt:--spacing(6)] [--dialog-pb:--spacing(6)] [--dialog-max-h:none] gap-(--dialog-gap) px-(--dialog-px) pt-(--dialog-pt) pb-(--dialog-pb) max-h-(--dialog-max-h)",
           "max-sm:[--dialog-gap:--spacing(5)] max-sm:[--dialog-px:--spacing(5)] max-sm:[--dialog-pt:--spacing(7)] max-sm:[--dialog-pb:max(1.25rem,env(safe-area-inset-bottom))] max-sm:[--dialog-max-h:92dvh]",
-          "max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:rounded-none max-sm:rounded-t-3xl max-sm:duration-300 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:zoom-in-100 max-sm:data-closed:zoom-out-100 max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom",
+          "max-sm:inset-x-0 max-sm:top-auto max-sm:bottom-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:overflow-y-auto max-sm:overscroll-contain max-sm:rounded-none max-sm:rounded-t-xl max-sm:duration-300 max-sm:ease-[cubic-bezier(0.32,0.72,0,1)] max-sm:data-open:zoom-in-100 max-sm:data-closed:zoom-out-100 max-sm:data-open:slide-in-from-bottom max-sm:data-closed:slide-out-to-bottom",
           className
         )}
         {...props}
@@ -134,7 +134,7 @@ function DialogTitle({
   return (
     <DialogPrimitive.Title
       data-slot="dialog-title"
-      className={cn("leading-none font-medium max-sm:font-display max-sm:text-lg max-sm:leading-tight max-sm:font-semibold max-sm:tracking-tight", className)}
+      className={cn("font-display text-lg leading-tight font-semibold", className)}
       {...props}
     />
   )

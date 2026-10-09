@@ -114,7 +114,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
           </div>
 
           <div className="flex min-h-0 flex-1 flex-col border rounded-lg sm:block">
-            <div className="p-3 border-b bg-muted/50 flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
+            <div className="p-3 border-b bg-sunk flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
               <h3 className="text-sm font-medium">{t("membersHeading")}</h3>
               <p className="text-xs text-muted-foreground">{t("searchAllHint")}</p>
             </div>
@@ -144,7 +144,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                   {displayMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-3 p-3 hover:bg-sunk transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <p dir="auto" className="text-sm font-medium truncate">{member.name}</p>
@@ -199,7 +199,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
 
           {stagedMembers.length > 0 && (
             <div className="border rounded-lg">
-              <div className="p-3 border-b bg-muted/50">
+              <div className="p-3 border-b bg-sunk">
                 <h3 className="text-sm font-medium">
                   {t("selectedHeading", { count: stagedMembers.length })}
                 </h3>
@@ -209,7 +209,7 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
                   {stagedMembers.map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center gap-3 p-3 hover:bg-muted/50 transition-colors"
+                      className="flex items-center gap-3 p-3 hover:bg-sunk transition-colors"
                     >
                       <div className="flex-1 min-w-0">
                         <p dir="auto" className="text-sm font-medium truncate">{member.name}</p>

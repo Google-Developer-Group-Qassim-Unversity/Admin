@@ -97,7 +97,7 @@ export function DaySelectDialog({
         <AlertDialogFooter>
           <AlertDialogCancel disabled={isSubmitting}>{tc("cancel")}</AlertDialogCancel>
           <AlertDialogAction onClick={handleConfirm} disabled={isSubmitting}>
-            {isSubmitting && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+            {isSubmitting && <Loader2 className="animate-spin" />}
             {t("markAttendance")}
           </AlertDialogAction>
         </AlertDialogFooter>

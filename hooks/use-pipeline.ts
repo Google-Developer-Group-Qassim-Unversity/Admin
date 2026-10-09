@@ -12,9 +12,9 @@ export const pipelineKeys = {
 };
 
 /** Which departments the signed-in person acts for, and which department is which team. */
-export function usePipelineMe() {
+export function usePipelineMe({ enabled = true }: { enabled?: boolean } = {}) {
   const api = useApi();
-  return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000 });
+  return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000, enabled });
 }
 
 export function usePipelineCalendar(from: string, to: string) {
@@ -40,9 +40,23 @@ export function usePipelineRequests(page = 1) {
   });
 }
 
-export function usePipelineRequest(id: string) {
+export function usePipelineRequest(id: string, { enabled = true }: { enabled?: boolean } = {}) {
   const api = useApi();
-  return useQuery({ queryKey: pipelineKeys.request(id), queryFn: () => api.pipelineRequests.get(id) });
+  return useQuery({ queryKey: pipelineKeys.request(id), queryFn: () => api.pipelineRequests.get(id), enabled: enabled && !!id });
+}
+
+/**
+ * Every request the caller can see, up to 100, for the dashboard's overview:
+ * whose turn it is, the stage board. A super admin sees every department; the
+ * backend's page size caps it at 100.
+ */
+export function usePipelineOverview(enabled = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...pipelineKeys.requests(), "list", "overview"],
+    queryFn: () => api.pipelineRequests.list({ page: 1, pageSize: 100 }),
+    enabled,
+  });
 }
 
 /**

@@ -58,29 +58,51 @@ export function useRoleName(roles: ClubRole[]) {
   };
 }
 
-export function DepartmentIcon({ icon, color }: Pick<ClubDepartment, "icon" | "color">) {
+/** Whether a department colour is light enough that its plate needs dark ink. */
+function isLight(hex: string) {
+  const match = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i.exec(hex);
+  if (!match) return false;
+  const [r, g, b] = match.slice(1).map((part) => parseInt(part, 16) / 255);
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b > 0.55;
+}
+
+/**
+ * The department's own door: its colour is its identity, so it paints the
+ * plate (state colours stay on marks and pills around it).
+ */
+export function DepartmentIcon({
+  icon,
+  color,
+  size = "md",
+}: Pick<ClubDepartment, "icon" | "color"> & { size?: "sm" | "md" | "lg" }) {
   const Icon = Object.hasOwn(DEPARTMENT_ICON_COMPONENTS, icon.toLowerCase())
     ? DEPARTMENT_ICON_COMPONENTS[icon.toLowerCase()]
     : DEPARTMENT_ICON_COMPONENTS.users;
   return (
     <span
       aria-hidden="true"
-      className="flex size-10 shrink-0 items-center justify-center rounded-lg text-lg"
-      style={{ backgroundColor: `${color}22`, color }}
+      className={cn(
+        "plate-depth grid shrink-0 place-items-center rounded-t-[4px] rounded-b-[2px]",
+        size === "sm" && "h-9 w-8 [&_svg]:size-4",
+        size === "md" && "h-11 w-10 [&_svg]:size-[18px]",
+        size === "lg" && "h-[52px] w-12 [&_svg]:size-6",
+      )}
+      style={{ backgroundColor: color, color: isLight(color) ? "#2b1c0c" : "#ffffff" }}
     >
-      <Icon className="size-5" />
+      <Icon strokeWidth={1.75} />
     </span>
   );
 }
 
+/** A member's initials on a small square of plaster. */
 export function MemberAvatar({ name, small = false }: { name: string; small?: boolean }) {
   const initials = memberInitials(name);
   return (
     <span
       aria-hidden="true"
       className={cn(
-        "flex shrink-0 items-center justify-center rounded-full border bg-muted font-semibold",
-        small ? "size-5 text-[9px]" : "size-9 text-xs",
+        "bg-sunk text-foreground flex shrink-0 items-center justify-center rounded-[3px] font-bold shadow-[inset_0_0_0_1px_var(--rule)]",
+        small ? "size-6 text-[10px]" : "size-9 text-xs",
       )}
     >
       {initials}
@@ -90,34 +112,14 @@ export function MemberAvatar({ name, small = false }: { name: string; small?: bo
 
 export function DepartmentTypeBadge({ type }: Pick<ClubDepartment, "type">) {
   const t = useTranslations("clubStructure");
-  return (
-    <Badge
-      variant="outline"
-      className={cn(
-        "rounded-full border-transparent text-[11px]",
-        // Type is information, not state: specialised gets the informational
-        // blue, administrative stays neutral.
-        type === "administrative" ? "bg-muted text-muted-foreground" : "bg-brand-blue-soft text-brand-blue-ink",
-      )}
-    >
-      {t(`types.${type}`)}
-    </Badge>
-  );
+  // Type is information, not state: specialised is informational indigo,
+  // administrative stays on the wall.
+  return <Badge variant={type === "administrative" ? "secondary" : "indigo"}>{t(`types.${type}`)}</Badge>;
 }
 
+/** Officer seats are ranks, not states: ink for the leader, an outline for a VP. */
 export function RoleBadge({ role, label }: { role: ClubRoleKey; label: string }) {
-  return (
-    <Badge
-      variant="secondary"
-      className={cn(
-        "text-[11px]",
-        role === "leader" && "bg-brand-blue-soft text-brand-blue-ink",
-        role === "vp" && "border-border text-foreground bg-transparent",
-      )}
-    >
-      {label}
-    </Badge>
-  );
+  return <Badge variant={role === "leader" ? "default" : role === "vp" ? "outline" : "secondary"}>{label}</Badge>;
 }
 
 export function QueryError({ error, retry, stale = false }: { error: Error; retry: () => void; stale?: boolean }) {
@@ -143,18 +145,18 @@ export function ClubLoading({ overview = false }: { overview?: boolean }) {
   return (
     <div role="status" aria-label={t("loading")} className="space-y-5">
       <span className="sr-only">{t("loading")}</span>
-      <div aria-hidden="true" className={cn("grid gap-4", overview && "grid-cols-2 lg:grid-cols-4")}>
+      {overview && <Skeleton aria-hidden="true" className="h-[74px] rounded-xl" />}
+      <div aria-hidden="true" className="flex flex-col gap-2">
         {Array.from({ length: overview ? 4 : 3 }, (_, index) => (
-          <Skeleton key={index} className={overview ? "h-20" : "h-14"} />
+          <div key={index} className="border-rule flex items-center gap-3 border-b py-3">
+            <Skeleton className="h-11 w-10 rounded-[4px]" />
+            <div className="flex flex-1 flex-col gap-1.5">
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-3 w-1/2" />
+            </div>
+          </div>
         ))}
       </div>
-      {overview && (
-        <div aria-hidden="true" className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
-        </div>
-      )}
     </div>
   );
 }

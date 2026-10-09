@@ -31,6 +31,7 @@ import { useEventForm } from "@/hooks/use-create-event-form";
 import { useActions, useDepartments } from "@/hooks/use-event";
 import type { Action, Department, LocationType } from "@/lib/api-types";
 import { formatLocalDateTime } from "@/lib/utils";
+import { isolate } from "@/lib/format";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { useTranslations } from "next-intl";
 
@@ -171,7 +172,7 @@ export function EventForm({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-ink-2" />
       </div>
     );
   }
@@ -330,7 +331,7 @@ export function EventForm({
               />
             )}
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-ink-2">
             {watch("requireRegistration")
               ? t("registration.requiredHint")
               : t("registration.notRequiredHint")}
@@ -386,12 +387,14 @@ export function EventForm({
                       if (inGroup.length === 0) return null;
                       return (
                         <SelectGroup key={type}>
-                          <SelectLabel dir="auto">{label}</SelectLabel>
+                          <SelectLabel>{label}</SelectLabel>
                           {inGroup.map((dept) => (
                             <SelectItem key={dept.id} value={dept.id.toString()}>
-                              {extraDepartment?.id === dept.id
-                                ? t("fields.departmentArchived", { name: dept.ar_name })
-                                : dept.ar_name}
+                              {extraDepartment?.id === dept.id ? (
+                                t("fields.departmentArchived", { name: isolate(dept.ar_name) })
+                              ) : (
+                                <bdi>{dept.ar_name}</bdi>
+                              )}
                             </SelectItem>
                           ))}
                         </SelectGroup>
@@ -463,7 +466,7 @@ export function EventForm({
       {/* Submit: sticks above the tab bar on phones so it is always in reach.
           The card around the form pads 16px (24px from sm), which the bar
           bleeds back out of so it spans the card edge to edge. */}
-      <FormActions className="bg-card/95 supports-backdrop-filter:bg-card/80 sm:-mx-6 sm:px-6 md:mx-0 md:bg-transparent md:px-0">
+      <FormActions className="sm:-mx-6 sm:px-6 md:mx-0 md:px-0">
         <Button
           type="submit"
           className="md:min-w-40"
@@ -471,7 +474,7 @@ export function EventForm({
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {submittingText ?? defaultSubmittingText}
             </>
           ) : (

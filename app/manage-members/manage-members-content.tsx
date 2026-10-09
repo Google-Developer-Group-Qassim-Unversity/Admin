@@ -27,7 +27,6 @@ import {
   EllipsisVertical,
   Mail,
 } from "lucide-react";
-import { format } from "date-fns";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -57,16 +56,17 @@ import {
 import { PageHeader } from "@/components/page-header";
 import { FilterBar } from "@/components/filter-bar";
 import { ListPager } from "@/components/list-pager";
-import { StatTile } from "@/components/dashboard/stat-tile";
+import { Mark } from "@/components/najdi";
 import { MemberStatePill } from "@/components/manage-members/member-state-pill";
 import { CreateMemberDialog } from "@/components/manage-members/create-member-dialog";
 import { BatchImportDialog } from "@/components/manage-members/batch-import-dialog";
-import { MemberDetailsTrigger } from "@/components/member-details";
+import { MemberDetailsTrigger, memberInitials } from "@/components/member-details";
 
 import { useMembersPaginated, useMemberStats, memberKeys } from "@/hooks/use-members";
 import type { Member } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 import { config } from "@/lib/config";
+import { useFormatters } from "@/lib/format";
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100] as const;
 
@@ -88,7 +88,11 @@ function phoneSortOf(sorting: SortingState): PhoneSort {
 
 // Messages come from a translator, so column defs are built per render
 // rather than at module scope where `useTranslations` is unavailable.
-function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>): ColumnDef<Member>[] {
+function buildColumns(
+  t: ReturnType<typeof useTranslations<"manageMembersPage">>,
+  tf: ReturnType<typeof useTranslations<"common.fields">>,
+  fmt: ReturnType<typeof useFormatters>,
+): ColumnDef<Member>[] {
   return [
     {
       accessorKey: "name",
@@ -138,7 +142,10 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
     {
       accessorKey: "gender",
       header: t("columns.gender"),
-      cell: ({ row }) => row.getValue("gender"),
+      cell: ({ row }) => {
+        const gender = row.getValue<string>("gender");
+        return gender === "Male" ? tf("male") : gender === "Female" ? tf("female") : gender || "—";
+      },
     },
     {
       accessorKey: "phone_number",
@@ -165,9 +172,9 @@ function buildColumns(t: ReturnType<typeof useTranslations<"manageMembersPage">>
       cell: ({ row }) => {
         const lastActivity = row.getValue<string | null | undefined>("last_activity");
         return lastActivity ? (
-          <span className="tabular text-sm">{format(new Date(lastActivity), "MMM d, yyyy")}</span>
+          <span className="tabular text-sm">{fmt.date(lastActivity)}</span>
         ) : (
-          <span className="text-sm text-muted-foreground">{t("noActivity")}</span>
+          <span className="text-ink-2 text-sm">{t("noActivity")}</span>
         );
       },
       sortingFn: (rowA, rowB) => {
@@ -214,7 +221,9 @@ export function ManageMembersContent() {
   const createMemberT = useTranslations("createMember");
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
-  const columns = React.useMemo(() => buildColumns(t), [t]);
+  const tf = useTranslations("common.fields");
+  const fmt = useFormatters();
+  const columns = React.useMemo(() => buildColumns(t, tf, fmt), [t, tf, fmt]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isBatchDialogOpen, setIsBatchDialogOpen] = React.useState(false);
@@ -287,34 +296,56 @@ export function ManageMembersContent() {
   const emptyMessage = debouncedSearch.length > 0 ? t("noneMatchSearch") : t("noneFound");
 
   return (
-    <div className="space-y-6">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Users}>
         <Button variant="outline" onClick={() => setIsBatchDialogOpen(true)}>
-          <Upload className="h-4 w-4 me-2" />
+          <Upload className="h-4 w-4" />
           {t("batchImport")}
         </Button>
         <Button onClick={() => setIsCreateDialogOpen(true)}>
-          <UserPlus className="h-4 w-4 me-2" />
+          <UserPlus className="h-4 w-4" />
           {createMemberT("createMember")}
         </Button>
       </PageHeader>
 
-      {/* Phones: total across the top, then a 2x2 of the breakdown. */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 sm:gap-3.5">
-        <div className="col-span-2 sm:col-span-1">
-          <StatTile icon={Users} label={t("stats.total")} value={stats?.total} isPending={!stats} />
-        </div>
-        <StatTile
-          icon={BadgeCheck}
-          tone="green"
-          label={t("stats.authenticated")}
-          value={stats?.authenticated}
-          isPending={!stats}
-        />
-        <StatTile icon={UserPen} label={t("stats.manual")} value={stats?.manual} isPending={!stats} />
-        <StatTile icon={Mars} label={t("stats.male")} value={stats?.male} isPending={!stats} />
-        <StatTile icon={Venus} label={t("stats.female")} value={stats?.female} isPending={!stats} />
+      {/* Phones: one quiet line, so search and the list come first. */}
+      <div className="text-ink-2 tabular text-[13px] sm:hidden">
+        {stats ? (
+          t("stats.summary", {
+            total: fmt.number(stats.total),
+            authenticated: fmt.number(stats.authenticated),
+            manual: fmt.number(stats.manual),
+          })
+        ) : (
+          <Skeleton className="h-4 w-56" />
+        )}
       </div>
+
+      {/* Wider: one quiet strip of numbers. */}
+      <dl className="bg-rule ring-rule hidden gap-px overflow-hidden rounded-xl ring-1 sm:grid sm:grid-cols-5">
+        {(
+          [
+            { key: "total", label: t("stats.total"), value: stats?.total, icon: Users },
+            { key: "authenticated", label: t("stats.authenticated"), value: stats?.authenticated, icon: BadgeCheck },
+            { key: "manual", label: t("stats.manual"), value: stats?.manual, icon: UserPen },
+            { key: "male", label: t("stats.male"), value: stats?.male, icon: Mars },
+            { key: "female", label: t("stats.female"), value: stats?.female, icon: Venus },
+          ] as const
+        ).map(({ key, label, value, icon: Icon }) => (
+          <div
+            key={key}
+            className="bg-card flex min-w-0 flex-col-reverse gap-0.5 px-4 py-3"
+          >
+            <dt className="text-ink-2 flex items-center gap-1.5 text-[13px]">
+              {key === "authenticated" ? <Mark tone="green" /> : <Icon className="size-3.5" aria-hidden="true" />}
+              {label}
+            </dt>
+            <dd className="text-[21px] leading-tight font-bold tabular-nums">
+              {value === undefined ? <Skeleton className="my-1 h-5 w-14" /> : fmt.number(value)}
+            </dd>
+          </div>
+        ))}
+      </dl>
 
       <FilterBar
         search={searchQuery}
@@ -322,7 +353,8 @@ export function ManageMembersContent() {
         searchPlaceholder={t("searchPlaceholder")}
         trailing={
           <>
-            <span className="tabular">
+            {/* Phones already show the total in the summary line; keep it here only while searching. */}
+            <span className={debouncedSearch.length > 0 ? "tabular" : "tabular max-sm:hidden"}>
               {t("memberCount", { count: total })}
               {debouncedSearch.length > 0 && stats && t("filteredFromTotal", { total: stats.total })}
             </span>
@@ -379,33 +411,32 @@ export function ManageMembersContent() {
       ) : (
         <>
           {/* Phones: one compact card per member. */}
-          <div
-            className={`bg-card border-border overflow-hidden rounded-xl border transition-opacity md:hidden ${
-              isPlaceholderData ? "opacity-60" : ""
-            }`}
-          >
+          <div className={`border-foreground border-t transition-opacity md:hidden ${isPlaceholderData ? "opacity-60" : ""}`}>
             {isPending ? (
-              <ul className="divide-border divide-y">
+              <ul className="flex flex-col">
                 {Array.from({ length: 6 }).map((_, i) => (
-                  <li key={i} className="space-y-2 px-4 py-3.5">
-                    <Skeleton className="h-4 w-2/5" />
-                    <Skeleton className="h-3.5 w-4/5" />
+                  <li key={i} className="border-rule flex items-center gap-3 border-b px-1 py-3.5">
+                    <Skeleton className="size-10 rounded-[4px]" />
+                    <div className="flex flex-1 flex-col gap-2">
+                      <Skeleton className="h-4 w-2/5" />
+                      <Skeleton className="h-3.5 w-4/5" />
+                    </div>
                   </li>
                 ))}
               </ul>
             ) : rows.length ? (
-              <ul className="divide-border divide-y">
+              <ul className="flex flex-col">
                 {rows.map((member) => (
                   <MemberRow key={member.id} member={member} />
                 ))}
               </ul>
             ) : (
-              <p className="text-muted-foreground px-4 py-10 text-center text-sm">{emptyMessage}</p>
+              <p className="text-ink-2 px-4 py-10 text-center text-sm">{emptyMessage}</p>
             )}
           </div>
 
           <div
-            className={`hidden rounded-lg border transition-opacity md:block ${isPlaceholderData ? "opacity-60" : ""}`}
+            className={`bg-card ring-rule hidden overflow-hidden rounded-xl ring-1 transition-opacity md:block ${isPlaceholderData ? "opacity-60" : ""}`}
           >
             <Table>
               <TableHeader>
@@ -442,7 +473,7 @@ export function ManageMembersContent() {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                    <TableCell colSpan={columns.length} className="text-ink-2 h-24 text-center">
                       {emptyMessage}
                     </TableCell>
                   </TableRow>
@@ -483,13 +514,20 @@ export function ManageMembersContent() {
 /** A member as a phone row: name, IDs, state, last seen, and a menu for the rest. */
 function MemberRow({ member }: { member: Member }) {
   const t = useTranslations("manageMembersPage");
+  const fmt = useFormatters();
   return (
-    <li className="flex items-start gap-2 py-3 ps-4 pe-2">
+    <li className="border-rule flex items-start gap-3 border-b py-3 ps-1">
+      <span
+        aria-hidden="true"
+        className="bg-sunk mt-0.5 flex size-10 shrink-0 items-center justify-center rounded-[4px] text-[13px] font-bold shadow-[inset_0_0_0_1px_var(--rule)]"
+      >
+        {memberInitials(member.name)}
+      </span>
       <div className="min-w-0 flex-1 space-y-1">
-        <div className="truncate text-[15px] leading-snug font-semibold" dir="auto">
+        <div className="truncate text-[15px] leading-snug font-bold" dir="auto">
           <MemberDetailsTrigger member={member} />
         </div>
-        <div className="text-muted-foreground flex min-w-0 items-center gap-1.5 text-[13px]">
+        <div className="text-ink-2 flex min-w-0 items-center gap-1.5 text-[13px]">
           {member.uni_id ? (
             <>
               <span className="tabular shrink-0">{member.uni_id}</span>
@@ -502,11 +540,11 @@ function MemberRow({ member }: { member: Member }) {
         </div>
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-0.5">
           <MemberStatePill authenticated={!!member.is_authenticated} />
-          <span className="text-muted-foreground flex items-center gap-1 text-[13px]">
+          <span className="text-ink-2 flex items-center gap-1 text-[13px]">
             <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="sr-only">{t("columns.lastActivity")}: </span>
             {member.last_activity ? (
-              <span className="tabular">{format(new Date(member.last_activity), "MMM d, yyyy")}</span>
+              <span className="tabular">{fmt.date(member.last_activity)}</span>
             ) : (
               t("noActivity")
             )}
@@ -515,7 +553,7 @@ function MemberRow({ member }: { member: Member }) {
       </div>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="text-muted-foreground shrink-0">
+          <Button variant="ghost" size="icon" className="text-ink-2 shrink-0">
             <EllipsisVertical />
             <span className="sr-only">{t("rowActions", { name: member.name })}</span>
           </Button>

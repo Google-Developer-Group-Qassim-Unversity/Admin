@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { Download, Eye, FileCode, FileText, Palette } from "lucide-react";
+import { Download, ExternalLink, Eye, FileCode, FileText, Palette, type LucideIcon } from "lucide-react";
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plate } from "@/components/najdi";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -14,7 +14,7 @@ interface AssetItem {
   type: "svg" | "html" | "figma";
   src?: string;
   iframeSrc?: string;
-  icon: React.ElementType;
+  icon: LucideIcon;
 }
 
 const assets: AssetItem[] = [
@@ -50,9 +50,9 @@ function PreviewDialog({
           <DialogTitle>{t(`${asset.key}.name`)}</DialogTitle>
           <DialogDescription>{t(`${asset.key}.description`)}</DialogDescription>
         </DialogHeader>
-        <div className="flex-1 min-h-0 border-t">
+        <div className="border-rule min-h-0 flex-1 border-t">
           {asset.type === "svg" && asset.src && (
-            <div className="w-full h-full min-h-[50dvh] sm:min-h-[400px] bg-muted/30 flex items-center justify-center p-4 overflow-auto">
+            <div className="w-full h-full min-h-[50dvh] sm:min-h-[400px] bg-sunk flex items-center justify-center p-4 overflow-auto">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={asset.src} alt={t(`${asset.key}.name`)} className="max-w-full max-h-full object-contain" />
             </div>
@@ -64,8 +64,7 @@ function PreviewDialog({
             <iframe
               src={asset.iframeSrc}
               className="w-full h-full min-h-[60dvh] sm:min-h-[400px] border-0"
-              style={{ border: "1px solid rgba(0, 0, 0, 0.1)" }}
-              title={t(`${asset.key}.name`)}
+                            title={t(`${asset.key}.name`)}
               allowFullScreen
             />
           )}
@@ -97,32 +96,23 @@ export function AssetsPanel() {
 
   return (
     <>
-      <Card size="sm">
-        <CardHeader>
-          <CardTitle>{t("title")}</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-1 p-2!">
+      <section className="bg-card ring-rule flex flex-col gap-1 rounded-xl px-4 pt-3 pb-2 ring-1" aria-labelledby="email-assets-title">
+        <h2 id="email-assets-title" className="border-foreground border-b pb-2 text-base font-bold">
+          {t("title")}
+        </h2>
+        <ul className="flex flex-col">
           {assets.map((asset) => (
-            <div
-              key={asset.key}
-              className="flex items-center gap-2 px-2 py-1.5 pointer-coarse:py-2 rounded-md hover:bg-muted/50 transition-colors group"
-            >
-              <asset.icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate md:text-xs">{t(`items.${asset.key}.name`)}</p>
-                <p className="text-xs text-muted-foreground truncate">{t(`items.${asset.key}.description`)}</p>
+            <li key={asset.key} className="border-rule flex min-h-14 items-center gap-3 border-b py-2 last:border-b-0">
+              <Plate tone="neutral" size="sm" icon={asset.icon} />
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-bold">{t(`items.${asset.key}.name`)}</p>
+                <p className="text-ink-2 truncate text-xs">{t(`items.${asset.key}.description`)}</p>
               </div>
-              <div className="flex items-center gap-1 transition-opacity md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 pointer-coarse:opacity-100">
+              <div className="flex shrink-0 items-center">
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      className="md:size-6"
-                      aria-label={t("preview")}
-                      onClick={() => setPreviewAsset(asset)}
-                    >
-                      <Eye className="h-3 w-3" />
+                    <Button variant="ghost" size="icon-sm" aria-label={t("preview")} onClick={() => setPreviewAsset(asset)}>
+                      <Eye />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{t("preview")}</TooltipContent>
@@ -132,20 +122,19 @@ export function AssetsPanel() {
                     <Button
                       variant="ghost"
                       size="icon-sm"
-                      className="md:size-6"
                       aria-label={asset.type === "figma" ? t("openInFigma") : t("download")}
                       onClick={() => handleDownload(asset)}
                     >
-                      <Download className="h-3 w-3" />
+                      {asset.type === "figma" ? <ExternalLink /> : <Download />}
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>{asset.type === "figma" ? t("openInFigma") : t("download")}</TooltipContent>
                 </Tooltip>
               </div>
-            </div>
+            </li>
           ))}
-        </CardContent>
-      </Card>
+        </ul>
+      </section>
 
       {previewAsset && (
         <PreviewDialog

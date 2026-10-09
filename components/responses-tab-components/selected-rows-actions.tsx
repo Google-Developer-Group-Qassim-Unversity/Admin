@@ -44,7 +44,7 @@ export function SelectedRowsActions({
       className={cn(
         "flex items-center gap-2",
         floating &&
-          "fixed inset-x-3 bottom-[calc(4rem+env(safe-area-inset-bottom)+0.5rem)] z-30 rounded-2xl border bg-card p-2 ps-3 shadow-lg",
+          "bg-card border-foreground fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] z-30 border-t px-4 py-3",
         className
       )}
     >
@@ -54,19 +54,18 @@ export function SelectedRowsActions({
           size="icon"
           onClick={onClearSelection}
           aria-label={t("clearSelection")}
-          className="-ms-1 shrink-0 pointer-coarse:size-10"
+          className="-ms-2 shrink-0"
         >
           <X className="h-4 w-4" />
         </Button>
       ) : null}
-      <span className={cn("tabular text-sm text-muted-foreground", floating && "flex-1 font-medium text-foreground")}>
+      <span className={cn("tabular text-sm text-ink-2", floating && "flex-1 font-bold text-foreground")}>
         {t("selectedCount", { count: selectedCount })}
       </span>
       <Button
-        variant={allAccepted ? "destructive" : "default"}
-        size={floating ? "default" : "sm"}
+        variant={allAccepted ? "destructive" : "green"}
+        size={floating ? "lg" : "sm"}
         onClick={onAcceptSelected}
-        className="gap-1"
         disabled={isLoading}
       >
         {isLoading ? (

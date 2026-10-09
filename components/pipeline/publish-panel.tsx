@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { ExternalLink, PartyPopper, Rocket, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
+import { Door, DoorPanel } from "@/components/najdi";
 import { useFormatDateRange } from "@/components/pipeline/shared";
 import {
   AlertDialog,
@@ -22,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { usePublishRequest } from "@/hooks/use-pipeline";
 import { useAccess } from "@/hooks/use-access";
 import type { EventRequestDetail, LogisticsConfirmation } from "@/lib/pipeline-types";
+import { isolate } from "@/lib/format";
 
 const hhmm = (time: string | null | undefined) => time?.slice(0, 5) ?? "";
 
@@ -40,20 +42,22 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
 
   if (request.stage === "published" && request.event_id) {
     return (
-      <section className="bg-brand-green-soft text-brand-green-ink border-brand-green/30 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 sm:p-5">
-        <span className="flex items-center gap-2.5 text-sm font-medium">
-          <PartyPopper className="h-5 w-5 shrink-0" />
-          {t("done", { id: request.event_id })}
-        </span>
-        {can("events.view") ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/events/${request.event_id}`}>
-              <ExternalLink className="h-4 w-4" />
-              {t("open")}
-            </Link>
-          </Button>
-        ) : null}
-      </section>
+      <Door tone="green" aria-label={t("published")}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-2.5 text-[15px] font-bold">
+            <PartyPopper className="size-5 shrink-0" />
+            {t("done", { id: request.event_id })}
+          </span>
+          {can("events.view") ? (
+            <Button asChild variant="outline" className="text-on-door shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-white/12">
+              <Link href={`/events/${request.event_id}`}>
+                <ExternalLink />
+                {t("open")}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </Door>
     );
   }
   if (!request.actions.can_publish) return null;
@@ -85,32 +89,28 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
   };
 
   return (
-    <section className="bg-card border-brand-green/40 flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="bg-brand-green-soft text-brand-green-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          <Rocket className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
-        </div>
-      </div>
+    <Door tone="ochre" aria-labelledby="publish-title">
+      <h2 id="publish-title" className="font-display text-[21px] leading-tight font-semibold">
+        {t("title")}
+      </h2>
+      <p className="text-sm font-medium">{t("hint")}</p>
 
-      <div className="bg-muted/40 flex items-center gap-3 rounded-lg p-3">
+      {/* What will go live, as the teams handed it over. */}
+      <DoorPanel className="flex-row items-center gap-3">
         {posterUrl ? (
           // eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded
-          <img src={posterUrl} alt="" className="h-16 w-16 shrink-0 rounded-md border object-cover" />
+          <img src={posterUrl} alt="" className="size-16 shrink-0 rounded-sm object-cover shadow-[0_0_0_1px_var(--door-panel-rule)]" />
         ) : null}
         <div className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate text-sm font-semibold">{request.title}</span>
-          <span className="text-muted-foreground text-xs">{summary.join(" · ")}</span>
-          {!posterUrl ? <span className="text-brand-yellow-ink text-xs">{t("noPoster")}</span> : null}
+          <bdi className="truncate text-[15px] font-bold">{request.title}</bdi>
+          {summary.length ? <span className="tabular text-[13px] opacity-80">{summary.map(String).map(isolate).join(" · ")}</span> : null}
+          {!posterUrl ? <span className="text-door-madder-ink text-[13px] font-medium">{t("noPoster")}</span> : null}
         </div>
-      </div>
+      </DoorPanel>
 
       <div className="flex">
-        <Button className="max-sm:flex-1" onClick={() => setAsking(true)} disabled={publish.isPending}>
-          <Rocket className="h-4 w-4" />
+        <Button variant="green" size="lg" className="max-sm:flex-1" onClick={() => setAsking(true)} disabled={publish.isPending}>
+          <Rocket />
           {t("button")}
         </Button>
       </div>
@@ -119,7 +119,7 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <TriangleAlert className="text-brand-red-ink h-5 w-5 shrink-0" />
+              <TriangleAlert className="text-door-madder-ink size-5 shrink-0" />
               {t("confirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription asChild>
@@ -129,21 +129,21 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
               </div>
             </AlertDialogDescription>
           </AlertDialogHeader>
-          <div className="flex items-start gap-2.5">
-            <Checkbox id="publish-checked" checked={checked} onCheckedChange={(v) => setChecked(v === true)} />
+          <div className="flex min-h-11 items-start gap-2.5">
+            <Checkbox id="publish-checked" checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" />
             <Label htmlFor="publish-checked" className="text-sm leading-snug font-normal">
               {t("confirmCheck")}
             </Label>
           </div>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("confirmCancel")}</AlertDialogCancel>
-            <Button onClick={onPublish} disabled={!checked || publish.isPending}>
-              <Rocket className="h-4 w-4" />
+            <Button variant="green" onClick={onPublish} disabled={!checked || publish.isPending}>
+              <Rocket />
               {t("confirmButton")}
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </section>
+    </Door>
   );
 }

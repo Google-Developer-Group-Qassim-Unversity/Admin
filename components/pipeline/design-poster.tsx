@@ -2,12 +2,16 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { CircleCheck, ExternalLink, ImageIcon, Loader2, Upload } from "lucide-react";
+import { CircleCheck, CornerUpLeft, ExternalLink, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { Door, DoorPanel, Mark, SectionHead } from "@/components/najdi";
+import { TeamActionButtons } from "@/components/pipeline/team-actions";
 import { Button } from "@/components/ui/button";
 import { useCompleteTask, useUploadPoster } from "@/hooks/use-pipeline";
 import type { EventRequestDetail } from "@/lib/pipeline-types";
+import { isolate, useFormatters } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 const ACCEPT = "image/png,image/jpeg,image/webp";
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -19,6 +23,8 @@ const MAX_BYTES = 10 * 1024 * 1024;
  */
 export function DesignPoster({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.poster");
+  const tr = useTranslations("pipeline.review");
+  const fmt = useFormatters();
   const task = request.tasks.find((x) => x.team === "design");
   const upload = useUploadPoster(request.id);
   const complete = useCompleteTask(request.id);
@@ -56,89 +62,125 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
     }
   };
 
-  return (
-    <section
-      className={`bg-card flex flex-col gap-4 rounded-xl border p-4 sm:p-5 ${canFinish ? "border-brand-blue/30" : "border-border"}`}
+  const image = posterUrl ? (
+    <div className="flex flex-col items-start gap-2">
+      {/* eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded */}
+      <img
+        src={posterUrl}
+        alt={t("alt", { title: request.title ?? "" })}
+        className={cn(
+          "bg-sunk w-auto max-w-full rounded-sm object-contain shadow-[0_0_0_1px_var(--rule)]",
+          canUpload ? "max-h-80" : "max-h-56",
+        )}
+      />
+      <a
+        href={posterUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex min-h-8 items-center gap-1 text-[13px] font-bold underline underline-offset-2"
+      >
+        {t("openFull")}
+        <ExternalLink className="size-3.5" />
+      </a>
+    </div>
+  ) : canUpload ? (
+    <button
+      type="button"
+      onClick={() => input.current?.click()}
+      disabled={upload.isPending}
+      className="flex min-h-36 flex-col items-center justify-center gap-2 rounded-sm border-2 border-dashed border-current/35 px-4 py-6 text-sm transition-colors hover:bg-black/5 disabled:opacity-60"
     >
-      <div className="flex items-start gap-3">
-        <span
-          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
-            task.status === "done" ? "bg-brand-green-soft text-brand-green-ink" : "bg-brand-blue-soft text-brand-blue-ink"
-          }`}
-        >
-          <ImageIcon className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground text-[13px]">
-            {canUpload ? t("hint") : task.done_by ? t("by", { name: task.done_by.name }) : t("viewHint")}
-          </p>
-        </div>
-      </div>
+      {upload.isPending ? <Loader2 className="size-6 animate-spin" /> : <Upload className="size-6" />}
+      <span className="font-bold">{t("pick")}</span>
+      <span className="text-[13px] opacity-75">{t("formats")}</span>
+    </button>
+  ) : null;
 
-      {posterUrl ? (
-        <div className="flex flex-col items-start gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded */}
-          <img
-            src={posterUrl}
-            alt={t("alt", { title: request.title ?? "" })}
-            className={`bg-muted w-auto max-w-full rounded-lg border object-contain ${canUpload ? "max-h-80" : "max-h-56"}`}
-          />
-          <a
-            href={posterUrl}
-            target="_blank"
-            rel="noreferrer"
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-xs underline-offset-2 hover:underline"
-          >
-            {t("openFull")}
-            <ExternalLink className="h-3.5 w-3.5" />
-          </a>
-        </div>
-      ) : canUpload ? (
-        <button
-          type="button"
-          onClick={() => input.current?.click()}
-          disabled={upload.isPending}
-          className="border-border hover:bg-muted/50 text-muted-foreground flex min-h-36 flex-col items-center justify-center gap-2 rounded-lg border-2 border-dashed px-4 py-6 text-sm transition-colors"
-        >
-          {upload.isPending ? <Loader2 className="h-6 w-6 animate-spin" /> : <Upload className="h-6 w-6" />}
-          <span className="text-foreground font-medium">{t("pick")}</span>
-          <span className="text-xs">{t("formats")}</span>
-        </button>
-      ) : null}
+  const fileInput = canUpload ? (
+    <input
+      ref={input}
+      type="file"
+      accept={ACCEPT}
+      className="hidden"
+      onChange={(e) => {
+        void onFile(e.target.files?.[0]);
+        e.target.value = "";
+      }}
+    />
+  ) : null;
 
-      {canUpload ? (
-        <input
-          ref={input}
-          type="file"
-          accept={ACCEPT}
-          className="hidden"
-          onChange={(e) => {
-            void onFile(e.target.files?.[0]);
-            e.target.value = "";
-          }}
-        />
-      ) : null}
-
-      {canUpload && (posterUrl || canFinish) ? (
-        <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center">
+  // Design's turn: the poster is the thing waiting on them, so it gets the door.
+  if (canFinish) {
+    return (
+      <Door tone="ochre" aria-labelledby="poster-title">
+        <h2 id="poster-title" className="font-display text-[21px] leading-tight font-semibold">
+          {t("title")}
+        </h2>
+        <p className="text-sm font-medium">{t("hint")}</p>
+        <DoorPanel className="gap-3">{image}</DoorPanel>
+        {fileInput}
+        <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+          <Button variant="green" size="lg" onClick={onFinish} disabled={!posterUrl || complete.isPending || upload.isPending}>
+            <CircleCheck />
+            {t("finish")}
+          </Button>
           {posterUrl ? (
-            <Button variant="outline" onClick={() => input.current?.click()} disabled={upload.isPending}>
-              {upload.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+            <Button
+              variant="outline"
+              size="lg"
+              className="text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"
+              onClick={() => input.current?.click()}
+              disabled={upload.isPending}
+            >
+              {upload.isPending ? <Loader2 className="animate-spin" /> : <Upload />}
               {t("replace")}
             </Button>
-          ) : null}
-          {canFinish ? (
-            <>
-              <span className="text-muted-foreground flex-1 text-xs sm:text-end">{posterUrl ? "" : t("needsPoster")}</span>
-              <Button onClick={onFinish} disabled={!posterUrl || complete.isPending || upload.isPending}>
-                <CircleCheck className="h-4 w-4" />
-                {t("finish")}
-              </Button>
-            </>
-          ) : null}
+          ) : (
+            <span className="text-[13px] font-bold">{t("needsPoster")}</span>
+          )}
         </div>
-      ) : null}
+        {/* Design may still send the request back early on; the button lives here
+            so Design's turn is one door (TeamActions steps aside). */}
+        {request.actions.can_return ? (
+          <div className="flex flex-col gap-2 border-t border-current/20 pt-3">
+            {request.return_deadline ? (
+              <p className="flex items-center gap-1.5 text-[13px] font-bold">
+                <CornerUpLeft className="size-4 shrink-0" />
+                {tr("returnUntil", { date: fmt.dateTime(request.return_deadline) })}
+              </p>
+            ) : null}
+            <TeamActionButtons request={request} />
+          </div>
+        ) : null}
+      </Door>
+    );
+  }
+
+  // Everyone else (and Design after finishing, until publish): the poster on the wall.
+  return (
+    <section aria-labelledby="poster-title" className="flex flex-col gap-3">
+      <SectionHead
+        id="poster-title"
+        title={
+          <>
+            <Mark tone={task.status === "done" ? "green" : "indigo"} />
+            {t("title")}
+          </>
+        }
+        action={
+          canUpload && posterUrl ? (
+            <Button variant="outline" size="sm" onClick={() => input.current?.click()} disabled={upload.isPending}>
+              {upload.isPending ? <Loader2 className="animate-spin" /> : <Upload />}
+              {t("replace")}
+            </Button>
+          ) : null
+        }
+      />
+      <p className="text-ink-2 text-[13px]">
+        {canUpload ? t("hint") : task.done_by ? t("by", { name: isolate(task.done_by.name) }) : t("viewHint")}
+      </p>
+      {image}
+      {fileInput}
     </section>
   );
 }
