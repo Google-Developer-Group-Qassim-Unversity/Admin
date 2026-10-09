@@ -23,6 +23,16 @@ const eslintConfig = defineConfig([
       "react-hooks/immutability": "off",
     },
   },
+  {
+    // The preview harness stands in for Next and Clerk: its stubs swallow
+    // props they do not use and render plain <img>s on purpose.
+    files: ["tests/ui-preview/**"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@next/next/no-img-element": "off",
+      "import/no-anonymous-default-export": "off",
+    },
+  },
 ]);
 
 export default eslintConfig;

@@ -1,233 +1,235 @@
-# GDG Qassim admin — design system
+# GDG Qassim admin — design system: Mud & Doors
 
-A guide for anyone (human or agent) building new UI in this app. The goal is
-that a new page looks like it was always here. **When in doubt, copy an existing
+A guide for anyone (human or agent) building UI in this app. The goal is that a
+new page looks like it was always here. **When in doubt, copy an existing
 page**; this file explains the rules those pages follow.
 
-The identity is **Google Developer Groups**: the four Google brand colours, used
-to carry **meaning** (state), not sprinkled for decoration. Type is friendly and
-modern; surfaces are calm; the four colours do the talking.
+The console is a **Najdi house in Qassim**. Limewashed walls are the calm
+ground. Colour lives only on the **painted wooden doors**, and every door is
+something you can open: your turn, a request, a team's inbox, a day on the
+calendar. Triangular **tarma** openings mark progress, the stepped **shurfa**
+parapet tops the header, and the booking calendar is a **course of bricks** in
+mortar.
 
-> **Source of truth is the code, not this file.** Tokens live in
-> `app/globals.css`; the reusable identity pieces live in
-> `components/brand-mark.tsx`, `components/page-header.tsx`,
-> `components/status-badge.tsx`, and `components/app-shell.tsx`. If this doc and
-> the code disagree, the code wins — and fix this doc.
+> **Source of truth is the code.** Tokens live in `app/globals.css`; the
+> vocabulary lives in `components/najdi.tsx`, `components/status-badge.tsx`,
+> `components/page-header.tsx`, `components/brand-mark.tsx` and
+> `components/app-shell.tsx`. If this file and the code disagree, the code wins;
+> fix this file.
 
 ---
 
-## 1. The four brand colours
+## 1. Colour is state
 
-Held as literal hex (not oklch) so they reproduce Google's palette exactly. Each
-hue has three roles, all exposed as Tailwind utilities via `@theme inline`:
+Five door colours, each a state. Nothing is coloured "because it looks nice".
 
-| Role | Utility | Light | Use for |
-| --- | --- | --- | --- |
-| **base** | `bg-brand-blue` / `text-brand-blue` / `border-brand-blue` | `#4285f4` blue · `#ea4335` red · `#fbbc04` yellow · `#34a853` green | dots, bars, rails, icon strokes — a solid hit of colour |
-| **soft** | `bg-brand-blue-soft` | pale tint (`#e8f0fe`, …) | the surface tint behind an icon chip or a status pill |
-| **ink** | `text-brand-blue-ink` | AA-safe text (`#1a56c4`, …) | text/icon sitting **on** a `-soft` background |
+| Door | Means | Examples |
+| --- | --- | --- |
+| **green** | done, live, published | task done, event running, Submit / Publish / Mark done |
+| **ochre** | waiting on someone, usually the reader | your turn, a held draft, Book dates, Continue |
+| **madder** | returned, overdue, failed, closed | a returned request, attendance never closed, a closed day |
+| **indigo** | with a team, open, informational | in review, open for registration, a booked day, links |
+| **umber** | draft, inactive | a draft event, an archived thing |
 
-The rule: **`-soft` background always pairs with `-ink` text** (that pairing is
-contrast-checked). Never put base-colour text on white — it fails AA; use `-ink`.
+Everything else is the wall: limewash `bg-background`, raised plaster
+`bg-card`, sunk `bg-sunk`, one-pixel rules `border-rule`, mud ink
+`text-foreground`, and two quieter inks `text-ink-2` (secondary text) and
+`text-ink-3` (only for large or non-essential text: it is 3.9:1).
 
-Dark mode swaps in Google's published lighter variants automatically (blue
-`#8ab4f8`, red `#f28b82`, yellow `#fdd663`, green `#81c995`; `-soft` become
-low-chroma oklch tints). **You never write dark-specific brand colours** — use
-the same `brand-*` utility and it adapts.
+Each door has four utilities, all theme-aware:
 
-### Colour = state (the important rule)
-
-The four colours mean specific things. **`components/status-badge.tsx` is the
-single source** — never hand-roll a coloured status chip; import from there.
-
-| Colour | Meaning |
+| Utility | Use |
 | --- | --- |
-| 🔵 **blue** | open / informational (e.g. an event open for signup) |
-| 🟢 **green** | active / live / done |
-| 🟡 **yellow** | waiting on an admin — something a human must act on |
-| 🔴 **red** | overdue or failed |
-| ⚪ neutral | draft / inactive (muted grey, not a brand colour) |
+| `bg-door-green` | a solid plate (an icon plate, a booked day, a door). Text on it: `text-on-door` (green/madder/indigo/umber) or `text-on-door-ochre` |
+| `bg-door-green-soft` | a tinted ground (a chip, a highlighted row) |
+| `text-door-green-ink` | text on the wall or on the soft ground (AA-checked) |
+| `border-door-green` | an edge |
 
-Exports: `StatusBadge` / `StatusDot` (event status: draft·open·active·closed),
-`UrgencyDot` (`waiting`·`overdue`·`info`·`done`). Building a work-queue or a
-state indicator? Reach for these first.
+In code, prefer the maps in `components/najdi.tsx` over hand-written classes:
+`PLATE[tone]`, `SOFT[tone]`, `INK[tone]`, `FILL[tone]`, all keyed by
+`DoorTone`. Status → tone mappings live in `components/status-badge.tsx`
+(`URGENCY_TONE`, `STAGE_TONE`, `STAGE_STEP`, `PIPELINE_DAY_STYLES`); add a new
+state there, never per page.
 
----
+The old `brand-blue/red/yellow/green` utilities still work (they are aliased to
+indigo/madder/ochre/green) only so the migration can happen page by page.
+**New code uses `door-*`**; no `brand-*` should survive the rewrite.
 
-## 2. Typography
+**One door per region.** A screen gets at most one big painted `Door` (the one
+thing waiting on the reader). Elsewhere colour appears as small plates, square
+marks and soft chips. Three values at rest: limewash, mud ink, and one door
+colour per region.
 
-- **Body:** Manrope — `font-sans` (the default, via `--font-latin`).
-- **Display:** Outfit — `font-display`. Used for page/section titles. `h1`
-  already gets it automatically (see the base layer in `globals.css`); for other
-  headings add `font-display`.
-- **Numbers that line up** (counts, IDs, times, table figures): add `.tabular`
-  (tabular-nums).
-
-Titles are tight: `font-display font-semibold tracking-tight`. Don't introduce
-other font families or weights beyond Manrope/Outfit.
-
----
-
-## 3. Surfaces, radius, dark mode
-
-- Content sits on **cards**: `bg-card border border-border rounded-xl` (or
-  `rounded-2xl` for a hero/banner). The page ground (`bg-background`) shows only
-  in the gutters.
-- Base radius is `0.625rem`; use the `rounded-lg/xl/2xl` scale, not arbitrary
-  values.
-- **Primary action colour** is Google Blue 600 (`--primary`), already wired to
-  `Button`. Use `<Button>` variants; don't recolour buttons by hand.
-- **Dark mode is a deep blue-slate, not black** — the whole palette carries a
-  hint of the identity. It's driven entirely by tokens, so **if you build with
-  the tokens (`bg-card`, `text-muted-foreground`, `brand-*`), dark mode just
-  works.** Never hardcode a hex or a `dark:` colour that bypasses a token.
-- The ambient page backdrop (corner colour orbs + big faint arcs + dot grid) is
-  one component, `AppBackground`, rendered once in the shell. You don't touch it
-  per-page; it's already behind everything.
+Dark mode is **night adobe** (deep warm brown, never black). If you build with
+the tokens it just works; never write a hex or a `dark:` colour that bypasses a
+token.
 
 ---
 
-## 4. The identity pieces (reuse, don't reinvent)
+## 2. Type
 
-From `components/brand-mark.tsx`:
-
-- **`BrandMark`** — the broken four-colour ring. The app logo; already in the
-  shell. Rarely needed elsewhere.
-- **`BrandArcs`** — the concentric quarter-arcs. The signature decorative motif.
-  Belongs bleeding off a **corner** of a hero/banner, large and low-opacity,
-  never inline with text. Mirrors in RTL via `rtl:-scale-x-100`.
-- **`BrandRail`** — the four-colour hairline. Caps the top edge of cards
-  and banners. `orientation="vertical"` for a leading-edge accent.
-- **`AppBackground`** — the ambient backdrop (shell-level only).
-
-From `components/page-header.tsx`:
-
-- **`PageHeader`** — the arc-decorated banner every top-level page opens with.
-  Props: `title`, `description?`, `icon?` (match the page's sidebar icon),
-  `children` (action buttons). **Every new top-level page should use it.**
-
-From `components/dashboard/`:
-
-- **`StatTile`** — a metric card with a tone (`blue`/`green`/`yellow`/`red`/
-  `neutral`) that colours its accent rail + icon chip. Use for KPI numbers.
-
-Layout:
-
-- **`AppShell`** wraps everything (sidebar + topbar + ⌘K palette on desktop;
-  top bar + bottom tab bar on phones - see §6). New routes get
-  it automatically. A new nav entry goes in `NAV_GROUPS` (`app-shell.tsx`) under
-  the right group (Operate / People / Engage / System) with a Lucide icon; add
-  the matching label to `messages/{en,ar}.json` under `nav`. Full-bleed routes
-  (projector, access-denied, sign-in) are listed in `MINIMAL_ROUTES`.
+- **UI: Thmanyah Sans** (`font-sans`, the default) for everything, both
+  scripts. It is fetched from Thmanyah's site by `pnpm fonts`
+  (`scripts/fetch-thmanyah.mjs`, also run in the Docker build) because its
+  licence forbids re-hosting it, so the files are git-ignored. Without them
+  Tajawal takes over automatically.
+- **Display: Reem Kufi** (`font-display`): page titles (`h1` gets it
+  automatically), door headings, dialog titles, the top-bar title, the brand.
+  Never for labels, buttons, data or body text.
+- **Rank by weight and case, not size.** The scale is tight: 12 / 13 / 14 / 15 /
+  16 / 19 / 21 / 26–30. Section headings are 16px **bold** with a one-pixel ink
+  rule under them (`SectionHead`), not big type.
+- **Aligned numbers**: `.tabular` on counts, times, IDs, countdowns.
 
 ---
 
-## 5. Page recipe (copy this shape)
+## 3. Shape, depth, motion
+
+- **Carved timber, not pebbles.** Radii are small: `rounded-lg` = 4px (buttons,
+  inputs, rows), `rounded-xl` = 6px (panels, doors, dialogs). `rounded-full` is
+  only for the grab handle and avatars that come from Clerk. Status marks are
+  **squares** (`Mark`), not dots.
+- **Plates have depth**: `plate-depth` (a hairline edge and a darker bottom
+  rail). Panels have none: a raised plaster panel is `bg-card ring-1 ring-rule
+  rounded-xl`, no shadow. Only a `Door` casts a soft shadow.
+- **Rules are one pixel.** Section heads and the bottom bar use an ink rule
+  (`border-foreground`); everything else `border-rule`.
+- **The wall** has faint plaster courses every 32px, painted on `body`. Don't
+  add other textures.
+- **Motion** is short (150–200ms), ease-out, and only shows a change of state:
+  press (`active:translate-y-px`), hover tint, a sheet sliding up. No entrance
+  choreography. Respect `prefers-reduced-motion`.
+
+---
+
+## 4. The vocabulary (`components/najdi.tsx`)
+
+| Piece | What it is |
+| --- | --- |
+| `Door` | A painted door with carved bands top and bottom. The one big coloured surface on a screen: your turn, a team task, a hold. `tone` defaults to ochre. |
+| `DoorPanel` | The light panel set into a door, where the details sit. |
+| `Plate` | An icon on a small painted door (`sm` / `md` / `lg`). Leads list rows. |
+| `Tarma` | Five triangular openings: how far a request has come. `current`, `tone`, `returned`, `done`, `label`. |
+| `Courses` | Bricks in a course: `done` of `total` filled in (a form section, a checklist). |
+| `Mark` | A small square state mark. |
+| `Count` | A square counter: ink, or ochre when it is waiting on the reader. |
+| `SectionHead` | 16px bold heading, ink rule under it, optional count and trailing action. |
+| `Mortar` | A grid whose gaps read as mortar: bricks inside (calendar, segmented strips, stage strips). |
+| `Shurfa` | The stepped parapet edge; give it the colour of the header it tops. |
+| `Fact` | A term/value pair for a `<dl>`. |
+
+Elsewhere:
+
+- `GdgLogo` (`components/brand-mark.tsx`): the GDG chevrons. The app's logo.
+- `PageHeader`: every top-level page opens with it. Title in Reem Kufi on the
+  wall, description, actions trailing, an ink rule under it. No banner card.
+- `StatusBadge` / `StageBadge` / `StatusDot` / `UrgencyDot`: square-marked pills.
+- `Button` variants: `default` (mud ink, the everyday action), `outline`,
+  `secondary`, `ghost`, `link`, `destructive` (soft madder), and the door
+  plates `ochre` (the action waiting on the reader), `green` (finish: submit,
+  publish, mark done), `madder` (irreversible), `indigo` (rare).
+- `Badge` variants add `green` / `ochre` / `madder` / `indigo` soft chips.
+- `Tabs`: the default list is a mortar tray with an ink-filled active segment;
+  `variant="line"` is an ink underline. `SegmentedControl` matches the tray.
+
+The previous design's `BrandArcs`, `BrandRail` and `AppBackground` render
+nothing and are deprecated; delete their calls. `StatTile` and the old
+dashboard cards belong to the previous design.
+
+---
+
+## 5. The shell
+
+`AppShell` wraps every page:
+
+- **Desktop**: a raised-plaster sidebar (logo, nav groups, the Pipeline entry
+  with an ochre count of what is waiting on your teams, and the ochre **Book
+  dates** button at the foot), and a top bar crowned by the shurfa with the page
+  title, ⌘K search, language, theme, notifications and the avatar.
+- **Phone**: the same top bar, and a bottom bar with Home, Pipeline, the ochre
+  **Book dates** door in the middle, Events and More. More is a bottom sheet
+  with the rest of the nav plus theme and language. `main` pads itself so
+  content clears the bar. Anything pinned to the bottom of the screen on a phone
+  sits above it: `bottom-[calc(4rem+env(safe-area-inset-bottom))]`.
+- Book dates links to `/pipeline?book=1`, which opens the booking calendar in
+  booking mode.
+
+A new nav entry goes in `NAV_GROUPS` with a Lucide icon and labels in both
+`messages/*.json` under `nav`.
+
+---
+
+## 6. Page recipe
 
 ```tsx
-export default function ThingPage() {
-  const t = useTranslations("thing");
-  return (
-    <div className="space-y-6">
-      <PageHeader title={t("title")} description={t("subtitle")} icon={SomeIcon}>
-        <Button asChild>
-          <Link href="/thing/create">{t("create")}</Link>
-        </Button>
-      </PageHeader>
+<div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
+  <PageHeader title={t("title")} description={t("subtitle")} icon={SomeIcon}>
+    <Button asChild><Link href="/thing/create">{t("create")}</Link></Button>
+  </PageHeader>
 
-      {/* KPI row (optional) */}
-      <div className="grid gap-3.5 sm:grid-cols-2 xl:grid-cols-4">
-        <StatTile icon={Icon} tone="blue" label={…} value={…} />
-      </div>
-
-      {/* content in bg-card border rounded-xl surfaces */}
-    </div>
-  );
-}
+  <section className="flex flex-col gap-2">
+    <SectionHead title={t("list")} count={items.length} action={<Link …>{t("all")}</Link>} />
+    <ul className="flex flex-col">
+      {items.map((item) => (
+        <li key={item.id} className="border-rule flex min-h-16 items-center gap-3 border-b px-1 py-3">
+          <Plate tone="indigo" icon={Icon} />
+          <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <b className="truncate font-bold">{item.title}</b>
+            <span className="text-ink-2 text-[13px]">{item.meta}</span>
+          </div>
+          <ChevronRight className="text-ink-3 size-[18px] rtl:-scale-x-100" />
+        </li>
+      ))}
+    </ul>
+  </section>
+</div>
 ```
 
-Icons are **Lucide** (`lucide-react`), ~`h-4 w-4` inline. Don't mix icon sets.
+**Rows on the wall beat cards.** A list is rows separated by one-pixel rules,
+led by a plate, not a grid of identical cards. Use a raised panel (`bg-card
+ring-1 ring-rule rounded-xl`) to group a region on desktop; never nest panels.
+
+Icons are **Lucide**, 18px, stroke 1.75. Don't mix icon sets; no emoji.
 
 ---
 
-## 6. Phones
+## 7. Phones
 
-Admins run events from a phone - checking people in at the door, flipping an
-event open, glancing at responses. Every page has to work at 360px wide with a
-thumb. Build phone-first and let `sm:`/`md:` restore the denser desktop layout.
+Admins run the club from their phones: starting and continuing requests,
+working the team inbox, checking where things stand, checking people in. Every
+page has to work at 360px wide with a thumb.
 
-**The shell already handles:**
+- **Touch targets ≥ 44px.** `Button`, `Input`, `SelectTrigger`, tabs and menu
+  items already grow on `pointer-coarse`.
+- **Dialogs are bottom sheets** below `sm` (`components/ui/dialog.tsx`).
+- **Tables become lists** below `md`: a row per record (plate, title, one muted
+  meta line, a status pill, a chevron or a trailing action). Keep the table for
+  `md:` up.
+- **One column.** Side panels collapse under the main content.
+- **Sticky action bars** for long tasks (book, submit, save): `bg-card
+  border-t border-foreground`, above the bottom bar, primary action on the
+  trailing side.
+- **No fixed widths, no hover-only actions, no sideways page scroll.**
+- **Inputs** get the right `type` / `inputMode` / `enterKeyHint` and stay 16px.
 
-- **Bottom tab bar** (below `md`): the first four destinations the admin's role
-  can open, plus **More** - a bottom sheet with the rest of the nav and the
-  theme/language switches. `main` pads itself so content clears it.
-  Anything you pin to the bottom of the screen on a phone goes *above* it:
-  `bottom-[calc(4rem+env(safe-area-inset-bottom))]`. Sticky things under the
-  top bar use `top-[calc(3.5rem+env(safe-area-inset-top))]`.
-- **Dialogs are bottom sheets** below `sm` (`components/ui/dialog.tsx`): full
-  width, scroll inside, grab handle, footer buttons full width. Don't give a
-  dialog a fixed width or height that fights this.
-- **Touch sizing**: `Button`, `Input`, `SelectTrigger`, menu items and tab
-  lists grow to ~40px on `pointer-coarse`. If you set a height on a primary
-  touch target, pair it with `pointer-coarse:h-10`.
-
-**Reach for these:**
-
-| Want | Use |
-| --- | --- |
-| Search + filters row | `FilterBar` (`components/filter-bar.tsx`) |
-| Server-side paging | `ListPager` (`components/list-pager.tsx`) |
-| Save / cancel at the end of a long form | `FormActions` (sticky above the tab bar on phones) |
-| 2-4 visible choices | `SegmentedControl` (`components/ui/segmented-control.tsx`) |
-| Sideways tab strip | `TabsList` already scrolls; for link tabs copy `event-layout-content.tsx` |
-
-**Rules:**
-
-- **Tables become lists.** Below `md`, render a compact row per record - title
-  line, one muted meta line, a status pill, and a trailing menu or a stretched
-  link - and keep the table for `md:` up. `components/event-card.tsx` is the
-  model: a thumbnail row on phones, the full card from `sm`.
-- **One column.** Multi-column grids and side panels collapse; KPI tiles go
-  2-up.
-- **No fixed widths on phones.** `w-full sm:w-[180px]`, never a bare `w-64`.
-  Nothing may scroll the page sideways at 360px.
-- **Nothing hover-only.** Actions revealed on hover must be visible on touch.
-- **Inputs** get the right `type` / `inputMode` / `enterKeyHint`, and stay at
-  16px on phones (smaller makes iOS zoom the page on focus).
+Reach for `FilterBar`, `ListPager`, `FormActions` and `SegmentedControl`
+before writing bespoke mobile code.
 
 ---
 
-## 7. Non-negotiables
+## 8. Non-negotiables
 
-- **Tailwind class strings must be complete literals.** Tailwind v4 scans source
-  text — it never sees `` `bg-brand-${hue}` ``. Map tones to **full class
-  strings** (see `stat-tile.tsx` / `status-badge.tsx`) instead of building class
-  names dynamically.
-- **RTL is first-class.** Use logical properties everywhere: `ms/me`, `ps/pe`,
-  `start/end`, `text-start`. Never `ml/mr/left/right`. Flip directional glyphs
-  with `rtl:-scale-x-100`.
-- **i18n, always.** No hardcoded user-facing strings — everything through
-  `next-intl` (`useTranslations`). Add keys to **both** `messages/en.json` and
-  `messages/ar.json`; keep them in sync (equal key counts) and use ICU plurals
-  where counts appear.
-- **Colour must mean something.** If you're about to use a brand colour, ask
-  which *state* it represents. If the answer is "just looks nice," use a neutral
-  surface instead — decoration is `AppBackground`'s job, already handled.
-- **Theme via tokens only.** `bg-card`, `text-muted-foreground`, `border-border`,
-  `brand-*`. A raw hex or a `dark:` override that dodges a token is a bug.
-
----
-
-## 8. Quick reference
-
-| Want | Use |
-| --- | --- |
-| Page title banner | `PageHeader` (arcs + icon + actions) |
-| Status chip / dot | `StatusBadge` / `StatusDot` / `UrgencyDot` |
-| KPI number | `StatTile` (tone) |
-| A hit of brand colour | `bg-brand-{hue}` (base) — only if it encodes state |
-| Tinted chip background | `bg-brand-{hue}-soft` + `text-brand-{hue}-ink` |
-| A card surface | `bg-card border border-border rounded-xl` |
-| Decorative flourish | `BrandArcs` off a corner, low opacity |
-| Display heading | `font-display font-semibold tracking-tight` |
-| Aligned numbers | `.tabular` |
+- **Complete class literals.** Tailwind scans source text; map tones to full
+  class strings (see `najdi.tsx`), never `` `bg-door-${tone}` ``.
+- **RTL first.** Arabic is the primary language. Logical properties only
+  (`ms/me`, `ps/pe`, `start/end`, `text-start`); flip directional icons with
+  `rtl:-scale-x-100`.
+- **i18n always.** Every string through `next-intl`, in both `messages/en.json`
+  and `messages/ar.json`, ICU plurals for counts. The dashboard speaks the
+  club's Najdi Arabic (`وش`, `الحين`); keep that voice where it already exists.
+- **Only real data.** Show what an endpoint returns or what can be derived from
+  one. No invented feeds, tickers or totals.
+- **Theme via tokens only.**
+- **Verify** with the preview tool: `node tests/ui-preview/shoot.mjs --routes
+  /,/pipeline --viewports phone,desktop --locales ar,en --themes light,dark`
+  renders real pages with fixture data (`tests/ui-preview/README.md`).

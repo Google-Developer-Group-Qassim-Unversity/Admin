@@ -11,7 +11,7 @@ function Card({
     <div
       data-slot="card"
       data-size={size}
-      className={cn("[--card-gap:--spacing(5)] [--card-py:--spacing(5)] [--card-px:--spacing(4)] sm:[--card-gap:--spacing(6)] sm:[--card-py:--spacing(6)] sm:[--card-px:--spacing(6)] ring-foreground/10 bg-card text-card-foreground gap-(--card-gap) overflow-hidden rounded-xl py-(--card-py) text-sm shadow-xs ring-1 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col", className)}
+      className={cn("[--card-gap:--spacing(5)] [--card-py:--spacing(5)] [--card-px:--spacing(4)] sm:[--card-gap:--spacing(6)] sm:[--card-py:--spacing(6)] sm:[--card-px:--spacing(6)] ring-rule bg-card text-card-foreground gap-(--card-gap) overflow-hidden rounded-xl py-(--card-py) text-sm ring-1 has-[>img:first-child]:pt-0 data-[size=sm]:gap-4 data-[size=sm]:py-4 *:[img:first-child]:rounded-t-xl *:[img:last-child]:rounded-b-xl group/card flex flex-col", className)}
       {...props}
     />
   )
@@ -34,7 +34,7 @@ function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-title"
-      className={cn("text-base leading-normal font-medium group-data-[size=sm]/card:text-sm", className)}
+      className={cn("text-base leading-snug font-bold group-data-[size=sm]/card:text-sm", className)}
       {...props}
     />
   )
@@ -44,7 +44,7 @@ function CardDescription({ className, ...props }: React.ComponentProps<"div">) {
   return (
     <div
       data-slot="card-description"
-      className={cn("text-muted-foreground text-sm", className)}
+      className={cn("text-ink-2 text-sm", className)}
       {...props}
     />
   )

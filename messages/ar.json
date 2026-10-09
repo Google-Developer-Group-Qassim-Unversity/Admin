@@ -259,7 +259,9 @@
     "pipeline": "مسار الفعاليات",
     "more": "المزيد",
     "appearance": "المظهر",
-    "permissions": "الصلاحيات"
+    "permissions": "الصلاحيات",
+    "brand": "GDG القصيم",
+    "pipelineShort": "المسار"
   },
   "theme": {
     "toggle": "تغيير المظهر",

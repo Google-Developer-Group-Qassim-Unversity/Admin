@@ -14,7 +14,7 @@ export function AuthButton() {
 
   // Loading state
   if (!isLoaded) {
-    return <Skeleton className="h-8 w-8 rounded-full" />;
+    return <Skeleton className="h-9 w-9 rounded-[4px]" />;
   }
 
   // Signed in state - show user button
@@ -23,7 +23,7 @@ export function AuthButton() {
       <UserButton
         appearance={{
           elements: {
-            avatarBox: "h-8 w-8",
+            avatarBox: "h-9 w-9 rounded-[4px]",
           },
         }}
       >

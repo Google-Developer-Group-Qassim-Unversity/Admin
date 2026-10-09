@@ -2,46 +2,46 @@
 
 import { useTranslations } from "next-intl";
 
+import { FILL, SOFT, type DoorTone } from "@/components/najdi";
 import type { EventStatus } from "@/lib/api-types";
 
 /**
  * The one status vocabulary. Colour is bound to state everywhere in the
- * console - blue means a member can still act, green means it is running,
- * yellow means it is waiting on an admin, red means overdue or failed - so
- * these classes are the only place an event status gets a colour.
+ * console (DESIGN.md §1), so these maps are the only place a status gets a
+ * colour: indigo open, green running or done, ochre waiting on someone, madder
+ * overdue or failed, umber draft or finished.
  */
-const STATUS_STYLES: Record<EventStatus, { dot: string; pill: string }> = {
-  draft: {
-    dot: "bg-muted-foreground/60",
-    pill: "bg-muted text-muted-foreground",
-  },
-  open: {
-    dot: "bg-brand-blue",
-    pill: "bg-brand-blue-soft text-brand-blue-ink",
-  },
-  active: {
-    dot: "bg-brand-green",
-    pill: "bg-brand-green-soft text-brand-green-ink",
-  },
-  closed: {
-    dot: "bg-border",
-    pill: "bg-muted text-muted-foreground",
-  },
+const EVENT_TONE: Record<EventStatus, DoorTone> = {
+  draft: "umber",
+  open: "indigo",
+  active: "green",
+  closed: "umber",
 };
 
 export type Urgency = "waiting" | "overdue" | "info" | "done";
 
-export const URGENCY_STYLES: Record<Urgency, { dot: string; pill: string }> = {
-  waiting: { dot: "bg-brand-yellow", pill: "bg-brand-yellow-soft text-brand-yellow-ink" },
-  overdue: { dot: "bg-brand-red", pill: "bg-brand-red-soft text-brand-red-ink" },
-  info: { dot: "bg-brand-blue", pill: "bg-brand-blue-soft text-brand-blue-ink" },
-  done: { dot: "bg-brand-green", pill: "bg-brand-green-soft text-brand-green-ink" },
+export const URGENCY_TONE: Record<Urgency, DoorTone> = {
+  waiting: "ochre",
+  overdue: "madder",
+  info: "indigo",
+  done: "green",
 };
+
+/** @deprecated Class pairs kept for callers not yet moved to `URGENCY_TONE`. */
+export const URGENCY_STYLES: Record<Urgency, { dot: string; pill: string }> = {
+  waiting: { dot: FILL.ochre, pill: SOFT.ochre },
+  overdue: { dot: FILL.madder, pill: SOFT.madder },
+  info: { dot: FILL.indigo, pill: SOFT.indigo },
+  done: { dot: FILL.green, pill: SOFT.green },
+};
+
+const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
+const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";
 
 export function StatusDot({ status, className }: { status: EventStatus; className?: string }) {
   return (
     <span
-      className={`inline-block h-[7px] w-[7px] shrink-0 rounded-full ${STATUS_STYLES[status].dot} ${className ?? ""}`}
+      className={`${SQUARE} ${status === "closed" ? "bg-adobe" : FILL[EVENT_TONE[status]]} ${className ?? ""}`}
       aria-hidden="true"
     />
   );
@@ -51,9 +51,7 @@ export function StatusBadge({ status, className }: { status: EventStatus; classN
   const t = useTranslations("events.status");
 
   return (
-    <span
-      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold capitalize ${STATUS_STYLES[status].pill} ${className ?? ""}`}
-    >
+    <span className={`${PILL} capitalize ${status === "closed" ? "bg-sunk text-ink-2" : SOFT[EVENT_TONE[status]]} ${className ?? ""}`}>
       <StatusDot status={status} />
       {t(status)}
     </span>
@@ -61,50 +59,60 @@ export function StatusBadge({ status, className }: { status: EventStatus; classN
 }
 
 export function UrgencyDot({ urgency, className }: { urgency: Urgency; className?: string }) {
-  return (
-    <span
-      className={`inline-block h-2 w-2 shrink-0 rounded-full ${URGENCY_STYLES[urgency].dot} ${className ?? ""}`}
-      aria-hidden="true"
-    />
-  );
+  return <span className={`${SQUARE} size-2.5 ${FILL[URGENCY_TONE[urgency]]} ${className ?? ""}`} aria-hidden="true" />;
 }
 
 /**
- * Events pipeline calendar days. Same colour rules: a day nobody can book is
- * neutral, a banned day is red, a day held by a draft is waiting (yellow), a
- * booked day is taken (blue), and a published event is live (green).
+ * Events pipeline calendar days, laid as bricks: a day nobody can book is sunk
+ * into the wall, a closed day is madder, a day held by a draft waits in ochre,
+ * a booked day is an indigo plate, a published event a green one.
  */
 export type PipelineDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
 
 export const PIPELINE_DAY_STYLES: Record<PipelineDayStatus, { dot: string; cell: string }> = {
-  locked: { dot: "bg-muted-foreground/60", cell: "bg-muted/60 text-muted-foreground" },
-  banned: { dot: "bg-brand-red", cell: "bg-brand-red-soft text-brand-red-ink" },
-  open: { dot: "bg-border", cell: "bg-card text-foreground" },
-  held: { dot: "bg-brand-yellow", cell: "bg-brand-yellow-soft text-brand-yellow-ink" },
-  booked: { dot: "bg-brand-blue", cell: "bg-brand-blue-soft text-brand-blue-ink" },
-  published: { dot: "bg-brand-green", cell: "bg-brand-green-soft text-brand-green-ink" },
+  locked: { dot: "bg-sunk shadow-[inset_0_0_0_1px_var(--rule)]", cell: "bg-sunk text-ink-3" },
+  banned: { dot: "bg-door-madder-soft shadow-[inset_0_0_0_1px_var(--door-madder-ink)]", cell: "bg-door-madder-soft text-door-madder-ink" },
+  open: { dot: "bg-card shadow-[inset_0_0_0_1px_var(--rule)]", cell: "bg-card text-foreground" },
+  held: { dot: "bg-door-ochre-soft shadow-[inset_0_0_0_1.5px_var(--door-ochre)]", cell: "bg-door-ochre-soft text-door-ochre-ink shadow-[inset_0_0_0_1.5px_var(--door-ochre)]" },
+  booked: { dot: "bg-door-indigo", cell: "bg-door-indigo text-on-door" },
+  published: { dot: "bg-door-green", cell: "bg-door-green text-on-door" },
 };
 
-/** Where an event request is. Waiting on someone is yellow, done is green, a draft is neutral. */
+/** Where an event request is. */
 export type RequestStage = "draft" | "in_review" | "returned" | "media" | "ready" | "published" | "cancelled";
 
-const STAGE_STYLES: Record<RequestStage, { dot: string; pill: string }> = {
-  draft: { dot: "bg-muted-foreground/60", pill: "bg-muted text-muted-foreground" },
-  in_review: { dot: "bg-brand-yellow", pill: "bg-brand-yellow-soft text-brand-yellow-ink" },
-  returned: { dot: "bg-brand-red", pill: "bg-brand-red-soft text-brand-red-ink" },
-  media: { dot: "bg-brand-yellow", pill: "bg-brand-yellow-soft text-brand-yellow-ink" },
-  ready: { dot: "bg-brand-blue", pill: "bg-brand-blue-soft text-brand-blue-ink" },
-  published: { dot: "bg-brand-green", pill: "bg-brand-green-soft text-brand-green-ink" },
-  cancelled: { dot: "bg-border", pill: "bg-muted text-muted-foreground" },
+/**
+ * Whose turn a stage is: ochre when it is the requesting department's move
+ * (fill in the draft, publish when ready), indigo while a team has it, madder
+ * when it came back, green when it is out.
+ */
+export const STAGE_TONE: Record<RequestStage, DoorTone> = {
+  draft: "ochre",
+  in_review: "indigo",
+  returned: "madder",
+  media: "indigo",
+  ready: "ochre",
+  published: "green",
+  cancelled: "umber",
+};
+
+/** The step a stage sits on in the five-step path; -1 for a cancelled request. */
+export const STAGE_STEP: Record<RequestStage, number> = {
+  draft: 0,
+  in_review: 1,
+  returned: 1,
+  media: 2,
+  ready: 3,
+  published: 4,
+  cancelled: -1,
 };
 
 export function StageBadge({ stage, className }: { stage: RequestStage; className?: string }) {
   const t = useTranslations("pipeline.stage");
+  const tone = STAGE_TONE[stage];
   return (
-    <span
-      className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-1 text-[11.5px] font-semibold ${STAGE_STYLES[stage].pill} ${className ?? ""}`}
-    >
-      <span className={`inline-block h-[7px] w-[7px] shrink-0 rounded-full ${STAGE_STYLES[stage].dot}`} aria-hidden="true" />
+    <span className={`${PILL} ${stage === "cancelled" ? "bg-sunk text-ink-2" : SOFT[tone]} ${className ?? ""}`}>
+      <span className={`${SQUARE} ${FILL[tone]}`} aria-hidden="true" />
       {t(stage)}
     </span>
   );

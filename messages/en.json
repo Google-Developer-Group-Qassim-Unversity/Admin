@@ -259,7 +259,9 @@
     "pipeline": "Event pipeline",
     "more": "More",
     "appearance": "Appearance",
-    "permissions": "Permissions"
+    "permissions": "Permissions",
+    "brand": "GDG Qassim",
+    "pipelineShort": "Pipeline"
   },
   "theme": {
     "toggle": "Toggle theme",

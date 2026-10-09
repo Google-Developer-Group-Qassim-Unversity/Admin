@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Manrope, Outfit, IBM_Plex_Sans_Arabic } from "next/font/google";
+import { Geist_Mono, Reem_Kufi, Tajawal } from "next/font/google";
 import { NextIntlClientProvider } from "next-intl";
 import "./globals.css";
 
@@ -12,33 +12,22 @@ import { Toaster } from "@/components/ui/sonner";
 import { getDirection } from "@/i18n/config";
 import { getLocale } from "@/i18n/locale";
 
-// Manrope carries the UI text, Outfit the display sizes - headings, figures,
-// the numbers on the dashboard tiles. Outfit is the closest open face to
-// Google Sans, which is not licensed for use outside Google's own products.
-const manrope = Manrope({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-latin",
+// Thmanyah Sans carries the interface in both scripts. Its licence forbids
+// re-hosting it, so it is fetched from Thmanyah's site into public/fonts
+// (scripts/fetch-thmanyah.mjs) and declared in globals.css; Tajawal stands in
+// wherever it is missing.
+const tajawal = Tajawal({
+  subsets: ["arabic", "latin"],
+  weight: ["300", "400", "500", "700", "800"],
+  variable: "--font-tajawal",
 });
 
-const outfit = Outfit({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-display-latin",
-});
-
-// Manrope, Outfit and Geist carry no Arabic glyphs. This sits behind them in the stack
-// so Arabic renders properly in either locale - member names and event titles
-// are often Arabic even while the UI is in English.
-const plexArabic = IBM_Plex_Sans_Arabic({
-  subsets: ["arabic"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-arabic",
-});
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Reem Kufi is for display headings only: kufic geometry, like the carving on
+// a Najdi door.
+const reemKufi = Reem_Kufi({
+  subsets: ["arabic", "latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-reem-kufi",
 });
 
 const geistMono = Geist_Mono({
@@ -47,7 +36,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GDG-Admin",
+  title: "GDG Qassim · Admin",
   description: "Admin dashboard for Score Tracker application",
   icons: {
     icon: "/gdg.ico",
@@ -61,8 +50,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#1b2130" },
+    { media: "(prefers-color-scheme: light)", color: "#fbfaf6" },
+    { media: "(prefers-color-scheme: dark)", color: "#241d18" },
   ],
 };
 
@@ -78,12 +67,10 @@ export default async function RootLayout({
     <html
       lang={locale}
       dir={dir}
-      className={`${manrope.variable} ${outfit.variable} ${plexArabic.variable}`}
+      className={`${tajawal.variable} ${reemKufi.variable} ${geistMono.variable}`}
       suppressHydrationWarning
     >
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className="antialiased">
         <NextIntlClientProvider>
           <ThemeProvider
             attribute="class"

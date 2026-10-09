@@ -12,9 +12,9 @@ export const pipelineKeys = {
 };
 
 /** Which departments the signed-in person acts for, and which department is which team. */
-export function usePipelineMe() {
+export function usePipelineMe({ enabled = true }: { enabled?: boolean } = {}) {
   const api = useApi();
-  return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000 });
+  return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000, enabled });
 }
 
 export function usePipelineCalendar(from: string, to: string) {
