@@ -82,7 +82,7 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
           <img
             src={posterUrl}
             alt={t("alt", { title: request.title ?? "" })}
-            className="bg-muted max-h-80 w-auto max-w-full rounded-lg border object-contain"
+            className={`bg-muted w-auto max-w-full rounded-lg border object-contain ${canUpload ? "max-h-80" : "max-h-56"}`}
           />
           <a
             href={posterUrl}

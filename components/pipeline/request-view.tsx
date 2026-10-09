@@ -139,9 +139,9 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         {isReturned ? <ReturnedNotice request={request} /> : null}
         <PenaltyNote request={request} />
         <TeamActions request={request} />
+        <PublishPanel request={request} />
         <DesignPoster request={request} />
         <LogisticsConfirmation request={request} />
-        <PublishPanel request={request} />
 
         {showMissing ? (
           <section className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4 sm:p-5">
