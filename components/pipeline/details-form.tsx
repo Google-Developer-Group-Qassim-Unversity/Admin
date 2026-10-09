@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { useQuery } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
 import { CircleCheck, TriangleAlert } from "lucide-react";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useDepartments } from "@/hooks/use-event";
 import { useUpdateDetails } from "@/hooks/use-pipeline";
+import { useApi } from "@/lib/api/client";
 import {
   AUDIENCES,
   EVENT_TYPES,
@@ -44,6 +46,10 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const [today] = React.useState(() => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Riyadh" }).format(new Date()));
   const { data: departments } = useDepartments(today);
   const days = bookedDays(request);
+  const api = useApi();
+  // The points tiers are the composite action pairs, the same list the admin event form offers.
+  const { data: actions } = useQuery({ queryKey: ["actions"], queryFn: () => api.actions.list() });
+  const tiers = (actions?.composite_actions ?? []).filter((pair) => pair.length === 2);
 
   const draft = useAutosavedDraft<DetailsDraft>({
     key: "details",
@@ -96,6 +102,31 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
               options={EVENT_TYPES}
               label={(o) => t(`eventTypes.${o}`)}
               onChange={(v) => set("event_type", v)}
+              disabled={disabled}
+              placeholder={t("choose")}
+            />
+          </Field>
+          <Field label={t("pointsTier")} name="details.points_tier" hint={t("pointsTierHint")} className="md:col-span-2">
+            <ChoiceSelect
+              value={
+                form.department_action_id && form.member_action_id
+                  ? `${form.department_action_id}:${form.member_action_id}`
+                  : null
+              }
+              options={tiers.map(([dept, member]) => `${dept.id}:${member.id}`)}
+              label={(value) => {
+                const [dept, member] = tiers.find(([d, m]) => `${d.id}:${m.id}` === value) ?? [];
+                if (!dept || !member) return value;
+                const name = locale === "ar" ? dept.ar_action_name || dept.action_name : dept.action_name;
+                return t("pointsTierOption", { name, points: member.points });
+              }}
+              onChange={(value) => {
+                const [departmentActionId, memberActionId] = value.split(":").map(Number);
+                draft.update((d) => ({
+                  ...d,
+                  details: { ...d.details, department_action_id: departmentActionId, member_action_id: memberActionId },
+                }));
+              }}
               disabled={disabled}
               placeholder={t("choose")}
             />

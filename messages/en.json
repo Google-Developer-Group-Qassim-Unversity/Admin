@@ -1979,7 +1979,10 @@
       "official": {
         "yes": "Official",
         "no": "Unofficial"
-      }
+      },
+      "pointsTier": "Points tier",
+      "pointsTierHint": "The kind of event, for points: what the department and each attendee earn.",
+      "pointsTierOption": "{name} · {points} points per attendee"
     },
     "submit": {
       "title": "Submit to Design and Logistics",
@@ -2021,7 +2024,18 @@
       "design_content": "Design: content",
       "logistics_meet_link_by_logistics": "Logistics: Google Meet link",
       "logistics_venue": "Logistics: venue",
-      "logistics_buses_needed": "Logistics: buses"
+      "logistics_buses_needed": "Logistics: buses",
+      "details_points_tier": "Points tier",
+      "confirm_start_date": "Confirmation: first day",
+      "confirm_end_date": "Confirmation: last day",
+      "confirm_day_modes": "Confirmation: each day's mode",
+      "confirm_daily_start_time": "Confirmation: start time",
+      "confirm_daily_end_time": "Confirmation: end time (after the start)",
+      "confirm_venue": "Confirmation: venue",
+      "confirm_meet_link": "Confirmation: Google Meet link",
+      "confirm_responsible_member_id": "Confirmation: responsible person",
+      "confirm_event_type": "Confirmation: event type",
+      "confirm_description": "Confirmation: description"
     },
     "briefs": {
       "choose": "Choose…",
@@ -2113,7 +2127,8 @@
         "returned": "Design returned {title} with notes",
         "task_done": "A team finished its part of {title}",
         "media_received": "{title} is ready for Media",
-        "ready_to_publish": "{title} is ready to publish"
+        "ready_to_publish": "{title} is ready to publish",
+        "dates_changed": "Logistics moved {title} to other dates"
       }
     },
     "inbox": {
@@ -2178,6 +2193,42 @@
       "label": "Progress",
       "step": "Step {current} of {total}",
       "cancelled": "This request was cancelled."
+    },
+    "confirm": {
+      "title": "Confirm the event",
+      "hint": "This is filled in from the request. Change whatever the booking turned out differently, then confirm. The event is published with exactly this.",
+      "sections": {
+        "when": "When",
+        "where": "Where",
+        "what": "Who and what"
+      },
+      "startDate": "First day",
+      "endDate": "Last day",
+      "datesMoved": "Requested for {requested}. Confirming other dates moves the request on the calendar and emails the department.",
+      "requestedTime": "Requested: {time}",
+      "meetLink": "Google Meet link",
+      "meetLinkHint": "Members join with this link on the online days.",
+      "pickModes": "Choose each day's mode above.",
+      "responsible": "Responsible person",
+      "responsibleHint": "The club member who answers for the event on the day.",
+      "pickResponsible": "Choose a member",
+      "searchPeople": "Search by name",
+      "noPeople": "No one by that name this semester.",
+      "button": "Confirm",
+      "confirmed": "Confirmed. Logistics is done.",
+      "incomplete": "{count, plural, one {# thing is} other {# things are}} still missing.",
+      "failed": "Could not confirm",
+      "summary": {
+        "title": "Confirmed by Logistics",
+        "by": "Confirmed by {name}",
+        "dates": "Dates",
+        "time": "Time (every day)",
+        "mode": "Mode",
+        "place": "Place",
+        "meet": "Google Meet",
+        "responsible": "Responsible",
+        "type": "Event type"
+      }
     }
   },
   "permissions": {

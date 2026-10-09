@@ -15,6 +15,7 @@ import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief
 import { DetailsForm } from "@/components/pipeline/details-form";
 import { DraftSaveProvider } from "@/components/pipeline/draft-autosave";
 import { MissingProvider, READ_ONLY, focusField } from "@/components/pipeline/form-kit";
+import { LogisticsConfirmation } from "@/components/pipeline/logistics-confirmation";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { RequestProgress } from "@/components/pipeline/request-progress";
 import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
@@ -137,6 +138,7 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         {isReturned ? <ReturnedNotice request={request} /> : null}
         <PenaltyNote request={request} />
         <TeamActions request={request} />
+        <LogisticsConfirmation request={request} />
         <PublishPanel request={request} />
 
         {showMissing ? (

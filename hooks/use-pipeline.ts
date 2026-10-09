@@ -17,6 +17,17 @@ export function usePipelineMe() {
   return useQuery({ queryKey: pipelineKeys.me(), queryFn: () => api.pipeline.me(), staleTime: 30_000 });
 }
 
+/** This semester's club members, to name one responsible for an event. */
+export function usePipelinePeople(enabled = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...pipelineKeys.all, "people"],
+    queryFn: () => api.pipeline.people(),
+    staleTime: 5 * 60_000,
+    enabled,
+  });
+}
+
 export function usePipelineCalendar(from: string, to: string) {
   const api = useApi();
   return useQuery({ queryKey: pipelineKeys.calendar(from, to), queryFn: () => api.pipeline.calendar(from, to) });
@@ -97,6 +108,13 @@ export function useSaveBrief(id: string, team: PipelineTeam) {
   return useRequestMutation(id, (brief: Record<string, unknown>) => api.pipelineRequests.saveBrief(id, team, brief));
 }
 
+export function useSaveDeliverable(id: string, team: PipelineTeam) {
+  const api = useApi();
+  return useRequestMutation(id, (deliverable: Record<string, unknown>) =>
+    api.pipelineRequests.saveDeliverable(id, team, deliverable),
+  );
+}
+
 export function useSubmitRequest(id: string) {
   const api = useApi();
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
@@ -150,7 +168,6 @@ export function usePublishRequest(id: string) {
   const api = useApi();
   return useRequestMutation(
     id,
-    (body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
-      api.pipelineRequests.publish(id, body),
+    (body: { image_url: string | null }) => api.pipelineRequests.publish(id, body),
   );
 }

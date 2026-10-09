@@ -79,6 +79,9 @@ export interface EventDetails {
   registration: Registration | null;
   expected_accepted: number | null;
   help_needed: string | null;
+  /** The points tier: one of the composite action pairs from `GET /actions`, set together. */
+  department_action_id: number | null;
+  member_action_id: number | null;
 }
 
 export type UpdateDetailsInput = Partial<EventDetails> & { partner_department_ids?: number[] };
@@ -102,6 +105,10 @@ export interface RequestTask {
   status: TaskStatus;
   brief: Record<string, unknown> | null;
   brief_version: number | null;
+  /** What the team hands over. Logistics' confirmation comes prefilled from the request until it is saved. */
+  deliverable: Record<string, unknown> | null;
+  /** What the team still has to hand over before it can finish: `confirm.venue`, `poster.poster_url`. */
+  deliverable_missing: string[];
   opened_at: string | null;
   completed_at: string | null;
   completed_by: { member_id: number; name: string } | null;
@@ -130,6 +137,26 @@ export interface LogisticsBrief {
   venue_needs?: ("devices" | "internet" | "audio")[];
   buses_needed?: boolean | null;
   notes?: string | null;
+}
+
+/** Mirrors `LogisticsDeliverableV1` in Backend/app/services/event_deliverables.py: the event as Logistics booked it. */
+export interface LogisticsConfirmation {
+  start_date: string | null;
+  end_date: string | null;
+  day_modes: Record<string, DayMode> | null;
+  daily_start_time: string | null;
+  daily_end_time: string | null;
+  venue: string | null;
+  room: string | null;
+  meet_link: string | null;
+  responsible_member_id: number | null;
+  event_type: EventType | null;
+  description: string | null;
+}
+
+export interface PersonRef {
+  member_id: number;
+  name: string;
 }
 
 /** Mirrors `VENUES` in Backend/app/services/event_briefs.py - the old Logistics form's list. */
@@ -195,7 +222,8 @@ export type NotificationKind =
   | "returned"
   | "task_done"
   | "media_received"
-  | "ready_to_publish";
+  | "ready_to_publish"
+  | "dates_changed";
 
 export interface PipelineNotification {
   id: string;
