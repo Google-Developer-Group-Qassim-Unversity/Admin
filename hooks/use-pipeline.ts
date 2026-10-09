@@ -115,6 +115,11 @@ export function useSaveDeliverable(id: string, team: PipelineTeam) {
   );
 }
 
+export function useUploadPoster(id: string) {
+  const api = useApi();
+  return useRequestMutation(id, (file: File) => api.pipelineRequests.uploadPoster(id, file));
+}
+
 export function useSubmitRequest(id: string) {
   const api = useApi();
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));

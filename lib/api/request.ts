@@ -35,6 +35,8 @@ export interface Requester {
   json<T>(path: string, options?: RequestOptions): Promise<T>;
   /** The upload service, which takes multipart rather than JSON. */
   upload<T>(path: string, file: File): Promise<T>;
+  /** A file to a backend route, as the `file` field of a multipart form. */
+  file<T>(path: string, file: File): Promise<T>;
   /** This app's own Next route handlers, on the same origin. */
   route<T>(path: string, options?: RequestOptions): Promise<T>;
 }
@@ -144,6 +146,22 @@ export function createRequester(getToken: GetToken): Requester {
       formData.append("file", file);
       try {
         const response = await fetch(`${config.uploadSource.replace(/\/$/, "")}${path}`, {
+          method: "POST",
+          headers: await authHeaders(),
+          body: formData,
+        });
+        return await toResult<T>(response);
+      } catch (error) {
+        throw asNetworkError(error, "Upload error occurred");
+      }
+    },
+
+    /** A file to a backend route, as the `file` field of a multipart form. */
+    async file<T>(path: string, file: File) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await fetch(`${config.backendApiUrl}${path}`, {
           method: "POST",
           headers: await authHeaders(),
           body: formData,

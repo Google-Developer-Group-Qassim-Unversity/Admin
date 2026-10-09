@@ -2035,7 +2035,8 @@
       "confirm_meet_link": "التأكيد: رابط Google Meet",
       "confirm_responsible_member_id": "التأكيد: المسؤول",
       "confirm_event_type": "التأكيد: نوع الفعالية",
-      "confirm_description": "التأكيد: الوصف"
+      "confirm_description": "التأكيد: الوصف",
+      "poster_poster_url": "التصميم: البوستر"
     },
     "briefs": {
       "choose": "اختر…",
@@ -2229,6 +2230,24 @@
         "responsible": "المسؤول",
         "type": "نوع الفعالية"
       }
+    },
+    "poster": {
+      "title": "البوستر",
+      "hint": "ارفعوا البوستر النهائي. يصبح صورة الفعالية عند نشرها، ويمكنكم استبداله حتى ذلك الحين.",
+      "viewHint": "قسم التصميم يعمل عليه.",
+      "by": "صممه {name}",
+      "alt": "بوستر {title}",
+      "openFull": "فتح بالحجم الكامل",
+      "pick": "رفع البوستر",
+      "formats": "PNG أو JPEG أو WebP، حتى ١٠ ميجابايت",
+      "replace": "استبدال البوستر",
+      "needsPoster": "ارفعوا البوستر أولًا.",
+      "finish": "إنهاء التصميم",
+      "finished": "انتهى التصميم، وانتقل الطلب إلى الإعلام.",
+      "uploaded": "تم رفع البوستر",
+      "wrongType": "يجب أن يكون البوستر صورة PNG أو JPEG أو WebP.",
+      "tooLarge": "يجب ألا يتجاوز البوستر ١٠ ميجابايت.",
+      "failed": "حدث خطأ"
     }
   },
   "permissions": {

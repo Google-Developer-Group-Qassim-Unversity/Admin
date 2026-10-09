@@ -196,6 +196,8 @@ export interface EventRequestDetail extends EventRequestSummary {
     can_resubmit: boolean;
     complete: PipelineTeam[];
     can_publish: boolean;
+    /** Design uploads or replaces the poster, until the request is published. */
+    can_upload_poster: boolean;
   };
   now: string;
 }
