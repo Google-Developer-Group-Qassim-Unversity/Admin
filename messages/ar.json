@@ -1979,7 +1979,10 @@
       "official": {
         "yes": "رسمية",
         "no": "غير رسمية"
-      }
+      },
+      "pointsTier": "فئة النقاط",
+      "pointsTierHint": "نوع الفعالية من ناحية النقاط: ما يكسبه القسم وكل حاضر.",
+      "pointsTierOption": "{name} · {points} نقاط لكل حاضر"
     },
     "submit": {
       "title": "الإرسال للتصميم واللوجستيات",
@@ -2021,7 +2024,18 @@
       "design_content": "التصميم: المحتوى",
       "logistics_meet_link_by_logistics": "اللوجستيات: رابط Google Meet",
       "logistics_venue": "اللوجستيات: المكان",
-      "logistics_buses_needed": "اللوجستيات: الباصات"
+      "logistics_buses_needed": "اللوجستيات: الباصات",
+      "details_points_tier": "فئة النقاط",
+      "confirm_start_date": "التأكيد: اليوم الأول",
+      "confirm_end_date": "التأكيد: اليوم الأخير",
+      "confirm_day_modes": "التأكيد: نوع كل يوم",
+      "confirm_daily_start_time": "التأكيد: وقت البداية",
+      "confirm_daily_end_time": "التأكيد: وقت النهاية (بعد البداية)",
+      "confirm_venue": "التأكيد: المكان",
+      "confirm_meet_link": "التأكيد: رابط Google Meet",
+      "confirm_responsible_member_id": "التأكيد: المسؤول",
+      "confirm_event_type": "التأكيد: نوع الفعالية",
+      "confirm_description": "التأكيد: الوصف"
     },
     "briefs": {
       "choose": "اختر…",
@@ -2113,7 +2127,8 @@
         "returned": "أعاد التصميم {title} مع ملاحظات",
         "task_done": "أنهى قسم دوره في {title}",
         "media_received": "{title} جاهز للإعلام",
-        "ready_to_publish": "{title} جاهز للنشر"
+        "ready_to_publish": "{title} جاهز للنشر",
+        "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى"
       }
     },
     "inbox": {
@@ -2178,6 +2193,42 @@
       "label": "سير الطلب",
       "step": "الخطوة {current} من {total}",
       "cancelled": "أُلغي هذا الطلب."
+    },
+    "confirm": {
+      "title": "تأكيد الفعالية",
+      "hint": "هذه البيانات من الطلب. عدّلوا ما اختلف في الحجز الفعلي ثم أكّدوا. تُنشر الفعالية بهذه البيانات كما هي.",
+      "sections": {
+        "when": "متى",
+        "where": "أين",
+        "what": "من وماذا"
+      },
+      "startDate": "اليوم الأول",
+      "endDate": "اليوم الأخير",
+      "datesMoved": "التاريخ المطلوب {requested}. تأكيد تواريخ أخرى ينقل الطلب في التقويم ويرسل بريدًا للقسم.",
+      "requestedTime": "المطلوب: {time}",
+      "meetLink": "رابط Google Meet",
+      "meetLinkHint": "يدخل الأعضاء بهذا الرابط في الأيام عن بُعد.",
+      "pickModes": "اختاروا نوع كل يوم في الأعلى.",
+      "responsible": "المسؤول",
+      "responsibleHint": "عضو النادي المسؤول عن الفعالية يوم إقامتها.",
+      "pickResponsible": "اختاروا عضوًا",
+      "searchPeople": "ابحثوا بالاسم",
+      "noPeople": "لا يوجد أحد بهذا الاسم هذا الفصل.",
+      "button": "تأكيد",
+      "confirmed": "تم التأكيد. انتهى دور اللوجستيات.",
+      "incomplete": "{count, plural, one {بقي شيء واحد} two {بقي شيئان} few {بقيت # أشياء} many {بقي # شيئًا} other {بقي # شيء}}",
+      "failed": "تعذّر التأكيد",
+      "summary": {
+        "title": "أكّدتها اللوجستيات",
+        "by": "أكّدها {name}",
+        "dates": "التواريخ",
+        "time": "الوقت (كل يوم)",
+        "mode": "النوع",
+        "place": "المكان",
+        "meet": "Google Meet",
+        "responsible": "المسؤول",
+        "type": "نوع الفعالية"
+      }
     }
   },
   "permissions": {

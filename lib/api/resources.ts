@@ -49,6 +49,7 @@ import type {
   InboxItem,
   PaginatedNotifications,
   PaginatedRequests,
+  PersonRef,
   PipelineCalendar,
   PipelineMe,
   PipelineTeam,
@@ -311,6 +312,8 @@ export function createApi(request: Requester) {
   // departments they act for), so none of them opt into the shared Data Cache.
   const pipeline = {
     me: () => request.json<PipelineMe>("/pipeline/me"),
+    /** This semester's club members: who can be named responsible for an event. */
+    people: () => request.json<PersonRef[]>("/pipeline/people"),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
     ban: (dates: string[], reason: string | null) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
@@ -342,6 +345,11 @@ export function createApi(request: Requester) {
     cancel: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
     saveBrief: (id: string, team: PipelineTeam, brief: Record<string, unknown>) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
+    saveDeliverable: (id: string, team: PipelineTeam, deliverable: Record<string, unknown>) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/deliverables/${team}`, {
+        method: "PUT",
+        body: { deliverable },
+      }),
     submit: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
     returnToTeam: (id: string, notes: string) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),
@@ -349,7 +357,7 @@ export function createApi(request: Requester) {
     complete: (id: string, team: PipelineTeam) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
     inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
-    publish: (id: string, body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
+    publish: (id: string, body: { image_url: string | null }) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
   };
 

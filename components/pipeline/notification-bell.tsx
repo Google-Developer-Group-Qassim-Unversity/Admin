@@ -22,6 +22,7 @@ const URGENCY: Record<NotificationKind, Urgency> = {
   hold_expired: "overdue",
   task_done: "done",
   ready_to_publish: "info",
+  dates_changed: "info",
 };
 
 const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
