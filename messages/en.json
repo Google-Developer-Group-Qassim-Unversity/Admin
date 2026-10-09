@@ -2033,7 +2033,6 @@
       "confirm_daily_end_time": "Confirmation: end time (after the start)",
       "confirm_venue": "Confirmation: venue",
       "confirm_meet_link": "Confirmation: Google Meet link",
-      "confirm_responsible_member_id": "Confirmation: responsible person",
       "confirm_event_type": "Confirmation: event type",
       "confirm_description": "Confirmation: description",
       "poster_poster_url": "Design: the poster"
@@ -2205,7 +2204,7 @@
       "sections": {
         "when": "When",
         "where": "Where",
-        "what": "Who and what"
+        "what": "What"
       },
       "startDate": "First day",
       "endDate": "Last day",
@@ -2214,11 +2213,6 @@
       "meetLink": "Google Meet link",
       "meetLinkHint": "Members join with this link on the online days.",
       "pickModes": "Choose each day's mode above.",
-      "responsible": "Responsible person",
-      "responsibleHint": "The club member who answers for the event on the day.",
-      "pickResponsible": "Choose a member",
-      "searchPeople": "Search by name",
-      "noPeople": "No one by that name this semester.",
       "button": "Confirm",
       "confirmed": "Confirmed. Logistics is done.",
       "incomplete": "{count, plural, one {# thing is} other {# things are}} still missing.",
@@ -2231,7 +2225,6 @@
         "mode": "Mode",
         "place": "Place",
         "meet": "Google Meet",
-        "responsible": "Responsible",
         "type": "Event type"
       }
     },

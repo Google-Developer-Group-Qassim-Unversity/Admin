@@ -149,14 +149,8 @@ export interface LogisticsConfirmation {
   venue: string | null;
   room: string | null;
   meet_link: string | null;
-  responsible_member_id: number | null;
   event_type: EventType | null;
   description: string | null;
-}
-
-export interface PersonRef {
-  member_id: number;
-  name: string;
 }
 
 /** Mirrors `VENUES` in Backend/app/services/event_briefs.py - the old Logistics form's list. */

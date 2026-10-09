@@ -2033,7 +2033,6 @@
       "confirm_daily_end_time": "التأكيد: وقت النهاية (بعد البداية)",
       "confirm_venue": "التأكيد: المكان",
       "confirm_meet_link": "التأكيد: رابط Google Meet",
-      "confirm_responsible_member_id": "التأكيد: المسؤول",
       "confirm_event_type": "التأكيد: نوع الفعالية",
       "confirm_description": "التأكيد: الوصف",
       "poster_poster_url": "التصميم: البوستر"
@@ -2205,7 +2204,7 @@
       "sections": {
         "when": "متى",
         "where": "أين",
-        "what": "من وماذا"
+        "what": "ماذا"
       },
       "startDate": "اليوم الأول",
       "endDate": "اليوم الأخير",
@@ -2214,11 +2213,6 @@
       "meetLink": "رابط Google Meet",
       "meetLinkHint": "يدخل الأعضاء بهذا الرابط في الأيام عن بُعد.",
       "pickModes": "اختاروا نوع كل يوم في الأعلى.",
-      "responsible": "المسؤول",
-      "responsibleHint": "عضو النادي المسؤول عن الفعالية يوم إقامتها.",
-      "pickResponsible": "اختاروا عضوًا",
-      "searchPeople": "ابحثوا بالاسم",
-      "noPeople": "لا يوجد أحد بهذا الاسم هذا الفصل.",
       "button": "تأكيد",
       "confirmed": "تم التأكيد. انتهى دور اللوجستيات.",
       "incomplete": "{count, plural, one {بقي شيء واحد} two {بقي شيئان} few {بقيت # أشياء} many {بقي # شيئًا} other {بقي # شيء}}",
@@ -2231,7 +2225,6 @@
         "mode": "النوع",
         "place": "المكان",
         "meet": "Google Meet",
-        "responsible": "المسؤول",
         "type": "نوع الفعالية"
       }
     },

@@ -11,10 +11,9 @@ import { DraftSaveStatus, useAutosavedDraft, useDraftSave } from "@/components/p
 import { Choice, ChoiceSelect, Field, FormSection, MissingProvider, focusField } from "@/components/pipeline/form-kit";
 import { useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
-import { DepartmentCombobox } from "@/components/ui/department-combobox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { pipelineKeys, useCompleteTask, usePipelinePeople, useSaveDeliverable } from "@/hooks/use-pipeline";
+import { pipelineKeys, useCompleteTask, useSaveDeliverable } from "@/hooks/use-pipeline";
 import {
   EVENT_TYPES,
   VENUES,
@@ -65,7 +64,6 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   const save = useSaveDeliverable(request.id, "logistics");
   const complete = useCompleteTask(request.id);
   const { flushAll, state } = useDraftSave();
-  const { data: people, isPending: peopleLoading } = usePipelinePeople();
   // Missing fields turn red only after someone tries to confirm.
   const [shown, setShown] = React.useState(false);
 
@@ -239,17 +237,6 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
 
         <FormSection title={t("sections.what")}>
           <div className="grid gap-4 md:grid-cols-2">
-            <Field label={t("responsible")} name="confirm.responsible_member_id" hint={t("responsibleHint")}>
-              <DepartmentCombobox
-                options={(people ?? []).map((p) => ({ id: p.member_id, label: p.name }))}
-                value={form.responsible_member_id}
-                onChange={(id) => set("responsible_member_id", id)}
-                placeholder={t("pickResponsible")}
-                searchPlaceholder={t("searchPeople")}
-                emptyMessage={t("noPeople")}
-                isLoading={peopleLoading}
-              />
-            </Field>
             <Field label={td("eventType")} name="confirm.event_type">
               <ChoiceSelect
                 value={form.event_type}
@@ -286,8 +273,6 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
   const formatRange = useFormatDateRange();
   const task = request.tasks.find((x) => x.team === "logistics")!;
   const confirmed = task.deliverable as unknown as Confirmation;
-  const { data: people } = usePipelinePeople();
-  const responsible = people?.find((p) => p.member_id === confirmed.responsible_member_id)?.name;
   const modes = new Set(Object.values(confirmed.day_modes ?? {}));
   const place = [confirmed.venue, confirmed.room].filter(Boolean).join(" · ");
 
@@ -313,7 +298,6 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
       </a>,
     ]);
   }
-  rows.push([t("summary.responsible"), responsible ?? "-"]);
   rows.push([t("summary.type"), confirmed.event_type ? td(`eventTypes.${confirmed.event_type}`) : "-"]);
 
   return (
