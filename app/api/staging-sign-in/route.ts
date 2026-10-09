@@ -6,7 +6,8 @@ import { stagingSignIn } from '@/lib/staging-sign-in';
 /**
  * Exchange a developer email and the fixed staging code for a Clerk sign-in
  * ticket, which the sign-in page redeems with `signIn.create({ strategy: 'ticket' })`.
- * See lib/staging-sign-in.ts for when this exists at all.
+ * Without a code it only answers whether the email may sign in, for the
+ * page's email step. See lib/staging-sign-in.ts for when this exists at all.
  */
 export async function POST(request: Request) {
   const staging = stagingSignIn();
@@ -23,6 +24,9 @@ export async function POST(request: Request) {
 
   if (!staging.emails.includes(email)) {
     return NextResponse.json({ error: 'not_a_developer' }, { status: 403 });
+  }
+  if (body?.code === undefined) {
+    return NextResponse.json({ ok: true });
   }
   if (code !== staging.code) {
     return NextResponse.json({ error: 'wrong_code' }, { status: 401 });

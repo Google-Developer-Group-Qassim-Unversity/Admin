@@ -4,7 +4,7 @@ import { SignIn } from "@clerk/nextjs";
 import { useTranslations } from "next-intl";
 
 import { AppBackground, BrandMark, BrandRail } from "@/components/brand-mark";
-import { StagingSignIn } from "@/components/staging-sign-in";
+import { StagingSignIn, StagingSignInFooter } from "@/components/staging-sign-in";
 
 /**
  * The admin app's own sign-in. Clerk's flow runs here, on this origin, rather
@@ -17,8 +17,9 @@ import { StagingSignIn } from "@/components/staging-sign-in";
  * Signing in only proves who you are: the middleware still checks the roster
  * afterwards, so there is no sign-up link - staff already have an account.
  *
- * On staging, `staging` swaps Clerk's flow for the fixed-code form
- * (lib/staging-sign-in.ts); page.tsx decides, at request time.
+ * On staging, `staging` swaps Clerk's flow for a redrawn copy of it whose
+ * emailed code is always 8888 (lib/staging-sign-in.ts); page.tsx decides, at
+ * request time.
  */
 export function SignInView({ staging }: { staging: boolean }) {
   const tNav = useTranslations("nav");
@@ -43,7 +44,10 @@ export function SignInView({ staging }: { staging: boolean }) {
         <div className="bg-card border-border overflow-hidden rounded-xl border">
           <BrandRail />
           {staging ? (
-            <StagingSignIn />
+            <>
+              <StagingSignIn />
+              <StagingSignInFooter />
+            </>
           ) : (
             <SignIn
               routing="path"
