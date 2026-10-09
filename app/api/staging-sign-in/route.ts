@@ -48,8 +48,13 @@ export async function POST(request: Request) {
 
   // The development instance's session token carries publicMetadata but no
   // email claim, and the backend finds a member it has not seen under this
-  // Clerk id by `metadata.email` (Backend/app/helpers.py, resolve_member).
-  await clerk.users.updateUserMetadata(user.id, { publicMetadata: { email } });
+  // Clerk id by `metadata.uni_id`, then `metadata.email` (Backend/app/helpers.py,
+  // resolve_member). A university address is the uni id, and many members'
+  // rows hold a personal email instead, so it is passed as both.
+  const uniId = /^(\d+)@qu\.edu\.sa$/.exec(email)?.[1];
+  await clerk.users.updateUserMetadata(user.id, {
+    publicMetadata: uniId ? { email, uni_id: uniId } : { email },
+  });
 
   const token = await clerk.signInTokens.createSignInToken({
     userId: user.id,
