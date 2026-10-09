@@ -377,7 +377,7 @@ return (
             <div className="space-y-2">
               <Label htmlFor="whatsappUrl">{t("whatsappLabel")}</Label>
               <div className="relative">
-                <div className="absolute start-3 top-1/2 -translate-y-1/2 text-brand-green-ink">
+                <div className="absolute start-3 top-1/2 -translate-y-1/2 text-door-green-ink">
                   <WhatsAppIcon className="h-5 w-5" />
                 </div>
                 <Input
@@ -409,7 +409,7 @@ return (
               <CollapsibleContent className="mt-2">
                 <div className="rounded-lg border max-h-48 overflow-y-auto">
                   <table className="w-full text-sm">
-                    <thead className="bg-muted/50 sticky top-0">
+                    <thead className="bg-sunk/60 sticky top-0">
                       <tr>
                         <th className="text-start py-2 px-3 font-medium">{tbf("columnName")}</th>
                         <th className="text-start py-2 px-3 font-medium">{tbf("columnEmail")}</th>
@@ -419,7 +419,7 @@ return (
                       {recipients.map((recipient, index) => (
                         <tr key={index} className="border-t">
                           <td className="py-2 px-3">{recipient.name}</td>
-                          <td className="py-2 px-3 text-muted-foreground break-all">
+                          <td className="py-2 px-3 text-ink-2 break-all">
                             {recipient.email}
                           </td>
                         </tr>
@@ -459,7 +459,7 @@ return (
                       rows={3}
                       className="resize-none"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-ink-2">
                       {t("testHint")}
                     </p>
                   </div>
@@ -472,12 +472,12 @@ return (
                   >
                     {isTestLoading ? (
                       <>
-                        <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                        <Loader2 className="animate-spin" />
                         {tb("sendingTest")}
                       </>
                     ) : (
                       <>
-                        <Mail className="me-2 h-4 w-4" />
+                        <Mail />
                         {t("sendTestCount", { count: emailList.length })}
                       </>
                     )}
@@ -497,7 +497,7 @@ return (
               <Button onClick={handleSubmit} disabled={isSubmitDisabled || hasNoRecipients}>
                 {isLoading ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {ts("sending")}
                   </>
                 ) : hasNoRecipients ? (

@@ -18,7 +18,7 @@ function Switch({
       data-slot="switch"
       data-size={size}
       className={cn(
-        "data-[state=checked]:bg-door-green data-[state=unchecked]:bg-input focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 shrink-0 rounded-sm border border-transparent focus-visible:ring-[3px] aria-invalid:ring-[3px] data-[size=default]:h-[22px] data-[size=default]:w-[38px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] peer group/switch relative inline-flex items-center transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 data-disabled:cursor-not-allowed data-disabled:opacity-50 rtl:-scale-x-100",
+        "data-[state=checked]:bg-door-green data-[state=unchecked]:bg-sunk data-[state=unchecked]:shadow-[inset_0_0_0_1px_var(--input)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 shrink-0 rounded-sm border border-transparent focus-visible:ring-[3px] aria-invalid:ring-[3px] data-[size=default]:h-[22px] data-[size=default]:w-[38px] data-[size=sm]:h-[14px] data-[size=sm]:w-[24px] peer group/switch relative inline-flex items-center transition-all outline-none after:absolute after:-inset-x-3 after:-inset-y-2 data-disabled:cursor-not-allowed data-disabled:opacity-50 rtl:-scale-x-100",
         className
       )}
       {...props}

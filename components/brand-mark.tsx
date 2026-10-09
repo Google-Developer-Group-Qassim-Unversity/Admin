@@ -16,23 +16,3 @@ export function GdgLogo({ height = 24, className, priority }: { height?: number;
     />
   );
 }
-
-/** @deprecated The previous design's ring mark. Renders the GDG logo; use `GdgLogo`. */
-export function BrandMark({ size = 26, className }: { size?: number; className?: string }) {
-  return <GdgLogo height={Math.round(size * 0.8)} className={className} />;
-}
-
-/** @deprecated The previous design's arcs. Renders nothing; delete the call. */
-export function BrandArcs(_props: { size?: number; className?: string }) {
-  return null;
-}
-
-/** @deprecated The previous design's four-colour rail. Renders nothing; delete the call. */
-export function BrandRail(_props: { className?: string; orientation?: "horizontal" | "vertical" }) {
-  return null;
-}
-
-/** @deprecated The previous design's ambient backdrop. The wall texture now lives on `body`. */
-export function AppBackground() {
-  return null;
-}

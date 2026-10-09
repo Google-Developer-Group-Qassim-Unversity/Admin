@@ -49,3 +49,4 @@ next-env.d.ts
 
 # ui-preview screenshots
 /.preview-shots/
+/.impeccable/review/

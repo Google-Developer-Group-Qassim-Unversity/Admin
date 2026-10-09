@@ -7,7 +7,6 @@ import {
   ItemActions,
   ItemContent,
   ItemDescription,
-  ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
 import {
@@ -15,7 +14,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Check, Upload, Loader2, ExternalLink, Lock } from 'lucide-react';
+import { Loader2, ExternalLink, Lock } from 'lucide-react';
 import { usePublishEvent, useUnpublishEvent } from '@/hooks/use-event';
 import { toast } from 'sonner';
 import type { Event, GoogleFormData } from '@/lib/api-types';
@@ -68,36 +67,16 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
     return isPublished ? t('openDescription') : t('closedDescription');
   };
 
-  // Colour = state: blue while open for signup, neutral when draft or locked.
-  const getStatusIcon = () => {
-    if (isLocked) {
-      return <Lock className="h-5 w-5" />;
-    }
-    if (isPublished) {
-      return <Check className="h-5 w-5" />;
-    }
-    return <Upload className="h-5 w-5" />;
-  };
 
   return (
-    <Item
-      variant="outline"
-      className={isLocked ? 'bg-muted/40' : isPublished ? 'bg-card border-brand-blue/40' : 'bg-card'}
-    >
-      <ItemMedia>
-        <div className={`flex size-10 items-center justify-center rounded-lg ${
-          isPublished && !isLocked ? 'bg-brand-blue-soft text-brand-blue-ink' : 'bg-muted text-muted-foreground'
-        }`}>
-          {getStatusIcon()}
-        </div>
-      </ItemMedia>
+    <Item className="px-0 py-0">
       <ItemContent className="min-w-0">
-        <ItemTitle>{t('title')}</ItemTitle>
-        <ItemDescription className="line-clamp-none">
+        <ItemTitle className="text-[15px] font-bold">{t('title')}</ItemTitle>
+        <ItemDescription className="text-ink-2 line-clamp-none">
           <span className="flex flex-col gap-1">
             <span>{getStatusDescription()}</span>
             {hasGoogleForm && !isLocked && (
-              <span className="text-[13px] text-muted-foreground">{t('googleFormNote')}</span>
+              <span className="text-[13px] text-ink-2">{t('googleFormNote')}</span>
             )}
           </span>
         </ItemDescription>
@@ -109,7 +88,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
             <Button variant="outline" className="flex-1 sm:flex-none" asChild>
               <a href={eventUrl} target="_blank" rel="noopener noreferrer">
                 {t('openEvent')}
-                <ExternalLink className="ms-2 h-4 w-4 rtl:-scale-x-100" />
+                <ExternalLink className="rtl:-scale-x-100" />
               </a>
             </Button>
           </>
@@ -119,7 +98,7 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
             <TooltipTrigger asChild>
               <span tabIndex={0} className="flex-1 sm:flex-none">
                 <Button disabled variant="outline" className="w-full">
-                  <Lock className="me-2 h-4 w-4" />
+                  <Lock />
                   {t('locked')}
                 </Button>
               </span>
@@ -133,11 +112,11 @@ export function PublishItem({ event, formData, onEventChange }: PublishItemProps
             className="flex-1 sm:flex-none"
             onClick={isPublished ? handleUnpublish : handlePublish}
             disabled={isLoading}
-            variant={isPublished ? 'outline' : 'default'}
+            variant={isPublished ? 'outline' : 'green'}
           >
             {isLoading ? (
               <>
-                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 {isPublished ? t('unpublishing') : t('publishing')}
               </>
             ) : (

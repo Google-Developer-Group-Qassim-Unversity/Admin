@@ -67,6 +67,7 @@ export function CloseEventModal({
             {tc("cancel")}
           </Button>
           <Button
+            variant="green"
             onClick={handleClose}
             disabled={closeEvent.isPending}
           >

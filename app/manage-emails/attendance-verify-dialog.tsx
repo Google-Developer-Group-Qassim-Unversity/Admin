@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { SOFT } from "@/components/najdi";
 
 import type { CsvRow } from "./types";
 
@@ -44,7 +44,7 @@ export function AttendanceVerifyDialog({
       <DialogContent className="flex max-h-[88dvh] flex-col gap-0 overflow-hidden p-0 sm:max-h-[80vh] sm:max-w-3xl">
         <DialogHeader className="px-5 pt-7 pb-3 sm:p-6 sm:pb-2">
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
-            <span className="bg-brand-yellow-soft text-brand-yellow-ink flex size-8 shrink-0 items-center justify-center rounded-full">
+            <span className="bg-door-ochre-soft text-door-ochre-ink flex size-8 shrink-0 items-center justify-center rounded-sm">
               <AlertCircle className="h-4 w-4" />
             </span>
             {t("title")}
@@ -72,7 +72,7 @@ export function AttendanceVerifyDialog({
               </div>
               <span
                 dir="auto"
-                className={`inline-flex max-w-full rounded-full px-2.5 py-0.5 text-xs font-medium ${URGENCY_STYLES.waiting.pill}`}
+                className={`inline-flex max-w-full rounded-sm px-2.5 py-0.5 text-xs font-medium ${SOFT.ochre}`}
               >
                 <span className="truncate">{row.eventName}</span>
               </span>
@@ -83,7 +83,7 @@ export function AttendanceVerifyDialog({
                 </Button>
                 <Button
                   variant="outline"
-                  className="text-brand-green-ink"
+                  className="text-door-green-ink"
                   onClick={() => {
                     onAllow(i);
                     toast.success(t("allowedToast", { name: unverifiedRows[i].name }));
@@ -99,7 +99,7 @@ export function AttendanceVerifyDialog({
 
         <div className="hidden flex-1 overflow-auto px-6 py-2 sm:block">
           <Table>
-            <TableHeader className="bg-muted/50 sticky top-0 z-10">
+            <TableHeader className="bg-sunk sticky top-0 z-10">
               <TableRow className="h-10">
                 <TableHead className="text-xs font-semibold py-0">{t("studentName")}</TableHead>
                 <TableHead className="text-xs font-semibold py-0">{t("claimedEvent")}</TableHead>
@@ -122,7 +122,7 @@ export function AttendanceVerifyDialog({
                     </div>
                   </TableCell>
                   <TableCell className="py-2">
-                    <Badge variant="outline" dir="auto" className={`text-[11px] border-transparent ${URGENCY_STYLES.waiting.pill}`}>
+                    <Badge variant="outline" dir="auto" className={`text-[11px] border-transparent ${SOFT.ochre}`}>
                       {row.eventName}
                     </Badge>
                   </TableCell>
@@ -141,7 +141,7 @@ export function AttendanceVerifyDialog({
                       <Button
                         size="icon-sm"
                         variant="ghost"
-                        className="text-brand-green-ink hover:bg-brand-green-soft"
+                        className="text-door-green-ink hover:bg-door-green-soft"
                         onClick={() => {
                           onAllow(i);
                           toast.success(t("allowedToast", { name: unverifiedRows[i].name }));
@@ -159,7 +159,7 @@ export function AttendanceVerifyDialog({
           </Table>
         </div>
 
-        <DialogFooter className="border-t bg-muted/30 px-5 py-3 sm:p-6 sm:pt-3">
+        <DialogFooter className="border-t bg-sunk px-5 py-3 sm:p-6 sm:pt-3">
           <div className="flex w-full items-center justify-between gap-3">
             <div className="text-xs text-muted-foreground">
               <span className="tabular font-bold text-foreground">{unverifiedRows.length}</span> {t("remaining")}

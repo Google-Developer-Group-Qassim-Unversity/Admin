@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageHeader } from "@/components/page-header";
 import { EventForm, type EventFormData } from "@/components/event-form";
 import { useApi } from "@/lib/api/client";
 import { shouldContactSupport } from "@/lib/api/errors";
@@ -74,37 +74,15 @@ export default function CreateEventPage() {
   };
 
   return (
-    <div className="flex justify-center">
-      {/* overflow-visible below md so the form's sticky save bar can stick. */}
-      <Card className="w-full max-w-2xl max-md:overflow-visible">
-        <CardHeader>
-          <div className="mb-2 sm:mb-4">
-            <Button variant="ghost" size="sm" asChild className="-ms-2">
-              <Link href="/events" className="flex items-center gap-2">
-                <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-                {tl("backToEvents")}
-              </Link>
-            </Button>
-          </div>
-          <CardTitle className="flex items-center gap-3 font-display text-lg font-semibold tracking-tight">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-              <CalendarPlus className="h-5 w-5 text-muted-foreground" />
-            </div>
-            {te("createNew")}
-          </CardTitle>
-          <CardDescription>
-            {t("subtitle")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <EventForm
-            mode="create"
-            onSubmit={handleSubmit}
-            isSubmitting={isSubmitting}
-            getToken={getToken}
-          />
-        </CardContent>
-      </Card>
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-5">
+      <Button variant="ghost" size="sm" asChild className="-ms-3 self-start">
+        <Link href="/events">
+          <ArrowLeft className="rtl:-scale-x-100" />
+          {tl("backToEvents")}
+        </Link>
+      </Button>
+      <PageHeader title={te("createNew")} description={t("subtitle")} icon={CalendarPlus} />
+      <EventForm mode="create" onSubmit={handleSubmit} isSubmitting={isSubmitting} getToken={getToken} />
     </div>
   );
 }

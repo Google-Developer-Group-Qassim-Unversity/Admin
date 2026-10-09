@@ -27,8 +27,8 @@ export function FilterBar({
 }) {
   return (
     <div className={cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center", className)}>
-      <div className="relative w-full sm:w-64">
-        <Search className="text-muted-foreground pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2" />
+      <div className="relative w-full sm:w-72">
+        <Search className="text-ink-2 pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" aria-hidden="true" />
         <Input
           type="search"
           inputMode="search"
@@ -36,7 +36,7 @@ export function FilterBar({
           placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
-          className="bg-card ps-9"
+          className="ps-9"
         />
       </div>
       {children ? (
@@ -45,7 +45,7 @@ export function FilterBar({
         </div>
       ) : null}
       {trailing ? (
-        <div className="text-muted-foreground flex items-center justify-between gap-2 text-[13px] sm:ms-auto">
+        <div className="text-ink-2 flex items-center justify-between gap-3 text-[13px] sm:ms-auto">
           {trailing}
         </div>
       ) : null}

@@ -42,23 +42,23 @@ export function ActionsDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="min-w-[180px]">
         <DropdownMenuItem onClick={onCopyAsTSV}>
-          <Copy className="me-2 h-4 w-4" />
+          <Copy />
           {t("copyAsTsv")}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={onCopyAcceptedEmails}>
-          <Mail className="me-2 h-4 w-4" />
+          <Mail />
           {t("copyAcceptedEmails")}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={onAcceptAll} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {t("processing")}
             </>
           ) : (
             <>
-              <CheckCheck className="me-2 h-4 w-4" />
+              <CheckCheck />
               {t("acceptAllCount", { count: filteredRowCount })}
             </>
           )}
@@ -66,12 +66,12 @@ export function ActionsDropdown({
         <DropdownMenuItem onClick={onAcceptBulk} disabled={isLoading}>
           {isLoading ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {t("processing")}
             </>
           ) : (
             <>
-              <Users className="me-2 h-4 w-4" />
+              <Users />
               {t("acceptBulk")}
             </>
           )}

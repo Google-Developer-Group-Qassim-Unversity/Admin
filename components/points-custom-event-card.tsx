@@ -2,75 +2,65 @@
 
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarDays, ChevronRight, Eye, EyeOff, Trophy } from "lucide-react";
+import { ChevronRight, Eye, EyeOff } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
+import { INK, Plate } from "@/components/najdi";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 
+/** "12 Oct 2026" in the reader's language, Gregorian. */
+export function usePointsDate() {
+  const locale = useLocale();
+  return (iso: string) =>
+    parseLocalDateTime(iso).toLocaleDateString(locale === "ar" ? "ar-SA-u-ca-gregory" : "en-GB", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+    });
+}
+
 /**
- * A custom (points-only) event. On a phone it is a compact row - icon, name,
- * date and visibility - and the whole row opens the points editor. From sm up
- * it is a card in the grid with an explicit "Edit points" button.
+ * A custom (points-only) event: one row on the wall. The plate says whether it
+ * shows on the public leaderboard (indigo) or is hidden (umber); the whole row
+ * opens the points editor.
  */
 export function PointsCustomEventCard({ event }: { event: Event }) {
   const tp = useTranslations("points");
   const tf = useTranslations("customEventForm");
-  const locale = useLocale();
+  const formatDate = usePointsDate();
 
-  const date = parseLocalDateTime(event.start_datetime).toLocaleDateString(
-    locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-US",
-    { month: "short", day: "numeric", year: "numeric" },
-  );
   const isHidden = event.location_type === "hidden";
   const href = `/points/${event.id}`;
 
   return (
-    <article className="group bg-card border-border relative flex h-full items-center gap-3 rounded-2xl border p-3 transition-shadow hover:shadow-[0_2px_4px_oklch(0_0_0/0.04),0_8px_24px_oklch(0_0_0/0.06)] sm:flex-col sm:items-stretch sm:gap-4 sm:p-4">
-      <div className="flex min-w-0 flex-1 items-center gap-3 sm:items-start">
-        <span className="bg-muted text-muted-foreground flex h-11 w-11 shrink-0 items-center justify-center rounded-xl">
-          <Trophy className="h-5 w-5" />
-        </span>
+    <li className="border-rule relative flex min-h-16 items-center gap-3 border-b px-1 py-3 transition-colors last:border-b-0 hover:bg-card active:bg-sunk md:px-4">
+      <Plate tone={isHidden ? "umber" : "indigo"} icon={isHidden ? EyeOff : Eye} />
 
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <h3 className="line-clamp-2 text-[15px] leading-snug font-semibold sm:text-base" dir="auto">
-            {/* Stretched: the whole card opens the points editor. */}
-            <Link
-              href={href}
-              className="outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-[3px] focus-visible:after:ring-ring/50"
-            >
-              {event.name}
-            </Link>
-          </h3>
-
-          <div className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] sm:text-sm">
-            <span className="flex items-center gap-1.5">
-              <CalendarDays className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              <span className="tabular text-foreground font-medium">{date}</span>
-            </span>
-            <span className="flex items-center gap-1.5">
-              {isHidden ? (
-                <EyeOff className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              ) : (
-                <Eye className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" />
-              )}
-              {isHidden ? tf("hidden") : tf("visible")}
-            </span>
-          </div>
-
-          {event.description && (
-            <p dir="auto" className="text-muted-foreground mt-1 line-clamp-1 hidden text-sm sm:block">
-              {event.description}
-            </p>
-          )}
-        </div>
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 className="truncate text-[15px] leading-snug font-bold" dir="auto">
+          {/* Stretched: the whole row opens the points editor. */}
+          <Link
+            href={href}
+            aria-label={`${event.name}: ${tp("editPoints")}`}
+            className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ring"
+          >
+            {event.name}
+          </Link>
+        </h3>
+        <p className="text-ink-2 flex flex-wrap items-center gap-x-2 text-[13px]">
+          <span className="tabular">{formatDate(event.start_datetime)}</span>
+          <span aria-hidden="true">·</span>
+          <span className={isHidden ? INK.umber : INK.indigo}>{isHidden ? tf("hidden") : tf("visible")}</span>
+        </p>
+        {event.description ? (
+          <p dir="auto" className="text-ink-2 line-clamp-1 text-[13px] max-md:hidden">
+            {event.description}
+          </p>
+        ) : null}
       </div>
 
-      <ChevronRight className="text-muted-foreground h-5 w-5 shrink-0 rtl:-scale-x-100 sm:hidden" aria-hidden />
-
-      <Button asChild className="relative z-10 mt-auto hidden w-full sm:inline-flex">
-        <Link href={href}>{tp("editPoints")}</Link>
-      </Button>
-    </article>
+      <span className="text-ink-2 text-[13px] font-bold max-md:hidden">{tp("editPoints")}</span>
+      <ChevronRight className="text-ink-3 size-[18px] shrink-0 rtl:-scale-x-100" aria-hidden="true" />
+    </li>
   );
 }

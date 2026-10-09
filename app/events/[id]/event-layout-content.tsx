@@ -2,10 +2,14 @@
 
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX } from "lucide-react";
+import * as React from "react";
+import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX, CalendarDays, Globe, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Alert, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/status-badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Door } from "@/components/najdi";
+import { eventTone, useDepartmentName, useEventDates } from "@/components/event-bits";
+import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventProvider } from "@/contexts/event-context";
@@ -28,8 +32,8 @@ function scrollIntoViewOnMount(el: HTMLAnchorElement | null) {
 
 function TabSkeleton({ w }: { w: string }) {
   return (
-    <div className="flex items-center gap-2 pb-3">
-      <Skeleton className="h-4 w-4" />
+    <div className="flex items-center gap-2">
+      <Skeleton className="size-4" />
       <Skeleton className={`h-4 ${w}`} />
     </div>
   );
@@ -41,6 +45,9 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
   const pathname = usePathname();
 
   const { data: event, isLoading, error, refetch } = useEvent(eventId);
+  const dates = useEventDates();
+  const departmentName = useDepartmentName();
+  const [now] = React.useState(() => Date.now());
 
   const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
   const backLabel = searchParams.get('from') === 'points' ? t('backToPoints') : t('backToEvents');
@@ -54,129 +61,105 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
 
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5" aria-busy="true">
         <Skeleton className="h-9 w-32" />
-        <Skeleton className="h-8 w-64" />
-        <div className="space-y-6">
-          <div className="border-b">
-            <div className="flex gap-6">
-              <div className="flex items-center gap-2 pb-3 border-b-2 border-primary">
-                <Skeleton className="h-4 w-4" />
-                <Skeleton className="h-4 w-20" />
-              </div>
-              {["w-36", "w-32", "w-24", "w-20"].map((w, i) => (
-                <TabSkeleton key={i} w={w} />
-              ))}
-            </div>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <Skeleton className="w-full aspect-square sm:aspect-auto sm:h-150 rounded-lg" />
-            <div className="space-y-6">
-              <Skeleton className="h-12 w-3/4" />
-              <div className="flex gap-2">
-                <Skeleton className="h-7 w-20" />
-                <Skeleton className="h-7 w-32" />
-              </div>
-              <div className="space-y-4">
-                {["w-56", "w-48", "w-40"].map((w, i) => (
-                  <Skeleton key={i} className={`h-6 ${w}`} />
-                ))}
-              </div>
-              <div className="space-y-4 rounded-lg border bg-card p-6 mt-8">
-                <Skeleton className="h-7 w-32" />
-                <div className="space-y-3">
-                  {["w-full", "w-full", "w-5/6", "w-full", "w-3/4"].map((w, i) => (
-                    <Skeleton key={i} className={`h-4 ${w}`} />
-                  ))}
-                </div>
-              </div>
-            </div>
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-9 w-2/3 max-w-lg" />
+          <Skeleton className="h-6 w-80 max-w-full" />
+        </div>
+        <div className="border-foreground flex gap-6 border-b pb-3">
+          {["w-24", "w-36", "w-28", "w-20", "w-24"].map((w, i) => (
+            <TabSkeleton key={i} w={w} />
+          ))}
+        </div>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+          <Skeleton className="aspect-square w-full rounded-xl" />
+          <div className="flex flex-col gap-3">
+            {["w-full", "w-5/6", "w-full", "w-3/4", "w-2/3"].map((w, i) => (
+              <Skeleton key={i} className={`h-10 ${w}`} />
+            ))}
           </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
-    if (error instanceof ApiRequestError && error.isNotFound) {
-      return (
-        <div className="flex items-center justify-center min-h-[70vh]">
-          <Card className="max-w-md">
-            <CardContent className="pt-6">
-              <Empty>
-                <EmptyHeader>
-                  <EmptyMedia variant="icon">
-                    <CalendarX />
-                  </EmptyMedia>
-                  <EmptyTitle>{t('eventNotFound')}</EmptyTitle>
-                  <EmptyDescription>
-                    {t('eventNotFoundDescription')}
-                  </EmptyDescription>
-                </EmptyHeader>
-                <Button asChild>
-                  <Link href="/events">{t('goBackToEvents')}</Link>
-                </Button>
-              </Empty>
-            </CardContent>
-          </Card>
-        </div>
-      );
-    }
+  if (error && !(error instanceof ApiRequestError && error.isNotFound)) {
     return (
-      <div className="text-center py-12 text-destructive">
-        {t('errorPrefix', { message: error.message })}
-      </div>
+      <Alert variant="destructive" className="mx-auto max-w-2xl">
+        <CalendarX className="size-4" />
+        <AlertTitle>{t("errorPrefix", { message: error.message })}</AlertTitle>
+      </Alert>
     );
   }
 
-  if (!event) {
+  if (error || !event) {
     return (
-      <div className="flex items-center justify-center min-h-[70vh]">
-        <Card className="max-w-md">
-          <CardContent className="pt-6">
-            <Empty>
-              <EmptyHeader>
-                <EmptyMedia variant="icon">
-                  <CalendarX />
-                </EmptyMedia>
-                <EmptyTitle>{t('eventNotFound')}</EmptyTitle>
-                <EmptyDescription>
-                  {t('eventNotFoundDescription')}
-                </EmptyDescription>
-              </EmptyHeader>
-              <Button asChild>
-                <Link href="/events">{t('goBackToEvents')}</Link>
-              </Button>
-            </Empty>
-          </CardContent>
-        </Card>
-      </div>
+      <Empty className="min-h-[60vh]">
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <CalendarX />
+          </EmptyMedia>
+          <EmptyTitle>{t("eventNotFound")}</EmptyTitle>
+          <EmptyDescription>{t("eventNotFoundDescription")}</EmptyDescription>
+        </EmptyHeader>
+        <Button asChild>
+          <Link href="/events">{t("goBackToEvents")}</Link>
+        </Button>
+      </Empty>
     );
   }
+
+  const start = parseLocalDateTime(event.start_datetime);
+  const end = getEffectiveEndDate(start, parseLocalDateTime(event.end_datetime));
+  const dept = departmentName(event);
+  const LocationIcon = event.location_type === "online" ? Globe : MapPin;
+  const showLocation = event.location_type !== "none" && event.location_type !== "hidden" && Boolean(event.location);
+  const overdue = eventTone(event, now) === "madder";
+  const onAttendance = isActiveTab("/attendance");
 
   return (
     <EventProvider event={event} isLoading={isLoading} error={error} refetch={refetch}>
-      <div className="space-y-4 sm:space-y-6">
-        <div className="flex items-start gap-2 sm:flex-col sm:gap-3">
-          <Button variant="ghost" size="sm" asChild className="-ms-2 shrink-0 max-sm:size-9 max-sm:px-0">
-            <Link href={backHref} className="flex items-center gap-2" aria-label={backLabel}>
-              <ArrowLeft className="h-4 w-4 rtl:-scale-x-100 max-sm:h-5 max-sm:w-5" />
-              <span className="max-sm:hidden">{backLabel}</span>
-            </Link>
-          </Button>
+      <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-4 sm:gap-5">
+        <Button variant="ghost" size="sm" asChild className="-ms-3 self-start">
+          <Link href={backHref}>
+            <ArrowLeft className="rtl:-scale-x-100" />
+            {backLabel}
+          </Link>
+        </Button>
 
-          <div className="flex min-w-0 flex-1 flex-col gap-1.5 pt-1 sm:flex-row sm:items-center sm:gap-3 sm:pt-0">
-            <h1 className="font-display line-clamp-3 text-xl leading-tight font-semibold tracking-tight text-balance sm:text-2xl" dir="auto">
-              {event.name}
-            </h1>
-            <StatusBadge status={event.status} className="shrink-0" />
+        <header className="flex flex-col gap-2">
+          <h1 className="font-display line-clamp-3 text-[26px] leading-tight font-semibold text-balance sm:text-[30px]" dir="auto">
+            {event.name}
+          </h1>
+          <div className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px]">
+            <StatusBadge status={event.status} />
+            <span className="tabular text-foreground flex items-center gap-1.5 font-medium">
+              <CalendarDays className="size-4" aria-hidden="true" />
+              {dates.range(start, end)}
+            </span>
+            {showLocation ? (
+              <span className="flex min-w-0 items-center gap-1.5">
+                <LocationIcon className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate" dir="auto">{event.location}</span>
+              </span>
+            ) : null}
+            {dept ? (
+              <span className="flex min-w-0 items-center gap-1.5">
+                <Building2 className="size-4 shrink-0" aria-hidden="true" />
+                <span className="truncate" dir="auto">{dept}</span>
+              </span>
+            ) : null}
           </div>
-        </div>
+        </header>
 
         {/* Sticky under the top bar on phones so switching tab never needs a
             scroll back up; the strip scrolls sideways and keeps the current
             tab in view. */}
-        <nav className="bg-background/95 supports-backdrop-filter:bg-background/80 border-border sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 supports-backdrop-filter:backdrop-blur-lg sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none">
+        <nav
+          aria-label={t("tabsLabel")}
+          className="bg-background border-foreground sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 sm:-mx-6 sm:px-4 md:static md:mx-0 md:bg-transparent md:px-0"
+        >
           <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
             {TAB_ITEMS.map((tab) => {
               const isActive = isActiveTab(tab.path);
@@ -188,26 +171,35 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
                   prefetch
                   aria-current={isActive ? "page" : undefined}
                   ref={isActive ? scrollIntoViewOnMount : undefined}
-                  className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors pointer-coarse:py-3.5 ${
-                    isActive
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground"
+                  className={`focus-visible:outline-ring relative flex min-h-12 shrink-0 items-center gap-2 px-3 text-sm whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+                    isActive ? "text-foreground font-bold" : "text-ink-2 hover:text-foreground font-medium"
                   }`}
                 >
-                  <tab.icon className="h-4 w-4" />
+                  <tab.icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
                   {t(`tabs.${tab.key}`)}
-                  {isActive && (
-                    <span className="bg-primary absolute inset-x-2 bottom-0 h-[3px] rounded-t-full" />
-                  )}
+                  {isActive && <span aria-hidden="true" className="bg-foreground absolute inset-x-2 -bottom-px h-[3px] rounded-t-[2px]" />}
                 </Link>
               );
             })}
           </div>
         </nav>
 
-        <div className="space-y-6">
-          {children}
-        </div>
+        {overdue && !onAttendance ? (
+          <Door tone="madder" innerClassName="sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-1">
+              <h2 className="font-display text-[21px] leading-tight font-semibold">{t("overdue.title")}</h2>
+              <p className="text-sm font-medium opacity-90">{t("overdue.body")}</p>
+            </div>
+            <Button asChild variant="secondary" className="bg-[var(--door-panel)] text-[var(--door-panel-ink)] hover:bg-[var(--door-panel)]/90 sm:shrink-0">
+              <Link href={`/events/${eventId}/attendance`}>
+                {t("overdue.action")}
+                <ArrowLeft className="ltr:-scale-x-100" />
+              </Link>
+            </Button>
+          </Door>
+        ) : null}
+
+        <div className="flex flex-col gap-6">{children}</div>
       </div>
     </EventProvider>
   );

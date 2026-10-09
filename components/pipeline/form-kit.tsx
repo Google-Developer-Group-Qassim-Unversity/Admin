@@ -58,7 +58,7 @@ export function focusField(name: string) {
 }
 
 const INVALID =
-  "[&_[data-slot=input]]:border-brand-red [&_[data-slot=textarea]]:border-brand-red [&_[data-slot=select-trigger]]:border-brand-red [&_[role=radiogroup]]:ring-brand-red/60 [&_[role=radiogroup]]:ring-1";
+  "[&_[data-slot=input]]:border-door-madder [&_[data-slot=textarea]]:border-door-madder [&_[data-slot=select-trigger]]:border-door-madder [&_[role=radiogroup]]:ring-door-madder [&_[role=radiogroup]]:ring-1";
 
 export function Field({
   label,
@@ -80,18 +80,18 @@ export function Field({
   const invalid = useIsMissing(name);
   return (
     <div id={name ? fieldId(name) : undefined} className={cn("flex scroll-mt-24 flex-col gap-1.5", invalid && INVALID, className)}>
-      <Label className={cn("flex items-baseline gap-1.5 text-sm font-medium", invalid && "text-brand-red-ink")}>
+      <Label className={cn("flex items-baseline gap-1.5 text-sm font-bold", invalid && "text-door-madder-ink")}>
         {label}
-        {optional ? <span className="text-muted-foreground text-xs font-normal">{t("optional")}</span> : null}
+        {optional ? <span className="text-ink-2 text-xs font-medium">{t("optional")}</span> : null}
       </Label>
       {children}
       {invalid ? (
-        <p className="text-brand-red-ink flex items-center gap-1 text-xs font-medium">
-          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+        <p className="text-door-madder-ink flex items-center gap-1 text-xs font-bold">
+          <AlertCircle className="size-3.5 shrink-0" />
           {t("required")}
         </p>
       ) : hint ? (
-        <p className="text-muted-foreground text-xs">{hint}</p>
+        <p className="text-ink-2 text-xs">{hint}</p>
       ) : null}
     </div>
   );
@@ -108,10 +108,10 @@ export function FormSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-4 border-t pt-5 first:border-t-0 first:pt-0">
-      <div className="flex flex-col gap-0.5">
-        <h3 className="font-display text-[15px] font-semibold tracking-tight">{title}</h3>
-        {description ? <p className="text-muted-foreground text-[13px]">{description}</p> : null}
+    <section className="flex flex-col gap-4">
+      <div className="border-foreground flex flex-col gap-0.5 border-b pb-2">
+        <h3 className="text-base font-bold">{title}</h3>
+        {description ? <p className="text-ink-2 text-[13px]">{description}</p> : null}
       </div>
       {children}
     </section>
@@ -228,14 +228,14 @@ export function Chips<T extends string | number>({
             disabled={disabled}
             onClick={() => onChange(on ? current.filter((x) => x !== o) : [...current, o])}
             className={cn(
-              "focus-visible:ring-ring/50 inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3.5 text-sm font-medium transition-colors outline-none focus-visible:ring-[3px] disabled:cursor-default pointer-coarse:min-h-10",
+              "inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3.5 text-sm font-bold transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:cursor-default pointer-coarse:min-h-11",
               on
-                ? "border-brand-blue/40 bg-brand-blue-soft text-brand-blue-ink"
-                : "border-border bg-card text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground",
+                ? "bg-foreground text-background"
+                : "bg-card text-ink-2 shadow-[inset_0_0_0_1px_var(--rule)] enabled:hover:text-foreground enabled:hover:shadow-[inset_0_0_0_1px_var(--adobe)]",
               disabled && !on && "opacity-60",
             )}
           >
-            {on ? <Check className="h-3.5 w-3.5" /> : null}
+            {on ? <Check className="size-3.5" /> : null}
             {label(o)}
           </button>
         );
@@ -250,4 +250,4 @@ export function Chips<T extends string | number>({
  * keep full contrast and just stop looking clickable.
  */
 export const READ_ONLY =
-  "[&_[data-slot=input]:disabled]:opacity-100 [&_[data-slot=textarea]:disabled]:opacity-100 [&_[data-slot=select-trigger]:disabled]:opacity-100 [&_[data-slot=input]:disabled]:bg-muted/40 [&_[data-slot=textarea]:disabled]:bg-muted/40 [&_[data-slot=select-trigger]:disabled]:bg-muted/40 [&_[data-slot=input]:disabled]:cursor-default [&_[data-slot=textarea]:disabled]:cursor-default [&_[role=radiogroup]]:opacity-100 [&_[data-slot=input]:disabled]:placeholder:text-transparent [&_[data-slot=textarea]:disabled]:placeholder:text-transparent";
+  "[&_[data-slot=input]:disabled]:opacity-100 [&_[data-slot=textarea]:disabled]:opacity-100 [&_[data-slot=select-trigger]:disabled]:opacity-100 [&_[data-slot=input]:disabled]:bg-sunk/60 [&_[data-slot=textarea]:disabled]:bg-sunk/60 [&_[data-slot=select-trigger]:disabled]:bg-sunk/60 [&_[data-slot=input]:disabled]:cursor-default [&_[data-slot=textarea]:disabled]:cursor-default [&_[role=radiogroup]]:opacity-100 [&_[data-slot=input]:disabled]:placeholder:text-transparent [&_[data-slot=textarea]:disabled]:placeholder:text-transparent";

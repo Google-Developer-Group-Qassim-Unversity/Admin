@@ -25,7 +25,7 @@ import { toast } from 'sonner';
 import { useTranslations } from 'next-intl';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from '@/components/ui/card';
+import { SectionHead } from '@/components/najdi';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import {
@@ -108,20 +108,20 @@ interface GuardToggleRowProps {
 function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedChange }: GuardToggleRowProps) {
   const t = useTranslations("attendance.qrCode");
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+    <div className="border-rule flex min-h-12 items-center justify-between gap-4 border-b py-2.5 last:border-b-0">
       <div className="flex min-w-0 items-start gap-2 pointer-fine:items-center">
-        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground pointer-fine:mt-0" />
+        <Icon className="mt-0.5 h-4 w-4 shrink-0 text-ink-2 pointer-fine:mt-0" />
         <div className="min-w-0">
-          <Label htmlFor={id} className="text-sm font-normal">
+          <Label htmlFor={id} className="text-sm font-bold">
             {label}
           </Label>
           {/* Tooltips need a hover; on touch the explanation is simply shown. */}
-          <p className="mt-1 hidden text-[13px] text-muted-foreground pointer-coarse:block">{helpText}</p>
+          <p className="mt-1 hidden text-[13px] text-ink-2 pointer-coarse:block">{helpText}</p>
         </div>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>
-              <button type="button" className="text-muted-foreground hover:text-foreground pointer-coarse:hidden">
+              <button type="button" className="text-ink-2 hover:text-foreground pointer-coarse:hidden">
                 <HelpCircle className="h-3.5 w-3.5" />
                 <span className="sr-only">{t('whatDoesThisDo')}</span>
               </button>
@@ -276,15 +276,10 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
   );
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('title')}</CardTitle>
-        <CardDescription className="col-start-1">
-          {t('description')}
-        </CardDescription>
-        <CardAction className="hidden sm:block">{modeToggle}</CardAction>
-      </CardHeader>
-      <CardContent>
+    <section aria-labelledby="attendance-take" className="flex flex-col gap-4">
+      <SectionHead id="attendance-take" title={t('title')} action={<div className="hidden sm:block">{modeToggle}</div>} />
+      <p className="text-ink-2 -mt-2 text-[13.5px]">{t('description')}</p>
+      <div>
         <div className="mb-5 sm:hidden">{modeToggle}</div>
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
           {mode === 'camera' ? (
@@ -300,7 +295,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
           <div className="flex flex-col items-center justify-center">
             {tokenData && !isExpired ? (
               // The QR sits on white in both themes: scanners need the contrast.
-              <div className="w-full max-w-[20rem] rounded-2xl bg-white p-3 shadow-sm sm:p-4 md:max-w-[17rem]">
+              <div className="w-full max-w-[20rem] rounded-xl bg-white p-3 ring-1 ring-rule sm:p-4 md:max-w-[17rem]">
                 <QRCodeSVG
                   value={tokenData.attendanceUrl}
                   size={240}
@@ -316,8 +311,8 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
                 />
               </div>
             ) : (
-              <div className="flex aspect-square w-full max-w-[20rem] flex-col items-center justify-center rounded-2xl border-2 border-dashed border-muted-foreground/25 text-muted-foreground md:max-w-64">
-                <QrCode className="h-16 w-16 mb-3 opacity-40" />
+              <div className="flex aspect-square w-full max-w-[20rem] flex-col items-center justify-center rounded-xl border border-dashed border-adobe text-ink-2 md:max-w-64">
+                <QrCode className="mb-3 size-14" strokeWidth={1.25} />
                 <p className="text-sm text-center px-4">
                   {isExpired
                     ? t('qrExpiredHint')
@@ -328,14 +323,14 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
 
             {tokenData && !isExpired && timeRemaining && (
               <div className="mt-4 flex items-center gap-2 text-sm">
-                <Timer className="h-4 w-4 text-muted-foreground" />
-                <span className="text-muted-foreground">{t('expiresIn')}</span>
-                <span className="tabular font-semibold">{timeRemaining}</span>
+                <Timer className="h-4 w-4 text-ink-2" />
+                <span className="text-ink-2">{t('expiresIn')}</span>
+                <span className="tabular font-bold text-door-ochre-ink">{timeRemaining}</span>
               </div>
             )}
 
             {isExpired && (
-              <div className="mt-4 flex items-center gap-2 text-sm text-destructive">
+              <div className="mt-4 flex items-center gap-2 text-sm font-bold text-door-madder-ink">
                 <Clock className="h-4 w-4" />
                 <span>{t('expiredNotice')}</span>
               </div>
@@ -344,7 +339,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
 
           <div className="flex flex-col gap-5 md:gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-medium">{t('expirationTime')}</label>
+              <label className="text-sm font-bold">{t('expirationTime')}</label>
               <Select value={expirationMinutes} onValueChange={setExpirationMinutes}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder={t('selectExpirationTime')} />
@@ -357,7 +352,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
                   ))}
                 </SelectContent>
               </Select>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-ink-2">
                 {t('expirationHint')}
               </p>
             </div>
@@ -400,7 +395,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
               </CollapsibleContent>
             </Collapsible>
 
-            <Button onClick={handleGenerateToken} disabled={isGenerating} className="h-12 w-full text-base md:h-9 md:text-sm">
+            <Button variant="ochre" size="lg" onClick={handleGenerateToken} disabled={isGenerating} className="h-12 w-full text-base">
               {isGenerating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />
@@ -443,7 +438,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
 
             {tokenData && !isExpired && (
               <div className="space-y-2">
-                <label className="text-sm font-medium">{t('attendanceLink')}</label>
+                <label className="text-sm font-bold">{t('attendanceLink')}</label>
                 {/* Click-to-copy, and `select-none` on purpose: hand-selecting this
                     wrapped URL is how truncated links get shared, and a link that
                     loses even one character no longer validates. */}
@@ -451,10 +446,10 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
                   type="button"
                   onClick={handleCopyLink}
                   aria-label={t('copyLink')}
-                  className="block w-full select-none rounded-lg bg-muted p-3 text-start font-mono text-xs break-all text-muted-foreground transition-colors hover:bg-muted/70 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                  className="block w-full select-none rounded-lg bg-sunk p-3 text-start font-mono text-xs break-all text-ink-2 transition-colors hover:bg-rule/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
                 >
                   {tokenData.attendanceUrl}
-                  <span className="mt-2 flex items-center gap-1.5 font-sans text-xs text-muted-foreground/80">
+                  <span className="mt-2 flex items-center gap-1.5 font-sans text-xs text-ink-2">
                     {copied ? (
                       <>
                         <Check className="h-3.5 w-3.5" />
@@ -475,8 +470,8 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
           )}
         </div>
 
-        {children && <div className="mt-6 border-t pt-6 md:mt-8 md:pt-8">{children}</div>}
-      </CardContent>
-    </Card>
+        {children && <div className="border-rule mt-6 border-t pt-6 md:mt-8 md:pt-8">{children}</div>}
+      </div>
+    </section>
   );
 }

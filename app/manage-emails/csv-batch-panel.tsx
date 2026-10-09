@@ -45,7 +45,7 @@ import type { CsvRow } from "./types";
 import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { SOFT } from "@/components/najdi";
 import { useTranslations } from "next-intl";
 
 interface CsvBatchPanelProps {
@@ -396,10 +396,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
     <Button
       onClick={handleSubmit}
       disabled={isSubmitting || csvRows.length === 0}
-      size="sm"
-      className="gap-2 shadow-sm pointer-coarse:h-10 md:h-8"
+      variant="ochre"
     >
-      {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+      {isSubmitting ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <Send />}
       {t("dispatchAll")}
     </Button>
   );
@@ -407,11 +406,11 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
   return (
     <div className="grid gap-4 md:grid-cols-12">
       <div className="min-w-0 md:col-span-4 space-y-4">
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader className="p-4">
             <div className="flex items-center justify-between">
               <CardTitle className="text-base flex items-center gap-2">
-                <Settings2 className="h-4 w-4 text-primary" />
+                <Settings2 className="h-4 w-4 text-ink-2" />
                 {t("columnSettings")}
               </CardTitle>
               <Switch checked={useCustomColumns} onCheckedChange={setUseCustomColumns} />
@@ -446,9 +445,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
 
         <Card
           className={cn(
-            "shadow-sm transition-colors",
+            " transition-colors",
             !hasEventColumn && csvRows.length > 0
-              ? "ring-brand-yellow/60"
+              ? "ring-door-ochre/60"
               : "opacity-70",
           )}
         >
@@ -456,13 +455,13 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
             <CardTitle
               className={cn(
                 "text-base flex items-center gap-2",
-                !hasEventColumn && csvRows.length > 0 ? "text-brand-yellow-ink" : "",
+                !hasEventColumn && csvRows.length > 0 ? "text-door-ochre-ink" : "",
               )}
             >
               {!hasEventColumn && csvRows.length > 0 ? (
                 <AlertCircle className="h-4 w-4" />
               ) : (
-                <Calendar className="h-4 w-4 text-primary" />
+                <Calendar className="h-4 w-4 text-ink-2" />
               )}
               {t("eventSelection")}
             </CardTitle>
@@ -470,7 +469,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               className={cn(
                 "text-xs",
                 !hasEventColumn && csvRows.length > 0
-                  ? "text-brand-yellow-ink/80"
+                  ? "text-door-ochre-ink/80"
                   : "text-muted-foreground",
               )}
             >
@@ -496,7 +495,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0 shadow-lg" align="start">
+              <PopoverContent className="w-[min(300px,calc(100vw-2rem))] p-0" align="start">
                 <Command filter={(value, search) => {
                   const normValue = normalizeArabic(value);
                   const normSearch = normalizeArabic(search);
@@ -560,17 +559,17 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       <div className="min-w-0 md:col-span-8 space-y-4 relative">
         {isCheckingAttendance && (
           <div className="absolute inset-0 bg-background/60 backdrop-blur-[2px] z-50 flex flex-col items-center justify-center gap-2 animate-in fade-in duration-300 rounded-xl border">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="text-ink-2 size-8 animate-spin motion-reduce:animate-none" />
             <p className="text-sm font-medium">{t("verifyingAttendance")}</p>
           </div>
         )}
 
-        <Card className="shadow-sm overflow-hidden py-0">
+        <Card className=" overflow-hidden py-0">
           <CardHeader className="p-4 border-b bg-muted/20">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="min-w-0">
                 <CardTitle className="text-base flex items-center gap-2">
-                  <FileSpreadsheet className="h-4 w-4 text-primary" />
+                  <FileSpreadsheet className="h-4 w-4 text-ink-2" />
                   {t("batchImport")}
                 </CardTitle>
                 <CardDescription className="text-xs">
@@ -619,7 +618,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               <div
                 role="button"
                 tabIndex={0}
-                className="flex flex-col items-center justify-center py-12 px-6 cursor-pointer hover:bg-muted/30 active:bg-muted/40 transition-colors sm:py-16"
+                className="flex flex-col items-center justify-center py-12 px-6 cursor-pointer hover:bg-card active:bg-muted/40 transition-colors sm:py-16"
                 onClick={() => document.getElementById("cert-csv-upload")?.click()}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" || e.key === " ") {
@@ -635,7 +634,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   onChange={handleFileUpload}
                   className="hidden"
                 />
-                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-muted shadow-inner">
+                <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-xl bg-sunk">
                   <Upload className="h-8 w-8 text-muted-foreground" />
                 </div>
                 <h3 className="text-lg font-semibold">{t("uploadCsvFile")}</h3>
@@ -662,7 +661,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   </Label>
                 </li>
                 {csvRows.map((row, i) => (
-                  <li key={i} className={cn("space-y-2 px-4 py-3", !row.included && "bg-muted/30")}>
+                  <li key={i} className={cn("space-y-2 px-4 py-3", !row.included && "bg-sunk")}>
                     <div className="flex items-center gap-3">
                       <Checkbox
                         className="size-5"
@@ -683,11 +682,11 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                               {row.eventName || "\u2014"}
                             </span>
                             {row.matchedEvent ? (
-                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${URGENCY_STYLES.done.pill}`}>
+                              <span className={`shrink-0 rounded-sm px-2 py-0.5 text-[11px] font-semibold ${SOFT.green}`}>
                                 {t("matched")}
                               </span>
                             ) : row.eventName ? (
-                              <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold ${URGENCY_STYLES.waiting.pill}`}>
+                              <span className={`shrink-0 rounded-sm px-2 py-0.5 text-[11px] font-semibold ${SOFT.ochre}`}>
                                 {t("unmatched")}
                               </span>
                             ) : null}
@@ -701,7 +700,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                         size="icon"
                         aria-label={tc("remove")}
                         onClick={() => setCsvRows((rows) => rows.filter((_, idx) => idx !== i))}
-                        className="text-muted-foreground hover:text-destructive shrink-0"
+                        className="text-muted-foreground hover:text-door-madder-ink shrink-0"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -744,7 +743,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               </ul>
               <div className="hidden h-[500px] overflow-auto md:block">
                 <Table>
-                  <TableHeader className="bg-muted/50 sticky top-0 z-10">
+                  <TableHeader className="bg-sunk sticky top-0 z-10">
                     <TableRow className="h-10 hover:bg-transparent">
                       <TableHead className="w-12 text-center py-0">
                         <Checkbox
@@ -765,7 +764,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                   </TableHeader>
                   <TableBody>
                     {csvRows.map((row, i) => (
-                      <TableRow key={i} className={cn("h-12", !row.included && "opacity-50 bg-muted/30")}>
+                      <TableRow key={i} className={cn("h-12", !row.included && "opacity-50 bg-sunk")}>
                         <TableCell className="w-12 text-center py-2">
                           <Checkbox
                             checked={row.included}
@@ -814,18 +813,18 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                                   "text-xs font-medium truncate max-w-[150px]",
                                   row.matchedEvent
                                     ? "text-foreground"
-                                    : "text-brand-yellow-ink flex items-center gap-1",
+                                    : "text-door-ochre-ink flex items-center gap-1",
                                 )}
                               >
                                 {!row.matchedEvent && <AlertCircle className="h-3 w-3" />}
                                 {row.eventName || "\u2014"}
                               </div>
                               {row.matchedEvent ? (
-                                <span className={`w-fit rounded-full px-1.5 text-[10.5px] font-semibold ${URGENCY_STYLES.done.pill}`}>
+                                <span className={`w-fit rounded-sm px-1.5 text-[10.5px] font-semibold ${SOFT.green}`}>
                                   {t("matched")}
                                 </span>
                               ) : row.eventName ? (
-                                <span className={`w-fit rounded-full px-1.5 text-[10.5px] font-semibold ${URGENCY_STYLES.waiting.pill}`}>
+                                <span className={`w-fit rounded-sm px-1.5 text-[10.5px] font-semibold ${SOFT.ochre}`}>
                                   {t("unmatched")}
                                 </span>
                               ) : null}
@@ -837,7 +836,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                             variant="ghost"
                             size="icon"
                             onClick={() => setCsvRows((rows) => rows.filter((_, idx) => idx !== i))}
-                            className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                            className="h-6 w-6 text-muted-foreground hover:text-door-madder-ink"
                           >
                             <Trash2 className="h-3 w-3" />
                           </Button>
@@ -867,9 +866,9 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               />
             ))}
             {failedCount > 0 && (
-              <Card className="gap-0 py-0 sm:gap-0 sm:py-0 ring-brand-red/30">
+              <Card className="gap-0 py-0 sm:gap-0 sm:py-0 ring-door-madder/30">
                 <CardHeader className="p-4 sm:p-4">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-brand-red-ink">
+                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-door-madder-ink">
                     <AlertCircle className="h-4 w-4" />
                     {t("failedToQueue", { count: failedCount })}
                   </CardTitle>

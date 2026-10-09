@@ -1,9 +1,9 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
-import { format, setHours, setMinutes } from "date-fns";
-import { CalendarIcon, Plus } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
+import { setHours, setMinutes } from "date-fns";
+import { CalendarIcon, Eye, EyeOff, Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -27,6 +27,7 @@ import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 import { useAccess } from "@/hooks/use-access";
 import { FormActions } from "@/components/form-actions";
+import { SectionHead } from "@/components/najdi";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
@@ -78,6 +79,7 @@ export function CustomEventForm({
   onMemberCreated,
 }: CustomEventFormProps) {
   const t = useTranslations("customEventForm");
+  const locale = useLocale();
   const tc = useTranslations("common.states");
   const { isSuperAdmin } = useAccess();
   // Only super admins give points outside the point actions.
@@ -264,13 +266,16 @@ export function CustomEventForm({
     });
   };
 
-  const displayDate = date ? format(date, "PPP") : null;
+  // The date in the reader's language (date-fns' "PPP" was always English).
+  const displayDate = date
+    ? date.toLocaleDateString(locale === "ar" ? "ar-SA-u-ca-gregory" : "en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric" })
+    : null;
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
-      <div className="space-y-4">
-        <h3 className="font-display text-lg font-semibold tracking-tight">{t("eventInformation")}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-8">
+      <section className="flex flex-col gap-4">
+        <SectionHead title={t("eventInformation")} />
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="event-name">{t("eventName")}</Label>
             {useSimpleInput ? (
@@ -296,7 +301,7 @@ export function CustomEventForm({
               />
             )}
             {errors.eventName && (
-              <p className="text-sm text-destructive">{errors.eventName}</p>
+              <p className="text-door-madder-ink text-sm font-medium">{errors.eventName}</p>
             )}
           </div>
 
@@ -307,12 +312,12 @@ export function CustomEventForm({
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-start font-normal",
-                    !date && "text-muted-foreground"
+                    "bg-card w-full justify-start text-start font-medium shadow-[inset_0_0_0_1px_var(--input)]",
+                    !date && "text-ink-3"
                   )}
                   disabled={isSubmitting || isFullEvent}
                 >
-                  <CalendarIcon className="me-2 h-4 w-4" />
+                  <CalendarIcon className="text-ink-2" />
                   {displayDate ?? t("selectDate")}
                 </Button>
               </PopoverTrigger>
@@ -329,13 +334,16 @@ export function CustomEventForm({
               </PopoverContent>
             </Popover>
             {errors.date && (
-              <p className="text-sm text-destructive">{errors.date}</p>
+              <p className="text-door-madder-ink text-sm font-medium">{errors.date}</p>
             )}
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
-            <label htmlFor="is_visible" className="flex cursor-pointer items-center gap-4 rounded-lg border p-3 sm:p-4">
+            <label
+              htmlFor="is_visible"
+              className="bg-card ring-rule has-[:focus-visible]:ring-ring flex min-h-14 cursor-pointer items-center gap-3 rounded-lg p-3 ring-1 transition-colors hover:ring-adobe"
+            >
               <Switch
                 id="is_visible"
                 checked={isVisible}
@@ -343,10 +351,11 @@ export function CustomEventForm({
                 disabled={isSubmitting || isFullEvent}
               />
               <div className="flex-1">
-                <p className="text-sm font-medium">
+                <p className={cn("flex items-center gap-1.5 text-sm font-bold", isVisible ? "text-door-indigo-ink" : "text-door-umber-ink")}>
+                  {isVisible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
                   {isVisible ? t("visible") : t("hidden")}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-ink-2 text-[13px]">
                   {isVisible
                     ? t("visibleHint")
                     : t("hiddenHint")}
@@ -355,26 +364,19 @@ export function CustomEventForm({
             </label>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="border-t" />
-
-      <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2">
-          <h3 className="font-display text-lg font-semibold tracking-tight">{t("pointDetails")}</h3>
-          <span className="tabular text-muted-foreground text-[13px]">
-            {t("rowCount", { count: rows.length })}
-          </span>
-        </div>
+      <section className="flex flex-col gap-4">
+        <SectionHead title={t("pointDetails")} count={rows.length} />
 
         {errors.rows && (
-          <p className="text-sm text-destructive">{errors.rows}</p>
+          <p className="text-door-madder-ink text-sm font-medium">{errors.rows}</p>
         )}
 
         {Object.entries(errors)
           .filter(([key]) => key.startsWith("row_"))
           .map(([key, msg]) => (
-            <p key={key} className="text-sm text-destructive">
+            <p key={key} className="text-door-madder-ink text-sm font-medium">
               {msg}
             </p>
           ))}
@@ -400,8 +402,8 @@ export function CustomEventForm({
         <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end">
           <Button
             type="button"
-            variant="outline"
-            className="border-dashed"
+            variant="ghost"
+            className="border-adobe border-dashed"
             onClick={() => addRow("department")}
             disabled={isSubmitting}
           >
@@ -410,8 +412,8 @@ export function CustomEventForm({
           </Button>
           <Button
             type="button"
-            variant="outline"
-            className="border-dashed"
+            variant="ghost"
+            className="border-adobe border-dashed"
             onClick={() => addRow("member")}
             disabled={isSubmitting}
           >
@@ -419,7 +421,7 @@ export function CustomEventForm({
             <span className="truncate">{t("memberRow")}</span>
           </Button>
         </div>
-      </div>
+      </section>
 
       <FormActions>
         <Button type="submit" disabled={isSubmitting || (mode === "edit" && !isDirty)}>

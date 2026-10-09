@@ -5,7 +5,7 @@ import { useFormatter, useTranslations } from "next-intl";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import { MemberDetailsTrigger } from "@/components/member-details";
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { SOFT } from "@/components/najdi";
 import type { TableRowData } from "@/lib/responses-utils";
 import { cn } from "@/lib/utils";
 
@@ -29,7 +29,7 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
+      <div className="border-adobe text-ink-2 rounded-xl border border-dashed p-8 text-center text-sm">
         {emptyLabel}
       </div>
     );
@@ -39,8 +39,8 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
   const somePageSelected = table.getIsSomePageRowsSelected();
 
   return (
-    <div className="space-y-2">
-      <label className="flex min-h-11 cursor-pointer items-center gap-3 rounded-xl px-3 text-sm text-muted-foreground">
+    <div className="flex flex-col">
+      <label className="border-foreground text-ink-2 flex min-h-12 cursor-pointer items-center gap-3 border-b px-1 text-sm font-bold">
         <Checkbox
           className="size-5"
           checked={allPageSelected || (somePageSelected && "indeterminate")}
@@ -49,7 +49,7 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
         {t("selectPage")}
       </label>
 
-      <ul className="space-y-2">
+      <ul className="flex flex-col">
         {rows.map((row) => {
           const data = row.original;
           const selected = row.getIsSelected();
@@ -63,11 +63,11 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
             <li
               key={row.id}
               className={cn(
-                "overflow-hidden rounded-xl border bg-card transition-colors",
-                selected && "border-primary/60 bg-primary/5"
+                "border-rule border-b transition-colors",
+                selected && "bg-door-ochre-soft"
               )}
             >
-              <label className="flex cursor-pointer items-start gap-3 p-3">
+              <label className="flex cursor-pointer items-start gap-3 px-1 py-3">
                 <Checkbox
                   className="mt-0.5 size-5"
                   checked={selected}
@@ -75,19 +75,19 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
                   aria-label={tt("selectRow")}
                 />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
+                  <p className="truncate text-[15px] font-bold">
                     <bdi>
                       <MemberDetailsTrigger member={{ id: data.member_id, name: String(data.name) }} />
                     </bdi>
                   </p>
-                  <p className="truncate text-[13px] text-muted-foreground">
+                  <p className="truncate text-[13px] text-ink-2">
                     <span dir="ltr">{data.email}</span>
                   </p>
                   <div className="mt-2 flex flex-wrap items-center gap-1.5">
                     <span
                       className={cn(
-                        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                        data.is_accepted ? URGENCY_STYLES.done.pill : URGENCY_STYLES.waiting.pill
+                        "inline-flex items-center rounded-sm px-2 py-1 text-xs leading-none font-bold",
+                        data.is_accepted ? SOFT.green : SOFT.ochre
                       )}
                     >
                       {data.is_accepted ? tt("accepted") : tp("notAccepted")}
@@ -95,8 +95,8 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
                     {data.is_invited ? (
                       <span
                         className={cn(
-                          "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold",
-                          URGENCY_STYLES.info.pill
+                          "inline-flex items-center rounded-sm px-2 py-1 text-xs leading-none font-bold",
+                          SOFT.indigo
                         )}
                       >
                         {tt("emailed")}
@@ -105,7 +105,7 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
                     {!Number.isNaN(submitted.getTime()) && (
                       <time
                         dateTime={submitted.toISOString()}
-                        className="tabular ms-auto text-xs text-muted-foreground"
+                        className="tabular ms-auto text-xs text-ink-2"
                       >
                         {format.dateTime(submitted, {
                           month: "short",
@@ -120,15 +120,15 @@ export function ResponseCardList({ table, questionKeys, emptyLabel }: ResponseCa
               </label>
 
               {answers.length > 0 && (
-                <details className="group border-t">
-                  <summary className="flex min-h-10 cursor-pointer list-none items-center justify-between px-3 text-[13px] font-medium text-muted-foreground [&::-webkit-details-marker]:hidden">
+                <details className="group ps-8">
+                  <summary className="text-door-indigo-ink flex min-h-11 cursor-pointer list-none items-center gap-2 px-1 text-[13px] font-bold [&::-webkit-details-marker]:hidden">
                     {t("answers")}
                     <span className="tabular text-xs">({answers.length})</span>
                   </summary>
-                  <dl className="space-y-2 px-3 pb-3">
+                  <dl className="space-y-2 px-1 pb-3">
                     {answers.map(({ key, value }) => (
                       <div key={key}>
-                        <dt className="text-xs text-muted-foreground" dir="auto">
+                        <dt className="text-xs text-ink-2" dir="auto">
                           {key}
                         </dt>
                         <dd className="text-sm break-words whitespace-pre-wrap" dir="auto">

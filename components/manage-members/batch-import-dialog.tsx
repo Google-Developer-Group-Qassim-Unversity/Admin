@@ -236,22 +236,17 @@ export function BatchImportDialog({
                   <CardContent className="space-y-3 pt-0">
                     <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">{tb("rowCount")}</span>
+                        <span className="text-ink-2">{tb("rowCount")}</span>
                         <span className="font-medium">{metadata?.row_count ?? "-"}</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">{tb("valid")}</span>
-                        <Badge
-                          className={
-                            isValidData ? "bg-brand-green-soft text-brand-green-ink border-transparent" : ""
-                          }
-                          variant={isValidData ? "outline" : "destructive"}
-                        >
+                        <span className="text-ink-2">{tb("valid")}</span>
+                        <Badge variant={isValidData ? "green" : "destructive"}>
                           {isValidData ? tb("yes") : tb("no")}
                         </Badge>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">{tb("validatedAt")}</span>
+                        <span className="text-ink-2">{tb("validatedAt")}</span>
                         <span className="font-medium tabular text-end">
                           {metadata?.validated_at
                             ? new Date(metadata.validated_at).toLocaleString()
@@ -259,14 +254,14 @@ export function BatchImportDialog({
                         </span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">{tb("source")}</span>
+                        <span className="text-ink-2">{tb("source")}</span>
                         <span className="font-medium">{metadata?.source ?? "-"}</span>
                       </div>
                     </div>
                     {signature && (
                       <div className="pt-2 border-t">
-                        <div className="text-muted-foreground text-sm mb-1">{tb("signature")}</div>
-                        <div className="font-mono text-xs text-muted-foreground break-all">
+                        <div className="text-ink-2 text-sm mb-1">{tb("signature")}</div>
+                        <div className="font-mono text-xs text-ink-2 break-all">
                           {signature}
                         </div>
                       </div>
@@ -300,7 +295,7 @@ export function BatchImportDialog({
                                 <div className="truncate text-sm font-medium" dir="auto">
                                   {row.name}
                                 </div>
-                                <div className="text-muted-foreground truncate text-[13px]">
+                                <div className="text-ink-2 truncate text-[13px]">
                                   <span className="tabular">{row["university id"]}</span>
                                   {row.email ? <> · {row.email}</> : null}
                                   {row.gender ? <> · {row.gender}</> : null}
@@ -308,7 +303,7 @@ export function BatchImportDialog({
                               </li>
                             ))}
                             {verifiedRows.length > 50 && (
-                              <li className="text-muted-foreground px-3 py-2.5 text-center text-[13px]">
+                              <li className="text-ink-2 px-3 py-2.5 text-center text-[13px]">
                                 {tb("andMore", { count: verifiedRows.length - 50 })}
                               </li>
                             )}
@@ -333,7 +328,7 @@ export function BatchImportDialog({
                               ))}
                               {verifiedRows.length > 50 && (
                                 <TableRow>
-                                  <TableCell colSpan={4} className="text-center text-muted-foreground">
+                                  <TableCell colSpan={4} className="text-center text-ink-2">
                                     {tb("andMore", { count: verifiedRows.length - 50 })}
                                   </TableCell>
                                 </TableRow>
@@ -400,13 +395,13 @@ export function BatchImportDialog({
               <CardContent className="pt-0">
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{tb("created")}</span>
-                    <Badge className="bg-brand-green-soft text-brand-green-ink tabular border-transparent">
+                    <span className="text-sm text-ink-2">{tb("created")}</span>
+                    <Badge variant="green" className="tabular">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{t("existing")}</span>
+                    <span className="text-sm text-ink-2">{t("existing")}</span>
                     <span className="font-medium">{summaryDialog?.existing_count ?? 0}</span>
                   </div>
                 </div>

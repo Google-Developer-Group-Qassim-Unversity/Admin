@@ -291,12 +291,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
   return (
     <div className="grid gap-6">
-      <Card className="shadow-sm">
+      <Card>
         <CardHeader className="pb-2">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
-                <Mail className="h-4 w-4 text-primary" />
+                <Mail className="h-4 w-4 text-ink-2" />
                 {tDirect("compose")}
               </CardTitle>
               <CardDescription className="text-xs">
@@ -326,7 +326,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   variant="ghost"
                   size="icon"
                   aria-label={tc("delete")}
-                  className="text-muted-foreground hover:text-destructive sm:size-8"
+                  className="text-muted-foreground hover:text-door-madder-ink sm:size-8"
                   onClick={() => setDeleteTarget(templates.find((t) => t.id === selectedTemplateId) ?? null)}
                 >
                   <Trash2 className="h-3.5 w-3.5" />
@@ -354,7 +354,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   className="w-auto shrink-0 p-0.5 [&>button]:min-h-8 [&>button]:px-2.5 [&>button]:text-xs [&>button]:whitespace-nowrap pointer-coarse:[&>button]:min-h-9"
                 />
               </div>
-              <div className="border rounded-md overflow-auto h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[700px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
+              <div className="ring-1 ring-rule rounded-lg overflow-auto bg-white h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[700px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
                 {composer.viewMode === "raw" ? (
                   <Textarea
                     value={composer.rawHtml}
@@ -405,10 +405,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       </Card>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <SlidersHorizontal className="h-4 w-4 text-primary" />
+              <SlidersHorizontal className="text-ink-2 h-4 w-4" />
               {t("audience")}
             </CardTitle>
             <CardDescription className="text-xs">
@@ -519,7 +519,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 </Button>
               </div>
               {recipientList.recipients.length > 0 && (
-                <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg border divide-y sm:max-h-40">
+                <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg ring-1 ring-rule divide-y divide-rule sm:max-h-40">
                   {recipientList.recipients.map((r) => (
                     <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                       <div className="flex-1 min-w-0">
@@ -531,7 +531,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                         variant="ghost"
                         size="icon-sm"
                         aria-label={tc("remove")}
-                        className="hover:text-destructive sm:size-6"
+                        className="hover:text-door-madder-ink sm:size-6"
                         onClick={() => recipientList.remove(r.email)}
                         disabled={isBusy}
                       >
@@ -554,10 +554,10 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           </CardContent>
         </Card>
 
-        <Card className="shadow-sm">
+        <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-base flex items-center gap-2">
-              <Paperclip className="h-4 w-4 text-primary" />
+              <Paperclip className="h-4 w-4 text-ink-2" />
               {tDirect("attachments")}
             </CardTitle>
             <CardDescription className="text-xs">{t("attachmentsHint")}</CardDescription>
@@ -585,7 +585,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   <FileUploadItem key={`${entry.file.name}-${entry.file.lastModified}`} value={entry.file}>
                     <FileUploadItemPreview />
                     <FileUploadItemMetadata />
-                    {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-muted-foreground" />}
                     <FileUploadItemDelete asChild>
                       <Button
                         type="button"
@@ -602,7 +602,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
               </FileUploadList>
             </FileUpload>
             {attachments.attachmentSizeExceeded && (
-              <p className="text-xs text-destructive">
+              <p className="text-[13px] font-medium text-door-madder-ink">
                 {tDirect("sizeExceeded", {
                   total: formatSize(attachments.totalAttachmentSize),
                   limit: formatSize(MAX_TOTAL_ATTACHMENT_SIZE),
@@ -641,7 +641,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
           <Button type="button" variant="secondary" onClick={handleTestSubmit} disabled={isTestDisabled} className="w-full">
             {testMutation.isPending ? (
               <>
-                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                <Loader2 className="me-2 h-4 w-4 animate-spin motion-reduce:animate-none" />
                 {t("sendingTest")}
               </>
             ) : (
@@ -657,8 +657,8 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       <FormActions>
         <AlertDialog>
           <AlertDialogTrigger asChild>
-            <Button type="button" disabled={isSendDisabled} className="gap-2 shadow-sm">
-              {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            <Button type="button" variant="ochre" size="lg" disabled={isSendDisabled}>
+              {sendMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Send className="h-4 w-4" />}
               {t("sendBlast", { count: totalRecipients })}
             </Button>
           </AlertDialogTrigger>
@@ -676,7 +676,7 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirmSend}>{t("send")}</AlertDialogAction>
+              <AlertDialogAction variant="ochre" onClick={handleConfirmSend}>{t("send")}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -720,12 +720,12 @@ export function BlastEmailsTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 onClick={handleUpdateExisting}
                 disabled={!templateNameDraft.trim() || updateTemplateMutation.isPending}
               >
-                {updateTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+                {updateTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
                 {t("updateExisting")}
               </Button>
             )}
             <Button onClick={handleSaveAsNew} disabled={!templateNameDraft.trim() || createTemplateMutation.isPending}>
-              {createTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin" />}
+              {createTemplateMutation.isPending && <Loader2 className="me-2 h-4 w-4 animate-spin motion-reduce:animate-none" />}
               {t("saveAsNew")}
             </Button>
           </DialogFooter>

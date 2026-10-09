@@ -16,6 +16,7 @@ import {
   MultiSelectItem,
 } from "@/components/ui/multi-select";
 import { ActionReasonSelect } from "@/components/ui/action-reason-select";
+import { Count, Plate } from "@/components/najdi";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { GroupedActions, Member, PointRowType } from "@/lib/api-types";
 import {
@@ -133,39 +134,41 @@ export function PointDetailRow({
     return `${selectedMemberNames.slice(0, 2).join(", ")}, ${t("moreCount", { count: count - 2 })}`;
   };
 
-  const removeButton = (className: string) => (
-    <Button
-      type="button"
-      variant="ghost"
-      size="icon"
-      className={`text-muted-foreground hover:text-destructive h-9 w-9 pointer-coarse:h-10 pointer-coarse:w-10 ${className}`}
-      onClick={() => onRemove(index)}
-      disabled={!canRemove || isCompositeAction}
-      aria-label={t("removeRow")}
-    >
-      <Trash2 className="h-4 w-4" />
-    </Button>
-  );
+  const stepButton = "h-10 shrink-0 p-0 pointer-coarse:h-11";
 
-  const stepButton = "h-9 shrink-0 p-0 pointer-coarse:h-10";
-
-  // Phone: a stacked card - who, then points, then reason - with remove in the
-  // header. From sm up the fields sit on one wrapping row as before.
+  // One panel per point detail: a header strip (who it is for, remove), then
+  // who, points and reason. On a phone the fields stack; from sm they share a
+  // wrapping row.
   return (
-    <div className="bg-card rounded-xl border p-3 sm:p-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-start sm:gap-4">
-        <div className="min-w-0 space-y-1.5 sm:max-w-[300px] sm:min-w-[200px] sm:flex-1">
-          <div className="flex items-center justify-between gap-2">
-            <Label className="flex items-center gap-1.5 text-sm font-medium">
-              {data.row_type === "department" ? (
-                <Building2 className="text-muted-foreground h-3.5 w-3.5" />
-              ) : (
-                <User className="text-muted-foreground h-3.5 w-3.5" />
-              )}
-              {entityLabel}
-            </Label>
-            {removeButton("-my-1.5 -me-1.5 sm:hidden")}
-          </div>
+    <div className="bg-card ring-rule flex flex-col rounded-xl ring-1">
+      <div className="border-rule flex items-center gap-2.5 border-b py-2 ps-3 pe-1.5">
+        <Plate tone="umber" size="sm" icon={data.row_type === "department" ? Building2 : User} />
+        <span className="flex-1 text-sm font-bold">
+          {entityLabel}
+          <span className="tabular text-ink-3 ms-1.5 font-medium">#{index + 1}</span>
+        </span>
+        {isCompositeAction ? (
+          <span className="text-ink-2 flex items-center gap-1 text-[12.5px] font-medium">
+            <Lock className="size-3.5" />
+            {t("compositeLocked")}
+          </span>
+        ) : null}
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          className="text-ink-2 hover:text-door-madder-ink hover:bg-door-madder-soft"
+          onClick={() => onRemove(index)}
+          disabled={!canRemove || isCompositeAction}
+          aria-label={t("removeRow")}
+        >
+          <Trash2 />
+        </Button>
+      </div>
+
+      <div className="flex flex-col gap-4 p-3 sm:flex-row sm:flex-wrap sm:items-start sm:p-4">
+        <div className="min-w-0 space-y-1.5 sm:max-w-[320px] sm:min-w-[220px] sm:flex-1">
+          <Label className="text-ink-2 text-[13px] font-bold">{entityLabel}</Label>
           {data.row_type === "department" ? (
             <MultiSelect
               values={entityIds.map(String)}
@@ -176,7 +179,7 @@ export function PointDetailRow({
                 )
               }
             >
-              <MultiSelectTrigger className="h-9 w-full max-w-full pointer-coarse:h-10" disabled={isCompositeAction}>
+              <MultiSelectTrigger className="h-10 w-full max-w-full pointer-coarse:h-11" disabled={isCompositeAction}>
                 <MultiSelectValue
                   placeholder={t("selectDepartments")}
                   overflowBehavior="cutoff"
@@ -202,19 +205,15 @@ export function PointDetailRow({
               <Button
                 type="button"
                 variant="outline"
-                className={`h-9 w-full justify-start font-normal pointer-coarse:h-10 ${isCompositeAction ? "opacity-80 cursor-not-allowed" : ""}`}
+                className={`bg-card h-10 w-full justify-start font-medium shadow-[inset_0_0_0_1px_var(--input)] pointer-coarse:h-11 ${isCompositeAction ? "cursor-not-allowed opacity-80" : ""}`}
                 onClick={() => !isCompositeAction && setMemberDialogOpen(true)}
                 disabled={isCompositeAction}
               >
-                <Users className="h-4 w-4 me-2 shrink-0 text-muted-foreground" />
-                <span className={`truncate min-w-0 ${data.member_ids.length === 0 ? "text-muted-foreground" : ""}`} dir="auto">
+                <Users className="text-ink-2 shrink-0" />
+                <span className={`min-w-0 truncate ${data.member_ids.length === 0 ? "text-ink-3" : ""}`} dir="auto">
                   {getMemberDisplayText()}
                 </span>
-                {data.member_ids.length > 0 && (
-                  <span className="tabular bg-brand-blue-soft text-brand-blue-ink ms-auto rounded px-1.5 py-0.5 text-xs font-semibold">
-                    {data.member_ids.length}
-                  </span>
-                )}
+                {data.member_ids.length > 0 && <Count className="ms-auto">{data.member_ids.length}</Count>}
               </Button>
               <MemberSelectDialog
                 open={memberDialogOpen}
@@ -230,13 +229,13 @@ export function PointDetailRow({
 
         {!isRestrictedMode && (
           <div className="space-y-1.5">
-            <Label className="text-sm font-medium flex items-center gap-1">
+            <Label className="text-ink-2 flex items-center gap-1 text-[13px] font-bold">
               {t("points")}
               {isPointsLocked && (
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <Lock className="h-3 w-3 text-muted-foreground" />
+                      <Lock className="text-ink-2 size-3.5" aria-label={t("pointsLockedTooltip")} />
                     </TooltipTrigger>
                     <TooltipContent>
                       <p>{t("pointsLockedTooltip")}</p>
@@ -245,9 +244,10 @@ export function PointDetailRow({
                 </TooltipProvider>
               )}
             </Label>
-            {/* Phone: the stepper spans the card, the number in the middle
-                taking what is left. */}
-            <div className="grid grid-cols-[3rem_2.5rem_minmax(0,1fr)_2.5rem_3rem] items-center gap-1.5 sm:flex sm:gap-1">
+            {/* Phone: the stepper spans the panel, the number in the middle
+                taking what is left. The steppers always read minus-to-plus
+                left to right, like a number line, in both languages. */}
+            <div dir="ltr" className="grid grid-cols-[3rem_2.75rem_minmax(0,1fr)_2.75rem_3rem] items-center gap-1.5 sm:flex sm:gap-1">
               <Button
                 type="button"
                 variant="outline"
@@ -256,18 +256,18 @@ export function PointDetailRow({
                 disabled={isPointsLocked}
                 aria-label="-5"
               >
-                <Minus className="h-3 w-3 shrink-0" />
-                <span className="tabular text-xs font-semibold">5</span>
+                <Minus className="size-3 shrink-0" />
+                <span className="tabular text-xs font-bold">5</span>
               </Button>
               <Button
                 type="button"
                 variant="outline"
-                className={`${stepButton} sm:w-9`}
+                className={`${stepButton} sm:w-10`}
                 onClick={() => adjustPoints(-1)}
                 disabled={isPointsLocked}
                 aria-label="-1"
               >
-                <Minus className="h-3 w-3" />
+                <Minus className="size-3" />
               </Button>
               <Input
                 type="number"
@@ -280,19 +280,19 @@ export function PointDetailRow({
                   updateField("points", parseInt(e.target.value) || 0)
                 }
                 disabled={isPointsLocked}
-                className={`tabular h-9 w-full text-center text-base font-semibold pointer-coarse:h-10 sm:w-20 sm:text-sm ${
-                  data.points < 0 ? "text-destructive" : ""
-                } ${isPointsLocked ? "bg-muted cursor-not-allowed" : ""}`}
+                className={`tabular h-10 w-full text-center text-base font-bold pointer-coarse:h-11 sm:w-20 ${
+                  data.points < 0 ? "text-door-madder-ink" : ""
+                } ${isPointsLocked ? "bg-sunk cursor-not-allowed" : ""}`}
               />
               <Button
                 type="button"
                 variant="outline"
-                className={`${stepButton} sm:w-9`}
+                className={`${stepButton} sm:w-10`}
                 onClick={() => adjustPoints(1)}
                 disabled={isPointsLocked}
                 aria-label="+1"
               >
-                <Plus className="h-3 w-3" />
+                <Plus className="size-3" />
               </Button>
               <Button
                 type="button"
@@ -302,23 +302,22 @@ export function PointDetailRow({
                 disabled={isPointsLocked}
                 aria-label="+5"
               >
-                <Plus className="h-3 w-3 shrink-0" />
-                <span className="tabular text-xs font-semibold">5</span>
+                <Plus className="size-3 shrink-0" />
+                <span className="tabular text-xs font-bold">5</span>
               </Button>
             </div>
           </div>
         )}
 
-        <div className="min-w-0 space-y-1.5 sm:min-w-[200px] sm:flex-1">
-          <Label className="text-sm font-medium text-muted-foreground">
+        <div className="min-w-0 space-y-1.5 sm:min-w-[220px] sm:flex-1">
+          <Label className="text-ink-2 text-[13px] font-bold">
             {isRestrictedMode ? (
               <>
-                {t("action")} <span className="text-destructive">*</span>
+                {t("action")} <span className="text-door-madder-ink">*</span>
               </>
             ) : (
               <>
-                {t("reason")}{" "}
-                <span className="text-xs font-normal">{t("optional")}</span>
+                {t("reason")} <span className="text-ink-3 text-xs font-medium">{t("optional")}</span>
               </>
             )}
           </Label>
@@ -329,15 +328,8 @@ export function PointDetailRow({
             onChange={handleActionChange}
             restricted={isRestrictedMode}
             error={isRestrictedMode && data.action_id === null}
-            className="w-full border-dashed opacity-80 hover:opacity-100 focus-within:opacity-100 pointer-coarse:min-h-10"
+            className="w-full pointer-coarse:min-h-11"
           />
-        </div>
-
-        <div className="hidden flex-col items-center space-y-1.5 sm:flex">
-          <Label className="text-sm font-medium text-transparent select-none" aria-hidden>
-            {t("delete")}
-          </Label>
-          {removeButton("")}
         </div>
       </div>
     </div>

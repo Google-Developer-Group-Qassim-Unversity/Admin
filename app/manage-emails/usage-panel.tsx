@@ -5,34 +5,26 @@ import { RefreshCw } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 
-function AddressUsageRow({ value, label }: { value: number; label: string }) {
+/** One label and its count on a ruled line, with a hairline showing its share. */
+function UsageRow({ label, count, max, title }: { label: string; count: number; max?: number; title?: string }) {
   return (
-    <div className="flex items-center justify-between gap-3 rounded-md border px-3 py-2">
-      <p className="text-xs text-muted-foreground truncate min-w-0" title={label}>
-        {label}
-      </p>
-      <p className="text-sm font-bold shrink-0">{value}</p>
-    </div>
-  );
-}
-
-function TypeBar({ label, count, max }: { label: string; count: number; max: number }) {
-  const pct = max > 0 ? (count / max) * 100 : 0;
-  return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-xs">
-        <span className="text-muted-foreground">{label}</span>
-        <span className="font-medium">{count}</span>
+    <div className="border-rule flex flex-col gap-1.5 border-b py-2 last:border-b-0">
+      <div className="flex items-baseline justify-between gap-3">
+        <dt className="text-ink-2 min-w-0 truncate text-[13px]" title={title} dir="auto">
+          {label}
+        </dt>
+        <dd className="tabular shrink-0 text-sm font-bold">{count.toLocaleString()}</dd>
       </div>
-      <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-        <div className="h-full bg-primary/60 rounded-full transition-all" style={{ width: `${pct}%` }} />
-      </div>
+      {max ? (
+        <span aria-hidden="true" className="bg-sunk block h-1 overflow-hidden rounded-[1px]">
+          <span className="bg-adobe block h-full" style={{ width: `${Math.max(2, (count / max) * 100)}%` }} />
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -69,57 +61,60 @@ export function UsagePanel() {
   const maxTypeCount = stats ? Math.max(...Object.values(stats.by_type), 1) : 1;
 
   return (
-    <Card size="sm">
-      <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle>{t("title")} <span className="text-xs text-muted-foreground/50">·</span> <span className="text-muted-foreground font-normal text-xs">{t("last24h")}</span></CardTitle>
-          <Button variant="ghost" size="icon-sm" onClick={() => setRefreshKey((k) => k + 1)} disabled={isLoading}>
-            <RefreshCw className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`} />
-          </Button>
+    <section className="bg-card ring-rule flex flex-col gap-3 rounded-xl px-4 pt-3 pb-4 ring-1" aria-labelledby="email-usage-title">
+      <div className="border-foreground flex items-center justify-between gap-2 border-b pb-2">
+        <h2 id="email-usage-title" className="flex items-baseline gap-2 text-base font-bold">
+          {t("title")}
+          <span className="text-ink-2 text-xs font-medium">{t("last24h")}</span>
+        </h2>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setRefreshKey((k) => k + 1)}
+          disabled={isLoading}
+          aria-label={t("refresh")}
+        >
+          <RefreshCw className={isLoading ? "animate-spin motion-reduce:animate-none" : ""} />
+        </Button>
+      </div>
+      {isLoading ? (
+        <div className="flex flex-col gap-3" aria-hidden="true">
+          {[0, 1, 2, 3, 4].map((i) => (
+            <Skeleton key={i} className="h-6 w-full" />
+          ))}
         </div>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        {isLoading ? (
-          <div className="space-y-4">
-            <div className="space-y-1.5">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-            </div>
-            <div className="space-y-3">
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-              <Skeleton className="h-8 w-full" />
-            </div>
-          </div>
-        ) : stats ? (
-          <>
-            <div className="space-y-1.5">
-              <p className="text-xs font-medium text-muted-foreground">{t("sentPerAddress")}</p>
-              {Object.entries(stats.addresses).reverse().map(([addr, data]) => (
-                <AddressUsageRow key={addr} value={data.usage} label={addr} />
-              ))}
-            </div>
-            <div className="pt-2">
-              <p className="text-xs font-medium mb-2">{t("byType")}</p>
-              <div className="space-y-2.5">
-                {Object.entries(stats.by_type).map(([type, count]) => (
-                  <TypeBar key={type} label={typeLabels[type] ?? type} count={count} max={maxTypeCount} />
+      ) : stats ? (
+        <>
+          <dl className="flex items-baseline justify-between gap-3">
+            <dt className="text-sm font-bold">{t("total")}</dt>
+            <dd className="tabular text-[21px] leading-none font-bold">{stats.total_24h.toLocaleString()}</dd>
+          </dl>
+          <div className="flex flex-col">
+            <p className="text-ink-2 text-xs font-bold">{t("sentPerAddress")}</p>
+            <dl>
+              {Object.entries(stats.addresses)
+                .reverse()
+                .map(([addr, data]) => (
+                  <UsageRow key={addr} label={addr} title={addr} count={data.usage} />
                 ))}
-                {Object.keys(stats.by_type).length === 0 && (
-                  <p className="text-xs text-muted-foreground text-center py-2">{t("noData")}</p>
-                )}
-              </div>
-            </div>
-            <div className="pt-1 border-t">
-              <div className="flex items-center justify-between text-xs text-muted-foreground">
-                <span>{t("total")}</span>
-                <span className="font-medium text-foreground">{stats.total_24h}</span>
-              </div>
-            </div>
-          </>
-        ) : null}
-      </CardContent>
-    </Card>
+            </dl>
+          </div>
+          <div className="flex flex-col">
+            <p className="text-ink-2 text-xs font-bold">{t("byType")}</p>
+            {Object.keys(stats.by_type).length === 0 ? (
+              <p className="text-ink-2 py-2 text-center text-xs">{t("noData")}</p>
+            ) : (
+              <dl>
+                {Object.entries(stats.by_type).map(([type, count]) => (
+                  <UsageRow key={type} label={typeLabels[type] ?? type} count={count} max={maxTypeCount} />
+                ))}
+              </dl>
+            )}
+          </div>
+        </>
+      ) : (
+        <p className="text-ink-2 text-[13px]">{t("loadFailed")}</p>
+      )}
+    </section>
   );
 }

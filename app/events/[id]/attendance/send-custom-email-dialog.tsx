@@ -185,7 +185,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
         {recipients.map((recipient, index) => (
           <div
             key={index}
-            className="relative grid grid-cols-1 md:grid-cols-12 gap-2 p-2 rounded-lg border bg-muted/30"
+            className="relative grid grid-cols-1 md:grid-cols-12 gap-2 p-2 rounded-lg border bg-sunk/60"
           >
             {recipients.length > 1 && (
               <Button
@@ -194,7 +194,7 @@ function RecipientRowsEditor({ recipients, onChange, disabled, compact }: Recipi
                 size="icon"
                 onClick={() => removeRow(index)}
                 disabled={disabled}
-                className="absolute -end-2 -top-2 z-10 h-5 w-5 rounded-full border bg-background shadow-sm hover:text-destructive pointer-coarse:size-7"
+                className="absolute -end-2 -top-2 z-10 h-5 w-5 rounded-sm border bg-card hover:text-destructive pointer-coarse:size-7"
               >
                 <X className="h-3 w-3" />
               </Button>
@@ -488,26 +488,26 @@ export function SendCustomEmailDialog({
             <Label>{t("recipients", { count: recipients.length })}</Label>
             <div className="rounded-lg border max-h-48 overflow-y-auto divide-y">
               {recipients.length === 0 ? (
-                <div className="p-4 text-sm text-muted-foreground text-center">{t("noEligibleRecipients")}</div>
+                <div className="p-4 text-sm text-ink-2 text-center">{t("noEligibleRecipients")}</div>
               ) : (
                 recipients.map((r, index) => (
                   <div key={r.member_id ?? index} className="flex items-center gap-3 px-3 py-2">
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium truncate">{r.name}</p>
-                      <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                      <p className="text-xs text-ink-2 truncate">{r.email}</p>
                     </div>
                   </div>
                 ))
               )}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-ink-2">
               {t("recipientsHint")}
             </p>
           </div>
 
           <div className="space-y-2">
             <Label>{t("extraAttachments")}</Label>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-ink-2">
               {t("extraAttachmentsHint")}
             </p>
             <FileUpload
@@ -521,11 +521,11 @@ export function SendCustomEmailDialog({
               disabled={isBusy}
             >
               <FileUploadDropzone className="min-h-20 flex-col">
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <Upload className="h-6 w-6 text-ink-2" />
+                <p className="mt-1 text-xs text-ink-2">
                   {td("dropzoneHint")}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-ink-2">
                   {td("dropzoneLimits", { max: MAX_ATTACHMENT_FILES, size: formatSize(MAX_ATTACHMENT_FILE_SIZE) })}
                 </p>
               </FileUploadDropzone>
@@ -534,7 +534,7 @@ export function SendCustomEmailDialog({
                   <FileUploadItem key={`${entry.file.name}-${entry.file.lastModified}`} value={entry.file}>
                     <FileUploadItemPreview />
                     <FileUploadItemMetadata />
-                    {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-ink-2" />}
                     <FileUploadItemDelete asChild>
                       <Button
                         type="button"
@@ -565,7 +565,7 @@ export function SendCustomEmailDialog({
               </Button>
             </CollapsibleTrigger>
             <CollapsibleContent className="mt-3 space-y-3">
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-ink-2">
                 {t("testModeHint")}
               </p>
               <RecipientRowsEditor
@@ -583,12 +583,12 @@ export function SendCustomEmailDialog({
               >
                 {testMutation.isPending ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {t("sendingTest")}
                   </>
                 ) : (
                   <>
-                    <Mail className="me-2 h-4 w-4" />
+                    <Mail />
                     {t("sendTest", { count: validTestRecipients.length })}
                   </>
                 )}
@@ -603,12 +603,12 @@ export function SendCustomEmailDialog({
             <Button onClick={handleSubmit} disabled={isSubmitDisabled}>
               {sendMutation.isPending ? (
                 <>
-                  <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="animate-spin" />
                   {t("sending")}
                 </>
               ) : (
                 <>
-                  <Send className="me-2 h-4 w-4" />
+                  <Send />
                   {t("send", { count: validRecipients.length })}
                 </>
               )}

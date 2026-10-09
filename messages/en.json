@@ -382,8 +382,9 @@
     "unofficial": "Internal",
     "showing": "{count, plural, one {# event} other {# events}}",
     "view": {
-      "table": "Table view",
-      "cards": "Card view"
+      "label": "Show events as",
+      "table": "Table",
+      "cards": "Posters"
     },
     "columns": {
       "event": "Event",
@@ -478,7 +479,8 @@
     "searchCustom": "Search custom events...",
     "clearFilters": "Clear filters",
     "noMatchCustom": "No custom events match your search.",
-    "noMatchFull": "No full events match your search."
+    "noMatchFull": "No full events match your search.",
+    "shownCount": "{shown} of {total}"
   },
   "manageEmails": {
     "title": "Manage Emails",
@@ -502,6 +504,8 @@
       "byType": "Usage by email type",
       "noData": "No usage data",
       "total": "Total",
+      "refresh": "Refresh usage",
+      "loadFailed": "Couldn't load usage. Try refreshing.",
       "types": {
         "eventCertificate": "Event Certificates",
         "manualCertificate": "Manual Certificates",
@@ -849,6 +853,12 @@
     "addedMembers": "{count, plural, one {Added # member} other {Added # members}}"
   },
   "attendance": {
+    "qrDisplay": {
+      "title": "Scan to record your attendance",
+      "hint": "Open your phone's camera and point it at the code.",
+      "missingTitle": "No QR code to show",
+      "missingBody": "Generate one from the event's Attendance tab in the admin console."
+    },
     "confirmDialog": {
       "confirm": "Confirm",
       "andMore": "{count, plural, one {...and # more} other {...and # more}}"
@@ -856,6 +866,7 @@
     "statusItem": {
       "reopenTitle": "Re-open Event",
       "closeTitle": "Close Event",
+      "overdueTitle": "The event has ended: close it",
       "reopenDescription": "Re-open the event to resume accepting attendance.",
       "closeDescription": "When attendance is complete, close the event to finalize attendance records.",
       "opening": "Opening...",
@@ -1088,7 +1099,8 @@
     "notRequiredHint": "Anyone can participate without registration. If a Google Form is attached, it stays attached.",
     "registrationRequired": "Registration is now required for this event",
     "registrationNotRequired": "Registration is no longer required",
-    "updateFailed": "Failed to update registration setting"
+    "updateFailed": "Failed to update registration setting",
+    "stepDone": "Done"
   },
   "sendCustomEmail": {
     "title": "Send Custom Email",
@@ -1137,6 +1149,12 @@
     "eventNotFoundDescription": "The event you're looking for doesn't exist or has been deleted.",
     "goBackToEvents": "Go back to Events",
     "errorPrefix": "Error: {message}",
+    "tabsLabel": "Event sections",
+    "overdue": {
+      "title": "Attendance was never closed",
+      "body": "The event has ended. Close it to award the points and send the certificates.",
+      "action": "Close the event"
+    },
     "tabs": {
       "info": "Event Info",
       "manage": "Google Form & Publish",
@@ -1146,6 +1164,7 @@
     }
   },
   "editEvent": {
+    "editHeading": "Edit the event",
     "updatedSuccess": "Event updated successfully!",
     "unknownError": "Unknown error",
     "updateFailedContactSupport": "Failed to update event. Please contact support.",
@@ -1274,6 +1293,7 @@
     "delete": "Delete",
     "usedCount": "{count, plural, =0 {Not used yet} one {Used once} other {Used # times}}",
     "moreActions": "More actions for {name}",
+    "dragToReorder": "Drag to reorder {name}",
     "sortLabel": "Sort",
     "actionsCountShort": "{count, plural, one {# action} other {# actions}}",
     "sort": {
@@ -1709,7 +1729,8 @@
     "reason": "Reason",
     "optional": "(optional)",
     "delete": "Del",
-    "removeRow": "Remove row"
+    "removeRow": "Remove row",
+    "compositeLocked": "Set by a combined action"
   },
   "actionReasonSelect": {
     "selectAction": "Select action...",
@@ -1764,6 +1785,7 @@
     "actions": "Actions",
     "goTo": "Go to",
     "events": "Events",
+    "bookDates": "Book dates for an event",
     "newEvent": "Create an event",
     "grantPoints": "Grant custom points",
     "addMember": "Add a member",
@@ -1780,6 +1802,36 @@
     "eventCount": "{count, plural, one {# event} other {# events}}",
     "allClearTitle": "Nothing waiting on you",
     "allClearBody": "No overdue events, stale drafts or unsent certificates. Enjoy it.",
+    "greeting": "Welcome, {name}",
+    "yourRequests": "Your department's requests",
+    "all": "All",
+    "noRequests": "No requests yet. Book dates to start one.",
+    "openInbox": "Open",
+    "events": "Events",
+    "noEvents": "Nothing is running or open for registration.",
+    "stages": {
+      "club": "Across the club",
+      "yours": "Your departments' pipeline",
+      "open": "Pipeline",
+      "returned": "{count, plural, one {# request is back with its department for fixes} other {# requests are back with their departments for fixes}}",
+      "moreInStep": "+{count} more"
+    },
+    "yourTurn": {
+      "title": "Your turn",
+      "holdEnds": "Hold ends in",
+      "noneTitle": "Nothing is waiting on you",
+      "noneBody": "Your requests are with the teams. Book dates to start a new one.",
+      "book": "Book dates",
+      "readyNote": "Every team is done. Pick the points tier and publish.",
+      "returnedNote": "Fix what Design asked for, then resubmit.",
+      "more": "{count, plural, one {+# more waiting on you} other {+# more waiting on you}}",
+      "action": {
+        "hold": "Continue",
+        "returned": "Fix it",
+        "lost": "Pick new dates",
+        "ready": "Publish"
+      }
+    },
     "tiles": {
       "open": "Open for registration",
       "openHint": "Members can still sign up",
@@ -1816,6 +1868,13 @@
   "pipeline": {
     "title": "Event pipeline",
     "subtitle": "Book a date, brief Design and Logistics, and publish your event",
+    "stepNames": {
+      "draft": "Draft",
+      "in_review": "Design & Logistics",
+      "media": "Media",
+      "ready": "Ready",
+      "published": "Published"
+    },
     "teams": {
       "design": "Design",
       "logistics": "Logistics",
@@ -1831,6 +1890,7 @@
       "previous": "Previous month",
       "next": "Next month",
       "firstBookable": "The first day you can book is {date}.",
+      "yourPick": "Your pick",
       "status": {
         "locked": "Too soon",
         "banned": "Closed by Logistics",
@@ -1876,7 +1936,9 @@
       "book": "Book",
       "cancel": "Cancel",
       "booked": "Dates held for 24 hours",
-      "failed": "Could not book these days"
+      "failed": "Could not book these days",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "heldFor": "held for 24 hours"
     },
     "requests": {
       "mine": "Your department's requests",
@@ -1897,7 +1959,7 @@
       "cancelled": "Request cancelled",
       "failed": "Something went wrong",
       "holdTitle": "Dates held",
-      "holdBody": "Fill in the event and both briefs, then submit before the hold runs out:",
+      "holdBody": "Fill in the event and both briefs, then submit before the hold runs out.",
       "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
       "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
       "lostDatesBody": "Everything you filled in is kept. Pick new dates to carry on.",
@@ -1911,7 +1973,9 @@
         "logistics": "Logistics brief"
       },
       "cancelTitle": "Cancel this request?",
-      "keep": "Keep it"
+      "keep": "Keep it",
+      "whatsLeft": "What is left",
+      "sectionDone": "All filled in"
     },
     "details": {
       "title": "Event title",

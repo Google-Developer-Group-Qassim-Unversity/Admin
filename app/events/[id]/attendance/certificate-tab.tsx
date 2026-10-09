@@ -199,16 +199,16 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
       )}
 
       {subTab === "sent" && (
-        <div className="rounded-lg border bg-muted/30">
+        <div className="rounded-lg border bg-sunk/60">
           <div className="flex items-center justify-between px-3 py-2 border-b">
             <div className="flex items-center gap-2">
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-ink-2">
                 {logs.length > 0
                   ? t("certificatesSentCount", { count: logs.length })
                   : t("noneSentYet")}
               </span>
               {isStreaming && (
-                <Badge variant="outline" className="gap-1 border-transparent bg-brand-green-soft text-brand-green-ink">
+                <Badge variant="outline" className="gap-1 border-transparent bg-door-green-soft text-door-green-ink">
                   <Activity className="h-3 w-3 animate-pulse" />
                   {t("live")}
                 </Badge>
@@ -217,7 +217,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
           </div>
           <ScrollArea className="h-[45dvh] sm:h-[320px]">
             {logs.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-2">
+              <div className="flex flex-col items-center justify-center py-12 text-sm text-ink-2 gap-2">
                 {isStreaming ? (
                   <>
                     <Loader2 className="h-4 w-4 animate-spin opacity-50" />
@@ -234,14 +234,14 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                     key={log.id}
                     className="flex items-start gap-3 px-3 py-2.5"
                   >
-                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-brand-green-ink" />
+                    <CheckCircle className="mt-0.5 h-4 w-4 shrink-0 text-door-green-ink" />
                     <div className="flex-1 min-w-0">
                       <p className="truncate text-sm font-medium"><bdi>{log.member_name}</bdi></p>
-                      <p className="truncate text-[13px] text-muted-foreground sm:text-xs">{log.member_email}</p>
+                      <p className="truncate text-[13px] text-ink-2 sm:text-xs">{log.member_email}</p>
                     </div>
                     <div className="text-end shrink-0">
-                      <div className="tabular text-xs text-muted-foreground">{formatSentAt(log.sent_at)}</div>
-                      <div className="hidden text-xs text-muted-foreground/70 sm:block">{log.from_address}</div>
+                      <div className="tabular text-xs text-ink-2">{formatSentAt(log.sent_at)}</div>
+                      <div className="hidden text-xs text-ink-3 sm:block">{log.from_address}</div>
                     </div>
                   </div>
                 ))}
@@ -254,7 +254,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
       {subTab === "not-sent" && (
         <div className="space-y-3">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-            <span className="tabular text-sm text-muted-foreground">
+            <span className="tabular text-sm text-ink-2">
               {isLoading
                 ? t("loading")
                 : t("eligibleCount", { count: notSentCount })}
@@ -266,46 +266,46 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
               >
                 {isSending ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {t("sending")}
                   </>
                 ) : notSentCount === 0 ? (
                   <>
-                    <CheckCircle className="me-2 h-4 w-4" />
+                    <CheckCircle />
                     {t("certificatesSent")}
                   </>
                 ) : (
                   <>
-                    <Mail className="me-2 h-4 w-4" />
+                    <Mail />
                     {t("sendCertificates", { count: notSentCount })}
                   </>
                 )}
               </Button>
               <Button variant="outline" onClick={() => setIsCustomEmailOpen(true)}>
-                <MailPlus className="me-2 h-4 w-4" />
+                <MailPlus />
                 {t("sendCustomEmail")}
               </Button>
             </div>
           </div>
 
-          <div className="rounded-lg border bg-muted/30">
+          <div className="rounded-lg border bg-sunk/60">
             <ScrollArea className="h-[40dvh] sm:h-[310px]">
               {isLoading ? (
                 <div className="flex items-center justify-center py-12">
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-4 w-4 animate-spin text-ink-2" />
                 </div>
               ) : notSentMembers.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground">
+                <div className="flex flex-col items-center justify-center py-12 text-sm text-ink-2">
                   {t("allReceived")}
                 </div>
               ) : (
                 <div className="divide-y">
                   {notSentMembers.map((member) => (
                     <div key={member.id} className="flex items-start gap-3 px-3 py-2.5">
-                      <Users className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                      <Users className="h-4 w-4 text-ink-2 shrink-0 mt-0.5" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
-                        <p className="truncate text-[13px] text-muted-foreground sm:text-xs">{member.email}</p>
+                        <p className="truncate text-[13px] text-ink-2 sm:text-xs">{member.email}</p>
                       </div>
                     </div>
                   ))}

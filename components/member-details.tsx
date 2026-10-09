@@ -101,7 +101,7 @@ function MemberDetailsDialog({ member, onClose }: { member: MemberRef; onClose: 
           <div className="flex min-w-0 items-center gap-3">
             <span
               aria-hidden="true"
-              className="flex size-12 shrink-0 items-center justify-center rounded-full border bg-muted text-sm font-semibold"
+              className="bg-foreground text-background flex size-12 shrink-0 items-center justify-center rounded-[4px] text-sm font-bold"
             >
               {memberInitials(details?.name ?? member.name)}
             </span>
@@ -124,7 +124,7 @@ function MemberDetailsDialog({ member, onClose }: { member: MemberRef; onClose: 
         )}
         {query.error && (
           <div role="alert" className="space-y-3 text-sm">
-            <p className="text-destructive">{t("loadFailed")}</p>
+            <p className="text-door-madder-ink">{t("loadFailed")}</p>
             <Button variant="outline" size="sm" onClick={() => void query.refetch()}>
               {common("actions.retry")}
             </Button>
@@ -132,7 +132,7 @@ function MemberDetailsDialog({ member, onClose }: { member: MemberRef; onClose: 
         )}
         {details && (
           <>
-            <dl className="divide-y rounded-lg border">
+            <dl className="border-foreground flex flex-col border-t">
               <Field label={t("email")} value={details.email} copy ltr />
               <Field label={t("universityId")} value={details.uni_id} copy ltr />
               <Field label={t("phone")} value={details.phone_number} copy ltr />
@@ -200,22 +200,22 @@ function Field({
   }
 
   return (
-    <div className="flex min-h-11 items-center gap-3 px-3 py-2">
-      <dt className="w-28 shrink-0 text-xs text-muted-foreground">{label}</dt>
-      <dd className="min-w-0 flex-1 text-sm">
+    <div className="border-rule flex min-h-11 items-center gap-3 border-b px-1 py-1.5">
+      <dt className="text-ink-2 w-28 shrink-0 text-[13px]">{label}</dt>
+      <dd className="min-w-0 flex-1 text-sm font-medium">
         {value ? (
           <span className={cn("wrap-anywhere", ltr && "tabular")} dir={ltr ? "ltr" : "auto"}>
             {value}
           </span>
         ) : (
-          <span className="text-muted-foreground">{t("notProvided")}</span>
+          <span className="text-ink-3 font-normal">{t("notProvided")}</span>
         )}
       </dd>
       {copy && value && (
         <Button
           variant="ghost"
           size="icon"
-          className="size-8 shrink-0 text-muted-foreground"
+          className="text-ink-2 size-9 shrink-0"
           aria-label={t(copied ? "copied" : "copy", { field: label })}
           onClick={() => void copyValue()}
         >

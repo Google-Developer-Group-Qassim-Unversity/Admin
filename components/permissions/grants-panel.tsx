@@ -36,15 +36,15 @@ export function GrantsPanel() {
   const [history, setHistory] = React.useState(false);
 
   if (departments.length === 0) {
-    return <p className="text-muted-foreground text-sm">{t("noDepartments")}</p>;
+    return <p className="text-ink-2 text-sm">{t("noDepartments")}</p>;
   }
 
   return (
-    <section className="bg-card border-border flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <section className="flex flex-col gap-4">
+      <div className="border-foreground flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
-          <h2 className="font-display text-lg font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
+          <h2 className="text-base font-bold">{t("title")}</h2>
+          <p className="text-ink-2 max-w-[70ch] text-[13px]">{t("hint")}</p>
         </div>
         {departments.length > 1 ? (
           <Select value={selected ? String(selected) : ""} onValueChange={(v) => setDepartmentId(Number(v))}>
@@ -62,7 +62,7 @@ export function GrantsPanel() {
         ) : null}
       </div>
       {selected !== null ? <DepartmentGrantsView departmentId={selected} history={history} /> : null}
-      <label className="text-muted-foreground flex items-center gap-2 text-sm">
+      <label className="text-ink-2 flex min-h-11 w-fit cursor-pointer items-center gap-2.5 text-sm font-medium">
         <Switch checked={history} onCheckedChange={setHistory} />
         <History className="h-4 w-4" />
         {t("showHistory")}
@@ -104,9 +104,9 @@ function DepartmentGrantsView({ departmentId, history }: { departmentId: number;
   return (
     <div className="flex flex-col gap-4">
       {data.members.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t("noMembers")}</p>
+        <p className="text-ink-2 text-sm">{t("noMembers")}</p>
       ) : (
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="bg-card ring-rule flex flex-col gap-2 rounded-xl p-3 ring-1 sm:flex-row sm:items-center">
           <Select value={memberId} onValueChange={setMemberId}>
             <SelectTrigger className="w-full sm:flex-1">
               <SelectValue placeholder={t("pickMember")} />
@@ -131,7 +131,7 @@ function DepartmentGrantsView({ departmentId, history }: { departmentId: number;
               ))}
             </SelectContent>
           </Select>
-          <Button onClick={onGrant} disabled={!memberId || !perm || grant.isPending}>
+          <Button variant="green" onClick={onGrant} disabled={!memberId || !perm || grant.isPending}>
             <UserPlus className="h-4 w-4" />
             {t("grant")}
           </Button>
@@ -139,9 +139,9 @@ function DepartmentGrantsView({ departmentId, history }: { departmentId: number;
       )}
 
       {data.grants.length === 0 ? (
-        <p className="text-muted-foreground text-sm">{t("noGrants")}</p>
+        <p className="text-ink-2 text-sm">{t("noGrants")}</p>
       ) : (
-        <ul className="divide-border border-border divide-y rounded-lg border">
+        <ul className="border-rule flex flex-col border-t">
           {data.grants.map((row) => (
             <GrantRow key={row.id} row={row} onRevoke={() => onRevoke(row)} pending={revoke.isPending} />
           ))}
@@ -159,13 +159,13 @@ function GrantRow({ row, onRevoke, pending }: { row: GrantEntry; onRevoke: () =>
   const revoked = row.revoked_at !== null;
 
   return (
-    <li className="flex items-center justify-between gap-3 px-3 py-2.5">
+    <li className="border-rule flex min-h-14 items-center justify-between gap-3 border-b px-1 py-2.5">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className={`truncate text-sm font-medium ${revoked ? "text-muted-foreground line-through" : ""}`}>
+        <span className={`truncate text-sm font-bold ${revoked ? "text-ink-2 font-medium line-through" : ""}`}>
           <MemberDetailsTrigger member={{ id: row.member.member_id, name: row.member.name }} /> ·{" "}
           {label(row.permission)}
         </span>
-        <span className="text-muted-foreground text-xs">
+        <span className="text-ink-2 text-xs">
           {t("grantedBy", { name: row.granted_by.name, date: when(row.granted_at) })}
           {revoked && row.revoked_by
             ? ` · ${t("revokedBy", { name: row.revoked_by.name, date: when(row.revoked_at as string) })}`
@@ -173,7 +173,7 @@ function GrantRow({ row, onRevoke, pending }: { row: GrantEntry; onRevoke: () =>
         </span>
       </div>
       {!revoked ? (
-        <Button size="sm" variant="ghost" onClick={onRevoke} disabled={pending}>
+        <Button size="sm" variant="destructive" onClick={onRevoke} disabled={pending}>
           <UserMinus className="h-4 w-4" />
           {t("revoke")}
         </Button>

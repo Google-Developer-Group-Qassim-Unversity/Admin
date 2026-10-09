@@ -1,12 +1,7 @@
 "use client";
 
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useSendAcceptance, useSendAcceptanceTest } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
@@ -434,24 +429,24 @@ export default function EventResponsesPage() {
         {event.status === 'open' ? (
           closeResponsesMutation.isPending ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {t("closing")}
             </>
           ) : (
             <>
-              <Lock className="me-2 h-4 w-4" />
+              <Lock />
               {t("closeResponses")}
             </>
           )
         ) : (
           openResponsesMutation.isPending ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {t("opening")}
             </>
           ) : (
             <>
-              <Unlock className="me-2 h-4 w-4" />
+              <Unlock />
               {t("openResponses")}
             </>
           )
@@ -461,44 +456,34 @@ export default function EventResponsesPage() {
 
   if (!formDataLoading && formData?.formType === 'none') {
     return (
-      <Card className="max-w-full mx-auto">
-        <CardHeader>
-          <CardTitle>{t("title", { name: event.name })}</CardTitle>
-          <CardDescription>
-            {t("subtitle")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-lg border border-dashed p-12 text-center">
-            <FileX className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">{t("noSignupsTitle")}</h3>
-            <p className="text-muted-foreground">
-              {t("noSignupsDescription")}
-            </p>
-          </div>
-        </CardContent>
-      </Card>
+      <Empty>
+        <EmptyHeader>
+          <EmptyMedia variant="icon">
+            <FileX />
+          </EmptyMedia>
+          <EmptyTitle>{t("noSignupsTitle")}</EmptyTitle>
+          <EmptyDescription>{t("noSignupsDescription")}</EmptyDescription>
+        </EmptyHeader>
+      </Empty>
     );
   }
 
   return (
-    <Card className="max-w-full mx-auto">
-      <CardHeader>
-        <CardTitle>{t("title", { name: event.name })}</CardTitle>
-        <CardDescription>
-          {t("subtitle")}
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
+    <section aria-labelledby="responses-title" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <h2 id="responses-title" className="sr-only">
+          {t("title", { name: event.name })}
+        </h2>
+        <p className="text-ink-2 text-[13.5px]">{t("subtitle")}</p>
+      </div>
+      <div>
         {isLoading ? (
           <TableSkeleton />
         ) : error ? (
-          <div className="rounded-lg border border-dashed p-12 text-center text-muted-foreground">
-            <p>{t("loadSubmissionsFailed")}</p>
-            <p className="mt-2 text-xs">
-              {String((error as Error).message ?? error)}
-            </p>
-          </div>
+          <Alert variant="destructive">
+            <AlertTitle>{t("loadSubmissionsFailed")}</AlertTitle>
+            <AlertDescription>{String((error as Error).message ?? error)}</AlertDescription>
+          </Alert>
         ) : (
           <>
             <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
@@ -508,7 +493,7 @@ export default function EventResponsesPage() {
             <div className="mb-4 space-y-2 md:hidden">
               <div className="flex gap-2">
                 <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
                   <Input
                     type="search"
                     inputMode="search"
@@ -526,7 +511,7 @@ export default function EventResponsesPage() {
                   onClick={() => refetchSubmissions()}
                   disabled={submissionsLoading}
                   aria-label={t("refresh")}
-                  className="shrink-0 pointer-coarse:size-10"
+                  className="shrink-0"
                 >
                   <RefreshCw className={`h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
                 </Button>
@@ -567,12 +552,12 @@ export default function EventResponsesPage() {
               </div>
             </div>
 
-            <div className="mb-4 hidden flex-wrap items-center gap-4 md:flex">
+            <div className="mb-4 hidden flex-wrap items-center gap-2 md:flex">
               <Select
                 value={statusFilter}
                 onValueChange={(value: StatusFilter) => setStatusFilter(value)}
               >
-                <SelectTrigger className="w-37.5" size="sm">
+                <SelectTrigger className="w-44">
                   <SelectValue placeholder={t("filterStatus")} />
                 </SelectTrigger>
                 <SelectContent align="start">
@@ -584,8 +569,8 @@ export default function EventResponsesPage() {
                 </SelectContent>
               </Select>
 
-              <div className="relative max-w-sm">
-                <Search className="absolute start-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <div className="relative w-64 max-w-sm">
+                <Search className="text-ink-2 pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" aria-hidden="true" />
                 <Input
                   type="search"
                   inputMode="search"
@@ -593,7 +578,7 @@ export default function EventResponsesPage() {
                   placeholder={t("searchByName")}
                   value={globalFilter}
                   onChange={(e) => setGlobalFilter(e.target.value)}
-                  className="ps-8"
+                  className="ps-9"
                 />
               </div>
 
@@ -617,7 +602,7 @@ export default function EventResponsesPage() {
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="outline" size="sm">
-                    <Columns3 className="me-1 h-4 w-4" />
+                    <Columns3 />
                     {t("columns")}
                   </Button>
                 </DropdownMenuTrigger>
@@ -648,7 +633,7 @@ export default function EventResponsesPage() {
                 onClick={() => refetchSubmissions()}
                 disabled={submissionsLoading}
               >
-                <RefreshCw className={`me-1 h-4 w-4 ${submissionsLoading ? "animate-spin" : ""}`} />
+                <RefreshCw className={submissionsLoading ? "animate-spin" : ""} />
                 {t("refresh")}
               </Button>
 
@@ -665,7 +650,7 @@ export default function EventResponsesPage() {
               <ResponseCardList table={table} questionKeys={questionKeys} emptyLabel={t("noneFound")} />
             </div>
 
-            <div className="hidden rounded-lg border md:block">
+            <div className="bg-card ring-rule hidden overflow-hidden rounded-xl ring-1 md:block">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -704,7 +689,7 @@ export default function EventResponsesPage() {
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center text-muted-foreground"
+                        className="h-24 text-center text-ink-2"
                       >
                         {t("noneFound")}
                       </TableCell>
@@ -727,11 +712,11 @@ export default function EventResponsesPage() {
               isLoading={acceptSubmissionsMutation.isPending}
             />
             {table.getFilteredSelectedRowModel().rows.length > 0 && (
-              <div aria-hidden="true" className="h-16 md:hidden" />
+              <div aria-hidden="true" className="h-20 md:hidden" />
             )}
           </>
         )}
-      </CardContent>
+      </div>
       <BulkAcceptDialog
         open={bulkAcceptDialogOpen}
         onOpenChange={setBulkAcceptDialogOpen}
@@ -774,24 +759,24 @@ export default function EventResponsesPage() {
               {event.status === 'open' ? (
                 closeResponsesMutation.isPending ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {t("closing")}
                   </>
                 ) : (
                   <>
-                    <Lock className="me-2 h-4 w-4" />
+                    <Lock />
                     {t("closeResponses")}
                   </>
                 )
               ) : (
                 openResponsesMutation.isPending ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {t("opening")}
                   </>
                 ) : (
                   <>
-                    <Unlock className="me-2 h-4 w-4" />
+                    <Unlock />
                     {t("openResponses")}
                   </>
                 )
@@ -811,6 +796,6 @@ export default function EventResponsesPage() {
         isTestLoading={sendAcceptanceTestMutation.isPending}
         event={event ?? undefined}
       />
-    </Card>
+    </section>
   );
 }

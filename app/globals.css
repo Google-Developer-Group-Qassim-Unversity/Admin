@@ -107,20 +107,6 @@
   --color-on-door-ochre: var(--on-door-ochre);
   --color-on-door: var(--on-door);
 
-  /* Legacy names from the previous design, mapped onto the doors so nothing
-     breaks mid-migration. New code uses door-*. */
-  --color-brand-blue: var(--door-indigo);
-  --color-brand-red: var(--door-madder);
-  --color-brand-yellow: var(--door-ochre);
-  --color-brand-green: var(--door-green);
-  --color-brand-blue-soft: var(--door-indigo-soft);
-  --color-brand-red-soft: var(--door-madder-soft);
-  --color-brand-yellow-soft: var(--door-ochre-soft);
-  --color-brand-green-soft: var(--door-green-soft);
-  --color-brand-blue-ink: var(--door-indigo-ink);
-  --color-brand-red-ink: var(--door-madder-ink);
-  --color-brand-yellow-ink: var(--door-ochre-ink);
-  --color-brand-green-ink: var(--door-green-ink);
 
   /* Carved timber, not pebbles: small radii everywhere. */
   --radius-xs: 1px;

@@ -3,15 +3,15 @@
 import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Trophy, CalendarPlus, Settings, Plus } from "lucide-react";
+import { Trophy, CalendarCheck, ListOrdered, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { useTranslations } from "next-intl";
 
 const TABS = [
   { key: "custom", href: "/points", icon: Trophy, match: ["/points", "/points/", "/points/custom"] },
-  { key: "full", href: "/points/full", icon: CalendarPlus, match: ["/points/full"] },
-  { key: "manage", href: "/points/manage", icon: Settings, match: ["/points/manage"] },
+  { key: "full", href: "/points/full", icon: CalendarCheck, match: ["/points/full"] },
+  { key: "manage", href: "/points/manage", icon: ListOrdered, match: ["/points/manage"] },
 ] as const;
 
 function scrollIntoViewOnMount(el: HTMLAnchorElement | null) {
@@ -27,28 +27,28 @@ export default function PointsLayout({
   const pathname = usePathname();
 
   // The create and edit screens are focused tasks with their own back link;
-  // the section banner and tabs belong to the three list views only.
+  // the page header and tabs belong to the three list views only.
   const isListView = TABS.some((tab) => (tab.match as readonly string[]).includes(pathname));
   if (!isListView) {
-    return <div className="space-y-6">{children}</div>;
+    return <div className="mx-auto w-full max-w-[1100px]">{children}</div>;
   }
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="mx-auto flex w-full max-w-[1100px] flex-col gap-5">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Trophy}>
         <Button asChild>
-          <Link href="/points/create" className="flex items-center gap-2">
-            <Plus className="h-4 w-4" />
+          <Link href="/points/create">
+            <Plus />
             {t("createCustomEvent")}
           </Link>
         </Button>
       </PageHeader>
 
-      {/* Sticky under the top bar on phones, scrolling sideways instead of
-          squashing - the same strip the event tabs use. */}
+      {/* Ink-underlined section tabs. On a phone they stick under the top bar
+          and scroll sideways instead of squashing. */}
       <nav
         aria-label={t("sectionsLabel")}
-        className="bg-background/95 supports-backdrop-filter:bg-background/80 border-border sticky top-[calc(3.5rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 supports-backdrop-filter:backdrop-blur-lg sm:static sm:mx-0 sm:bg-transparent sm:px-0 sm:backdrop-blur-none"
+        className="bg-background border-rule sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 -mt-2 border-b px-2 sm:static sm:mx-0 sm:bg-transparent sm:px-0"
       >
         <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
           {TABS.map((tab) => {
@@ -59,17 +59,13 @@ export default function PointsLayout({
                 href={tab.href}
                 aria-current={isActive ? "page" : undefined}
                 ref={isActive ? scrollIntoViewOnMount : undefined}
-                className={`relative flex shrink-0 items-center gap-2 px-3 py-3 text-sm font-medium whitespace-nowrap transition-colors pointer-coarse:py-3.5 ${
-                  isActive
-                    ? "text-foreground"
-                    : "text-muted-foreground hover:text-foreground"
+                className={`relative flex min-h-12 shrink-0 items-center gap-2 px-3 text-sm whitespace-nowrap transition-colors ${
+                  isActive ? "text-foreground font-bold" : "text-ink-2 hover:text-foreground font-medium"
                 }`}
               >
-                <tab.icon className="h-4 w-4" />
+                <tab.icon className="size-[18px] max-[400px]:hidden" strokeWidth={1.75} />
                 {t(`tabs.${tab.key}`)}
-                {isActive && (
-                  <span className="bg-primary absolute inset-x-2 bottom-0 h-[3px] rounded-t-full" />
-                )}
+                {isActive && <span aria-hidden="true" className="bg-foreground absolute inset-x-2 -bottom-px h-[3px] rounded-t-[2px]" />}
               </Link>
             );
           })}

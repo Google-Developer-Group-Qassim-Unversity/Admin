@@ -44,7 +44,12 @@ const pipelineMe = {
   name: "Ibrahim",
   is_super_admin: true,
   has_access: true,
-  departments: [{ ...DEPARTMENTS.mobile, is_officer: true, teams: [] }],
+  // A super admin acts for every department; the roster (access/me) says Mobile is their own.
+  departments: Object.entries(DEPARTMENTS).map(([key, d]) => ({
+    ...d,
+    is_officer: key === "mobile",
+    teams: ["design", "logistics", "media"].includes(key) ? [key] : [],
+  })),
   teams: [
     { team: "design", department: DEPARTMENTS.design },
     { team: "logistics", department: DEPARTMENTS.logistics },
@@ -148,7 +153,7 @@ function detail(id) {
       completed_by: t.completed_by ?? (t.status === "done" ? { member_id: 7, name: "Sara" } : null),
       ...t,
     })),
-    missing: draft ? ["details_presenter_email", "design_content", "logistics_venue"] : [],
+    missing: draft ? ["details.presenter_email", "design.content", "logistics.venue"] : [],
     returned_at: s.stage === "returned" ? at(-6 * H) : null,
     return_count: s.stage === "returned" ? 1 : 0,
     return_notes: s.stage === "returned" ? "المحتوى ناقص: أضيفوا أسماء الحكّام وجدول الأيام الثلاثة." : null,
@@ -232,7 +237,8 @@ export default [
   { path: /^\/access\/events\/\d+$/, body: ({ match }) => ({ event_id: Number(match[0].split("/").pop()), permissions: ALL_PERMS }) },
   { path: /^\/pipeline\/me$/, body: pipelineMe },
   { path: /^\/pipeline\/calendar$/, body: ({ query }) => calendar(query) },
-  { path: /^\/pipeline\/requests$/, body: { items: REQUESTS.filter((r) => r.department.id === 11), total: 3, page: 1, page_size: 20, total_pages: 1 } },
+  // A super admin sees every department's requests.
+  { path: /^\/pipeline\/requests$/, body: { items: REQUESTS, total: REQUESTS.length, page: 1, page_size: 20, total_pages: 1 } },
   { path: /^\/pipeline\/requests\/[\w-]+$/, body: ({ pathname }) => detail(pathname.split("/").pop()) },
   { path: /^\/pipeline\/inbox$/, body: inbox },
   { path: /^\/pipeline\/notifications$/, body: { items: notifications, total: 5, unread: 3, page: 1, page_size: 20, total_pages: 1 } },

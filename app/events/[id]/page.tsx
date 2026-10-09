@@ -7,6 +7,7 @@ import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance } from "@/hooks/use-event";
 import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { SectionHead } from "@/components/najdi";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
 function Fact({
@@ -19,12 +20,10 @@ function Fact({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-start gap-3 px-4 py-3.5 sm:px-5">
-      <span className="bg-muted text-muted-foreground flex size-9 shrink-0 items-center justify-center rounded-lg">
-        <Icon className="h-[18px] w-[18px]" aria-hidden="true" />
-      </span>
-      <div className="min-w-0 flex-1">
-        <dt className="text-muted-foreground text-[13px] leading-5">{label}</dt>
+    <div className="border-rule flex items-start gap-3 border-b py-3 last:border-b-0">
+      <Icon className="text-ink-2 mt-0.5 size-[18px] shrink-0" strokeWidth={1.75} aria-hidden="true" />
+      <div className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:gap-4">
+        <dt className="text-ink-2 shrink-0 text-[13.5px] leading-6 sm:w-36">{label}</dt>
         <dd className="text-foreground text-[15px] leading-6 font-medium break-words">{children}</dd>
       </div>
     </div>
@@ -51,7 +50,7 @@ export default function EventInfoPage() {
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
   // Gregorian calendar with Latin digits in Arabic, matching the event cards.
-  const dateLocale = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-US";
+  const dateLocale = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
 
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);
@@ -102,9 +101,9 @@ export default function EventInfoPage() {
 
   return (
     // Phone: poster, facts, description stacked. lg+: poster beside the rest.
-    <div className="grid grid-cols-1 items-start gap-4 sm:gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-8">
+    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
       {imageUrl ? (
-        <div className="border-border bg-muted/40 flex justify-center overflow-hidden rounded-2xl border">
+        <div className="bg-sunk ring-rule flex justify-center overflow-hidden rounded-xl ring-1">
           <Image
             src={imageUrl}
             alt={event.name}
@@ -115,16 +114,16 @@ export default function EventInfoPage() {
           />
         </div>
       ) : (
-        <div className="border-border bg-muted/40 text-muted-foreground flex items-center justify-center gap-2 rounded-2xl border border-dashed py-6 lg:aspect-square lg:flex-col lg:py-0">
-          <ImageIcon className="h-5 w-5 opacity-60 lg:h-12 lg:w-12" aria-hidden="true" />
+        <div className="border-adobe text-ink-2 flex items-center justify-center gap-2 rounded-xl border border-dashed py-6 lg:aspect-square lg:flex-col lg:py-0">
+          <ImageIcon className="size-5 lg:size-10" strokeWidth={1.5} aria-hidden="true" />
           <span className="text-sm">{t("noImage")}</span>
         </div>
       )}
 
-      <div className="min-w-0 space-y-4 sm:space-y-6">
-        <section className="bg-card border-border overflow-hidden rounded-xl border">
-          <h2 className="sr-only">{t("details")}</h2>
-          <dl className="divide-border divide-y">
+      <div className="flex min-w-0 flex-col gap-8">
+        <section aria-labelledby="event-details" className="flex flex-col gap-1">
+          <SectionHead id="event-details" title={t("details")} />
+          <dl>
             <Fact icon={Calendar} label={t("date")}>
               {singleDay ? (
                 startDate
@@ -132,23 +131,21 @@ export default function EventInfoPage() {
                 <>
                   <span className="block">{startDate}</span>
                   <span className="block">
-                    <ArrowRight className="text-muted-foreground me-1.5 inline h-4 w-4 align-[-2px] rtl:-scale-x-100" aria-hidden="true" />
+                    <ArrowRight className="text-ink-2 me-1.5 inline size-4 align-[-2px] rtl:-scale-x-100" aria-hidden="true" />
                     {endDate}
                   </span>
                   {diffDays > 1 && (
-                    <span className="text-muted-foreground block text-[13px] font-normal">
-                      {t("daysCount", { count: diffDays })}
-                    </span>
+                    <span className="text-ink-2 block text-[13px] font-normal">{t("daysCount", { count: diffDays })}</span>
                   )}
                 </>
               )}
             </Fact>
 
             <Fact icon={Clock} label={t("time")}>
-              <span className="tabular" dir="auto">{dailyStartTime} – {dailyEndTime}</span>
-              {!singleDay && (
-                <span className="text-muted-foreground ms-2 text-[13px] font-normal">{t("daily")}</span>
-              )}
+              <span className="tabular" dir="auto">
+                {dailyStartTime} – {dailyEndTime}
+              </span>
+              {!singleDay && <span className="text-ink-2 ms-2 text-[13px] font-normal">{t("daily")}</span>}
             </Fact>
 
             {event.location_type !== "none" && (
@@ -159,9 +156,7 @@ export default function EventInfoPage() {
 
             {showAttendance && (
               <Fact icon={UserCheck} label={t("attendance")}>
-                <span className="tabular">
-                  {t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}
-                </span>
+                <span className="tabular">{t("attendeesCount", { count: attendanceData?.attendance_count ?? 0 })}</span>
               </Fact>
             )}
 
@@ -171,16 +166,14 @@ export default function EventInfoPage() {
           </dl>
         </section>
 
-        <section className="bg-card border-border rounded-xl border px-4 py-4 sm:px-5 sm:py-5">
-          <h2 className="font-display mb-2 text-base font-semibold tracking-tight">{t("description")}</h2>
+        <section aria-labelledby="event-description" className="flex flex-col gap-3">
+          <SectionHead id="event-description" title={t("description")} />
           {event.description ? (
-            <p dir="auto" className="text-muted-foreground text-[15px] leading-relaxed whitespace-pre-wrap break-words">
+            <p dir="auto" className="max-w-[70ch] text-[15px] leading-relaxed break-words whitespace-pre-wrap">
               {event.description}
             </p>
           ) : (
-            <p className="text-muted-foreground text-sm italic">
-              {t("noDescription")}
-            </p>
+            <p className="text-ink-2 text-sm">{t("noDescription")}</p>
           )}
         </section>
       </div>

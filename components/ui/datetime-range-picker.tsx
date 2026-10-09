@@ -102,11 +102,11 @@ function TimeSelect({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs font-normal text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-normal text-ink-2">{label}</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full justify-between font-medium tabular-nums">
           <span className="flex items-center gap-2">
-            <ClockIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <ClockIcon className="size-3.5 shrink-0 text-ink-2" />
             {/* The label is always Latin ("10:00 AM"), so keep it LTR in Arabic. */}
             <span dir="ltr">
               <SelectValue />
@@ -291,7 +291,7 @@ export function DateTimeRangePicker({
           disabled={disabled}
           className={cn(
             "w-full justify-start text-start font-normal",
-            !value.startDate && "text-muted-foreground",
+            !value.startDate && "text-ink-2",
             className
           )}
         >

@@ -208,7 +208,7 @@ export function BackfillTab({
 
   return (
     <div className="space-y-4 px-1 pb-1">
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-ink-2">
         {t("intro")}
       </p>
 
@@ -216,7 +216,7 @@ export function BackfillTab({
         href={config.sheetProcessorUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline"
+        className="text-door-indigo-ink inline-flex items-center gap-1.5 text-sm font-bold hover:underline"
       >
         {t("getExportToken")}
         <ExternalLink className="h-3.5 w-3.5" />
@@ -248,12 +248,12 @@ export function BackfillTab({
         <Button onClick={handleVerify} disabled={isVerifying || !token.trim()} className="w-full sm:w-auto">
           {isVerifying ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {t("verifying")}
             </>
           ) : (
             <>
-              <CheckCircle className="me-2 h-4 w-4" />
+              <CheckCircle />
               {t("verifyToken")}
             </>
           )}
@@ -267,17 +267,17 @@ export function BackfillTab({
             <CardContent className="space-y-3 pt-0">
               <div className="grid grid-cols-1 gap-x-4 gap-y-2 text-sm sm:grid-cols-2">
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t("rowCount")}</span>
+                  <span className="text-ink-2">{t("rowCount")}</span>
                   <span className="tabular font-medium">
                     {metadata?.row_count ?? "-"}
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t("valid")}</span>
+                  <span className="text-ink-2">{t("valid")}</span>
                   <Badge
                     className={
                       isValidData
-                        ? "border-transparent bg-brand-green-soft text-brand-green-ink"
+                        ? "border-transparent bg-door-green-soft text-door-green-ink"
                         : ""
                     }
                     variant={isValidData ? "outline" : "destructive"}
@@ -286,7 +286,7 @@ export function BackfillTab({
                   </Badge>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t("validatedAt")}</span>
+                  <span className="text-ink-2">{t("validatedAt")}</span>
                   <span className="font-medium">
                     {metadata?.validated_at
                       ? new Date(metadata.validated_at).toLocaleString()
@@ -294,16 +294,16 @@ export function BackfillTab({
                   </span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-muted-foreground">{t("source")}</span>
+                  <span className="text-ink-2">{t("source")}</span>
                   <span className="font-medium">{metadata?.source ?? "-"}</span>
                 </div>
               </div>
               {signature && (
                 <div className="pt-2 border-t">
-                  <div className="text-muted-foreground text-sm mb-1">
+                  <div className="text-ink-2 text-sm mb-1">
                     {t("signature")}
                   </div>
-                  <div className="font-mono text-xs text-muted-foreground break-all">
+                  <div className="font-mono text-xs text-ink-2 break-all">
                     {signature}
                   </div>
                 </div>
@@ -331,7 +331,7 @@ export function BackfillTab({
                   {verifiedRows.slice(0, 50).map((row, idx) => (
                     <li key={idx} className="px-3 py-2">
                       <p className="truncate text-sm font-medium"><bdi>{row.name}</bdi></p>
-                      <p className="truncate text-[13px] text-muted-foreground">
+                      <p className="truncate text-[13px] text-ink-2">
                         <span className="tabular" dir="ltr">{row["university id"]}</span>
                         {" · "}
                         <span dir="ltr">{row.email}</span>
@@ -339,7 +339,7 @@ export function BackfillTab({
                     </li>
                   ))}
                   {verifiedRows.length > 50 && (
-                    <li className="px-3 py-2 text-center text-[13px] text-muted-foreground">
+                    <li className="px-3 py-2 text-center text-[13px] text-ink-2">
                       {t("andMore", { count: verifiedRows.length - 50 })}
                     </li>
                   )}
@@ -370,7 +370,7 @@ export function BackfillTab({
                           <TableRow>
                             <TableCell
                               colSpan={4}
-                              className="text-center text-muted-foreground"
+                              className="text-center text-ink-2"
                             >
                               {t("andMore", { count: verifiedRows.length - 50 })}
                             </TableCell>
@@ -387,7 +387,7 @@ export function BackfillTab({
 
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-3">
             <div className="flex items-center gap-2">
-              <Label className="text-muted-foreground">{t("dayLabel")}</Label>
+              <Label className="text-ink-2">{t("dayLabel")}</Label>
               <Select value={selectedDay} onValueChange={onDayChange}>
                 <SelectTrigger className="flex-1 sm:w-24 sm:flex-none">
                   <SelectValue />
@@ -419,12 +419,12 @@ export function BackfillTab({
               <Button onClick={handleSubmit} disabled={isSubmitting} className="whitespace-normal">
                 {isSubmitting ? (
                   <>
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                     {t("submitting")}
                   </>
                 ) : (
                   <>
-                    <Upload className="me-2 h-4 w-4" />
+                    <Upload />
                     {t("backfillButton", { count: verifiedRows?.length ?? 0, day: selectedDay })}
                   </>
                 )}
@@ -453,15 +453,15 @@ export function BackfillTab({
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-ink-2">
                       {t("created")}
                     </span>
-                    <Badge className="tabular border-transparent bg-brand-green-soft text-brand-green-ink">
+                    <Badge className="tabular border-transparent bg-door-green-soft text-door-green-ink">
                       {summaryDialog?.created_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">{t("found")}</span>
+                    <span className="text-sm text-ink-2">{t("found")}</span>
                     <span className="font-medium">
                       {summaryDialog?.existing_count ?? 0}
                     </span>
@@ -476,26 +476,26 @@ export function BackfillTab({
               <CardContent className="pt-0">
                 <div className="grid grid-cols-2 gap-3">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-ink-2">
                       {t("marked")}
                     </span>
-                    <Badge className="tabular border-transparent bg-brand-green-soft text-brand-green-ink">
+                    <Badge className="tabular border-transparent bg-door-green-soft text-door-green-ink">
                       {summaryDialog?.marked_count ?? 0}
                     </Badge>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm text-muted-foreground">
+                    <span className="text-sm text-ink-2">
                       {t("skipped")}
                     </span>
-                    <Badge className="tabular border-transparent bg-brand-yellow-soft text-brand-yellow-ink">
+                    <Badge className="tabular border-transparent bg-door-ochre-soft text-door-ochre-ink">
                       {summaryDialog?.already_attended_count ?? 0}
                     </Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
-            <div className="flex justify-between items-center p-3 bg-muted rounded-md">
-              <span className="text-sm text-muted-foreground">{t("date")}</span>
+            <div className="flex justify-between items-center p-3 bg-sunk rounded-md">
+              <span className="text-sm text-ink-2">{t("date")}</span>
               <span className="font-medium text-sm">
                 {summaryDialog
                   ? formatDate(summaryDialog.attendance_date)

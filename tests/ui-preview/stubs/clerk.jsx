@@ -1,6 +1,9 @@
 // Preview-only stand-in for @clerk/nextjs. Never bundled into the Next.js app.
+// One function for the page's lifetime, like Clerk's: effects that depend on
+// getToken would otherwise re-run (and refetch) on every render.
+const getToken = async () => "preview-token";
 export function useAuth() {
-  return { isLoaded: true, isSignedIn: true, userId: "preview", getToken: async () => "preview-token" };
+  return { isLoaded: true, isSignedIn: true, userId: "preview", getToken };
 }
 export function useUser() {
   return {

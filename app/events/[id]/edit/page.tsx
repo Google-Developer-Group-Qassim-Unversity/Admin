@@ -1,12 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Trash2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -164,58 +165,40 @@ export default function EventEditPage() {
 
   if (isLoadingDetails || isLoadingActions || isLoadingDepartments) {
     return (
-      <Card className="max-w-3xl mx-auto">
-        <CardContent className="flex items-center justify-center py-16">
-          <div className="flex flex-col items-center gap-3">
-            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-            <p className="text-sm text-muted-foreground">{t("loadingDetails")}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4" aria-busy="true" aria-label={t("loadingDetails")}>
+        <Skeleton className="h-8 w-1/3" />
+        {[0, 1, 2, 3, 4].map((i) => (
+          <Skeleton key={i} className="h-11 w-full" />
+        ))}
+      </div>
     );
   }
 
   if (detailsError) {
     return (
-      <Card className="max-w-3xl mx-auto">
-        <CardContent className="py-16">
-          <div className="text-center text-destructive">
-            <p className="font-medium">{t("loadFailed")}</p>
-            <p className="text-sm mt-1">{detailsError.message}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <Alert variant="destructive" className="mx-auto max-w-3xl">
+        <AlertTitle>{t("loadFailed")}</AlertTitle>
+        <AlertDescription>{detailsError.message}</AlertDescription>
+      </Alert>
     );
   }
 
   if (!eventDetails || !initialFormData) {
     return (
-      <Card className="max-w-3xl mx-auto">
-        <CardContent className="py-16">
-          <div className="text-center text-muted-foreground">
-            <p>{t("notAvailable")}</p>
-          </div>
-        </CardContent>
-      </Card>
+      <p className="text-ink-2 mx-auto max-w-3xl py-16 text-center">{t("notAvailable")}</p>
     );
   }
 
   return (
     // overflow-visible below md so the form's sticky save bar can stick; the
     // card's default overflow-hidden would pin it inside the card instead.
-    <Card className="max-w-3xl mx-auto max-md:overflow-visible">
-      <CardHeader>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <section aria-labelledby="edit-title" className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        <div className="border-foreground flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-end sm:justify-between">
           <div className="min-w-0">
-            <CardTitle className="flex items-center gap-3 font-display text-lg font-semibold tracking-tight">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted">
-                <Pencil className="h-5 w-5 text-muted-foreground" />
-              </div>
-              <span dir="auto" className="min-w-0 line-clamp-2">{t("title", { name: event.name })}</span>
-            </CardTitle>
-            <CardDescription className="mt-1.5">
-              {t("subtitle")}
-            </CardDescription>
+            <h2 id="edit-title" className="text-base font-bold">
+              {t("editHeading")}
+            </h2>
+            <p className="text-ink-2 mt-1 text-[13.5px]">{t("subtitle")}</p>
           </div>
           {isDraft && (
             <AlertDialog>
@@ -227,9 +210,9 @@ export default function EventEditPage() {
                   disabled={deleteEventMutation.isPending}
                 >
                   {deleteEventMutation.isPending ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <Trash2 className="me-2 h-4 w-4" />
+                    <Trash2 />
                   )}
                   {t("deleteDraft")}
                 </Button>
@@ -255,8 +238,6 @@ export default function EventEditPage() {
             </AlertDialog>
           )}
         </div>
-      </CardHeader>
-      <CardContent>
         <EventForm
           mode="edit"
           eventId={event.id}
@@ -267,7 +248,6 @@ export default function EventEditPage() {
           submitButtonText={t("saveChanges")}
           submittingText={t("saving")}
         />
-      </CardContent>
-    </Card>
+    </section>
   );
 }

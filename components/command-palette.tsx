@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { CalendarPlus, RotateCcw, Trophy, UserPlus } from "lucide-react";
+import { CalendarCheck, CalendarPlus, RotateCcw, Trophy, UserPlus, type LucideIcon } from "lucide-react";
 
 import { useNavGroups } from "@/components/app-shell";
 import { useAccess } from "@/hooks/use-access";
@@ -21,7 +21,8 @@ import { useEvents } from "@/hooks/use-event";
 import { parseLocalDateTime } from "@/lib/utils";
 
 const QUICK_ACTIONS = [
-  { href: "/events/create", key: "newEvent", icon: CalendarPlus },
+  { href: "/pipeline?book=1", key: "bookDates", icon: CalendarPlus },
+  { href: "/events/create", key: "newEvent", icon: CalendarCheck },
   { href: "/points/create", key: "grantPoints", icon: Trophy },
   { href: "/manage-members", key: "addMember", icon: UserPlus },
   { href: "/settings", key: "resetCache", icon: RotateCcw },
@@ -45,7 +46,11 @@ export function CommandPalette({
   const navGroups = useNavGroups();
   const { canOpen, can } = useAccess();
   const quickActions = QUICK_ACTIONS.filter((action) =>
-    action.key === "resetCache" ? can("cache.reset") : action.key === "addMember" ? can("members.create") : canOpen(action.href),
+    action.key === "resetCache"
+      ? can("cache.reset")
+      : action.key === "addMember"
+        ? can("members.create")
+        : canOpen(action.href.split("?")[0]),
   );
 
   // Only fetch once the palette has actually been opened.
@@ -86,8 +91,8 @@ export function CommandPalette({
             const Icon = action.icon;
             return (
               <CommandItem key={action.href} value={t(action.key)} onSelect={() => go(action.href)}>
-                <Icon className="h-4 w-4" />
-                <span>{t(action.key)}</span>
+                <ItemPlate icon={Icon} ochre={action.key === "bookDates"} />
+                <span className="font-bold">{t(action.key)}</span>
               </CommandItem>
             );
           })}
@@ -100,8 +105,8 @@ export function CommandPalette({
             const Icon = item.icon;
             return (
               <CommandItem key={item.href} value={tn(item.key)} onSelect={() => go(item.href)}>
-                <Icon className="h-4 w-4" />
-                <span>{tn(item.key)}</span>
+                <ItemPlate icon={Icon} />
+                <span className="font-medium">{tn(item.key)}</span>
               </CommandItem>
             );
           })}
@@ -117,8 +122,12 @@ export function CommandPalette({
                   value={`${event.name} ${event.location}`}
                   onSelect={() => go(`/events/${event.id}`)}
                 >
-                  <StatusDot status={event.status} />
-                  <span className="truncate">{event.name}</span>
+                  <span className="grid size-8 shrink-0 place-items-center">
+                    <StatusDot status={event.status} />
+                  </span>
+                  <span className="truncate font-medium" dir="auto">
+                    {event.name}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -126,5 +135,21 @@ export function CommandPalette({
         )}
       </CommandList>
     </CommandDialog>
+  );
+}
+
+/** The icon on a small plate: plaster for places, ochre for the one action waiting on everyone (booking). */
+function ItemPlate({ icon: Icon, ochre = false }: { icon: LucideIcon; ochre?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={
+        ochre
+          ? "plate-depth bg-door-ochre text-on-door-ochre grid size-8 shrink-0 place-items-center rounded-[3px]"
+          : "bg-sunk text-foreground grid size-8 shrink-0 place-items-center rounded-[3px] shadow-[inset_0_0_0_1px_var(--rule)]"
+      }
+    >
+      <Icon className="size-4" strokeWidth={1.75} />
+    </span>
   );
 }

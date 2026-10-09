@@ -167,7 +167,8 @@ try {
           const query = new URLSearchParams(search);
           query.set("locale", locale);
           query.set("theme", theme);
-          await page.goto(`${base}${pathname}?${query}`, { waitUntil: "networkidle" });
+          // A page holding a stream open (the email log's SSE) never goes network-idle.
+          await page.goto(`${base}${pathname}?${query}`, { waitUntil: "networkidle", timeout: 15_000 }).catch(() => page.waitForLoadState("load"));
           await page.evaluate(() => document.fonts.ready);
           await page.waitForTimeout(400);
           if (scroll) {

@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { INK, Mortar } from "@/components/najdi";
 import { cn } from "@/lib/utils";
 
 interface SummaryStatisticsProps {
@@ -28,35 +28,28 @@ export function SummaryStatistics({
 }: SummaryStatisticsProps) {
   const t = useTranslations("responses.summary");
 
-  const tiles: { key: string; label: string; value: number; dot: string | null; className?: string }[] = [
-    { key: "total", label: t("tiles.total"), value: total, dot: null, className: "col-span-2 sm:col-span-1" },
-    { key: "accepted", label: t("tiles.accepted"), value: accepted, dot: URGENCY_STYLES.done.dot },
-    { key: "emailed", label: t("tiles.emailed"), value: invited, dot: URGENCY_STYLES.info.dot },
-    { key: "notEmailed", label: t("tiles.notEmailed"), value: acceptedNotInvited, dot: URGENCY_STYLES.waiting.dot },
-    { key: "pending", label: t("tiles.pending"), value: pending, dot: URGENCY_STYLES.waiting.dot },
+  const tiles: { key: string; label: string; value: number; ink: string; className?: string }[] = [
+    { key: "total", label: t("tiles.total"), value: total, ink: "text-foreground", className: "col-span-2 sm:col-span-1" },
+    { key: "accepted", label: t("tiles.accepted"), value: accepted, ink: INK.green },
+    { key: "emailed", label: t("tiles.emailed"), value: invited, ink: INK.indigo },
+    { key: "notEmailed", label: t("tiles.notEmailed"), value: acceptedNotInvited, ink: acceptedNotInvited ? INK.ochre : "text-ink-2" },
+    { key: "pending", label: t("tiles.pending"), value: pending, ink: pending ? INK.ochre : "text-ink-2" },
   ];
 
   return (
     <section aria-label={t("title")} className="mb-5 sm:mb-6">
       <h3 className="sr-only">{t("title")}</h3>
-      <dl className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
-        {tiles.map((tile) => (
-          <div
-            key={tile.key}
-            className={cn("rounded-xl border bg-muted/40 px-3.5 py-3", tile.className)}
-          >
-            <dt className="flex items-center gap-1.5 text-[13px] text-muted-foreground">
-              {tile.dot ? (
-                <span className={cn("inline-block h-2 w-2 shrink-0 rounded-full", tile.dot)} aria-hidden="true" />
-              ) : null}
-              <span className="truncate">{tile.label}</span>
-            </dt>
-            <dd className="tabular mt-1 font-display text-2xl leading-none font-semibold tracking-tight">
-              {tile.value}
-            </dd>
-          </div>
-        ))}
-      </dl>
+      {/* Bricks in mortar: each count in the colour of the state it counts. */}
+      <Mortar className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        <dl className="contents">
+          {tiles.map((tile) => (
+            <div key={tile.key} className={cn("bg-card flex flex-col-reverse gap-1 rounded-sm px-3.5 py-3", tile.className)}>
+              <dt className="text-ink-2 truncate text-[12.5px] font-medium">{tile.label}</dt>
+              <dd className={cn("tabular text-[21px] leading-none font-bold", tile.ink)}>{tile.value}</dd>
+            </div>
+          ))}
+        </dl>
+      </Mortar>
     </section>
   );
 }

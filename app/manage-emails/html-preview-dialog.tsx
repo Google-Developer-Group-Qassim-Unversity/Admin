@@ -42,7 +42,7 @@ export function HtmlPreviewDialog({ open, onOpenChange, html, subject }: HtmlPre
           <DialogTitle>{t("title")}</DialogTitle>
           {subject && <DialogDescription dir="auto">{subject}</DialogDescription>}
         </DialogHeader>
-        <div className="border rounded-md overflow-hidden bg-muted/30">
+        <div className="border rounded-md overflow-hidden bg-sunk">
           <ScaledEmailFrame srcDoc={html} title={t("title")} />
         </div>
         <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center">

@@ -8,6 +8,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { AccessDenied } from "@/components/ui/access-denied";
 import { Button } from "@/components/ui/button";
+import { Plate } from "@/components/najdi";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DepartmentForm } from "@/components/club-structure/department-form";
 import { ClubLoading, DepartmentPlusIcon } from "@/components/club-structure/shared";
@@ -68,22 +69,22 @@ function CreateDepartment() {
               </Link>
             </Button>
           </div>
-          <CardTitle className="flex items-center gap-2">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <DepartmentPlusIcon className="h-5 w-5 text-primary" />
-            </div>
-            {t("newDepartment")}
+          <CardTitle className="flex items-center gap-3">
+            <Plate tone="umber">
+              <DepartmentPlusIcon className="size-[18px]" />
+            </Plate>
+            <h1 className="font-display text-[26px] leading-tight font-semibold">{t("newDepartment")}</h1>
           </CardTitle>
-          <CardDescription>{t("createDescription", { semester: semester?.name ?? "" })}</CardDescription>
+          <CardDescription className="mt-1">{t("createDescription", { semester: semester?.name ?? "" })}</CardDescription>
         </CardHeader>
         <CardContent>
           {overview.error && (
-            <p role="alert" className="mb-6 text-sm text-destructive">
+            <p role="alert" className="text-door-madder-ink mb-6 text-sm">
               {describeError(overview.error)}
             </p>
           )}
           {mutation.error && (
-            <p role="alert" className="mb-6 text-sm text-destructive">
+            <p role="alert" className="text-door-madder-ink mb-6 text-sm">
               {describeError(mutation.error, true)}
             </p>
           )}

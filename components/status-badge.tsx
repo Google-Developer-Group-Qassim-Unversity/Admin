@@ -27,13 +27,6 @@ export const URGENCY_TONE: Record<Urgency, DoorTone> = {
   done: "green",
 };
 
-/** @deprecated Class pairs kept for callers not yet moved to `URGENCY_TONE`. */
-export const URGENCY_STYLES: Record<Urgency, { dot: string; pill: string }> = {
-  waiting: { dot: FILL.ochre, pill: SOFT.ochre },
-  overdue: { dot: FILL.madder, pill: SOFT.madder },
-  info: { dot: FILL.indigo, pill: SOFT.indigo },
-  done: { dot: FILL.green, pill: SOFT.green },
-};
 
 const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
 const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";

@@ -4,10 +4,23 @@ import * as React from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { ArrowLeft, CalendarClock, CalendarPlus, CircleAlert, FileQuestion, Trash2, Workflow } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarCheck,
+  CalendarPlus,
+  Check,
+  ChevronRight,
+  CircleDashed,
+  FileQuestion,
+  FileText,
+  Palette,
+  Trash2,
+  Truck,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 
-import { PageHeader } from "@/components/page-header";
+import { Count, Door, Mark, Plate, SectionHead } from "@/components/najdi";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-panel";
 import { Countdown } from "@/components/pipeline/countdown";
@@ -18,7 +31,7 @@ import { MissingProvider, READ_ONLY, focusField } from "@/components/pipeline/fo
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { RequestProgress } from "@/components/pipeline/request-progress";
 import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
-import { DraftBar, MissingList, tabOf, type FormTab } from "@/components/pipeline/submit-bar";
+import { DraftBar, tabOf, useFieldLabel, type FormTab } from "@/components/pipeline/submit-bar";
 import { PenaltyNote, ReturnedNotice, TeamActions } from "@/components/pipeline/team-actions";
 import { StageBadge } from "@/components/status-badge";
 import {
@@ -40,11 +53,14 @@ import { useCancelRequest, usePipelineRequest, useRedate } from "@/hooks/use-pip
 import { cn } from "@/lib/utils";
 import type { EventRequestDetail, PipelineMe } from "@/lib/pipeline-types";
 
-const TAB_PANEL = "bg-card border-border rounded-xl border p-4 sm:p-6 data-[state=inactive]:hidden";
+const TAB_PANEL = "bg-card ring-rule rounded-xl p-4 ring-1 sm:p-6 data-[state=inactive]:hidden";
+const FORM_TABS = ["details", "design", "logistics"] as const;
+const TAB_ICON: Record<FormTab, LucideIcon> = { details: FileText, design: Palette, logistics: Truck };
 
 /**
- * One request, top to bottom: what it is, where it stands, what to do now,
- * then the three forms. A draft gets a bar that follows the page with Submit.
+ * One request, top to bottom: what it is, the one thing to do now (a painted
+ * door), where it stands, what is left, then the three forms. A draft gets a
+ * bar that stays above the thumb with Submit.
  */
 export function RequestView({ id, me }: { id: string; me: PipelineMe }) {
   const t = useTranslations("pipeline.request");
@@ -52,26 +68,28 @@ export function RequestView({ id, me }: { id: string; me: PipelineMe }) {
 
   if (isPending) {
     return (
-      <div className="flex flex-col gap-4">
-        <Skeleton className="h-28 w-full rounded-2xl" />
-        <Skeleton className="h-24 w-full rounded-xl" />
+      <div className="flex flex-col gap-5">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-10 w-2/3" />
+        <Skeleton className="h-40 w-full rounded-xl" />
+        <Skeleton className="h-24 w-full" />
         <Skeleton className="h-96 w-full rounded-xl" />
       </div>
     );
   }
   if (error || !request) {
     return (
-      <Empty className="bg-card border-border rounded-xl border">
+      <Empty className="bg-card ring-rule rounded-xl border-0 ring-1">
         <EmptyHeader>
           <EmptyMedia variant="icon">
             <FileQuestion />
           </EmptyMedia>
           <EmptyTitle>{t("notFound")}</EmptyTitle>
-          {error ? <EmptyDescription className="text-brand-red-ink">{error.message}</EmptyDescription> : null}
+          {error ? <EmptyDescription className="text-door-madder-ink">{error.message}</EmptyDescription> : null}
         </EmptyHeader>
         <Button asChild variant="outline">
           <Link href="/pipeline">
-            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+            <ArrowLeft className="rtl:-scale-x-100" />
             {t("back")}
           </Link>
         </Button>
@@ -98,18 +116,21 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
   const holdRanOut = isDraft && !!request.hold_expires_at && request.hold_expires_at <= request.now;
   const lostDates = (!request.start_date || holdRanOut) && canAct && !["published", "cancelled"].includes(request.stage);
   const showBar = request.can_edit && ((isDraft && canAct) || (isReturned && request.actions.can_resubmit));
-  // The dates card already says when dates are what's missing.
+  // The dates door already says when dates are what's missing.
   const missing = lostDates ? request.missing.filter((f) => f !== "dates") : request.missing;
   const showMissing = request.can_edit && canAct && (isDraft || (isReturned && missing.length > 0));
+  const holding = isDraft && canAct && !!request.hold_expires_at && !holdRanOut;
 
   const missingByTab = React.useMemo(() => {
-    const counts: Record<FormTab, number> = { details: 0, design: 0, logistics: 0 };
-    for (const field of request.missing) {
-      const owner = tabOf(field);
-      if (owner) counts[owner] += 1;
-    }
-    return counts;
-  }, [request.missing]);
+    const out: Record<FormTab, string[]> = { details: [], design: [], logistics: [] };
+    for (const field of missing) out[tabOf(field) ?? "details"].push(field);
+    return out;
+  }, [missing]);
+
+  const openTab = React.useCallback((owner: FormTab) => {
+    setTab(owner);
+    window.setTimeout(() => document.getElementById("request-forms")?.scrollIntoView({ behavior: "smooth", block: "start" }), 60);
+  }, []);
 
   const jump = React.useCallback((field: string) => {
     const owner = tabOf(field);
@@ -122,51 +143,38 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
     window.setTimeout(() => focusField(field), 60);
   }, []);
 
-  const onIncomplete = (missing: string[]) => {
+  const onIncomplete = (fields: string[]) => {
     setShown(true);
-    if (missing[0]) jump(missing[0]);
+    if (fields[0]) jump(fields[0]);
   };
 
   return (
     <MissingProvider missing={request.missing} shown={shown}>
-      <div className="flex flex-col gap-4 sm:gap-5">
+      <div className={cn("flex flex-col gap-6", showBar && "max-md:pb-40")}>
         <RequestHeader request={request} me={me} canAct={canAct} />
-        <RequestProgress request={request} />
 
         {lostDates ? <Redate request={request} me={me} /> : null}
+        {holding ? <HoldDoor request={request} /> : null}
         {isReturned ? <ReturnedNotice request={request} /> : null}
         <PenaltyNote request={request} />
         <TeamActions request={request} />
         <PublishPanel request={request} />
 
+        <RequestProgress request={request} />
+
         {showMissing ? (
-          <section className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4 sm:p-5">
-            {isDraft && request.hold_expires_at && !holdRanOut ? (
-              <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
-                <CalendarClock className="text-brand-yellow-ink h-4 w-4 shrink-0" />
-                <span className="font-medium">{t("holdTitle")}</span>
-                <span className="text-muted-foreground">·</span>
-                <Countdown until={request.hold_expires_at} serverNow={request.now} />
-              </p>
-            ) : null}
-            <MissingList missing={missing} shown={shown} onJump={jump} />
-          </section>
+          <WhatIsLeft missingByTab={missingByTab} total={missing.length} shown={shown} onJump={jump} onOpen={openTab} />
         ) : null}
 
-        <Tabs value={tab} onValueChange={(v) => setTab(v as FormTab)} className="gap-3">
-          <TabsList className="w-full justify-start sm:w-fit">
-            {(["details", "design", "logistics"] as const).map((key) => (
+        <Tabs id="request-forms" value={tab} onValueChange={(v) => setTab(v as FormTab)} className="scroll-mt-24 gap-3">
+          <TabsList className="w-full sm:w-fit">
+            {FORM_TABS.map((key) => (
               <TabsTrigger key={key} value={key} className="gap-1.5">
                 {t(`tabs.${key}`)}
-                {showMissing && missingByTab[key] ? (
-                  <span
-                    className={cn(
-                      "tabular flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[11px] font-semibold",
-                      shown ? "bg-brand-red text-white" : "bg-brand-yellow-soft text-brand-yellow-ink",
-                    )}
-                  >
-                    {missingByTab[key]}
-                  </span>
+                {showMissing && missingByTab[key].length ? (
+                  <Count tone={shown ? "madder" : "ochre"} className="h-[18px] min-w-[18px] text-[11px]">
+                    {missingByTab[key].length}
+                  </Count>
                 ) : null}
               </TabsTrigger>
             ))}
@@ -189,8 +197,99 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
   );
 }
 
+/** The days are held while the request is filled in: the clock, on an ochre door. */
+function HoldDoor({ request }: { request: EventRequestDetail }) {
+  const t = useTranslations("pipeline.request");
+  return (
+    <Door tone="ochre" aria-labelledby="hold-title">
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+        <h2 id="hold-title" className="font-display text-[21px] leading-tight font-semibold">
+          {t("holdTitle")}
+        </h2>
+        <Countdown until={request.hold_expires_at} serverNow={request.now} format="clock" plain className="text-2xl" />
+      </div>
+      <p className="text-sm font-medium">{t("holdBody")}</p>
+    </Door>
+  );
+}
+
+/**
+ * What submit still needs, by form: a plate per form (green when it is
+ * complete), and each missing field as a chip that jumps to it.
+ */
+function WhatIsLeft({
+  missingByTab,
+  total,
+  shown,
+  onJump,
+  onOpen,
+}: {
+  missingByTab: Record<FormTab, string[]>;
+  total: number;
+  shown: boolean;
+  onJump: (field: string) => void;
+  onOpen: (tab: FormTab) => void;
+}) {
+  const t = useTranslations("pipeline");
+  const label = useFieldLabel();
+
+  return (
+    <section aria-labelledby="whats-left" className="flex flex-col gap-1">
+      <SectionHead
+        id="whats-left"
+        title={t("request.whatsLeft")}
+        count={total || undefined}
+        countTone={shown ? "madder" : "ochre"}
+      />
+      <ul className="flex flex-col">
+        {FORM_TABS.map((key) => {
+          const fields = missingByTab[key];
+          const complete = fields.length === 0;
+          return (
+            <li key={key} className="border-rule flex min-h-16 items-center gap-3 border-b px-1 py-3">
+              <Plate tone={complete ? "green" : shown ? "madder" : "ochre"} icon={complete ? Check : TAB_ICON[key]} />
+              <div className="flex min-w-0 flex-1 flex-col gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => onOpen(key)}
+                  className="w-fit text-start text-[15px] font-bold outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+                >
+                  {t(`request.tabs.${key}`)}
+                </button>
+                {complete ? (
+                  <span className="text-door-green-ink text-[13px] font-medium">{t("request.sectionDone")}</span>
+                ) : (
+                  <ul className="flex flex-wrap gap-1.5">
+                    {fields.map((field) => (
+                      <li key={field}>
+                        <button
+                          type="button"
+                          onClick={() => onJump(field)}
+                          className={cn(
+                            "inline-flex min-h-8 items-center gap-1 rounded-sm px-2 text-[13px] font-bold outline-none hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring pointer-coarse:min-h-10",
+                            shown ? "bg-door-madder-soft text-door-madder-ink" : "bg-door-ochre-soft text-door-ochre-ink",
+                          )}
+                        >
+                          <CircleDashed className="size-3.5" aria-hidden="true" />
+                          {label(field)}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <ChevronRight className="text-ink-3 size-[18px] shrink-0 rtl:-scale-x-100" aria-hidden="true" />
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
 function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; me: PipelineMe; canAct: boolean }) {
   const t = useTranslations("pipeline.request");
+  const td = useTranslations("pipeline.details.eventTypes");
   const router = useRouter();
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
@@ -209,27 +308,39 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
   };
 
   const meta = [
-    departmentName(request.department),
+    request.details.event_type ? td(request.details.event_type) : null,
     request.start_date ? formatRange(request.start_date, request.end_date) : t("noDates"),
     t("createdBy", { name: request.created_by.name }),
-  ].join(" · ");
+  ]
+    .filter(Boolean)
+    .join(" · ");
 
   return (
-    <div className="flex flex-col gap-2">
+    <header className="border-foreground flex flex-col gap-3 border-b pb-4">
       <Link
         href="/pipeline"
-        className="text-muted-foreground hover:text-foreground flex w-fit items-center gap-1 text-sm font-medium transition-colors"
+        className="text-ink-2 hover:text-foreground -ms-1 flex min-h-9 w-fit items-center gap-1 rounded-sm px-1 text-sm font-bold transition-colors"
       >
-        <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+        <ArrowLeft className="size-4 rtl:-scale-x-100" />
         {t("back")}
       </Link>
-      <PageHeader title={request.title || t("untitled")} description={meta} icon={Workflow}>
-        <StageBadge stage={request.stage} className="max-sm:flex-none" />
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="bg-sunk inline-flex h-7 items-center gap-1.5 rounded-sm px-2.5 text-[13px] font-bold">
+          <Mark tone="umber" />
+          {departmentName(request.department)}
+        </span>
+        <StageBadge stage={request.stage} />
+      </div>
+      <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[32px]">
+        {request.title || t("untitled")}
+      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <p className="text-ink-2 tabular text-[13.5px]">{meta}</p>
         {canCancel ? (
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="sm" className="text-brand-red-ink hover:bg-brand-red-soft hover:text-brand-red-ink">
-                <Trash2 className="h-4 w-4" />
+              <Button variant="destructive" size="sm">
+                <Trash2 />
                 {t("cancel")}
               </Button>
             </AlertDialogTrigger>
@@ -240,18 +351,19 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
-                <AlertDialogAction variant="destructive" onClick={onCancel} disabled={cancel.isPending}>
+                <AlertDialogAction variant="madder" onClick={onCancel} disabled={cancel.isPending}>
                   {t("cancel")}
                 </AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         ) : null}
-      </PageHeader>
-    </div>
+      </div>
+    </header>
   );
 }
 
+/** The dates were lost (the hold ran out, or Logistics closed a day): pick new ones. */
 function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }) {
   const t = useTranslations("pipeline.request");
   const tb = useTranslations("pipeline.book");
@@ -272,51 +384,45 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
   };
 
   return (
-    <section
-      id="request-dates"
-      className="bg-brand-red-soft text-brand-red-ink border-brand-red/30 flex scroll-mt-24 flex-col gap-3 rounded-xl border p-4 sm:p-5"
-    >
-      <div className="flex items-start gap-3">
-        <CircleAlert className="mt-0.5 h-5 w-5 shrink-0" />
-        <div className="flex flex-col gap-1">
-          <h2 className="font-display text-base font-semibold tracking-tight">
-            {t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}
-          </h2>
-          <p className="text-sm">{t("lostDatesBody")}</p>
-        </div>
-      </div>
+    <div id="request-dates" className="flex scroll-mt-24 flex-col gap-3">
+      <Door tone="madder" aria-labelledby="lost-dates">
+        <h2 id="lost-dates" className="font-display text-[21px] leading-tight font-semibold">
+          {t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}
+        </h2>
+        <p className="text-sm font-medium">{t("lostDatesBody")}</p>
+        {!open ? (
+          <div>
+            <Button size="lg" className="bg-card text-foreground hover:bg-card/90" onClick={() => setOpen(true)}>
+              <CalendarPlus />
+              {t("redate")}
+            </Button>
+          </div>
+        ) : null}
+      </Door>
       {open ? (
-        <div className="bg-card text-foreground flex flex-col gap-3 rounded-lg p-3 sm:p-4">
+        <section className="bg-card ring-door-ochre flex flex-col gap-4 rounded-xl p-4 ring-2 sm:p-5">
           <BookingCalendar
             selected={range.selected}
+            range={{ start: range.start, end: range.end }}
             onDayClick={range.onDayClick}
             isSelectable={(d) => me.is_super_admin || d.status === "open"}
           />
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <span className={cn("flex-1 text-sm", range.start ? "font-semibold" : "text-muted-foreground")}>
-              {range.start
-                ? formatRange(range.start, range.end)
-                : tb(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <span className={cn("flex-1 text-sm", range.start ? "tabular text-[17px] font-bold" : "text-ink-2")}>
+              {range.start ? formatRange(range.start, range.end) : tb(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}
             </span>
             <div className="flex gap-2 *:flex-1 sm:*:flex-none">
-              <Button variant="ghost" onClick={() => setOpen(false)}>
+              <Button variant="ghost" size="lg" onClick={() => setOpen(false)}>
                 {t("redateCancel")}
               </Button>
-              <Button onClick={onSave} disabled={!range.start || redate.isPending}>
-                <CalendarPlus className="h-4 w-4" />
+              <Button variant="ochre" size="lg" onClick={onSave} disabled={!range.start || redate.isPending}>
+                <CalendarCheck />
                 {t("redateSave")}
               </Button>
             </div>
           </div>
-        </div>
-      ) : (
-        <div>
-          <Button onClick={() => setOpen(true)}>
-            <CalendarPlus className="h-4 w-4" />
-            {t("redate")}
-          </Button>
-        </div>
-      )}
-    </section>
+        </section>
+      ) : null}
+    </div>
   );
 }

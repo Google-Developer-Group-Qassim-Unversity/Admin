@@ -77,7 +77,7 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const official = request.within_official_hours;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <FormSection title={t("sections.basics")}>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label={t("title")} name="details.title">
@@ -135,11 +135,11 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
 
       <FormSection title={t("sections.schedule")}>
         <Field label={t("dayModes")} name="details.day_modes">
-          {days.length === 0 ? <p className="text-muted-foreground text-sm">{t("noDaysYet")}</p> : null}
+          {days.length === 0 ? <p className="text-ink-2 text-sm">{t("noDaysYet")}</p> : null}
           <div className="flex flex-col gap-2">
             {days.map((day) => (
               <div key={day} className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-                <span className="text-sm font-medium sm:w-44">{dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
+                <span className="text-sm font-bold sm:w-44">{dayLabel.format(new Date(`${day}T00:00:00Z`))}</span>
                 <div className="sm:w-72">
                   <Choice<DayMode>
                     ariaLabel={dayLabel.format(new Date(`${day}T00:00:00Z`))}
@@ -174,8 +174,8 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
         </div>
         {official === null ? null : (
           <p
-            className={`flex w-fit items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${
-              official ? "bg-brand-green-soft text-brand-green-ink" : "bg-brand-yellow-soft text-brand-yellow-ink"
+            className={`flex w-fit items-center gap-1.5 rounded-sm px-2.5 py-1 text-xs font-bold ${
+              official ? "bg-door-green-soft text-door-green-ink" : "bg-door-ochre-soft text-door-ochre-ink"
             }`}
           >
             {official ? <CircleCheck className="h-3.5 w-3.5" /> : <TriangleAlert className="h-3.5 w-3.5" />}

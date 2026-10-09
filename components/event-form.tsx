@@ -148,7 +148,7 @@ export function EventForm({
   if (isLoading) {
     return (
       <div className="flex items-center justify-center py-10">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+        <Loader2 className="h-8 w-8 animate-spin text-ink-2" />
       </div>
     );
   }
@@ -307,7 +307,7 @@ export function EventForm({
               />
             )}
           />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-ink-2">
             {watch("requireRegistration")
               ? t("registration.requiredHint")
               : t("registration.notRequiredHint")}
@@ -427,7 +427,7 @@ export function EventForm({
       {/* Submit: sticks above the tab bar on phones so it is always in reach.
           The card around the form pads 16px (24px from sm), which the bar
           bleeds back out of so it spans the card edge to edge. */}
-      <FormActions className="bg-card/95 supports-backdrop-filter:bg-card/80 sm:-mx-6 sm:px-6 md:mx-0 md:bg-transparent md:px-0">
+      <FormActions className="sm:-mx-6 sm:px-6 md:mx-0 md:px-0">
         <Button
           type="submit"
           className="md:min-w-40"
@@ -435,7 +435,7 @@ export function EventForm({
         >
           {isSubmitting ? (
             <>
-              <Loader2 className="me-2 h-4 w-4 animate-spin" />
+              <Loader2 className="animate-spin" />
               {submittingText ?? defaultSubmittingText}
             </>
           ) : (

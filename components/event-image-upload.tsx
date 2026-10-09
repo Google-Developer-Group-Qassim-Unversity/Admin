@@ -79,7 +79,7 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
       {existingImageUrl && !uploadedFile && displayImageUrl && (
         <div className="relative rounded-lg border p-3 sm:p-4">
           <div className="flex items-center gap-3 sm:gap-4">
-            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
+            <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-sunk">
               <Image
                 src={displayImageUrl}
                 alt={t("currentAlt")}
@@ -88,11 +88,11 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
               />
             </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <div className="flex items-center gap-2 text-sm text-ink-2">
                 <ImageIcon className="h-4 w-4" />
                 <span className="truncate">{t("current")}</span>
               </div>
-              <p className="text-[13px] text-muted-foreground mt-1">
+              <p className="text-[13px] text-ink-2 mt-1">
                 {t("replaceHint")}
               </p>
             </div>
@@ -133,18 +133,18 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
           <FileUploadDropzone className="min-h-30 flex-col">
             {isUploading ? (
               <>
-                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground">
+                <Loader2 className="h-8 w-8 animate-spin text-ink-2" />
+                <p className="mt-2 text-sm text-ink-2">
                   {t("uploading")}
                 </p>
               </>
             ) : (
               <>
-                <Upload className="h-8 w-8 text-muted-foreground" />
-                <p className="mt-2 text-sm text-muted-foreground text-center">
+                <Upload className="h-8 w-8 text-ink-2" />
+                <p className="mt-2 text-sm text-ink-2 text-center">
                   {t("dropHint")}
                 </p>
-                <p className="text-[13px] text-muted-foreground">
+                <p className="text-[13px] text-ink-2">
                   {t("sizeHint")}
                 </p>
               </>
@@ -157,15 +157,15 @@ export function EventImageUpload({ onChange, error, getToken, initialValue }: Ev
           <FileUploadDropzone className="min-h-20 flex-col mt-2">
             {isUploading ? (
               <>
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                <p className="mt-1 text-xs text-muted-foreground">
+                <Loader2 className="h-6 w-6 animate-spin text-ink-2" />
+                <p className="mt-1 text-xs text-ink-2">
                   {t("uploadingShort")}
                 </p>
               </>
             ) : (
               <>
-                <Upload className="h-6 w-6 text-muted-foreground" />
-                <p className="mt-1 text-[13px] text-muted-foreground text-center">
+                <Upload className="h-6 w-6 text-ink-2" />
+                <p className="mt-1 text-[13px] text-ink-2 text-center">
                   {t("dropReplaceHint")}
                 </p>
               </>

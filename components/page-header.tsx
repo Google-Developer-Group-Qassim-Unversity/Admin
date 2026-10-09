@@ -18,8 +18,6 @@ export function PageHeader({
   description?: string;
   icon?: LucideIcon;
   children?: React.ReactNode;
-  /** @deprecated The arcs are gone; ignored. */
-  arcSize?: number;
 }) {
   return (
     <header className="border-foreground flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b pb-3">
