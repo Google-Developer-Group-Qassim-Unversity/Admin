@@ -97,6 +97,18 @@ export function useSaveBrief(id: string, team: PipelineTeam) {
   return useRequestMutation(id, (brief: Record<string, unknown>) => api.pipelineRequests.saveBrief(id, team, brief));
 }
 
+export function useSaveDeliverable(id: string, team: PipelineTeam) {
+  const api = useApi();
+  return useRequestMutation(id, (deliverable: Record<string, unknown>) =>
+    api.pipelineRequests.saveDeliverable(id, team, deliverable),
+  );
+}
+
+export function useUploadPoster(id: string) {
+  const api = useApi();
+  return useRequestMutation(id, (file: File) => api.pipelineRequests.uploadPoster(id, file));
+}
+
 export function useSubmitRequest(id: string) {
   const api = useApi();
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
@@ -148,9 +160,5 @@ export function useCompleteTask(id: string) {
 
 export function usePublishRequest(id: string) {
   const api = useApi();
-  return useRequestMutation(
-    id,
-    (body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
-      api.pipelineRequests.publish(id, body),
-  );
+  return useRequestMutation<void>(id, () => api.pipelineRequests.publish(id));
 }

@@ -12,10 +12,13 @@ import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-panel";
 import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
+import { DesignPoster } from "@/components/pipeline/design-poster";
 import { DetailsForm } from "@/components/pipeline/details-form";
 import { DraftSaveProvider } from "@/components/pipeline/draft-autosave";
 import { MissingProvider, READ_ONLY, focusField } from "@/components/pipeline/form-kit";
+import { LogisticsConfirmation } from "@/components/pipeline/logistics-confirmation";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
+import { RequestHistory } from "@/components/pipeline/request-history";
 import { RequestProgress } from "@/components/pipeline/request-progress";
 import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { DraftBar, MissingList, tabOf, type FormTab } from "@/components/pipeline/submit-bar";
@@ -138,6 +141,8 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         <PenaltyNote request={request} />
         <TeamActions request={request} />
         <PublishPanel request={request} />
+        <DesignPoster request={request} />
+        <LogisticsConfirmation request={request} />
 
         {showMissing ? (
           <section className="bg-card border-border flex flex-col gap-3 rounded-xl border p-4 sm:p-5">
@@ -183,6 +188,8 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
           </TabsContent>
         </Tabs>
 
+        <RequestHistory request={request} />
+
         {showBar ? <DraftBar request={request} onIncomplete={onIncomplete} /> : null}
       </div>
     </MissingProvider>
@@ -211,7 +218,7 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
   const meta = [
     departmentName(request.department),
     request.start_date ? formatRange(request.start_date, request.end_date) : t("noDates"),
-    t("createdBy", { name: request.created_by.name }),
+    t("requestedBy", { name: request.requested_by.name }),
   ].join(" · ");
 
   return (

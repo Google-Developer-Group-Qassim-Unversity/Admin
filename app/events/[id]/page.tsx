@@ -3,6 +3,7 @@
 import * as React from "react";
 import Image from "next/image";
 import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEndDate } from "@/lib/utils";
+import { EventHistory } from "@/components/events/event-history";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
 import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, type LucideIcon } from "lucide-react";
@@ -200,6 +201,8 @@ export default function EventInfoPage() {
             </p>
           )}
         </section>
+
+        <EventHistory eventId={event.id} />
       </div>
     </div>
   );
