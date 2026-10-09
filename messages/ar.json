@@ -1895,7 +1895,6 @@
       "back": "مسار الفعاليات",
       "untitled": "فعالية بلا عنوان",
       "noDates": "بلا تواريخ",
-      "createdBy": "بدأه {name}",
       "cancel": "إلغاء الطلب",
       "cancelConfirm": "ستصبح أيامه متاحة للأقسام الأخرى. لا يمكن التراجع عن ذلك.",
       "cancelled": "تم إلغاء الطلب",
@@ -1915,7 +1914,8 @@
         "logistics": "طلب اللوجستيات"
       },
       "cancelTitle": "إلغاء هذا الطلب؟",
-      "keep": "إبقاء الطلب"
+      "keep": "إبقاء الطلب",
+      "requestedBy": "طلبه {name}"
     },
     "details": {
       "title": "عنوان الفعالية",
@@ -2245,6 +2245,35 @@
       "wrongType": "يجب أن يكون البوستر صورة PNG أو JPEG أو WebP.",
       "tooLarge": "يجب ألا يتجاوز البوستر ١٠ ميجابايت.",
       "failed": "حدث خطأ"
+    },
+    "history": {
+      "title": "من فعل ماذا",
+      "hint": "كل خطوة وتعديل وتغيير تلقائي على هذا الطلب، ومن قام به ومتى. الأحدث أولًا.",
+      "automatic": "تلقائيًا",
+      "showAll": "عرض الكل ({count})",
+      "actions": {
+        "booked": "حجز {dates}",
+        "redated": "اختار تواريخ جديدة: {dates}",
+        "detailsEdited": "عدّل بيانات الفعالية",
+        "detailsEditedAfterSubmit": "عدّل بيانات الفعالية بعد إرسال الطلب",
+        "briefEdited": "عدّل طلب {team}",
+        "submitted": "أرسل الطلب",
+        "returned": "أعاد الطلب مع ملاحظات",
+        "resubmitted": "أعاد إرسال الطلب",
+        "late": "تأخير {days} يوم: خصم {points} نقطة عند النشر",
+        "cancelled": "ألغى الطلب",
+        "confirmation_edited": "عدّل تأكيد اللوجستيات",
+        "datesMoved": "نقل التواريخ من {from} إلى {to}",
+        "posterUploaded": "رفع البوستر",
+        "posterReplaced": "استبدل البوستر",
+        "taskDone": "أنهى دور {team}",
+        "published": "نشر الفعالية (رقم {id})",
+        "holdExpired": "ألغى حجز التواريخ: انتهت مهلة الـ٢٤ ساعة",
+        "datesBanned": "أغلق يومًا من {dates}، ففقد الطلب تواريخه",
+        "penaltyGrown": "زاد خصم التأخير إلى {points} نقطة (تأخير {days} يوم)",
+        "eventDeleted": "حذف الفعالية المنشورة (رقم {id})",
+        "briefEditedAfterSubmit": "عدّل طلب {team} بعد إرسال الطلب"
+      }
     }
   },
   "permissions": {

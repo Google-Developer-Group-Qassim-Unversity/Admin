@@ -71,7 +71,7 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
         <div className="flex flex-col gap-0.5">
           <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
           <p className="text-muted-foreground text-[13px]">
-            {canUpload ? t("hint") : task.completed_by ? t("by", { name: task.completed_by.name }) : t("viewHint")}
+            {canUpload ? t("hint") : task.done_by ? t("by", { name: task.done_by.name }) : t("viewHint")}
           </p>
         </div>
       </div>

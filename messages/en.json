@@ -1895,7 +1895,6 @@
       "back": "Pipeline",
       "untitled": "Untitled event",
       "noDates": "No dates",
-      "createdBy": "Started by {name}",
       "cancel": "Cancel request",
       "cancelConfirm": "Its dates become free for other departments. This can't be undone.",
       "cancelled": "Request cancelled",
@@ -1915,7 +1914,8 @@
         "logistics": "Logistics brief"
       },
       "cancelTitle": "Cancel this request?",
-      "keep": "Keep it"
+      "keep": "Keep it",
+      "requestedBy": "Requested by {name}"
     },
     "details": {
       "title": "Event title",
@@ -2245,6 +2245,35 @@
       "wrongType": "The poster must be a PNG, JPEG or WebP image.",
       "tooLarge": "The poster must be 10 MB or smaller.",
       "failed": "Something went wrong"
+    },
+    "history": {
+      "title": "Who did what",
+      "hint": "Every step, edit and automatic change on this request, with who did it and when. Newest first.",
+      "automatic": "Automatic",
+      "showAll": "Show all {count}",
+      "actions": {
+        "booked": "booked {dates}",
+        "redated": "picked new dates: {dates}",
+        "detailsEdited": "edited the event details",
+        "detailsEditedAfterSubmit": "edited the event details after the request was submitted",
+        "briefEdited": "edited the {team} brief",
+        "submitted": "submitted the request",
+        "returned": "returned the request with notes",
+        "resubmitted": "resubmitted the request",
+        "late": "{days, plural, one {# day} other {# days}} late: {points, plural, one {# point} other {# points}} off at publish",
+        "cancelled": "cancelled the request",
+        "confirmation_edited": "edited the Logistics confirmation",
+        "datesMoved": "moved the dates from {from} to {to}",
+        "posterUploaded": "uploaded the poster",
+        "posterReplaced": "replaced the poster",
+        "taskDone": "finished the {team} part",
+        "published": "published the event (#{id})",
+        "holdExpired": "released the dates: the 24-hour hold ran out",
+        "datesBanned": "closed a day of {dates}, so the request lost its dates",
+        "penaltyGrown": "grew the late penalty to {points, plural, one {# point} other {# points}} ({days, plural, one {# day} other {# days}} late)",
+        "eventDeleted": "deleted the published event (#{id})",
+        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted"
+      }
     }
   },
   "permissions": {
