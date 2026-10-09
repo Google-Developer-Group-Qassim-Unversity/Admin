@@ -171,8 +171,5 @@ export function useCompleteTask(id: string) {
 
 export function usePublishRequest(id: string) {
   const api = useApi();
-  return useRequestMutation(
-    id,
-    (body: { image_url: string | null }) => api.pipelineRequests.publish(id, body),
-  );
+  return useRequestMutation<void>(id, () => api.pipelineRequests.publish(id));
 }

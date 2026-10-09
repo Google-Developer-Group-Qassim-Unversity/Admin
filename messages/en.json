@@ -2169,16 +2169,20 @@
     },
     "publish": {
       "title": "Publish the event",
-      "hint": "Every team is done. Publishing creates the event in Events as a draft; an admin reviews it and opens registration.",
-      "tier": "Points tier",
-      "pickTier": "Choose the event's points tier",
-      "image": "Poster image link",
-      "imageHint": "You can also add it later from the event page.",
+      "hint": "Every team is done. Publishing puts the event live with exactly what the teams confirmed: nothing to fill in here.",
       "button": "Publish",
-      "published": "Published",
+      "published": "Published. The event is live.",
       "failed": "Could not publish",
-      "done": "Published as event #{id} (a draft for admins to review).",
-      "open": "Open the event"
+      "done": "Published as event #{id}. It is live: members can see it and register.",
+      "open": "Open the event",
+      "online": "Online",
+      "noPoster": "No poster: the event will go out without an image.",
+      "confirmTitle": "Publish this event to everyone?",
+      "confirmBody": "This makes the event public right now. Members see it straight away and can start registering. There is no admin review after this.",
+      "confirmFinal": "You cannot undo this from the pipeline. Check the date, time, place and poster before you continue.",
+      "confirmCheck": "I checked everything and the event is ready to go public.",
+      "confirmCancel": "Not yet",
+      "confirmButton": "Yes, publish it now"
     },
     "autosave": {
       "saving": "Saving…",
