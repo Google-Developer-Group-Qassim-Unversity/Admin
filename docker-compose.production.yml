@@ -8,8 +8,9 @@
 
 services:
   web:
-    image: gdg-admin-web
-    container_name: gdg-admin-web
+    # Named per deployment by deploy.yml: gdg-admin-web for prod, -staging for staging.
+    image: ${CONTAINER_NAME:-gdg-admin-web}
+    container_name: ${CONTAINER_NAME:-gdg-admin-web}
     build:
       context: .
       dockerfile: Dockerfile
@@ -35,4 +36,4 @@ services:
       NODE_OPTIONS: "--dns-result-order=ipv4first --no-network-family-autoselection"
     restart: unless-stopped
     ports:
-      - "127.0.0.1:3012:3000"
+      - "127.0.0.1:${HOST_PORT:-3012}:3000"
