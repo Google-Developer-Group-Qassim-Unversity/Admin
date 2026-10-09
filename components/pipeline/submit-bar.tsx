@@ -151,30 +151,37 @@ export function DraftBar({
 
   const left = request.missing.length;
 
+  // On a phone this is one line above the bottom bar, so the form keeps the
+  // screen: a short count, Finish later and Submit. Wider screens get the full
+  // sentence and the autosave status.
   return (
-    <div className="bg-card border-foreground z-30 flex flex-col gap-2.5 border-t px-4 py-3 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] md:sticky md:bottom-4 md:flex-row md:items-center md:gap-4 md:rounded-xl md:border-0 md:px-5 md:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)] md:ring-1 md:ring-rule">
+    <div className="bg-card border-foreground z-30 flex items-center gap-2 border-t px-3 py-2.5 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] md:sticky md:bottom-4 md:gap-4 md:rounded-xl md:border-0 md:px-5 md:py-3 md:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)] md:ring-1 md:ring-rule">
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
         {left ? (
-          <p className="text-door-ochre-ink flex items-center gap-2 text-sm font-bold">
+          <p className="text-door-ochre-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
             <ListTodo className="size-[18px] shrink-0" />
-            {t("stillMissing", { count: left })}
+            <span className="md:hidden">{t("leftShort", { count: left })}</span>
+            <span className="max-md:hidden">{t("stillMissing", { count: left })}</span>
           </p>
         ) : (
-          <p className="text-door-green-ink flex items-center gap-2 text-sm font-bold">
+          <p className="text-door-green-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
             <CircleCheck className="size-[18px] shrink-0" />
-            {t("complete")}
+            <span className="md:hidden">{t("readyShort")}</span>
+            <span className="max-md:hidden">{t("complete")}</span>
           </p>
         )}
-        <DraftSaveStatus />
+        <span className="max-md:hidden">
+          <DraftSaveStatus />
+        </span>
       </div>
-      <div className={cn("grid gap-2 md:flex", isReturned ? "grid-cols-1" : "grid-cols-[1fr_1.3fr]")}>
+      <div className="flex shrink-0 gap-2">
         {!isReturned ? (
-          <Button variant="outline" size="lg" onClick={onFinishLater} disabled={busy}>
-            <Clock />
+          <Button variant="outline" size="lg" className="max-md:h-11 max-md:px-3" onClick={onFinishLater} disabled={busy}>
+            <Clock className="max-[359px]:hidden" />
             {t("finishLater")}
           </Button>
         ) : null}
-        <Button variant="green" size="lg" onClick={onSubmit} disabled={busy}>
+        <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
           <Send className="rtl:-scale-x-100" />
           {isReturned ? tr("resubmit") : t("button")}
         </Button>

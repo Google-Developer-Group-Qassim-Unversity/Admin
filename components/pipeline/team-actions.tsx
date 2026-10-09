@@ -19,6 +19,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCompleteTask, useReturnRequest } from "@/hooks/use-pipeline";
 import type { EventRequestDetail, PipelineTeam } from "@/lib/pipeline-types";
+import { intlLocale } from "@/lib/format";
 
 /**
  * The caller's team's turn: mark its part done, or (Design, once, early on)
@@ -28,22 +29,11 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
   const tt = useTranslations("pipeline.teams");
   const locale = useLocale();
-  const complete = useCompleteTask(request.id);
-  const [returning, setReturning] = React.useState(false);
-  const formatter = new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" });
+  const formatter = new Intl.DateTimeFormat(intlLocale(locale), { dateStyle: "medium", timeStyle: "short" });
   const teams = request.actions.complete;
   const canReturn = request.actions.can_return;
 
   if (!teams.length && !canReturn) return null;
-
-  const onComplete = async (team: PipelineTeam) => {
-    try {
-      await complete.mutateAsync(team);
-      toast.success(t("marked"));
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("failed"));
-    }
-  };
 
   const formatTeams = teams.map((team) => tt(team)).join(" · ");
 
@@ -69,27 +59,56 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
           </p>
         ) : null}
       </DoorPanel>
-      <div className="grid gap-2 sm:flex sm:flex-wrap">
-        {teams.map((team) => (
-          <Button key={team} variant="green" size="lg" onClick={() => onComplete(team)} disabled={complete.isPending}>
-            <CheckCircle2 />
-            {t("markTeamDone", { team: tt(team) })}
-          </Button>
-        ))}
-        {canReturn ? (
-          <Button
-            variant="outline"
-            size="lg"
-            className="text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"
-            onClick={() => setReturning(true)}
-          >
-            <CornerUpLeft />
-            {t("return")}
-          </Button>
-        ) : null}
-      </div>
-      <ReturnDialog request={request} open={returning} onOpenChange={setReturning} />
+      <TeamActionButtons request={request} />
     </Door>
+  );
+}
+
+/**
+ * The buttons alone, for an ochre door that is already open: one green
+ * "Mark <team> done" per team whose turn it is, and "Return with notes" when
+ * Design still may. Shared by the request view and the dashboard's door.
+ */
+export function TeamActionButtons({ request }: { request: EventRequestDetail }) {
+  const t = useTranslations("pipeline.review");
+  const tt = useTranslations("pipeline.teams");
+  const complete = useCompleteTask(request.id);
+  const [returning, setReturning] = React.useState(false);
+  const teams = request.actions.complete;
+  const canReturn = request.actions.can_return;
+
+  if (!teams.length && !canReturn) return null;
+
+  const onComplete = async (team: PipelineTeam) => {
+    try {
+      await complete.mutateAsync(team);
+      toast.success(t("marked"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+    }
+  };
+
+  return (
+    <div className="grid gap-2 sm:flex sm:flex-wrap">
+      {teams.map((team) => (
+        <Button key={team} variant="green" size="lg" onClick={() => onComplete(team)} disabled={complete.isPending}>
+          <CheckCircle2 />
+          {t("markTeamDone", { team: tt(team) })}
+        </Button>
+      ))}
+      {canReturn ? (
+        <Button
+          variant="outline"
+          size="lg"
+          className="text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"
+          onClick={() => setReturning(true)}
+        >
+          <CornerUpLeft />
+          {t("return")}
+        </Button>
+      ) : null}
+      <ReturnDialog request={request} open={returning} onOpenChange={setReturning} />
+    </div>
   );
 }
 

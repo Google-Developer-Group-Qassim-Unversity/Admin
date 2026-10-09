@@ -47,6 +47,7 @@ import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
 import { SOFT } from "@/components/najdi";
 import { useTranslations } from "next-intl";
+import { isolate, useFormatters } from "@/lib/format";
 
 interface CsvBatchPanelProps {
   events: Event[];
@@ -54,17 +55,14 @@ interface CsvBatchPanelProps {
   provider: EmailProvider;
 }
 
-function formatEventDate(event: Event): string {
-  const start = new Date(event.start_datetime);
-  const end = new Date(event.end_datetime);
-  const startStr = start.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  if (start.toDateString() === end.toDateString()) return startStr;
-  const endStr = end.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
-  return `${startStr} - ${endStr}`;
+/** "9 Oct 2026", or a range written the way the reader's language writes ranges. */
+function formatEventDate(event: Event, fmt: ReturnType<typeof useFormatters>): string {
+  return fmt.range(event.start_datetime, event.end_datetime);
 }
 
 export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelProps) {
   const t = useTranslations("manageEmails.csvBatch");
+  const fmt = useFormatters();
   const tSend = useTranslations("manageEmails.sendCertificates");
   const tDirect = useTranslations("manageEmails.directEmail");
   const tc = useTranslations("common.actions");
@@ -310,7 +308,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       if (updated.length === 0) setShowVerifyDialog(false);
       return updated;
     });
-    toast.info(t("discarded", { name: rowName }));
+    toast.info(t("discarded", { name: isolate(rowName) }));
   };
 
   const clearCsvRows = () => {
@@ -525,7 +523,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
                           <div className="flex flex-col">
                             <span dir="auto">{event.name}</span>
                             <span className="text-xs text-muted-foreground">
-                              {formatEventDate(event)}
+                              {formatEventDate(event, fmt)}
                             </span>
                           </div>
                         </CommandItem>
@@ -539,7 +537,7 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
               <div className="mt-3 space-y-2">
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {formatEventDate(batchSelectedEvent)}
+                  {formatEventDate(batchSelectedEvent, fmt)}
                 </div>
                 <div className="flex items-center gap-2 text-xs">
                   <Globe className="h-3 w-3 text-muted-foreground" />

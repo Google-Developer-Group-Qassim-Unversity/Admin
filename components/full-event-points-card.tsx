@@ -5,12 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Globe, MapPin } from "lucide-react";
 
-import { Plate, type DoorTone } from "@/components/najdi";
+import { Plate } from "@/components/najdi";
 import { usePointsDate } from "@/components/points-custom-event-card";
-import { StatusBadge } from "@/components/status-badge";
-import type { Event, EventStatus } from "@/lib/api-types";
+import { EVENT_TONE, StatusBadge } from "@/components/status-badge";
+import type { Event } from "@/lib/api-types";
 
-const STATUS_TONE: Record<EventStatus, DoorTone> = { draft: "umber", open: "indigo", active: "green", closed: "umber" };
 
 /**
  * A full (attendance) event in the points section: one row on the wall. The
@@ -32,18 +31,18 @@ export function FullEventPointsCard({ event }: { event: Event }) {
           <Image src={imageUrl} alt="" fill sizes="48px" className="object-cover" />
         </span>
       ) : (
-        <Plate tone={STATUS_TONE[event.status]} icon={CalendarDays} />
+        <Plate tone={EVENT_TONE[event.status]} icon={CalendarDays} />
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3 className="truncate text-[15px] leading-snug font-bold" dir="auto">
+        <h3 className="truncate text-[15px] leading-snug font-bold">
           {/* Stretched: the whole row opens the points editor. */}
           <Link
             href={`/points/${event.id}`}
             aria-label={`${event.name}: ${tp("editPoints")}`}
             className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ring"
           >
-            {event.name}
+            <bdi>{event.name}</bdi>
           </Link>
         </h3>
         <dl className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px]">

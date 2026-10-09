@@ -7,12 +7,13 @@ import { ChevronRight, Eye, EyeOff } from "lucide-react";
 import { INK, Plate } from "@/components/najdi";
 import { parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
+import { intlLocale } from "@/lib/format";
 
 /** "12 Oct 2026" in the reader's language, Gregorian. */
 export function usePointsDate() {
   const locale = useLocale();
   return (iso: string) =>
-    parseLocalDateTime(iso).toLocaleDateString(locale === "ar" ? "ar-SA-u-ca-gregory" : "en-GB", {
+    parseLocalDateTime(iso).toLocaleDateString(intlLocale(locale), {
       day: "numeric",
       month: "short",
       year: "numeric",
@@ -37,14 +38,14 @@ export function PointsCustomEventCard({ event }: { event: Event }) {
       <Plate tone={isHidden ? "umber" : "indigo"} icon={isHidden ? EyeOff : Eye} />
 
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <h3 className="truncate text-[15px] leading-snug font-bold" dir="auto">
+        <h3 className="truncate text-[15px] leading-snug font-bold">
           {/* Stretched: the whole row opens the points editor. */}
           <Link
             href={href}
             aria-label={`${event.name}: ${tp("editPoints")}`}
             className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ring"
           >
-            {event.name}
+            <bdi>{event.name}</bdi>
           </Link>
         </h3>
         <p className="text-ink-2 flex flex-wrap items-center gap-x-2 text-[13px]">

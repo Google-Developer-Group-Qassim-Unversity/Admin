@@ -14,6 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { useAddSuperAdmin, useRemoveSuperAdmin, useSuperAdmins } from "@/hooks/use-permissions";
 import type { SuperAdminEntry } from "@/lib/permissions-types";
+import { isolate } from "@/lib/format";
 
 /** Super admins can do anything; they add and remove each other here. */
 export function SuperAdminsPanel() {
@@ -71,7 +72,7 @@ export function SuperAdminsPanel() {
               </span>
               <span className="text-ink-2 text-xs">
                 {row.added_by
-                  ? t("addedBy", { name: row.added_by.name, date: format.dateTime(new Date(row.added_at), { dateStyle: "medium" }) })
+                  ? t("addedBy", { name: isolate(row.added_by.name), date: format.dateTime(new Date(row.added_at), { dateStyle: "medium" }) })
                   : t("addedByScript", { date: format.dateTime(new Date(row.added_at), { dateStyle: "medium" }) })}
               </span>
             </div>
@@ -94,7 +95,7 @@ export function SuperAdminsPanel() {
       ) : null}
       {removing ? (
         <ConfirmChange
-          title={t("removeConfirm", { name: removing.name })}
+          title={t("removeConfirm", { name: isolate(removing.name) })}
           description={t("removeHint")}
           pending={remove.isPending}
           onConfirm={() => void onRemove()}

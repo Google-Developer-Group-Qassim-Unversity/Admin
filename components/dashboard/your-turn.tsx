@@ -6,13 +6,15 @@ import { ArrowLeft, CalendarPlus, CheckCircle2, Hourglass, Timer } from "lucide-
 
 import { Door, DoorPanel, Plate, Tarma } from "@/components/najdi";
 import { Countdown } from "@/components/pipeline/countdown";
-import { tarmaFor, useDepartmentName, useFormatDateRange, useStageWords } from "@/components/pipeline/shared";
+import { useTimeAgo } from "@/lib/format";
+import { TEAM_ICON, tarmaFor, useDepartmentName, useFormatDateRange, useStageWords } from "@/components/pipeline/shared";
+import { TeamActionButtons } from "@/components/pipeline/team-actions";
 import { tabOf, useFieldLabel, type FormTab } from "@/components/pipeline/submit-bar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePipelineRequest } from "@/hooks/use-pipeline";
 import { cn } from "@/lib/utils";
-import type { EventRequestSummary } from "@/lib/pipeline-types";
+import type { EventRequestSummary, InboxItem } from "@/lib/pipeline-types";
 
 type Why = "returned" | "hold" | "lost" | "ready";
 
@@ -48,10 +50,13 @@ export function waitingOnYou(requests: EventRequestSummary[]) {
  */
 export function YourTurn({
   waiting,
+  teamTasks = [],
   isPending,
   big = false,
 }: {
   waiting: ReturnType<typeof waitingOnYou>;
+  /** What waits on the caller's teams, oldest first. Takes the door when their own department has nothing. */
+  teamTasks?: InboxItem[];
   isPending: boolean;
   big?: boolean;
 }) {
@@ -60,6 +65,7 @@ export function YourTurn({
   const { data: detail } = usePipelineRequest(first?.request.id ?? "", { enabled: !!first });
 
   if (isPending) return <Skeleton className="h-64 w-full rounded-xl" />;
+  if (!first && teamTasks[0]) return <TeamTaskDoor item={teamTasks[0]} more={teamTasks.length - 1} big={big} />;
   if (!first) {
     return (
       <section className="bg-card ring-rule flex items-center gap-3 rounded-xl px-4 py-4 ring-1">
@@ -149,7 +155,7 @@ function TurnDoor({
       </div>
       <DoorPanel>
         <h3 className={cn("leading-snug font-bold", big ? "text-[21px]" : "text-[19px]")}>
-          {request.title || tp("requests.untitled")}
+          <bdi>{request.title || tp("requests.untitled")}</bdi>
         </h3>
         <p className="text-[13.5px] opacity-80">
           {departmentName(request.department)} ·{" "}
@@ -197,6 +203,62 @@ function TurnDoor({
           {t("more", { count: more })}
         </Link>
       ) : null}
+    </Door>
+  );
+}
+
+/**
+ * A team's task in the dashboard's door: the oldest request waiting on one of
+ * the caller's teams, with the buttons that finish it right here.
+ */
+function TeamTaskDoor({ item, more, big }: { item: InboxItem; more: number; big: boolean }) {
+  const t = useTranslations("dashboard.yourTurn");
+  const tp = useTranslations("pipeline");
+  const departmentName = useDepartmentName();
+  const formatRange = useFormatDateRange();
+  const stageWords = useStageWords();
+  const timeAgo = useTimeAgo();
+  const request = item.request;
+  const { data: detail } = usePipelineRequest(request.id);
+  const TeamIcon = TEAM_ICON[item.team];
+
+  return (
+    <Door tone="ochre" aria-labelledby="team-task">
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        <h2 id="team-task" className="font-display text-[21px] leading-tight font-semibold">
+          {t("teamTitle")}
+        </h2>
+        <span className="bg-on-door-ochre inline-flex h-7 items-center gap-1.5 rounded-sm px-2.5 text-[13px] font-bold text-white">
+          <TeamIcon className="size-4" aria-hidden="true" />
+          {tp(`teams.${item.team}`)}
+        </span>
+      </div>
+      <DoorPanel>
+        <h3 className={cn("leading-snug font-bold", big ? "text-[21px]" : "text-[19px]")}>
+          <bdi>{request.title || tp("requests.untitled")}</bdi>
+        </h3>
+        <p className="text-[13.5px] opacity-80">
+          {departmentName(request.department)} ·{" "}
+          <span className="tabular">{request.start_date ? formatRange(request.start_date, request.end_date) : tp("requests.noDates")}</span>
+        </p>
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-2.5 gap-y-1 text-[13px] font-bold">
+          <Tarma {...tarmaFor(request.stage)} size={15} label={stageWords(request.stage)} />
+          <span>{stageWords(request.stage)}</span>
+          {item.opened_at ? <span className="ms-auto font-medium opacity-80">{t("teamArrived", { ago: timeAgo(item.opened_at) })}</span> : null}
+        </div>
+      </DoorPanel>
+      {detail ? <TeamActionButtons request={detail} /> : <Skeleton className="h-11 w-full rounded-lg bg-black/10" />}
+      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
+        <Link href={`/pipeline/requests/${request.id}`} className="inline-flex min-h-11 items-center gap-1.5 text-[14px] font-bold underline underline-offset-3">
+          {t("teamOpen")}
+          <ArrowLeft className="size-4 ltr:-scale-x-100" aria-hidden="true" />
+        </Link>
+        {more > 0 ? (
+          <Link href="/pipeline" className="text-[13px] font-bold underline underline-offset-3">
+            {t("teamMore", { count: more })}
+          </Link>
+        ) : null}
+      </div>
     </Door>
   );
 }

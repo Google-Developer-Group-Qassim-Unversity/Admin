@@ -82,7 +82,7 @@ function JobRow({ job }: { job: EmailJobModel }) {
 
   return (
     <div className="flex items-start gap-3 px-3 py-3">
-      <Plate tone="umber" size="sm" icon={TypeIcon} />
+      <Plate tone="neutral" size="sm" icon={TypeIcon} />
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="min-w-0 flex-1 truncate text-sm font-bold">

@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SOFT } from "@/components/najdi";
 
 import type { CsvRow } from "./types";
+import { isolate } from "@/lib/format";
 
 interface AttendanceVerifyDialogProps {
   open: boolean;
@@ -61,7 +62,7 @@ export function AttendanceVerifyDialog({
               <div className="min-w-0">
                 <p dir="auto" className="truncate text-sm font-medium">{row.name}</p>
                 <p className="text-muted-foreground truncate text-[13px]">
-                  {row.email}
+                  <bdi>{row.email}</bdi>
                   {row.uniId && (
                     <>
                       {" · "}
@@ -86,7 +87,7 @@ export function AttendanceVerifyDialog({
                   className="text-door-green-ink"
                   onClick={() => {
                     onAllow(i);
-                    toast.success(t("allowedToast", { name: unverifiedRows[i].name }));
+                    toast.success(t("allowedToast", { name: isolate(unverifiedRows[i].name) }));
                   }}
                 >
                   <Check className="h-4 w-4" />
@@ -112,7 +113,7 @@ export function AttendanceVerifyDialog({
                   <TableCell className="py-2">
                     <div dir="auto" className="font-medium text-sm">{row.name}</div>
                     <div className="text-xs text-muted-foreground flex items-center gap-2">
-                      <span>{row.email}</span>
+                      <bdi>{row.email}</bdi>
                       {row.uniId && (
                         <>
                           <span className="text-border">&bull;</span>
@@ -144,7 +145,7 @@ export function AttendanceVerifyDialog({
                         className="text-door-green-ink hover:bg-door-green-soft"
                         onClick={() => {
                           onAllow(i);
-                          toast.success(t("allowedToast", { name: unverifiedRows[i].name }));
+                          toast.success(t("allowedToast", { name: isolate(unverifiedRows[i].name) }));
                         }}
                         title={t("allow")}
                         aria-label={t("allow")}

@@ -50,7 +50,7 @@ export function MemberDetailsTrigger({
   const { can } = useAccess();
   const [open, setOpen] = useState(false);
   // Callers passing their own content underline the name in it with `group-hover/member:underline`.
-  const content = children ?? <span className="group-hover/member:underline">{member.name}</span>;
+  const content = children ?? <span className="group-hover/member:underline" dir="auto">{member.name}</span>;
 
   if (!can("members.view")) {
     return <span className={className}>{children ?? member.name}</span>;

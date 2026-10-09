@@ -36,6 +36,7 @@ import {
 import { useBatchCreateMembers } from "@/hooks/use-members";
 import type { BatchCreateMemberItem, Gender } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
+import { useFormatters } from "@/lib/format";
 
 interface BatchImportDialogProps {
   open: boolean;
@@ -68,6 +69,7 @@ export function BatchImportDialog({
 }: BatchImportDialogProps) {
   const t = useTranslations("batchImport");
   const tb = useTranslations("attendance.backfill");
+  const fmt = useFormatters();
   const batchMutation = useBatchCreateMembers(getToken);
 
   const [token, setToken] = React.useState("");
@@ -249,7 +251,7 @@ export function BatchImportDialog({
                         <span className="text-ink-2">{tb("validatedAt")}</span>
                         <span className="font-medium tabular text-end">
                           {metadata?.validated_at
-                            ? new Date(metadata.validated_at).toLocaleString()
+                            ? fmt.dateTime(metadata.validated_at)
                             : "-"}
                         </span>
                       </div>
@@ -297,7 +299,7 @@ export function BatchImportDialog({
                                 </div>
                                 <div className="text-ink-2 truncate text-[13px]">
                                   <span className="tabular">{row["university id"]}</span>
-                                  {row.email ? <> · {row.email}</> : null}
+                                  {row.email ? <> · <bdi>{row.email}</bdi></> : null}
                                   {row.gender ? <> · {row.gender}</> : null}
                                 </div>
                               </li>
@@ -320,9 +322,9 @@ export function BatchImportDialog({
                             <TableBody>
                               {verifiedRows.slice(0, 50).map((row, idx) => (
                                 <TableRow key={idx}>
-                                  <TableCell className="font-medium">{row.name}</TableCell>
+                                  <TableCell className="font-medium" dir="auto">{row.name}</TableCell>
                                   <TableCell>{row["university id"]}</TableCell>
-                                  <TableCell>{row.email}</TableCell>
+                                  <TableCell><bdi>{row.email}</bdi></TableCell>
                                   <TableCell>{row.gender}</TableCell>
                                 </TableRow>
                               ))}

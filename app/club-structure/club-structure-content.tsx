@@ -254,16 +254,21 @@ function ClubStructureOverview() {
       {!overview.data && !overview.error && <ClubLoading overview />}
       {overview.data && semester && (
         <>
-          {/* One quiet strip of numbers, not a row of tiles. */}
-          <dl className="bg-card ring-rule grid grid-cols-3 overflow-hidden rounded-xl ring-1">
+          {/* One quiet strip of numbers, not a row of tiles; on a phone, one line of text. */}
+          <dl className="text-ink-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[13px] sm:bg-card sm:ring-rule sm:grid sm:grid-cols-3 sm:overflow-hidden sm:rounded-xl sm:ring-1">
             {[
               { label: t("semesterDepartments", { semester: semester.name }), value: departments.length },
               { label: t("active"), value: departments.filter((department) => department.active).length },
               { label: t("totalMembers"), value: overview.data.total_members },
             ].map((stat) => (
-              <div key={stat.label} className="border-rule flex min-w-0 flex-col-reverse gap-0.5 border-e px-3 py-3 last:border-e-0 sm:px-5">
-                <dt className="text-ink-2 text-[12.5px] leading-snug sm:text-[13px]">{stat.label}</dt>
-                <dd className="text-[21px] leading-tight font-bold tabular-nums">{format.number(stat.value)}</dd>
+              <div
+                key={stat.label}
+                className="border-rule flex min-w-0 items-baseline gap-1 after:ps-0.5 after:content-['·'] last:after:content-none sm:flex-col-reverse sm:items-stretch sm:gap-0.5 sm:border-e sm:px-5 sm:py-3 sm:after:content-none sm:last:border-e-0"
+              >
+                <dt className="leading-snug sm:text-[13px]">{stat.label}</dt>
+                <dd className="text-foreground font-bold tabular-nums max-sm:order-first sm:text-[21px] sm:leading-tight">
+                  {format.number(stat.value)}
+                </dd>
               </div>
             ))}
           </dl>
@@ -304,7 +309,7 @@ function ClubStructureOverview() {
               </div>
             ) : (
               <div className="border-adobe mt-2 flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-14 text-center">
-                <Plate tone="umber" icon={Network} />
+                <Plate tone="neutral" icon={Network} />
                 <p className="text-ink-2 max-w-sm text-sm">
                   {search.trim() ? t("noDepartmentsFound") : t("noSemesterDepartments", { semester: semester.name })}
                 </p>

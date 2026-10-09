@@ -18,6 +18,7 @@ import { SendCustomEmailDialog } from "./send-custom-email-dialog";
 import type { CertificateEmailLog, CertificateEligibility } from "./types";
 import { useTranslations } from "next-intl";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { useFormatters } from "@/lib/format";
 
 type SubTab = "sent" | "not-sent";
 
@@ -32,6 +33,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
   // migrated yet.
   const { getToken } = useAuth();
   const t = useTranslations("attendance.certificateTab");
+  const fmt = useFormatters();
   const [subTab, setSubTab] = React.useState<SubTab>("sent");
   const [data, setData] = React.useState<CertificateEligibility | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -148,7 +150,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
 
   const formatSentAt = (sentAt: string) => {
     try {
-      return new Date(sentAt).toLocaleString();
+      return fmt.dateTime(sentAt);
     } catch {
       return sentAt;
     }
@@ -305,7 +307,7 @@ export function CertificateTab({ eventId }: CertificateTabProps) {
                       <Users className="h-4 w-4 text-ink-2 shrink-0 mt-0.5" />
                       <div className="min-w-0">
                         <p className="truncate text-sm font-medium"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
-                        <p className="truncate text-[13px] text-ink-2 sm:text-xs">{member.email}</p>
+                        <p className="truncate text-[13px] text-ink-2 sm:text-xs"><bdi>{member.email}</bdi></p>
                       </div>
                     </div>
                   ))}

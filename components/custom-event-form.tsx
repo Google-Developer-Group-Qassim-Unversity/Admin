@@ -28,6 +28,7 @@ import { useFormDirty } from "@/lib/use-form-dirty";
 import { useAccess } from "@/hooks/use-access";
 import { FormActions } from "@/components/form-actions";
 import { SectionHead } from "@/components/najdi";
+import { intlLocale } from "@/lib/format";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
@@ -268,7 +269,7 @@ export function CustomEventForm({
 
   // The date in the reader's language (date-fns' "PPP" was always English).
   const displayDate = date
-    ? date.toLocaleDateString(locale === "ar" ? "ar-SA-u-ca-gregory" : "en-GB", { weekday: "short", day: "numeric", month: "long", year: "numeric" })
+    ? date.toLocaleDateString(intlLocale(locale), { weekday: "short", day: "numeric", month: "long", year: "numeric" })
     : null;
 
   return (

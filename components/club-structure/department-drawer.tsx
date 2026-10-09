@@ -37,6 +37,7 @@ import type {
 } from "@/lib/club-structure-types";
 import { normalizeArabic } from "@/lib/search-utils";
 import { useClubError } from "@/components/club-structure/use-club-error";
+import { isolate } from "@/lib/format";
 
 function DepartmentRoster({
   semester,
@@ -179,7 +180,7 @@ function DepartmentRoster({
       )}
       {removing && canEdit && (
         <ConfirmChange
-          title={t("removeConfirm", { name: removing.member.name })}
+          title={t("removeConfirm", { name: isolate(removing.member.name) })}
           description={t("removeHint")}
           pending={remove.isPending}
           disabled={disabled}

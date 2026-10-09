@@ -24,18 +24,21 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { SemesterDialog } from "@/components/manage-semesters/semester-dialog";
 import { useCreateSemester, useDeleteSemester, useSemesters, useUpdateSemester } from "@/hooks/use-semesters";
 import type { Semester, SemesterInput } from "@/lib/api-types";
-import { useTranslations } from "next-intl";
-
-const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-
-function formatDate(isoDate: string) {
-  // The API sends plain YYYY-MM-DD; parsing as UTC keeps the day from shifting in negative offsets.
-  return DATE_FORMAT.format(new Date(`${isoDate}T00:00:00Z`));
-}
+import { useLocale, useTranslations } from "next-intl";
+import { intlLocale, isolate } from "@/lib/format";
 
 export default function ManageSemestersPage() {
   const t = useTranslations("semestersPage");
   const tc = useTranslations("common.actions");
+  const locale = useLocale();
+  // The API sends plain YYYY-MM-DD; reading it as UTC keeps the day from shifting.
+  const dates = React.useMemo(
+    () => new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }),
+    [locale],
+  );
+  const day = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`);
+  const formatDate = (isoDate: string) => dates.format(day(isoDate));
+  const formatRange = (start: string, end: string) => dates.formatRange(day(start), day(end));
   const { data: semesters, isLoading, error } = useSemesters();
   const createSemester = useCreateSemester();
   const updateSemester = useUpdateSemester();
@@ -75,7 +78,7 @@ export default function ManageSemestersPage() {
     if (!pendingDelete) return;
     try {
       await deleteSemester.mutateAsync(pendingDelete.id);
-      toast.success(t("semesterDeleted", { name: pendingDelete.name }));
+      toast.success(t("semesterDeleted", { name: isolate(pendingDelete.name) }));
       setPendingDelete(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("deleteFailed"));
@@ -139,10 +142,11 @@ export default function ManageSemestersPage() {
 
       {!isLoading && !error && (
         <section className="flex flex-col gap-3">
-          <SectionHead
-            title={t("allSemesters")}
-            action={<span className="text-ink-2 font-medium">{t("countDescription", { count: rows.length })}</span>}
-          />
+          <div className="flex flex-col gap-1.5">
+            <SectionHead title={t("allSemesters")} count={rows.length} />
+            {/* A sentence, not a heading action: it has to wrap on a phone. */}
+            <p className="text-ink-2 text-[13px] text-pretty">{t("countDescription", { count: rows.length })}</p>
+          </div>
           <div>
             {rows.length === 0 ? (
               <p className="text-ink-2 py-6 text-center text-sm">
@@ -163,7 +167,7 @@ export default function ManageSemestersPage() {
                         {semester.hijri_code} · {semester.gregorian_code}
                       </span>
                       <span className="text-ink-2 tabular text-[13px]">
-                        {formatDate(semester.start_date)} – {formatDate(semester.end_date)}
+                        {formatRange(semester.start_date, semester.end_date)}
                       </span>
                       {renderBadges(semester)}
                     </div>
@@ -223,7 +227,7 @@ export default function ManageSemestersPage() {
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle", { name: pendingDelete?.name ?? "" })}</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteConfirmTitle", { name: isolate(pendingDelete?.name ?? "") })}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("deleteConfirmDescription")}
             </AlertDialogDescription>

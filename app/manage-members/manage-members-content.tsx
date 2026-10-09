@@ -27,7 +27,6 @@ import {
   EllipsisVertical,
   Mail,
 } from "lucide-react";
-import { format } from "date-fns";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -67,6 +66,7 @@ import { useMembersPaginated, useMemberStats, memberKeys } from "@/hooks/use-mem
 import type { Member } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 import { config } from "@/lib/config";
+import { useFormatters } from "@/lib/format";
 
 const PAGE_SIZE_OPTIONS = [10, 50, 100] as const;
 
@@ -91,6 +91,7 @@ function phoneSortOf(sorting: SortingState): PhoneSort {
 function buildColumns(
   t: ReturnType<typeof useTranslations<"manageMembersPage">>,
   tf: ReturnType<typeof useTranslations<"common.fields">>,
+  fmt: ReturnType<typeof useFormatters>,
 ): ColumnDef<Member>[] {
   return [
     {
@@ -171,7 +172,7 @@ function buildColumns(
       cell: ({ row }) => {
         const lastActivity = row.getValue<string | null | undefined>("last_activity");
         return lastActivity ? (
-          <span className="tabular text-sm">{format(new Date(lastActivity), "MMM d, yyyy")}</span>
+          <span className="tabular text-sm">{fmt.date(lastActivity)}</span>
         ) : (
           <span className="text-ink-2 text-sm">{t("noActivity")}</span>
         );
@@ -221,7 +222,8 @@ export function ManageMembersContent() {
   const { getToken } = useAuth();
   const queryClient = useQueryClient();
   const tf = useTranslations("common.fields");
-  const columns = React.useMemo(() => buildColumns(t, tf), [t, tf]);
+  const fmt = useFormatters();
+  const columns = React.useMemo(() => buildColumns(t, tf, fmt), [t, tf, fmt]);
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = React.useState(false);
   const [isBatchDialogOpen, setIsBatchDialogOpen] = React.useState(false);
@@ -306,8 +308,21 @@ export function ManageMembersContent() {
         </Button>
       </PageHeader>
 
-      {/* One quiet strip of numbers. Phones: the total across the top, then a 2x2. */}
-      <dl className="bg-rule ring-rule grid grid-cols-2 gap-px overflow-hidden rounded-xl ring-1 sm:grid-cols-5">
+      {/* Phones: one quiet line, so search and the list come first. */}
+      <div className="text-ink-2 tabular text-[13px] sm:hidden">
+        {stats ? (
+          t("stats.summary", {
+            total: fmt.number(stats.total),
+            authenticated: fmt.number(stats.authenticated),
+            manual: fmt.number(stats.manual),
+          })
+        ) : (
+          <Skeleton className="h-4 w-56" />
+        )}
+      </div>
+
+      {/* Wider: one quiet strip of numbers. */}
+      <dl className="bg-rule ring-rule hidden gap-px overflow-hidden rounded-xl ring-1 sm:grid sm:grid-cols-5">
         {(
           [
             { key: "total", label: t("stats.total"), value: stats?.total, icon: Users },
@@ -319,14 +334,14 @@ export function ManageMembersContent() {
         ).map(({ key, label, value, icon: Icon }) => (
           <div
             key={key}
-            className="bg-card flex min-w-0 flex-col-reverse gap-0.5 px-4 py-3 max-sm:first:col-span-2"
+            className="bg-card flex min-w-0 flex-col-reverse gap-0.5 px-4 py-3"
           >
             <dt className="text-ink-2 flex items-center gap-1.5 text-[13px]">
               {key === "authenticated" ? <Mark tone="green" /> : <Icon className="size-3.5" aria-hidden="true" />}
               {label}
             </dt>
             <dd className="text-[21px] leading-tight font-bold tabular-nums">
-              {value === undefined ? <Skeleton className="my-1 h-5 w-14" /> : value.toLocaleString()}
+              {value === undefined ? <Skeleton className="my-1 h-5 w-14" /> : fmt.number(value)}
             </dd>
           </div>
         ))}
@@ -338,7 +353,8 @@ export function ManageMembersContent() {
         searchPlaceholder={t("searchPlaceholder")}
         trailing={
           <>
-            <span className="tabular">
+            {/* Phones already show the total in the summary line; keep it here only while searching. */}
+            <span className={debouncedSearch.length > 0 ? "tabular" : "tabular max-sm:hidden"}>
               {t("memberCount", { count: total })}
               {debouncedSearch.length > 0 && stats && t("filteredFromTotal", { total: stats.total })}
             </span>
@@ -498,6 +514,7 @@ export function ManageMembersContent() {
 /** A member as a phone row: name, IDs, state, last seen, and a menu for the rest. */
 function MemberRow({ member }: { member: Member }) {
   const t = useTranslations("manageMembersPage");
+  const fmt = useFormatters();
   return (
     <li className="border-rule flex items-start gap-3 border-b py-3 ps-1">
       <span
@@ -527,7 +544,7 @@ function MemberRow({ member }: { member: Member }) {
             <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
             <span className="sr-only">{t("columns.lastActivity")}: </span>
             {member.last_activity ? (
-              <span className="tabular">{format(new Date(member.last_activity), "MMM d, yyyy")}</span>
+              <span className="tabular">{fmt.date(member.last_activity)}</span>
             ) : (
               t("noActivity")
             )}

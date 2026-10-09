@@ -28,6 +28,7 @@ import { useTranslations } from "next-intl";
 
 import type { EmailLogFilters, EmailType } from "./types";
 import { TYPE_CONFIG, TYPE_LABEL_KEY } from "./email-log-row";
+import { useFormatters } from "@/lib/format";
 
 interface EmailLogFiltersBarProps {
   filters: EmailLogFilters;
@@ -41,6 +42,7 @@ const MAX_DISPLAY = 50;
 export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveToggle }: EmailLogFiltersBarProps) {
   const t = useTranslations("manageEmails.logFilters");
   const tt = useTranslations("manageEmails.logRow.types");
+  const fmtDate = useFormatters();
   const { getToken } = useAuth();
   const [events, setEvents] = React.useState<Event[]>([]);
   const [calendarOpen, setCalendarOpen] = React.useState(false);
@@ -93,15 +95,14 @@ export function EmailLogFiltersBar({ filters, onFiltersChange, isLive, onLiveTog
 
   const dateRangeLabel = React.useMemo(() => {
     if (!filters.start_date && !filters.end_date) return t("period");
-    const fmt = (iso: string) =>
-      new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    const fmt = (iso: string) => fmtDate.custom(iso, { month: "short", day: "numeric" });
     if (filters.start_date && filters.end_date) {
       return `${fmt(filters.start_date)} – ${fmt(filters.end_date)}`;
     }
     if (filters.start_date) return t("from", { date: fmt(filters.start_date) });
     if (filters.end_date) return t("until", { date: fmt(filters.end_date) });
     return t("period");
-  }, [filters.start_date, filters.end_date, t]);
+  }, [filters.start_date, filters.end_date, t, fmtDate]);
 
   const dateRange = filters.start_date && filters.end_date
     ? { from: new Date(filters.start_date), to: new Date(filters.end_date) }

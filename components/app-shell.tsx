@@ -9,7 +9,7 @@ import {
   CalendarPlus,
   ChevronRight,
   KeyRound,
-  LayoutDashboard,
+  House,
   LayoutGrid,
   Mail,
   Network,
@@ -56,7 +56,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     key: "operate",
     items: [
-      { href: "/", key: "home", icon: LayoutDashboard },
+      { href: "/", key: "home", icon: House },
       { href: "/pipeline", key: "pipeline", icon: Route },
       { href: "/events", key: "events", icon: CalendarDays },
     ],
@@ -211,11 +211,21 @@ function useMobileNav(slots: number) {
   return { primary, overflow };
 }
 
-function TabLink({ icon: Icon, label, active }: { icon: LucideIcon; label: string; active: boolean }) {
+function TabLink({ icon: Icon, label, active, count = 0 }: { icon: LucideIcon; label: string; active: boolean; count?: number }) {
   return (
     <>
       {active ? <span aria-hidden="true" className="bg-foreground absolute top-0 h-[3px] w-7 rounded-b-[2px]" /> : null}
-      <Icon className="size-[21px]" strokeWidth={active ? 2.1 : 1.75} />
+      <span className="relative">
+        <Icon className="size-[21px]" strokeWidth={active ? 2.1 : 1.75} />
+        {count > 0 ? (
+          <span
+            aria-hidden="true"
+            className="bg-door-ochre text-on-door-ochre tabular absolute -top-1.5 -end-2.5 grid h-[17px] min-w-[17px] place-items-center rounded-sm px-1 text-[11px] leading-none font-bold shadow-[0_0_0_2px_var(--card)]"
+          >
+            {count}
+          </span>
+        ) : null}
+      </span>
       <span
         className={`max-w-full truncate px-1 text-[11.5px] leading-none ${active ? "text-foreground font-bold" : "font-medium"}`}
       >
@@ -238,12 +248,21 @@ function BottomNav() {
   // With the Book door in the middle there is room for three destinations and More.
   const { primary, overflow } = useMobileNav(canBook ? 3 : 4);
   const overflowActive = overflow.some((item) => isActive(pathname, item.href));
+  const waiting = useWaitingOnYou();
   const tabs = primary.map((item) => {
     const active = isActive(pathname, item.href);
+    const count = item.href === "/pipeline" ? waiting : 0;
+    const label = item.key === "pipeline" ? t("pipelineShort") : t(item.key);
     return (
       <li key={item.href} className="min-w-0">
-        <Link href={item.href} prefetch aria-current={active ? "page" : undefined} className={TAB_CLASS}>
-          <TabLink icon={item.icon} label={item.key === "pipeline" ? t("pipelineShort") : t(item.key)} active={active} />
+        <Link
+          href={item.href}
+          prefetch
+          aria-current={active ? "page" : undefined}
+          aria-label={count ? `${label}, ${t("waitingCount", { count })}` : undefined}
+          className={TAB_CLASS}
+        >
+          <TabLink icon={item.icon} label={label} active={active} count={count} />
         </Link>
       </li>
     );
@@ -326,7 +345,7 @@ function MoreSheet({ items, onNavigate }: { items: NavItem[]; onNavigate: () => 
                     active ? "font-bold" : "font-medium"
                   }`}
                 >
-                  <Plate tone={active ? "ochre" : "umber"} icon={Icon} size="sm" />
+                  <Plate tone={active ? "ochre" : "neutral"} icon={Icon} size="sm" />
                   <span className="min-w-0 flex-1 leading-tight">{t(item.key)}</span>
                   <ChevronRight className="text-ink-3 size-[18px] rtl:-scale-x-100" />
                 </Link>

@@ -29,7 +29,7 @@ function SettingRow({
   return (
     <li className="border-rule flex flex-col gap-3 border-b px-1 py-4 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-start gap-3">
-        <Plate tone="umber" icon={icon} />
+        <Plate tone="neutral" icon={icon} />
         <div className="min-w-0 space-y-1">
           <p className="text-[15px] leading-snug font-bold">{title}</p>
           <p className="text-ink-2 max-w-[65ch] text-[13.5px]">{hint}</p>

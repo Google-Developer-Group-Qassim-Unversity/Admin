@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { usePipelineMe } from "@/hooks/use-pipeline";
 import type { EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
+import { intlLocale } from "@/lib/format";
 
 /** A department's name in the reader's language. */
 export function useDepartmentName() {
@@ -65,7 +66,7 @@ export function PipelineGate({ children }: { children: (me: PipelineMe) => React
 export function useFormatDateRange() {
   const locale = useLocale();
   return React.useMemo(() => {
-    const formatter = new Intl.DateTimeFormat(locale, { day: "numeric", month: "short", timeZone: "UTC" });
+    const formatter = new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", timeZone: "UTC" });
     return (start: string, end?: string | null) => {
       const from = new Date(`${start}T00:00:00Z`);
       if (!end || end === start) return formatter.format(from);

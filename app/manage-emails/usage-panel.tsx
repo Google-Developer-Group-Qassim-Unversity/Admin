@@ -9,16 +9,18 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getEmailDashboardStats } from "@/lib/api";
 import type { EmailDashboardStats } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
+import { useFormatters } from "@/lib/format";
 
 /** One label and its count on a ruled line, with a hairline showing its share. */
 function UsageRow({ label, count, max, title }: { label: string; count: number; max?: number; title?: string }) {
+  const fmt = useFormatters();
   return (
     <div className="border-rule flex flex-col gap-1.5 border-b py-2 last:border-b-0">
       <div className="flex items-baseline justify-between gap-3">
         <dt className="text-ink-2 min-w-0 truncate text-[13px]" title={title} dir="auto">
           {label}
         </dt>
-        <dd className="tabular shrink-0 text-sm font-bold">{count.toLocaleString()}</dd>
+        <dd className="tabular shrink-0 text-sm font-bold">{fmt.number(count)}</dd>
       </div>
       {max ? (
         <span aria-hidden="true" className="bg-sunk block h-1 overflow-hidden rounded-[1px]">
@@ -31,6 +33,7 @@ function UsageRow({ label, count, max, title }: { label: string; count: number; 
 
 export function UsagePanel() {
   const t = useTranslations("manageEmails.usage");
+  const fmt = useFormatters();
   const { getToken } = useAuth();
   const [stats, setStats] = React.useState<EmailDashboardStats | null>(null);
   const [isLoading, setIsLoading] = React.useState(true);
@@ -87,7 +90,7 @@ export function UsagePanel() {
         <>
           <dl className="flex items-baseline justify-between gap-3">
             <dt className="text-sm font-bold">{t("total")}</dt>
-            <dd className="tabular text-[21px] leading-none font-bold">{stats.total_24h.toLocaleString()}</dd>
+            <dd className="tabular text-[21px] leading-none font-bold">{fmt.number(stats.total_24h)}</dd>
           </dl>
           <div className="flex flex-col">
             <p className="text-ink-2 text-xs font-bold">{t("sentPerAddress")}</p>

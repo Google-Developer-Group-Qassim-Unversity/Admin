@@ -1,0 +1,451 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-09T01:49:52+00:00",
+  "title": "Design System: GDG Qassim Admin",
+  "extensions": {
+    "colorMeta": {
+      "limewash": {
+        "role": "neutral",
+        "displayName": "Limewash",
+        "canonical": "#f3f0e9",
+        "purpose": "The wall: page ground.",
+        "tonalRamp": [
+          "#312b1b",
+          "#52472d",
+          "#73643f",
+          "#948051",
+          "#b7a57b",
+          "#d2c7ac",
+          "#e8e2d4",
+          "#f6f4ee"
+        ]
+      },
+      "plaster": {
+        "role": "neutral",
+        "displayName": "Raised plaster",
+        "canonical": "#fbfaf6",
+        "purpose": "Panels, headers, sticky bars.",
+        "tonalRamp": [
+          "#352f18",
+          "#584e27",
+          "#7c6e37",
+          "#9f8d47",
+          "#c0b172",
+          "#d8cea7",
+          "#ebe5d1",
+          "#f7f5ed"
+        ]
+      },
+      "sunk": {
+        "role": "neutral",
+        "displayName": "Sunk plaster",
+        "canonical": "#eae4d8",
+        "purpose": "Wells, disabled, neutral plates.",
+        "tonalRamp": [
+          "#322a1b",
+          "#53462d",
+          "#74623e",
+          "#957e50",
+          "#b8a37a",
+          "#d2c6ac",
+          "#e8e1d4",
+          "#f6f4ee"
+        ]
+      },
+      "rule": {
+        "role": "neutral",
+        "displayName": "Rule",
+        "canonical": "#dcd2c1",
+        "purpose": "One-pixel rules.",
+        "tonalRamp": [
+          "#31291c",
+          "#51442e",
+          "#726040",
+          "#937b53",
+          "#b5a07d",
+          "#d1c4ae",
+          "#e7e0d5",
+          "#f6f3ef"
+        ]
+      },
+      "mortar": {
+        "role": "neutral",
+        "displayName": "Mortar",
+        "canonical": "#ddd3c2",
+        "purpose": "Joints between bricks.",
+        "tonalRamp": [
+          "#31291b",
+          "#52442e",
+          "#736040",
+          "#937b52",
+          "#b6a17c",
+          "#d1c4ad",
+          "#e7e0d4",
+          "#f6f3ef"
+        ]
+      },
+      "adobe": {
+        "role": "neutral",
+        "displayName": "Adobe",
+        "canonical": "#b8916b",
+        "purpose": "Quiet strokes, outline buttons.",
+        "tonalRamp": [
+          "#342619",
+          "#563f29",
+          "#79593a",
+          "#9b724a",
+          "#bd9975",
+          "#d6bfa9",
+          "#eaded2",
+          "#f7f2ee"
+        ]
+      },
+      "mud-ink": {
+        "role": "primary",
+        "displayName": "Mud-brick ink",
+        "canonical": "#3a2a1f",
+        "purpose": "Text and the everyday button.",
+        "tonalRamp": [
+          "#32241b",
+          "#533c2c",
+          "#74543e",
+          "#966c50",
+          "#b8937a",
+          "#d3bcac",
+          "#e8dcd4",
+          "#f6f2ee"
+        ]
+      },
+      "ink-2": {
+        "role": "neutral",
+        "displayName": "Ink 2",
+        "canonical": "#6a5443",
+        "purpose": "Secondary text.",
+        "tonalRamp": [
+          "#2f251e",
+          "#4e3e31",
+          "#6d5745",
+          "#8d6f59",
+          "#b09682",
+          "#cebdb1",
+          "#e5ddd6",
+          "#f5f2ef"
+        ]
+      },
+      "ink-3": {
+        "role": "neutral",
+        "displayName": "Ink 3",
+        "canonical": "#786150",
+        "purpose": "Quietest text.",
+        "tonalRamp": [
+          "#2e251f",
+          "#4c3e33",
+          "#6b5747",
+          "#8a6f5c",
+          "#ad9685",
+          "#ccbdb3",
+          "#e4ddd7",
+          "#f5f2f0"
+        ]
+      },
+      "door-green": {
+        "role": "tertiary",
+        "displayName": "Door green",
+        "canonical": "#1f6b57",
+        "purpose": "State: done, live, published.",
+        "tonalRamp": [
+          "#113b30",
+          "#1d6350",
+          "#288a71",
+          "#34b291",
+          "#61d1b4",
+          "#9ce2d0",
+          "#ccf0e6",
+          "#ebf9f6"
+        ]
+      },
+      "door-ochre": {
+        "role": "secondary",
+        "displayName": "Door ochre",
+        "canonical": "#d39a1c",
+        "purpose": "State: waiting on someone, usually you.",
+        "tonalRamp": [
+          "#443109",
+          "#71520f",
+          "#9e7315",
+          "#cb941b",
+          "#e7b64b",
+          "#f0d28e",
+          "#f7e7c4",
+          "#fcf6e8"
+        ]
+      },
+      "door-madder": {
+        "role": "tertiary",
+        "displayName": "Door madder",
+        "canonical": "#a63a2b",
+        "purpose": "State: returned, overdue, failed, closed.",
+        "tonalRamp": [
+          "#3d1510",
+          "#65231a",
+          "#8e3225",
+          "#b6402f",
+          "#d56c5d",
+          "#e5a39a",
+          "#f1cfca",
+          "#faedeb"
+        ]
+      },
+      "door-indigo": {
+        "role": "tertiary",
+        "displayName": "Door indigo",
+        "canonical": "#2b4a7e",
+        "purpose": "State: with a team, open, informational.",
+        "tonalRamp": [
+          "#132139",
+          "#20385f",
+          "#2d4e85",
+          "#3a64ab",
+          "#678ccb",
+          "#a0b7df",
+          "#cedaee",
+          "#ecf1f9"
+        ]
+      },
+      "door-umber": {
+        "role": "neutral",
+        "displayName": "Door umber",
+        "canonical": "#6a5443",
+        "purpose": "State: draft, inactive.",
+        "tonalRamp": [
+          "#2f251e",
+          "#4e3e31",
+          "#6d5745",
+          "#8d6f59",
+          "#b09682",
+          "#cebdb1",
+          "#e5ddd6",
+          "#f5f2ef"
+        ]
+      },
+      "on-door-ochre": {
+        "role": "neutral",
+        "displayName": "Ink on ochre",
+        "canonical": "#2b1c0c",
+        "purpose": "Text on an ochre plate.",
+        "tonalRamp": [
+          "#3c2711",
+          "#64411c",
+          "#8c5b27",
+          "#b37532",
+          "#d29b60",
+          "#e3c09b",
+          "#f1decb",
+          "#f9f2eb"
+        ]
+      },
+      "night-adobe": {
+        "role": "neutral",
+        "displayName": "Night adobe",
+        "canonical": "#1b1612",
+        "purpose": "Dark mode ground.",
+        "tonalRamp": [
+          "#2e251f",
+          "#4c3e33",
+          "#6b5747",
+          "#8a705c",
+          "#ad9785",
+          "#ccbeb3",
+          "#e4ddd7",
+          "#f5f2f0"
+        ]
+      },
+      "night-plaster": {
+        "role": "neutral",
+        "displayName": "Night plaster",
+        "canonical": "#241d18",
+        "purpose": "Dark mode panels.",
+        "tonalRamp": [
+          "#2e251f",
+          "#4c3e33",
+          "#6b5647",
+          "#8a6f5c",
+          "#ad9685",
+          "#ccbdb3",
+          "#e4ddd7",
+          "#f5f2f0"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display (Reem Kufi)",
+        "purpose": "Page titles only: kufic geometry like door carving."
+      },
+      "title": {
+        "displayName": "Title (Reem Kufi)",
+        "purpose": "Door headings, dialog and sheet titles, the top-bar title."
+      },
+      "section": {
+        "displayName": "Section",
+        "purpose": "SectionHead: bold over an ink rule; rank by weight, not size."
+      },
+      "body": {
+        "displayName": "Body (Thmanyah Sans)",
+        "purpose": "Everything else, both scripts."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Pills, counts, small labels."
+      }
+    },
+    "shadows": [
+      {
+        "name": "shadow-door",
+        "value": "0 1px 0 rgb(0 0 0 / 0.06), 0 10px 24px -14px rgb(58 42 31 / 0.55)",
+        "purpose": "A painted Door, the only resting shadow."
+      },
+      {
+        "name": "shadow-lift",
+        "value": "0 6px 14px -10px rgb(58 42 31 / 0.5)",
+        "purpose": "A card lifting on hover or while dragged."
+      },
+      {
+        "name": "shadow-float",
+        "value": "0 8px 24px -12px rgb(58 42 31 / 0.35)",
+        "purpose": "Popovers, menus, sticky bars, floating buttons."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state",
+        "value": "150-200ms ease-out",
+        "purpose": "Press, hover tint, sheets: state changes only."
+      },
+      {
+        "name": "tarma-fill",
+        "value": "260ms cubic-bezier(0.16, 1, 0.3, 1), 70ms stagger",
+        "purpose": "The one authored moment: tarma openings fill in order."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "sm",
+        "value": "640px"
+      },
+      {
+        "name": "md",
+        "value": "768px"
+      },
+      {
+        "name": "lg",
+        "value": "1024px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Everyday button",
+      "kind": "button",
+      "refersTo": "button-default",
+      "description": "Mud ink. Save, create, the ordinary action.",
+      "html": "<button class=\"ds-btn\">Save</button>",
+      "css": ".ds-btn{background:var(--primary,#3a2a1f);color:var(--primary-foreground,#f8f3ea);height:44px;padding:0 16px;border:0;border-radius:4px;font:700 14px 'Thmanyah Sans',Tajawal,sans-serif;cursor:pointer;transition:background-color .15s,transform .15s}.ds-btn:hover{background:color-mix(in srgb,var(--primary,#3a2a1f) 88%,transparent)}.ds-btn:active{transform:translateY(1px)}.ds-btn:focus-visible{outline:2px solid var(--ring,#2b4a7e);outline-offset:2px}"
+    },
+    {
+      "name": "Ochre door button",
+      "kind": "button",
+      "refersTo": "button-ochre",
+      "description": "The action waiting on the reader: Book dates, Continue.",
+      "html": "<button class=\"ds-btn-ochre\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/></svg>Book dates</button>",
+      "css": ".ds-btn-ochre{display:inline-flex;align-items:center;gap:8px;background:var(--door-ochre,#d39a1c);color:var(--on-door-ochre,#2b1c0c);height:44px;padding:0 16px;border:0;border-radius:4px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.08),inset 0 -2px 0 rgb(0 0 0/.08);font:700 14px 'Thmanyah Sans',Tajawal,sans-serif;cursor:pointer}.ds-btn-ochre:hover{filter:brightness(1.05)}.ds-btn-ochre:active{transform:translateY(1px)}.ds-btn-ochre:focus-visible{outline:2px solid var(--ring,#2b4a7e);outline-offset:2px}"
+    },
+    {
+      "name": "Green finish button",
+      "kind": "button",
+      "refersTo": "button-green",
+      "description": "Finishing something: Submit, Publish, Mark done.",
+      "html": "<button class=\"ds-btn-green\">Submit</button>",
+      "css": ".ds-btn-green{background:var(--door-green,#1f6b57);color:#fff;height:44px;padding:0 16px;border:0;border-radius:4px;box-shadow:inset 0 0 0 1px rgb(0 0 0/.08),inset 0 -2px 0 rgb(0 0 0/.08);font:700 14px 'Thmanyah Sans',Tajawal,sans-serif;cursor:pointer}.ds-btn-green:hover{filter:brightness(1.1)}.ds-btn-green:focus-visible{outline:2px solid var(--ring,#2b4a7e);outline-offset:2px}"
+    },
+    {
+      "name": "Input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Plaster field, adobe edge, ink edge on focus.",
+      "html": "<input class=\"ds-input\" placeholder=\"Event title\">",
+      "css": ".ds-input{background:var(--card,#fbfaf6);color:var(--foreground,#3a2a1f);height:44px;padding:0 12px;border:1px solid var(--input,#9c8366);border-radius:4px;font:400 16px 'Thmanyah Sans',Tajawal,sans-serif;min-width:240px}.ds-input::placeholder{color:var(--ink-3,#786150)}.ds-input:focus-visible{outline:none;border-color:var(--foreground,#3a2a1f);box-shadow:0 0 0 3px color-mix(in srgb,var(--ring,#2b4a7e) 25%,transparent)}"
+    },
+    {
+      "name": "Request row",
+      "kind": "custom",
+      "refersTo": "plate",
+      "description": "Rows on the wall: plate, title, meta, tarma progress.",
+      "html": "<a class=\"ds-row\" href=\"#\"><span class=\"ds-plate\"><svg width=\"18\" height=\"18\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.75\" stroke-linecap=\"round\" stroke-linejoin=\"round\"><rect x=\"3\" y=\"4\" width=\"18\" height=\"18\" rx=\"2\"/><path d=\"M16 2v4M8 2v4M3 10h18\"/></svg></span><span class=\"ds-row-main\"><b>Intro to Flutter</b><span>Mobile · 19–20 Oct</span><svg class=\"ds-tarma\" width=\"74\" height=\"13\" viewBox=\"-1 -1 74 13\"><polygon points=\"0,11 12,11 6,0.5\" fill=\"#1f6b57\" stroke=\"#1f6b57\"/><polygon points=\"15,11 27,11 21,0.5\" fill=\"none\" stroke=\"#855a06\" stroke-width=\"2\"/><polygon points=\"30,11 42,11 36,0.5\" fill=\"none\" stroke=\"#b8916b\"/><polygon points=\"45,11 57,11 51,0.5\" fill=\"none\" stroke=\"#b8916b\"/><polygon points=\"60,11 72,11 66,0.5\" fill=\"none\" stroke=\"#b8916b\"/></svg></span></a>",
+      "css": ".ds-row{display:flex;align-items:center;gap:12px;min-height:64px;padding:12px 4px;border-bottom:1px solid var(--rule,#dcd2c1);color:var(--foreground,#3a2a1f);text-decoration:none;font-family:'Thmanyah Sans',Tajawal,sans-serif}.ds-row:hover{background:var(--card,#fbfaf6)}.ds-plate{display:grid;place-items:center;width:40px;height:44px;flex:none;border-radius:4px 4px 2px 2px;background:var(--door-indigo,#2b4a7e);color:#fff;box-shadow:inset 0 0 0 1px rgb(0 0 0/.08),inset 0 -2px 0 rgb(0 0 0/.08)}.ds-row-main{display:flex;flex-direction:column;gap:3px}.ds-row-main b{font-weight:700;font-size:15px}.ds-row-main span{font-size:13px;color:var(--ink-2,#6a5443)}"
+    },
+    {
+      "name": "Your-turn door",
+      "kind": "card",
+      "refersTo": "door",
+      "description": "The one painted door per region: whatever is waiting on the reader.",
+      "html": "<section class=\"ds-door\"><div class=\"ds-band\"></div><div class=\"ds-door-in\"><h3>Your turn</h3><div class=\"ds-panel\"><b>Intro to Flutter</b><span>Hold ends in 14:31:52</span></div><button class=\"ds-door-btn\">Continue</button></div><div class=\"ds-band ds-band-b\"></div></section>",
+      "css": ".ds-door{width:320px;border-radius:6px;overflow:hidden;background:var(--door-ochre,#d39a1c);color:var(--on-door-ochre,#2b1c0c);box-shadow:var(--shadow-door,0 1px 0 rgb(0 0 0/.06),0 10px 24px -14px rgb(58 42 31/.55));font-family:'Thmanyah Sans',Tajawal,sans-serif}.ds-band{height:10px;margin-top:8px;background:rgb(43 28 12/.32);-webkit-mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Cpath d='M0 10L4 4L8 10Z M8 0L12 6L16 0Z'/%3E%3C/svg%3E\") repeat-x 0 0/16px 10px;mask:url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 10'%3E%3Cpath d='M0 10L4 4L8 10Z M8 0L12 6L16 0Z'/%3E%3C/svg%3E\") repeat-x 0 0/16px 10px}.ds-band-b{margin:0 0 8px;transform:scaleY(-1)}.ds-door-in{display:flex;flex-direction:column;gap:12px;padding:12px 16px 16px}.ds-door h3{margin:0;font:600 21px 'Reem Kufi',sans-serif}.ds-panel{display:flex;flex-direction:column;gap:4px;padding:12px 14px;border-radius:2px;background:rgb(255 252 243/.92);color:#3a2a1f}.ds-panel b{font-size:17px}.ds-panel span{font-size:13px}.ds-door-btn{align-self:flex-start;height:44px;padding:0 16px;border:0;border-radius:4px;background:#2b1c0c;color:#f8e9c9;font:700 14px 'Thmanyah Sans',Tajawal,sans-serif;cursor:pointer}.ds-door-btn:focus-visible{outline:2px solid #2b4a7e;outline-offset:2px}"
+    },
+    {
+      "name": "State pill",
+      "kind": "chip",
+      "refersTo": "plate",
+      "description": "Square mark plus label in the state's soft tone.",
+      "html": "<span class=\"ds-pill\"><i></i>With Design &amp; Logistics</span>",
+      "css": ".ds-pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:2px;background:var(--door-indigo-soft,#dde3ee);color:var(--door-indigo-ink,#2b4a7e);font:700 12px/1 'Thmanyah Sans',Tajawal,sans-serif}.ds-pill i{width:8px;height:8px;border-radius:1px;background:var(--door-indigo,#2b4a7e)}"
+    },
+    {
+      "name": "Section head",
+      "kind": "custom",
+      "refersTo": "panel",
+      "description": "Rank by weight: 16px bold over a one-pixel ink rule.",
+      "html": "<div class=\"ds-sh\"><h2>Your department's requests <span>3</span></h2><a href=\"#\">All</a></div>",
+      "css": ".ds-sh{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;min-width:320px;padding-bottom:8px;border-bottom:1px solid var(--foreground,#3a2a1f);font-family:'Thmanyah Sans',Tajawal,sans-serif}.ds-sh h2{margin:0;display:inline-flex;align-items:center;gap:8px;font-size:16px;font-weight:700;color:var(--foreground,#3a2a1f)}.ds-sh h2 span{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:2px;background:var(--foreground,#3a2a1f);color:var(--background,#f3f0e9);font-size:12.5px}.ds-sh a{font-size:13.5px;font-weight:700;color:var(--door-indigo-ink,#2b4a7e)}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Mud & Doors",
+    "overview": "The console is a Najdi house in Qassim. Limewashed walls are the calm ground; colour lives only on the painted wooden doors, and every door is something you can open: your turn, a request, a team's inbox, a day on the calendar. Triangular tarma openings mark progress, the stepped shurfa parapet tops the header, and the booking calendar is a course of bricks in mortar.",
+    "keyCharacteristics": [
+      "Colour is state: green done, ochre waiting on you, madder returned, indigo with a team, umber draft, neutral none",
+      "One painted Door per region",
+      "Rows on the wall, not card grids",
+      "Reem Kufi titles, Thmanyah Sans UI",
+      "Phone first, Arabic first, night-adobe dark mode"
+    ],
+    "rules": [
+      {
+        "name": "Colour is state",
+        "body": "Every colour answers 'which state is this?' with a door tone or neutral; status tones live only in status-badge.tsx.",
+        "section": "colors"
+      },
+      {
+        "name": "Rank by weight",
+        "body": "Tight scale; section heads are 16px bold over a one-pixel ink rule.",
+        "section": "typography"
+      },
+      {
+        "name": "Paint, not bevels",
+        "body": "Plates are flat paint with a hairline; only a Door casts a resting shadow.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do use Plate, Tarma, Door, SectionHead, StatePill from components/najdi.tsx and status-badge.tsx",
+      "Do wrap user content in <bdi> and format dates with lib/format.ts",
+      "Do check phone and desktop, ar and en, light and dark with tests/ui-preview"
+    ],
+    "donts": [
+      "Don't use brand-* classes or round status dots",
+      "Don't build grids of same-size cards or rows of big-number tiles",
+      "Don't use Reem Kufi for labels, buttons or data",
+      "Don't propose a new look: extend this one"
+    ]
+  }
+}

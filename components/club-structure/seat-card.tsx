@@ -12,6 +12,7 @@ import { useClubMutation } from "@/hooks/use-club-structure";
 import type { ClubMember, ClubRoleKey } from "@/lib/club-structure-types";
 import { Mark } from "@/components/najdi";
 import { useClubError } from "@/components/club-structure/use-club-error";
+import { isolate } from "@/lib/format";
 
 /** What the confirmation is about to do: give the role to `member`, or take it from `previous`. */
 type PendingChange = { member: ClubMember | null; previous: ClubMember | null };
@@ -140,9 +141,9 @@ export function RoleSeatCard({
           title={
             change.member
               ? change.previous
-                ? t("replaceConfirm", { name: change.member.name, previous: change.previous.name, role: label })
-                : t("assignConfirm", { name: change.member.name, role: label })
-              : t("clearConfirm", { name: change.previous?.name ?? "", role: label })
+                ? t("replaceConfirm", { name: isolate(change.member.name), previous: isolate(change.previous.name), role: label })
+                : t("assignConfirm", { name: isolate(change.member.name), role: label })
+              : t("clearConfirm", { name: isolate(change.previous?.name ?? ""), role: label })
           }
           description={t("leadershipChangeHint")}
           pending={mutation.isPending}

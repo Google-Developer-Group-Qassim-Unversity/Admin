@@ -261,7 +261,8 @@
     "appearance": "المظهر",
     "permissions": "الصلاحيات",
     "brand": "GDG القصيم",
-    "pipelineShort": "المسار"
+    "pipelineShort": "المسار",
+    "waitingCount": "{count, plural, one {طلب واحد ينتظر فريقك} two {طلبان ينتظران فريقك} few {# طلبات تنتظر فريقك} other {# طلبًا تنتظر فريقك}}"
   },
   "theme": {
     "toggle": "تغيير المظهر",
@@ -1359,7 +1360,8 @@
       "authenticated": "موثقين",
       "manual": "يدويين",
       "male": "ذكور",
-      "female": "إناث"
+      "female": "إناث",
+      "summary": "{total} عضو · {authenticated} موثّق · {manual} يدوي"
     },
     "searchPlaceholder": "ابحث بالاسم أو البريد أو الرقم الجامعي أو الجوال...",
     "memberCount": "{count, plural, =0 {لا يوجد أعضاء} one {عضو وحد} two {عضوان} few {# أعضاء} many {# عضو} other {# عضو}}",
@@ -1825,6 +1827,10 @@
       "readyNote": "خلّصت كل الأقسام. اختر فئة النقاط وانشر.",
       "returnedNote": "عدّل اللي طلبه التصميم، ثم أعد الإرسال.",
       "more": "{count, plural, one {+طلب ثاني ينتظرك} two {+طلبان ينتظرونك} few {+# طلبات تنتظرك} other {+# طلبًا تنتظرك}}",
+      "teamTitle": "دور فريقك",
+      "teamArrived": "وصل {ago}",
+      "teamOpen": "افتح الطلب",
+      "teamMore": "{count, plural, one {+طلب ثاني ينتظر فريقك} two {+طلبان ينتظران فريقك} few {+# طلبات تنتظر فريقك} other {+# طلبًا تنتظر فريقك}}",
       "action": {
         "hold": "أكمل الطلب",
         "returned": "عدّله",
@@ -1973,6 +1979,7 @@
         "logistics": "طلب اللوجستيات"
       },
       "cancelTitle": "إلغاء هذا الطلب؟",
+      "moreActions": "إجراءات أخرى",
       "keep": "إبقاء الطلب",
       "whatsLeft": "ما الذي بقي",
       "sectionDone": "مكتمل"
@@ -2054,6 +2061,8 @@
       "finishLaterSavedHold": "تم حفظ المسودة. ارجع وأرسل الطلب قبل انتهاء مهلة الحجز (٢٤ ساعة).",
       "finishLaterFailed": "تعذّر حفظ بعض التعديلات. راجع الرسالة الظاهرة وحاول مرة أخرى.",
       "stillMissing": "{count, plural, one {بقي شيء واحد قبل الإرسال} two {بقي شيئان قبل الإرسال} few {بقيت # أشياء قبل الإرسال} other {بقي # شيئًا قبل الإرسال}}",
+      "leftShort": "بقي {count}",
+      "readyShort": "جاهز",
       "incomplete": "{count, plural, one {حقل واحد ما زال ناقصًا} two {حقلان ما زالا ناقصين} few {# حقول ما زالت ناقصة} other {# حقلًا ما زال ناقصًا}}",
       "more": "+{count} أخرى"
     },

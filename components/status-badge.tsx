@@ -2,7 +2,7 @@
 
 import { useTranslations } from "next-intl";
 
-import { FILL, SOFT, type DoorTone } from "@/components/najdi";
+import { FILL, SOFT, type DoorTone, type Tone } from "@/components/najdi";
 import type { EventStatus } from "@/lib/api-types";
 
 /**
@@ -11,7 +11,7 @@ import type { EventStatus } from "@/lib/api-types";
  * colour: indigo open, green running or done, ochre waiting on someone, madder
  * overdue or failed, umber draft or finished.
  */
-const EVENT_TONE: Record<EventStatus, DoorTone> = {
+export const EVENT_TONE: Record<EventStatus, DoorTone> = {
   draft: "umber",
   open: "indigo",
   active: "green",
@@ -107,6 +107,20 @@ export function StageBadge({ stage, className }: { stage: RequestStage; classNam
     <span className={`${PILL} ${stage === "cancelled" ? "bg-sunk text-ink-2" : SOFT[tone]} ${className ?? ""}`}>
       <span className={`${SQUARE} ${FILL[tone]}`} aria-hidden="true" />
       {t(stage)}
+    </span>
+  );
+}
+
+/**
+ * A pill for any state: a square mark and a label in the state's tone. Add a
+ * new kind of status by mapping it to a tone in this file (like `STAGE_TONE`)
+ * and rendering it with this, never with a page's own colours.
+ */
+export function StatePill({ tone, children, className }: { tone: Tone; children: React.ReactNode; className?: string }) {
+  return (
+    <span className={`${PILL} ${SOFT[tone]} ${className ?? ""}`}>
+      <span className={`${SQUARE} ${FILL[tone]}`} aria-hidden="true" />
+      {children}
     </span>
   );
 }

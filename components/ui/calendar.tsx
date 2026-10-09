@@ -6,10 +6,12 @@ import {
   getDefaultClassNames,
   type DayButton,
 } from "react-day-picker"
+import { ar, enGB } from "react-day-picker/locale"
 
 import { useLocale } from "next-intl"
 
 import { cn } from "@/lib/utils"
+import { intlLocale } from "@/lib/format"
 import { getDirection, type Locale } from "@/i18n/config"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { ChevronLeftIcon, ChevronRightIcon, ChevronDownIcon } from "lucide-react"
@@ -27,12 +29,16 @@ function Calendar({
   buttonVariant?: React.ComponentProps<typeof Button>["variant"]
 }) {
   const defaultClassNames = getDefaultClassNames()
+  const appLocale = useLocale()
   // Drives day ordering, keyboard navigation and chevron orientation.
-  const dir = getDirection(useLocale() as Locale)
+  const dir = getDirection(appLocale as Locale)
 
   return (
     <DayPicker
       dir={dir}
+      // Month and weekday names in the reader's language, Western digits (DESIGN.md §2).
+      locale={appLocale === "ar" ? ar : enGB}
+      numerals="latn"
       showOutsideDays={showOutsideDays}
       className={cn(
         "p-3 [--cell-radius:var(--radius-md)] [--cell-size:--spacing(8)] bg-background group/calendar [[data-slot=card-content]_&]:bg-transparent [[data-slot=popover-content]_&]:bg-transparent",
@@ -41,7 +47,7 @@ function Calendar({
       captionLayout={captionLayout}
       formatters={{
         formatMonthDropdown: (date) =>
-          date.toLocaleString("default", { month: "short" }),
+          date.toLocaleString(intlLocale(appLocale), { month: "short" }),
         ...formatters,
       }}
       classNames={{
@@ -207,7 +213,7 @@ function CalendarDayButton({
       ref={ref}
       variant="ghost"
       size="icon"
-      data-day={day.date.toLocaleDateString()}
+      data-day={day.date.toISOString().slice(0, 10)}
       data-selected-single={
         modifiers.selected &&
         !modifiers.range_start &&

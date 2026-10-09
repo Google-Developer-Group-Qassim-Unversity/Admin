@@ -142,7 +142,7 @@ export function PointDetailRow({
   return (
     <div className="bg-card ring-rule flex flex-col rounded-xl ring-1">
       <div className="border-rule flex items-center gap-2.5 border-b py-2 ps-3 pe-1.5">
-        <Plate tone="umber" size="sm" icon={data.row_type === "department" ? Building2 : User} />
+        <Plate tone="neutral" size="sm" icon={data.row_type === "department" ? Building2 : User} />
         <span className="flex-1 text-sm font-bold">
           {entityLabel}
           <span className="tabular text-ink-3 ms-1.5 font-medium">#{index + 1}</span>

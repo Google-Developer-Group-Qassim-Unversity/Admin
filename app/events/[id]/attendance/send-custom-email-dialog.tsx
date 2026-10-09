@@ -493,8 +493,8 @@ export function SendCustomEmailDialog({
                 recipients.map((r, index) => (
                   <div key={r.member_id ?? index} className="flex items-center gap-3 px-3 py-2">
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium truncate">{r.name}</p>
-                      <p className="text-xs text-ink-2 truncate">{r.email}</p>
+                      <p className="text-sm font-medium truncate" dir="auto">{r.name}</p>
+                      <p className="text-xs text-ink-2 truncate"><bdi>{r.email}</bdi></p>
                     </div>
                   </div>
                 ))

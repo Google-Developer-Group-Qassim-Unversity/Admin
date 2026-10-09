@@ -63,7 +63,7 @@ export function RequestRow({
     >
       <Plate tone={tone} icon={STAGE_ICON[request.stage]} />
       <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <b className="truncate text-[15px] leading-snug font-bold">{request.title || t("requests.untitled")}</b>
+        <b className="truncate text-[15px] leading-snug font-bold"><bdi>{request.title || t("requests.untitled")}</bdi></b>
         <span className="text-ink-2 truncate text-[13px]">
           {showDepartment ? `${departmentName(request.department)} · ` : ""}
           <span className="tabular">{request.start_date ? formatRange(request.start_date, request.end_date) : t("requests.noDates")}</span>

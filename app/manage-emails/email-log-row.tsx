@@ -1,8 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { format } from "date-fns";
-import { formatDistanceToNow } from "date-fns";
 import { Award, ChevronDown, Eye, Mail, MailCheck, Megaphone, PenLine, Search, Users, type LucideIcon } from "lucide-react";
 import { Plate } from "@/components/najdi";
 
@@ -23,6 +21,7 @@ import { MemberDetailsTrigger } from "@/components/member-details";
 import { useFormatter, useNow, useTranslations } from "next-intl";
 
 import type { AcceptanceData, BlastData, CertificateData } from "./types";
+import { isolate, useFormatters } from "@/lib/format";
 
 interface EmailLogRowProps {
   log: EnrichedEmailLog;
@@ -82,7 +81,7 @@ function RowIcon({ type }: { type: string }) {
   if (!cfg) return null;
   const Icon = cfg.icon;
   return (
-    <Plate tone="umber" size="sm" icon={Icon} className="mt-0.5" />
+    <Plate tone="neutral" size="sm" icon={Icon} className="mt-0.5" />
   );
 }
 
@@ -170,21 +169,24 @@ function EventNameWithTooltip({
 
 function MetaColumn({ log }: { log: EnrichedEmailLog }) {
   const t = useTranslations("manageEmails.logRow");
+  const format = useFormatter();
+  const fmt = useFormatters();
+  const now = useNow({ updateInterval: 60_000 });
   const sentAt = new Date(log.sent_at);
   return (
     <div className="text-end shrink-0 space-y-1 min-w-[140px]">
       <Tooltip>
         <TooltipTrigger asChild>
           <p className="tabular text-xs text-muted-foreground cursor-default">
-            {formatDistanceToNow(sentAt, { addSuffix: true })}
+            {format.relativeTime(sentAt, now)}
           </p>
         </TooltipTrigger>
         <TooltipContent side="bottom" align="end">
-          <p className="text-xs">{format(sentAt, "MMM d, yyyy HH:mm:ss")}</p>
+          <p className="tabular text-xs">{fmt.custom(sentAt, { day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit" })}</p>
         </TooltipContent>
       </Tooltip>
       <p className="text-xs text-ink-2" dir="auto">
-        {t("sentBy", { name: log.sender_name ?? t("unknown") })}
+        {t("sentBy", { name: isolate(log.sender_name ?? t("unknown")) })}
       </p>
       <p className="text-xs text-ink-2 truncate max-w-[160px] ms-auto">
         {t("fromAddress", { address: log.from_address })}
@@ -253,7 +255,7 @@ function MemberListDialog({
               <span dir="auto" className="truncate text-sm sm:text-xs">
                 {m.name}
               </span>
-              <span className="text-muted-foreground truncate text-[13px] sm:text-xs">{m.email}</span>
+              <span className="text-muted-foreground truncate text-[13px] sm:text-xs"><bdi>{m.email}</bdi></span>
             </li>
           ))}
           {filtered.length === 0 && (
@@ -291,7 +293,7 @@ function CertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: isolate(snapshot?.member.name ?? "") })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : log.member_id ? (
@@ -484,7 +486,7 @@ function ManualCertificateRow({ log }: EmailLogRowProps) {
                       </span>
                     </TooltipTrigger>
                     <TooltipContent side="top">
-                      <p className="text-xs">{t("nameAtSendTime", { name: snapshot?.member.name ?? "" })}</p>
+                      <p className="text-xs">{t("nameAtSendTime", { name: isolate(snapshot?.member.name ?? "") })}</p>
                     </TooltipContent>
                   </Tooltip>
                 ) : log.member_id ? (
@@ -667,7 +669,7 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
         onClick={() => setOpen((v) => !v)}
         className="active:bg-sunk focus-visible:ring-ring/50 flex min-h-14 w-full items-center gap-3 px-3 py-2.5 text-start outline-none focus-visible:ring-[3px] focus-visible:ring-inset"
       >
-        <Plate tone="umber" size="sm" icon={Icon} />
+        <Plate tone="neutral" size="sm" icon={Icon} />
         <span className="min-w-0 flex-1">
           <span className="flex items-baseline gap-2">
             <span dir="auto" className={`truncate text-sm font-bold ${s.nameChanged ? CHANGED_CLASS : ""}`}>
@@ -752,7 +754,7 @@ function CompactLogRow({ log, onViewHtml }: EmailLogRowProps) {
             <div className="bg-door-ochre-soft text-door-ochre-ink space-y-0.5 rounded-lg px-3 py-2 text-[13px]">
               <p className="font-bold">{t("valuesAtSendTime")}</p>
               {s.nameChanged && s.snapshotMemberName && (
-                <p dir="auto">{t("nameAtSendTime", { name: s.snapshotMemberName })}</p>
+                <p dir="auto">{t("nameAtSendTime", { name: isolate(s.snapshotMemberName) })}</p>
               )}
               {s.eventChanged && s.snapEvent && (
                 <p>

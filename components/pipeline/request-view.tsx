@@ -11,6 +11,7 @@ import {
   Check,
   ChevronRight,
   CircleDashed,
+  Ellipsis,
   FileQuestion,
   FileText,
   Palette,
@@ -43,8 +44,8 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -294,6 +295,7 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
   const cancel = useCancelRequest();
+  const [confirming, setConfirming] = React.useState(false);
   const canCancel =
     canAct && (request.stage === "draft" || me.is_super_admin) && !["published", "cancelled"].includes(request.stage);
 
@@ -316,49 +318,56 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
     .join(" · ");
 
   return (
-    <header className="border-foreground flex flex-col gap-3 border-b pb-4">
-      <Link
-        href="/pipeline"
-        className="text-ink-2 hover:text-foreground -ms-1 flex min-h-9 w-fit items-center gap-1 rounded-sm px-1 text-sm font-bold transition-colors"
-      >
-        <ArrowLeft className="size-4 rtl:-scale-x-100" />
-        {t("back")}
-      </Link>
-      <div className="flex flex-wrap items-center gap-2">
+    <header className="border-foreground flex flex-col gap-2 border-b pb-3 sm:gap-3 sm:pb-4">
+      <div className="flex items-center justify-between gap-2">
+        <Link
+          href="/pipeline"
+          className="text-ink-2 hover:text-foreground -ms-1 flex min-h-11 w-fit items-center gap-1 rounded-sm px-1 text-sm font-bold transition-colors"
+        >
+          <ArrowLeft className="size-4 rtl:-scale-x-100" />
+          {t("back")}
+        </Link>
+        {canCancel ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="-me-2" aria-label={t("moreActions")}>
+                <Ellipsis className="size-5" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem variant="destructive" onSelect={() => setConfirming(true)}>
+                <Trash2 />
+                {t("cancel")}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : null}
+      </div>
+      <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[32px]">
+        <bdi>{request.title || t("untitled")}</bdi>
+      </h1>
+      <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
         <span className="bg-sunk inline-flex h-7 items-center gap-1.5 rounded-sm px-2.5 text-[13px] font-bold">
           <Mark tone="umber" />
           {departmentName(request.department)}
         </span>
         <StageBadge stage={request.stage} />
-      </div>
-      <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[32px]">
-        {request.title || t("untitled")}
-      </h1>
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
         <p className="text-ink-2 tabular text-[13.5px]">{meta}</p>
-        {canCancel ? (
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="destructive" size="sm">
-                <Trash2 />
-                {t("cancel")}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{t("cancelTitle")}</AlertDialogTitle>
-                <AlertDialogDescription>{t("cancelConfirm")}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
-                <AlertDialogAction variant="madder" onClick={onCancel} disabled={cancel.isPending}>
-                  {t("cancel")}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ) : null}
       </div>
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("cancelTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("cancelConfirm")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
+            <AlertDialogAction variant="madder" onClick={onCancel} disabled={cancel.isPending}>
+              {t("cancel")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </header>
   );
 }

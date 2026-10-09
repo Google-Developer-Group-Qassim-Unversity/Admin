@@ -261,7 +261,8 @@
     "appearance": "Appearance",
     "permissions": "Permissions",
     "brand": "GDG Qassim",
-    "pipelineShort": "Pipeline"
+    "pipelineShort": "Pipeline",
+    "waitingCount": "{count, plural, one {# waiting on your team} other {# waiting on your teams}}"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -1359,7 +1360,8 @@
       "authenticated": "Authenticated",
       "manual": "Manual",
       "male": "Male",
-      "female": "Female"
+      "female": "Female",
+      "summary": "{total} members · {authenticated} verified · {manual} manual"
     },
     "searchPlaceholder": "Search by name, email, uni ID, phone...",
     "memberCount": "{count, plural, one {# member} other {# members}}",
@@ -1825,6 +1827,10 @@
       "readyNote": "Every team is done. Pick the points tier and publish.",
       "returnedNote": "Fix what Design asked for, then resubmit.",
       "more": "{count, plural, one {+# more waiting on you} other {+# more waiting on you}}",
+      "teamTitle": "Your team's turn",
+      "teamArrived": "Arrived {ago}",
+      "teamOpen": "Open the request",
+      "teamMore": "{count, plural, one {+# more waiting on your team} other {+# more waiting on your team}}",
       "action": {
         "hold": "Continue",
         "returned": "Fix it",
@@ -1973,6 +1979,7 @@
         "logistics": "Logistics brief"
       },
       "cancelTitle": "Cancel this request?",
+      "moreActions": "More actions",
       "keep": "Keep it",
       "whatsLeft": "What is left",
       "sectionDone": "All filled in"
@@ -2054,6 +2061,8 @@
       "finishLaterSavedHold": "Draft saved. Come back and submit before your 24-hour hold runs out.",
       "finishLaterFailed": "Some changes couldn't be saved. Check the highlighted message and try again.",
       "stillMissing": "{count, plural, one {# thing left before you can submit} other {# things left before you can submit}}",
+      "leftShort": "{count} left",
+      "readyShort": "Ready",
       "incomplete": "{count, plural, one {# field still needs filling in} other {# fields still need filling in}}",
       "more": "+{count} more"
     },

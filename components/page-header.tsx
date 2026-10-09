@@ -6,7 +6,7 @@ import { Plate } from "@/components/najdi";
  * The head of every top-level page: the title in the kufic display face on the
  * wall itself, no banner card, closed by a one-pixel ink rule. Actions sit on
  * the trailing side; on a phone they take a full-width row of equal buttons.
- * `icon` is the page's nav icon on a small umber plate.
+ * `icon` is the page's nav icon on a neutral plate (a page has no state).
  */
 export function PageHeader({
   title,
@@ -22,7 +22,7 @@ export function PageHeader({
   return (
     <header className="border-foreground flex flex-wrap items-end justify-between gap-x-6 gap-y-3 border-b pb-3">
       <div className="flex min-w-0 items-center gap-3">
-        {icon ? <Plate tone="umber" icon={icon} className="max-sm:hidden" /> : null}
+        {icon ? <Plate tone="neutral" icon={icon} className="max-sm:hidden" /> : null}
         <div className="flex min-w-0 flex-col gap-1">
           <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[30px]">{title}</h1>
           {description ? <p className="text-ink-2 max-w-[70ch] text-sm text-pretty">{description}</p> : null}

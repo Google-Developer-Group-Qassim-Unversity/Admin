@@ -45,6 +45,7 @@ import { useApi } from "@/lib/api/client";
 import type { BackfillMember } from "@/lib/api-types";
 import type { BackfillSummary } from "./types";
 import { useTranslations } from "next-intl";
+import { useFormatters } from "@/lib/format";
 
 interface BackfillTabProps {
   dayCount: number;
@@ -74,6 +75,7 @@ export function BackfillTab({
   eventId,
 }: BackfillTabProps) {
   const t = useTranslations("attendance.backfill");
+  const fmt = useFormatters();
   const api = useApi();
   // The verify-token route below needs the raw bearer token, not a request.
   const { getToken } = useAuth();
@@ -147,7 +149,7 @@ export function BackfillTab({
   function formatDate(dateStr: string): string {
     try {
       const date = new Date(dateStr);
-      return date.toLocaleDateString("en-US", {
+      return fmt.custom(date, {
         weekday: "long",
         year: "numeric",
         month: "long",
@@ -289,7 +291,7 @@ export function BackfillTab({
                   <span className="text-ink-2">{t("validatedAt")}</span>
                   <span className="font-medium">
                     {metadata?.validated_at
-                      ? new Date(metadata.validated_at).toLocaleString()
+                      ? fmt.dateTime(metadata.validated_at)
                       : "-"}
                   </span>
                 </div>
@@ -358,11 +360,11 @@ export function BackfillTab({
                       <TableBody>
                         {verifiedRows.slice(0, 50).map((row, idx) => (
                           <TableRow key={idx}>
-                            <TableCell className="font-medium">
+                            <TableCell className="font-medium" dir="auto">
                               {row.name}
                             </TableCell>
                             <TableCell>{row["university id"]}</TableCell>
-                            <TableCell>{row.email}</TableCell>
+                            <TableCell><bdi>{row.email}</bdi></TableCell>
                             <TableCell>{row.gender}</TableCell>
                           </TableRow>
                         ))}

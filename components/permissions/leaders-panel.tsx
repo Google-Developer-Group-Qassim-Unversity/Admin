@@ -12,6 +12,7 @@ import { useAssignments, usePermissionCatalogue, useSetDepartment, useSetShared 
 import { DEPARTMENT_SCOPED, PERM_GROUPS, STAFF_BASICS, type Perm, type PermGroup } from "@/lib/access";
 import type { CataloguePermission } from "@/lib/permissions-types";
 import { cn } from "@/lib/utils";
+import { isolate } from "@/lib/format";
 
 /** "all" edits the shared permissions; a number edits that department's extras. */
 type Target = "all" | number;
@@ -204,7 +205,7 @@ function PermissionChecklist({
                         </span>
                       ) : DEPARTMENT_SCOPED.has(p.key) ? (
                         <span className="text-ink-2 text-xs">
-                          {departmentName ? t("ownDepartmentNamed", { department: departmentName }) : t("ownDepartment")}
+                          {departmentName ? t("ownDepartmentNamed", { department: isolate(departmentName) }) : t("ownDepartment")}
                         </span>
                       ) : null}
                     </span>
@@ -217,7 +218,7 @@ function PermissionChecklist({
       )}
       <div className="bg-card border-foreground sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-10 -mx-4 flex items-center gap-3 border-t px-4 py-3 sm:mx-0 sm:rounded-b-lg md:bottom-0">
         <Button onClick={onSave} disabled={!dirty || pending}>
-          {departmentName ? t("saveDepartment", { department: departmentName }) : t("saveShared")}
+          {departmentName ? t("saveDepartment", { department: isolate(departmentName) }) : t("saveShared")}
         </Button>
         {dirty ? (
           <Button variant="ghost" onClick={() => setChosen(new Set(initial))} disabled={pending}>

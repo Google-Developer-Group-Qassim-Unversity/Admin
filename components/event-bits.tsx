@@ -6,10 +6,11 @@ import { useLocale } from "next-intl";
 import { CalendarDays } from "lucide-react";
 
 import { Plate, type DoorTone } from "@/components/najdi";
-import type { Urgency } from "@/components/status-badge";
-import type { Event, EventStatus } from "@/lib/api-types";
+import { EVENT_TONE, type Urgency } from "@/components/status-badge";
+import type { Event } from "@/lib/api-types";
 import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
+import { intlLocale } from "@/lib/format";
 
 /**
  * An event's door colour. Draft and closed are mud (nothing to do, or done
@@ -18,13 +19,12 @@ import { cn } from "@/lib/utils";
  * madder: overdue.
  */
 export function eventTone(event: Pick<Event, "status" | "start_datetime" | "end_datetime">, now = Date.now()): DoorTone {
-  const byStatus: Record<EventStatus, DoorTone> = { draft: "umber", open: "indigo", active: "green", closed: "umber" };
   if (event.status === "active") {
     const start = parseLocalDateTime(event.start_datetime);
     const end = getEffectiveEndDate(start, parseLocalDateTime(event.end_datetime));
     if (end.getTime() < now) return "madder";
   }
-  return byStatus[event.status];
+  return EVENT_TONE[event.status];
 }
 
 /** The tone an urgency reads as; a step with no urgency is plain mud. */
@@ -64,7 +64,7 @@ export function useDepartmentName() {
 export function useEventDates() {
   const locale = useLocale();
   return React.useMemo(() => {
-    const loc = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
+    const loc = intlLocale(locale);
     const day = new Intl.DateTimeFormat(loc, { day: "numeric", month: "short" });
     const dayLong = new Intl.DateTimeFormat(loc, { weekday: "long", day: "numeric", month: "long", year: "numeric" });
     const time = new Intl.DateTimeFormat(loc, { hour: "numeric", minute: "2-digit" });

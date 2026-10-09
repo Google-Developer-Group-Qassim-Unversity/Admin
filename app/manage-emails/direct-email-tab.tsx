@@ -146,7 +146,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                   <div className="flex-1 min-w-0">
                     <p dir="auto" className="text-sm font-medium truncate sm:text-xs">{r.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                    <p className="text-xs text-muted-foreground truncate"><bdi>{r.email}</bdi></p>
                   </div>
                   <Button
                     type="button"

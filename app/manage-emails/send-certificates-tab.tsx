@@ -54,22 +54,11 @@ import { ProviderSelect } from "./provider-select";
 import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
 import { useTranslations } from "next-intl";
+import { useFormatters } from "@/lib/format";
 
-function formatEventDate(event: Event): string {
-  const start = new Date(event.start_datetime);
-  const end = new Date(event.end_datetime);
-  const startStr = start.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  if (start.toDateString() === end.toDateString()) return startStr;
-  const endStr = end.toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
-  return `${startStr} - ${endStr}`;
+/** "9 Oct 2026", or a range written the way the reader's language writes ranges. */
+function formatEventDate(event: Event, fmt: ReturnType<typeof useFormatters>): string {
+  return fmt.range(event.start_datetime, event.end_datetime);
 }
 
 function toDateString(datetime: string): string {
@@ -78,6 +67,7 @@ function toDateString(datetime: string): string {
 
 export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) {
   const t = useTranslations("manageEmails.sendCertificates");
+  const fmt = useFormatters();
   const tf = useTranslations("common.fields");
   const tDirect = useTranslations("manageEmails.directEmail");
   const tc = useTranslations("common.actions");
@@ -330,7 +320,7 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                               <div className="flex flex-col">
                                 <span dir="auto">{event.name}</span>
                                 <span className="text-xs text-muted-foreground">
-                                  {formatEventDate(event)}
+                                  {formatEventDate(event, fmt)}
                                 </span>
                               </div>
                             </CommandItem>

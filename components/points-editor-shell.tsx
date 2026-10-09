@@ -45,7 +45,7 @@ export function PointsEditorShell({
             </>
           ) : (
             <>
-              <Plate tone="umber" icon={Trophy} className="max-sm:hidden" />
+              <Plate tone="neutral" icon={Trophy} className="max-sm:hidden" />
               <div className="flex min-w-0 flex-col gap-1">
                 <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[30px]">{title}</h1>
                 {description ? <p className="text-ink-2 text-sm text-pretty">{description}</p> : null}

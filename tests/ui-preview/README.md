@@ -17,12 +17,19 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 `CHROMIUM_PATH`, or `/usr/bin/chromium` when present
 (`pnpm exec playwright install chromium` otherwise).
 
+- **Run it from `Frontend/`.** `--routes` defaults to `/`, `--locales` to `ar`
+  and `--themes` to `light`, so pass all four flags to cover a page properly.
 - **Routes** are listed in `entry.jsx`. Server-component pages are replaced by
-  the client component they render.
+  the client component they render. A new page needs a line in `ROUTES`.
 - **Fixtures**: each file default-exports
   `[{ method?, path: RegExp, status?, body | (ctx) => body }]`, matched against
   the API path. Unmatched GETs answer `[]` and are listed after the run, so you
   can see which fixtures a page still needs. Keep one file per area.
+- **First match wins**, and files load in alphabetical order. To override a
+  path that `core.mjs` already answers, name your file so it sorts first (as
+  `a-engage.mjs` does).
+- The signed-in preview user is a super admin with every permission
+  (`ALL_PERMS` in `core.mjs`), acting for every department.
 - Page errors and console errors are printed under each screenshot, and make
   the run exit non-zero.
 

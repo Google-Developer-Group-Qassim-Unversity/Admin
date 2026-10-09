@@ -82,6 +82,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useEventContext } from "@/contexts/event-context";
 import { useTranslations } from "next-intl";
+import { isolate } from "@/lib/format";
 
 export default function EventResponsesPage() {
   const t = useTranslations("responsesPage");
@@ -472,7 +473,7 @@ export default function EventResponsesPage() {
     <section aria-labelledby="responses-title" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
         <h2 id="responses-title" className="sr-only">
-          {t("title", { name: event.name })}
+          {t("title", { name: isolate(event.name) })}
         </h2>
         <p className="text-ink-2 text-[13.5px]">{t("subtitle")}</p>
       </div>

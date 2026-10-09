@@ -8,6 +8,7 @@ import { useEventAttendance } from "@/hooks/use-event";
 import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, type LucideIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { SectionHead } from "@/components/najdi";
+import { intlLocale } from "@/lib/format";
 
 /** One labelled fact in the summary list: icon chip, muted label, value. */
 function Fact({
@@ -50,7 +51,7 @@ export default function EventInfoPage() {
 
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
   // Gregorian calendar with Latin digits in Arabic, matching the event cards.
-  const dateLocale = locale === "ar" ? "ar-SA-u-ca-gregory-nu-latn" : "en-GB";
+  const dateLocale = intlLocale(locale);
 
   const formatDate = (dateString: string) => {
     const date = parseLocalDateTime(dateString);

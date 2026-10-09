@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { usePipelineCalendar } from "@/hooks/use-pipeline";
 import { cn } from "@/lib/utils";
 import type { CalendarDay } from "@/lib/pipeline-types";
+import { intlLocale } from "@/lib/format";
 
 const ISO = "yyyy-MM-dd";
 const LEGEND: PipelineDayStatus[] = ["open", "locked", "held", "booked", "published", "banned"];
@@ -59,14 +60,14 @@ export function BookingCalendar({
 
   const byDate = React.useMemo(() => new Map((data?.days ?? []).map((d) => [d.date, d])), [data]);
   const weekdays = React.useMemo(() => {
-    const short = new Intl.DateTimeFormat(locale, { weekday: "short" });
-    const narrow = new Intl.DateTimeFormat(locale, { weekday: "narrow" });
+    const short = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short" });
+    const narrow = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "narrow" });
     return Array.from({ length: 7 }, (_, i) => ({ short: short.format(addDays(gridStart, i)), narrow: narrow.format(addDays(gridStart, i)) }));
   }, [locale, gridStart]);
-  const monthLabel = new Intl.DateTimeFormat(locale, { month: "long", year: "numeric" }).format(month);
+  const monthLabel = new Intl.DateTimeFormat(intlLocale(locale), { month: "long", year: "numeric" }).format(month);
   const dayNumber = React.useMemo(() => new Intl.NumberFormat(locale), [locale]);
   const longDay = React.useMemo(
-    () => new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }),
+    () => new Intl.DateTimeFormat(intlLocale(locale), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }),
     [locale],
   );
 
@@ -153,7 +154,7 @@ export function BookingCalendar({
                   {dayNumber.format(cell.getDate())}
                 </b>
                 {label ? (
-                  <small className="max-w-full truncate text-[11px] leading-tight font-medium max-sm:hidden">{label}</small>
+                  <small className="max-w-full truncate text-[11px] leading-tight font-medium max-sm:hidden"><bdi>{label}</bdi></small>
                 ) : null}
                 {day.status === "banned" ? (
                   <i aria-hidden="true" className="bg-door-madder absolute top-1 end-1 size-1.5 rounded-[1px] sm:hidden" />
@@ -187,7 +188,7 @@ export function BookingCalendar({
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             {t("firstBookable", {
-              date: new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", timeZone: "UTC" }).format(
+              date: new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "long", timeZone: "UTC" }).format(
                 new Date(`${data.first_bookable_date}T00:00:00Z`),
               ),
             })}
@@ -197,11 +198,12 @@ export function BookingCalendar({
               {closed.map((d) => (
                 <li key={d.date}>
                   <span className="text-door-madder-ink font-bold">
-                    {new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
+                    {new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
                       new Date(`${d.date}T00:00:00Z`),
                     )}
                   </span>
-                  {d.reason ? ` · ${d.reason}` : ` · ${t("status.banned")}`}
+                  {" · "}
+                  {d.reason ? <bdi>{d.reason}</bdi> : t("status.banned")}
                 </li>
               ))}
             </ul>

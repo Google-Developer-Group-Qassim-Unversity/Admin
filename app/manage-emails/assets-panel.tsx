@@ -103,7 +103,7 @@ export function AssetsPanel() {
         <ul className="flex flex-col">
           {assets.map((asset) => (
             <li key={asset.key} className="border-rule flex min-h-14 items-center gap-3 border-b py-2 last:border-b-0">
-              <Plate tone="umber" size="sm" icon={asset.icon} />
+              <Plate tone="neutral" size="sm" icon={asset.icon} />
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-bold">{t(`items.${asset.key}.name`)}</p>
                 <p className="text-ink-2 truncate text-xs">{t(`items.${asset.key}.description`)}</p>

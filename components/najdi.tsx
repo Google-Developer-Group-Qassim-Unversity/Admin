@@ -14,8 +14,16 @@ import { cn } from "@/lib/utils";
  */
 export type DoorTone = "green" | "ochre" | "madder" | "indigo" | "umber";
 
+/**
+ * `neutral` is the wall itself: a plate or chip with no state (a page icon, a
+ * member, a setting). Use it whenever the honest answer to "which state is
+ * this?" is "none"; umber means draft or inactive, not "no colour".
+ */
+export type Tone = DoorTone | "neutral";
+
 /** A solid painted plate and the text that sits on it. */
-export const PLATE: Record<DoorTone, string> = {
+export const PLATE: Record<Tone, string> = {
+  neutral: "bg-sunk text-foreground shadow-[inset_0_0_0_1px_var(--rule)]",
   green: "bg-door-green text-on-door",
   ochre: "bg-door-ochre text-on-door-ochre",
   madder: "bg-door-madder text-on-door",
@@ -24,7 +32,8 @@ export const PLATE: Record<DoorTone, string> = {
 };
 
 /** A tinted ground with its readable ink: chips, pills, highlighted rows. */
-export const SOFT: Record<DoorTone, string> = {
+export const SOFT: Record<Tone, string> = {
+  neutral: "bg-sunk text-ink-2",
   green: "bg-door-green-soft text-door-green-ink",
   ochre: "bg-door-ochre-soft text-door-ochre-ink",
   madder: "bg-door-madder-soft text-door-madder-ink",
@@ -33,7 +42,8 @@ export const SOFT: Record<DoorTone, string> = {
 };
 
 /** Just the ink, for text sitting on the wall. */
-export const INK: Record<DoorTone, string> = {
+export const INK: Record<Tone, string> = {
+  neutral: "text-ink-2",
   green: "text-door-green-ink",
   ochre: "text-door-ochre-ink",
   madder: "text-door-madder-ink",
@@ -42,7 +52,8 @@ export const INK: Record<DoorTone, string> = {
 };
 
 /** Just the solid colour, for marks and fills. */
-export const FILL: Record<DoorTone, string> = {
+export const FILL: Record<Tone, string> = {
+  neutral: "bg-adobe",
   green: "bg-door-green",
   ochre: "bg-door-ochre",
   madder: "bg-door-madder",
@@ -64,7 +75,7 @@ export function Plate({
   className,
   children,
 }: {
-  tone: DoorTone;
+  tone: Tone;
   icon?: LucideIcon;
   size?: keyof typeof PLATE_SIZE;
   className?: string;
@@ -74,7 +85,8 @@ export function Plate({
     <span
       aria-hidden="true"
       className={cn(
-        "plate-depth grid shrink-0 place-items-center rounded-t-[4px] rounded-b-[2px]",
+        "grid shrink-0 place-items-center rounded-t-[4px] rounded-b-[2px]",
+        tone !== "neutral" && "plate-depth",
         PLATE[tone],
         PLATE_SIZE[size],
         className,
@@ -86,7 +98,7 @@ export function Plate({
 }
 
 /** A small square state mark: the house's replacement for a round status dot. */
-export function Mark({ tone, className }: { tone: DoorTone; className?: string }) {
+export function Mark({ tone, className }: { tone: Tone; className?: string }) {
   return <span aria-hidden="true" className={cn("inline-block size-2.5 shrink-0 rounded-[1px]", FILL[tone], className)} />;
 }
 
@@ -115,7 +127,7 @@ export function Door({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-xl shadow-[0_1px_0_rgb(0_0_0/0.06),0_10px_24px_-14px_rgb(58_42_31/0.55)]",
+        "overflow-hidden rounded-xl shadow-[var(--shadow-door)]",
         PLATE[tone],
         className,
       )}
@@ -184,7 +196,8 @@ export function Tarma({
       role={label ? "img" : undefined}
       aria-label={label}
       aria-hidden={label ? undefined : true}
-      className={cn("shrink-0 overflow-visible", className)}
+      // Progress runs in reading order: right to left in Arabic.
+      className={cn("shrink-0 overflow-visible rtl:-scale-x-100", className)}
     >
       {Array.from({ length: total }, (_, i) => {
         const x = i * (size + gap);
@@ -196,7 +209,9 @@ export function Tarma({
             points={points}
             strokeLinejoin="round"
             strokeWidth={state === "current" ? 2 : 1.4}
+            style={{ "--i": i } as React.CSSProperties}
             className={cn(
+              "animate-tarma",
               state === "done" && "fill-door-green stroke-door-green",
               state === "returned" && "fill-door-madder stroke-door-madder",
               state === "current" &&
@@ -314,5 +329,35 @@ export function Fact({ term, children, className }: { term: React.ReactNode; chi
       <dt className={cn("text-ink-2 border-rule border-b py-2 pe-4 text-sm", className)}>{term}</dt>
       <dd className={cn("border-rule border-b py-2 text-sm font-medium", className)}>{children}</dd>
     </>
+  );
+}
+
+/**
+ * Loading placeholder for a list of rows: the same height and rhythm as the
+ * real rows (plate, title, meta line), so nothing jumps when data arrives.
+ */
+export function RowsSkeleton({ rows = 3, className }: { rows?: number; className?: string }) {
+  return (
+    <div aria-hidden="true" className={cn("flex flex-col", className)}>
+      {Array.from({ length: rows }, (_, i) => (
+        <div key={i} className="border-rule flex min-h-16 items-center gap-3 border-b px-1 py-3">
+          <span className="bg-sunk h-11 w-10 shrink-0 animate-pulse rounded-t-[4px] rounded-b-[2px] motion-reduce:animate-none" />
+          <span className="flex flex-1 flex-col gap-2">
+            <span className="bg-sunk h-3.5 w-1/2 animate-pulse rounded-sm motion-reduce:animate-none" />
+            <span className="bg-sunk h-3 w-2/3 animate-pulse rounded-sm motion-reduce:animate-none" />
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+/** An empty list: one quiet line saying what would be here, and the action that fills it. */
+export function EmptyLine({ children, action, className }: { children: React.ReactNode; action?: React.ReactNode; className?: string }) {
+  return (
+    <div className={cn("border-rule flex min-h-16 flex-wrap items-center justify-between gap-3 border-b px-1 py-4", className)}>
+      <p className="text-ink-2 text-sm">{children}</p>
+      {action}
+    </div>
   );
 }

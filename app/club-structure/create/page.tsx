@@ -70,7 +70,7 @@ function CreateDepartment() {
             </Button>
           </div>
           <CardTitle className="flex items-center gap-3">
-            <Plate tone="umber">
+            <Plate tone="neutral">
               <DepartmentPlusIcon className="size-[18px]" />
             </Plate>
             <h1 className="font-display text-[26px] leading-tight font-semibold">{t("newDepartment")}</h1>

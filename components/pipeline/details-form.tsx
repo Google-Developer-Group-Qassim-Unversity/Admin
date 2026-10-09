@@ -22,6 +22,7 @@ import {
   type EventDetails,
   type EventRequestDetail,
 } from "@/lib/pipeline-types";
+import { intlLocale } from "@/lib/format";
 
 function bookedDays(request: EventRequestDetail): string[] {
   if (!request.start_date || !request.end_date) return [];
@@ -72,7 +73,7 @@ export function DetailsForm({ request }: { request: EventRequestDetail }) {
   const setPartners = (next: (current: number[]) => number[]) =>
     draft.update((d) => ({ ...d, partners: next(d.partners) }));
 
-  const dayLabel = new Intl.DateTimeFormat(locale, { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
+  const dayLabel = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "long", day: "numeric", month: "short", timeZone: "UTC" });
   const otherDepartments = (departments ?? []).filter((d) => d.id !== request.department.id);
   const official = request.within_official_hours;
 

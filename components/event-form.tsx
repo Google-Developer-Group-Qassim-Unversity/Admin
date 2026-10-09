@@ -359,7 +359,7 @@ export function EventForm({
                 <SelectContent>
                   {departments?.map((dept) => (
                     <SelectItem key={dept.id} value={dept.id.toString()}>
-                      {dept.ar_name}
+                      <bdi>{dept.ar_name}</bdi>
                     </SelectItem>
                   ))}
                 </SelectContent>

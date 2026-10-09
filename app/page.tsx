@@ -22,6 +22,7 @@ import { memberStatsQuery } from "@/hooks/use-members";
 import { useInbox, usePipelineMe, usePipelineOverview } from "@/hooks/use-pipeline";
 import { getEmailDashboardStats } from "@/lib/api";
 import { useApi } from "@/lib/api/client";
+import { useFormatters } from "@/lib/format";
 
 /**
  * Home. The event pipeline is the club's main way to make an event, so it is
@@ -32,6 +33,7 @@ import { useApi } from "@/lib/api/client";
  */
 export default function DashboardPage() {
   const t = useTranslations("dashboard");
+  const fmt = useFormatters();
   const { user } = useUser();
   const { can, canOpen, access } = useAccess();
   const pipelineAllowed = Boolean(access) && canOpen("/pipeline");
@@ -61,6 +63,14 @@ export default function DashboardPage() {
   const all = React.useMemo(() => (overview.data?.items ?? []).filter((r) => r.stage !== "cancelled"), [overview.data]);
   const mine = React.useMemo(() => all.filter((r) => ownIds.has(r.department.id)), [all, ownIds]);
   const waiting = React.useMemo(() => waitingOnYou(mine), [mine]);
+  // Oldest first, one entry per request: the door takes the task that has waited longest.
+  const teamTasks = React.useMemo(
+    () =>
+      [...new Map((inbox.data ?? []).map((item) => [item.request.id, item])).values()].sort((a, b) =>
+        (a.opened_at ?? "").localeCompare(b.opened_at ?? ""),
+      ),
+    [inbox.data],
+  );
   const mineSorted = React.useMemo(() => {
     const first = new Set(waiting.map((w) => w.request.id));
     return [...mine].sort((a, b) => Number(first.has(b.id)) - Number(first.has(a.id))).slice(0, 4);
@@ -79,7 +89,7 @@ export default function DashboardPage() {
       ? [
           {
             label: t("tiles.members"),
-            value: members.data.total.toLocaleString(),
+            value: fmt.number(members.data.total),
             note: t("tiles.membersHint", { verified: members.data.authenticated, pending: members.data.total - members.data.authenticated }),
           },
         ]
@@ -89,7 +99,7 @@ export default function DashboardPage() {
 
   const greeting = (
     <header className="flex flex-col gap-1">
-      <h1 className="font-display text-[28px] leading-tight font-semibold sm:text-[32px]">
+      <h1 className="font-display text-[26px] leading-tight font-semibold sm:text-[30px]">
         {user?.firstName ? t("greeting", { name: user.firstName }) : t("title")}
       </h1>
       <p className="text-ink-2 max-w-[70ch] text-[15px] text-pretty">
@@ -137,9 +147,9 @@ export default function DashboardPage() {
 
       {/* Phone: one column, in the order the job happens. */}
       <div className="flex flex-col gap-7 lg:hidden">
-        <YourTurn waiting={waiting} isPending={overview.isPending} />
-        {yourRequests}
+        <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} />
         {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} /> : null}
+        {yourRequests}
         <StageStrip requests={all} title={stagesTitle} isPending={overview.isPending} />
         <EventsNow events={events} isPending={eventsPending} />
         <AttentionList items={attention.items} isPending={attention.isPending} />
@@ -149,7 +159,7 @@ export default function DashboardPage() {
       {/* Wide: the door and what waits beside the booking calendar, then the board. */}
       <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(340px,392px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
-          <YourTurn waiting={waiting} isPending={overview.isPending} big />
+          <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} big />
           {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} panel /> : null}
           <div className="bg-card ring-rule rounded-xl px-5 pt-4 pb-2 ring-1">{yourRequests}</div>
         </div>

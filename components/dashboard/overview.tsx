@@ -7,7 +7,7 @@ import { Award, ChevronRight, ClockAlert, CornerUpLeft, FilePen, Users, type Luc
 
 import { INK, Mark, Mortar, Plate, SectionHead, SOFT, type DoorTone } from "@/components/najdi";
 import { TEAM_ICON, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
-import { STAGE_STEP, STAGE_TONE, URGENCY_TONE } from "@/components/status-badge";
+import { EVENT_TONE, STAGE_STEP, STAGE_TONE, URGENCY_TONE } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AttentionItem, AttentionKind } from "@/hooks/use-attention";
@@ -15,26 +15,10 @@ import { nextStepFor } from "@/lib/event-next-step";
 import { cn, getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import type { EventRequestSummary, InboxItem } from "@/lib/pipeline-types";
+import { intlLocale, useTimeAgo } from "@/lib/format";
 
 const STEPS = ["draft", "in_review", "media", "ready", "published"] as const;
 const LINK = "text-door-indigo-ink inline-flex min-h-8 items-center hover:underline underline-offset-3";
-
-/** "3 hours ago", from an ISO time. */
-export function useTimeAgo() {
-  const locale = useLocale();
-  return React.useCallback(
-    (iso: string | null) => {
-      if (!iso) return "";
-      const seconds = (new Date(iso).getTime() - Date.now()) / 1000;
-      const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-      for (const [unit, size] of [["day", 86_400], ["hour", 3_600], ["minute", 60]] as const) {
-        if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
-      }
-      return relative.format(0, "minute");
-    },
-    [locale],
-  );
-}
 
 /** Requests per step of the path. A returned request counts on the review step. */
 export function stageCounts(requests: EventRequestSummary[]) {
@@ -135,15 +119,15 @@ export function StageBoard({ requests, title, isPending }: { requests: EventRequ
                         r.stage === "returned"
                           ? "bg-door-madder-soft shadow-[inset_0_0_0_1px_var(--door-madder-ink)]"
                           : r.stage === "draft" || r.stage === "ready"
-                            ? "bg-card shadow-[inset_0_0_0_1.5px_var(--door-ochre)] hover:shadow-[inset_0_0_0_1.5px_var(--door-ochre),0_6px_14px_-10px_rgb(58_42_31/0.5)]"
-                            : "bg-card shadow-[inset_0_0_0_1px_var(--rule)] hover:shadow-[inset_0_0_0_1px_var(--adobe),0_6px_14px_-10px_rgb(58_42_31/0.5)]",
+                            ? "bg-card shadow-[inset_0_0_0_1.5px_var(--door-ochre)] hover:shadow-[inset_0_0_0_1.5px_var(--door-ochre),var(--shadow-lift)]"
+                            : "bg-card shadow-[inset_0_0_0_1px_var(--rule)] hover:shadow-[inset_0_0_0_1px_var(--adobe),var(--shadow-lift)]",
                       )}
                     >
                       <span className={cn("flex items-center gap-1.5 text-xs font-bold", INK[tone])}>
                         <Mark tone={tone} className="size-2" />
                         {t(`stage.${r.stage}`)}
                       </span>
-                      <b className="text-[14px] leading-snug font-bold">{r.title || t("requests.untitled")}</b>
+                      <b className="text-[14px] leading-snug font-bold"><bdi>{r.title || t("requests.untitled")}</bdi></b>
                       <span className="text-ink-2 text-xs">
                         {departmentName(r.department)} ·{" "}
                         <span className="tabular">{r.start_date ? formatRange(r.start_date, r.end_date) : t("requests.noDates")}</span>
@@ -197,7 +181,7 @@ export function TeamInbox({ items, isPending, panel = false }: { items: InboxIte
               >
                 <Plate tone="ochre" icon={TEAM_ICON[item.team]} />
                 <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                  <b className="truncate text-[15px] font-bold">{item.request.title || t("requests.untitled")}</b>
+                  <b className="truncate text-[15px] font-bold"><bdi>{item.request.title || t("requests.untitled")}</bdi></b>
                   <span className="text-ink-2 truncate text-[13px]">
                     {t(`teams.${item.team}`)} · {timeAgo(item.opened_at)}
                   </span>
@@ -212,7 +196,6 @@ export function TeamInbox({ items, isPending, panel = false }: { items: InboxIte
   );
 }
 
-const EVENT_TONE: Record<string, DoorTone> = { active: "green", open: "indigo", draft: "umber", closed: "umber" };
 
 /** Events running now and open for registration, each with the one thing it waits for. */
 export function EventsNow({ events, isPending, panel = false }: { events: Event[] | undefined; isPending: boolean; panel?: boolean }) {
@@ -220,7 +203,7 @@ export function EventsNow({ events, isPending, panel = false }: { events: Event[
   const te = useTranslations("events");
   const locale = useLocale();
   const when = React.useMemo(
-    () => new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }),
+    () => new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }),
     [locale],
   );
   const now = React.useMemo(() => new Date(), []);
@@ -330,7 +313,7 @@ export function Stats({ stats }: { stats: Stat[] }) {
           </React.Fragment>
         ))}
       </p>
-      <dl className="bg-card ring-rule hidden rounded-xl ring-1 md:grid md:grid-cols-4">
+      <dl className="bg-card ring-rule hidden rounded-xl ring-1 md:grid md:grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
         {stats.map((s) => (
           <div key={s.label} className="border-rule border-e px-5 py-3.5 last:border-e-0">
             <dt className="text-ink-2 text-[13px] font-medium">{s.label}</dt>

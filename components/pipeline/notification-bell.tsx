@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Ban, Bell, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, type LucideIcon } from "lucide-react";
 
 import { useDepartmentName } from "@/components/pipeline/shared";
@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { usePipelineNotifications, useReadNotifications } from "@/hooks/use-pipeline";
 import type { NotificationKind } from "@/lib/pipeline-types";
+import { useTimeAgo } from "@/lib/format";
 
 /** Each kind on its plate: ochre is waiting on the reader, madder went wrong, green moved on. */
 const KIND: Record<NotificationKind, { tone: DoorTone; icon: LucideIcon }> = {
@@ -25,28 +26,6 @@ const KIND: Record<NotificationKind, { tone: DoorTone; icon: LucideIcon }> = {
   task_done: { tone: "green", icon: CheckCheck },
 };
 
-const UNITS: [Intl.RelativeTimeFormatUnit, number][] = [
-  ["day", 86_400],
-  ["hour", 3_600],
-  ["minute", 60],
-];
-
-/** "3 hours ago" - a notification's age matters more than its timestamp. */
-function useTimeAgo() {
-  const locale = useLocale();
-  return React.useMemo(() => {
-    const relative = new Intl.RelativeTimeFormat(locale, { numeric: "auto" });
-    const absolute = new Intl.DateTimeFormat(locale, { dateStyle: "medium" });
-    return (iso: string) => {
-      const seconds = (new Date(iso).getTime() - Date.now()) / 1000;
-      if (seconds < -7 * 86_400) return absolute.format(new Date(iso));
-      for (const [unit, size] of UNITS) {
-        if (Math.abs(seconds) >= size) return relative.format(Math.round(seconds / size), unit);
-      }
-      return relative.format(0, "minute");
-    };
-  }, [locale]);
-}
 
 /**
  * The pipeline's notifications, in the top bar so they reach people on every
@@ -129,7 +108,7 @@ function NotificationPopover() {
                   <Plate tone={KIND[n.kind].tone} icon={KIND[n.kind].icon} size="sm" className={n.read ? "opacity-55" : undefined} />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className={`text-sm leading-snug ${n.read ? "text-ink-2 font-medium" : "font-bold"}`}>
-                      {t(`kinds.${n.kind}`, { title: n.request.title || tr("untitled") })}
+                      {t(`kinds.${n.kind}`, { title: `\u2068${n.request.title || tr("untitled")}\u2069` })}
                     </span>
                     <span className="text-ink-2 text-xs">
                       {departmentName(n.department)} · {timeAgo(n.created_at)}

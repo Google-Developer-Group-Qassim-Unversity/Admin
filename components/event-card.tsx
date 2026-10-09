@@ -49,12 +49,12 @@ export function EventRow({ event, now }: { event: Event; now: number }) {
     <li className="border-rule relative flex items-start gap-3 border-b px-1 py-3 transition-colors hover:bg-card has-[a:active]:bg-sunk">
       <EventThumb event={event} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <h3 className="line-clamp-2 text-[15px] leading-snug font-bold" dir="auto">
+        <h3 className="line-clamp-2 text-[15px] leading-snug font-bold">
           <Link
             href={`/events/${event.id}`}
             className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ring"
           >
-            {event.name}
+            <bdi>{event.name}</bdi>
           </Link>
         </h3>
         <p className="text-ink-2 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px]">
@@ -109,7 +109,7 @@ export function EventPosterTile({ event, now }: { event: Event; now: number }) {
 
   return (
     <li className="group relative flex flex-col gap-2">
-      <div className="bg-sunk ring-rule relative aspect-[4/5] overflow-hidden rounded-xl ring-1 transition-shadow group-hover:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)]">
+      <div className="bg-sunk ring-rule relative aspect-[4/5] overflow-hidden rounded-xl ring-1 transition-shadow group-hover:shadow-[var(--shadow-lift)]">
         {url ? (
           <Image src={url} alt="" fill sizes="(min-width: 1280px) 20vw, (min-width: 768px) 30vw, 100vw" className="object-contain" />
         ) : (
@@ -125,12 +125,12 @@ export function EventPosterTile({ event, now }: { event: Event; now: number }) {
           <span className="text-ink-2 text-[12.5px] font-bold">{t(`status.${event.status}`)}</span>
           <span className="text-ink-2 tabular ms-auto text-[12.5px]">{dates.day(event.start_datetime)}</span>
         </div>
-        <h3 className="line-clamp-2 text-[15px] leading-snug font-bold" dir="auto">
+        <h3 className="line-clamp-2 text-[15px] leading-snug font-bold">
           <Link
             href={`/events/${event.id}`}
             className="outline-none after:absolute after:inset-0 after:rounded-xl focus-visible:after:outline-2 focus-visible:after:outline-ring"
           >
-            {event.name}
+            <bdi>{event.name}</bdi>
           </Link>
         </h3>
         {dept ? (

@@ -39,8 +39,17 @@ export function SummaryStatistics({
   return (
     <section aria-label={t("title")} className="mb-5 sm:mb-6">
       <h3 className="sr-only">{t("title")}</h3>
-      {/* Bricks in mortar: each count in the colour of the state it counts. */}
-      <Mortar className="grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+      {/* Phones: one line, each count in the colour of the state it counts, so the list comes first. */}
+      <p className="text-ink-2 flex flex-wrap gap-x-1.5 gap-y-0.5 text-[13px] sm:hidden">
+        {tiles.map((tile, i) => (
+          <span key={tile.key} className="whitespace-nowrap">
+            <b className={cn("tabular font-bold", tile.ink)}>{tile.value}</b> {tile.label}
+            {i < tiles.length - 1 ? <span aria-hidden="true"> ·</span> : null}
+          </span>
+        ))}
+      </p>
+      {/* Wider: bricks in mortar. */}
+      <Mortar className="hidden sm:grid sm:grid-cols-3 lg:grid-cols-5">
         <dl className="contents">
           {tiles.map((tile) => (
             <div key={tile.key} className={cn("bg-card flex flex-col-reverse gap-1 rounded-sm px-3.5 py-3", tile.className)}>

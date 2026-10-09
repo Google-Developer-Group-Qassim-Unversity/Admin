@@ -138,7 +138,7 @@ function SortableTableRow({ action, onEdit, onToggleHidden, onDelete }: Sortable
     <TableRow
       ref={setNodeRef}
       style={style}
-      className={`${action.is_hidden ? "text-ink-2" : ""} ${isDragging ? "bg-door-ochre-soft relative z-10 shadow-[0_6px_16px_-8px_rgb(58_42_31/0.5)]" : ""}`}
+      className={`${action.is_hidden ? "text-ink-2" : ""} ${isDragging ? "bg-door-ochre-soft relative z-10 shadow-[var(--shadow-lift)]" : ""}`}
     >
       <TableCell>
         <div className="flex items-center gap-2">
@@ -911,7 +911,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.composite")}</SelectLabel>
                                   {groupedReplacements.composite.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -921,7 +921,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.department")}</SelectLabel>
                                   {groupedReplacements.department.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -931,7 +931,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.member")}</SelectLabel>
                                   {groupedReplacements.member.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>
@@ -941,7 +941,7 @@ export default function ManagePointsPage() {
                                   <SelectLabel>{t("types.bonus")}</SelectLabel>
                                   {groupedReplacements.bonus.map((action) => (
                                     <SelectItem key={action.id} value={action.id.toString()}>
-                                      {action.action_name} <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
+                                      <bdi>{action.action_name}</bdi> <span className="tabular" dir="ltr">({formatPoints(action.points)})</span>
                                     </SelectItem>
                                   ))}
                                 </SelectGroup>

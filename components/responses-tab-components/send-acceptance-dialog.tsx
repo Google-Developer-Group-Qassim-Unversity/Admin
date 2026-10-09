@@ -418,9 +418,9 @@ return (
                     <tbody>
                       {recipients.map((recipient, index) => (
                         <tr key={index} className="border-t">
-                          <td className="py-2 px-3">{recipient.name}</td>
+                          <td className="py-2 px-3" dir="auto">{recipient.name}</td>
                           <td className="py-2 px-3 text-ink-2 break-all">
-                            {recipient.email}
+                            <bdi>{recipient.email}</bdi>
                           </td>
                         </tr>
                       ))}

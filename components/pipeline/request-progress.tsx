@@ -1,5 +1,7 @@
 "use client";
 
+import type * as React from "react";
+
 import { useTranslations } from "next-intl";
 import { XCircle } from "lucide-react";
 
@@ -87,7 +89,9 @@ export function RequestProgress({ request }: { request: EventRequestDetail }) {
                   points="0,19 22,19 11,0.5"
                   strokeLinejoin="round"
                   strokeWidth={active ? 2.2 : 1.6}
+                  style={{ "--i": i } as React.CSSProperties}
                   className={cn(
+                    "animate-tarma",
                     done && "fill-door-green stroke-door-green",
                     active && (returned ? "fill-door-madder stroke-door-madder" : cn(SOFT_FILL[tone], STROKE[tone])),
                     !done && !active && "stroke-adobe fill-none",

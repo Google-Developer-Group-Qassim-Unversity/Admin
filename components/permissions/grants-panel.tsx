@@ -14,6 +14,7 @@ import { useAccess } from "@/hooks/use-access";
 import { useAssignments, useDepartmentGrants, useGrant, usePermissionLabel, useRevoke } from "@/hooks/use-permissions";
 import type { Perm } from "@/lib/access";
 import type { GrantEntry } from "@/lib/permissions-types";
+import { isolate } from "@/lib/format";
 
 type DepartmentOption = { id: number; name: string; ar_name: string };
 
@@ -114,7 +115,7 @@ function DepartmentGrantsView({ departmentId, history }: { departmentId: number;
             <SelectContent>
               {data.members.map((m) => (
                 <SelectItem key={m.member_id} value={String(m.member_id)}>
-                  {m.name}
+                  <bdi>{m.name}</bdi>
                 </SelectItem>
               ))}
             </SelectContent>
@@ -166,9 +167,9 @@ function GrantRow({ row, onRevoke, pending }: { row: GrantEntry; onRevoke: () =>
           {label(row.permission)}
         </span>
         <span className="text-ink-2 text-xs">
-          {t("grantedBy", { name: row.granted_by.name, date: when(row.granted_at) })}
+          {t("grantedBy", { name: isolate(row.granted_by.name), date: when(row.granted_at) })}
           {revoked && row.revoked_by
-            ? ` · ${t("revokedBy", { name: row.revoked_by.name, date: when(row.revoked_at as string) })}`
+            ? ` · ${t("revokedBy", { name: isolate(row.revoked_by.name), date: when(row.revoked_at as string) })}`
             : null}
         </span>
       </div>
