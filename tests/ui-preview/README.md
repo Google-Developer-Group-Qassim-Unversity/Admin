@@ -17,7 +17,7 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 `CHROMIUM_PATH`, or `/usr/bin/chromium` when present
 (`pnpm exec playwright install chromium` otherwise).
 
-- **Run it from `Frontend/`.** `--routes` defaults to `/`, `--locales` to `ar`
+- **Run it from the repo root.** `--routes` defaults to `/`, `--locales` to `ar`
   and `--themes` to `light`, so pass all four flags to cover a page properly.
 - **Routes** are listed in `entry.jsx`. Server-component pages are replaced by
   the client component they render. A new page needs a line in `ROUTES`.

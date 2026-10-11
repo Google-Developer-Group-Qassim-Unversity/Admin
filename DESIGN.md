@@ -125,7 +125,7 @@ mortar.
 
 - **This design is settled. Every UI task is a refinement inside it**: a new
   page, a new component, a tweak, or migrating code from the old design. Use the
-  **impeccable** skill (it loads `Frontend/PRODUCT.md` and this file) in its
+  **impeccable** skill (it loads `PRODUCT.md` and this file) in its
   refine/extend mode. Never run its redesign or new-visual-world flow, never
   propose a new look, and never edit this file or `PRODUCT.md` unless the user
   asks for a design-system change.
@@ -488,7 +488,7 @@ silently render without colour.
 6. Arabic and English: strings in both message files, logical CSS, `<bdi>` on
    user content, dates through `lib/format.ts`.
 7. Light and dark both checked.
-8. Screenshots with the preview tool, from `Frontend/`:
+8. Screenshots with the preview tool, from the repo root:
    `node tests/ui-preview/shoot.mjs --routes <your routes> --viewports phone,desktop --locales ar,en --themes light,dark`
    with no page errors (a new page needs a route in `tests/ui-preview/entry.jsx`
    and fixtures under `tests/ui-preview/fixtures/`; see its README). Then

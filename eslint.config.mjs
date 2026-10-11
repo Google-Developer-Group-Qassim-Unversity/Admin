@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design mockups, not part of the app.
+    "design-options/**",
   ]),
   {
     // This file builds a manual external store (mutable closure state read

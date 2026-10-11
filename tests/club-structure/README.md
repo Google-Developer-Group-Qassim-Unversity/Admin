@@ -7,22 +7,27 @@ responses are not mocked. Test identities replace Clerk's browser hooks and JWT
 verification; the backend's real permission guards still run. Public leaderboard
 cache calls are stubbed. No production auth bypass or test route is added.
 
-From `Frontend/`, install dependencies and Chromium:
+The test itself lives in the Backend repo
+(`tests/test_club_structure_browser.py`), which spins up the API and MySQL and
+runs this script. With both repos cloned side by side, install this repo's
+dependencies and Chromium from its root:
 
 ```bash
 pnpm install --frozen-lockfile
 pnpm exec playwright install chromium
 ```
 
-Then, from `Backend/`, with Docker available and `DATABASE_URL` unset:
+Then, from the Backend repo, with Docker available and `DATABASE_URL` unset:
 
 ```bash
-RUN_CLUB_BROWSER=1 uv run pytest
+RUN_CLUB_BROWSER=1 uv run pytest tests/test_club_structure_browser.py
 ```
 
-To use an installed browser, set `CHROMIUM_PATH=/usr/bin/chromium`. The ordinary
-backend suite skips this browser check when `RUN_CLUB_BROWSER` is unset. CI runs
-it in the `test` job of `.github/workflows/pr.yml`, without application
+If this repo is not at `../Admin` from the Backend repo, point `ADMIN_DIR` at
+it. To use an installed browser, set `CHROMIUM_PATH=/usr/bin/chromium`. The
+ordinary backend suite skips this browser check when `RUN_CLUB_BROWSER` is
+unset. CI runs it from both repos' `.github/workflows/pr.yml` (checking out the
+other repo's branch with the same name, else `dev`), without application
 secrets, and saves screenshots as an artifact. Python's failure output includes
 the local screenshot directory.
 

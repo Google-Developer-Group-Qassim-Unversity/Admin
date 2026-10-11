@@ -70,11 +70,11 @@ with a penalty clock) rather than a generic event tool.
 
 ## Brand Commitments
 
-- The GDG logo (`Frontend/public/gdg.png`, the four-colour chevrons) is the
+- The GDG logo (`public/gdg.png`, the four-colour chevrons) is the
   app's main logo.
 - The visual identity is **Mud & Doors** (chosen 2026-10-09 from four
   directions): limewash walls, colour only on painted Najdi doors, each door
-  colour a state. It is recorded in `Frontend/DESIGN.md` and is settled; new
+  colour a state. It is recorded in `DESIGN.md` and is settled; new
   work extends it rather than proposing another look.
 - Comfortable over loud: the user asked for "good, perfect, comfortable colors".
 - Fonts: Thmanyah Sans for the interface (requested by the user), Reem Kufi for
@@ -82,8 +82,8 @@ with a penalty clock) rather than a generic event tool.
 
 ## Evidence on Hand
 
-- Real copy for every screen in `Frontend/messages/en.json` and `ar.json`.
-- Real venue list (Arabic) in `Frontend/lib/pipeline-types.ts`.
+- Real copy for every screen in `messages/en.json` and `ar.json`.
+- Real venue list (Arabic) in `lib/pipeline-types.ts`.
 - No real usage numbers, testimonials or analytics; mockups use labelled sample
   data only.
 

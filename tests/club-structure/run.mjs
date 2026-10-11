@@ -1,4 +1,4 @@
-// Invoked by Backend/tests/test_club_structure_browser.py against its isolated API.
+// Invoked by the Backend repo's tests/test_club_structure_browser.py against its isolated API.
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { createRequire } from "node:module";

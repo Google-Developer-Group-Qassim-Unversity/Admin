@@ -1,8 +1,8 @@
 ---
 version: 1
 slug: "frontend-app-page-tsx"
-primary_target: "Frontend/app/page.tsx"
-related_targets: ["Frontend/app"]
+primary_target: "app/page.tsx"
+related_targets: ["app"]
 ---
 
 # Admin console (whole app)
