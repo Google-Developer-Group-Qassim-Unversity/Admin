@@ -1,0 +1,61 @@
+name: Deploy
+
+# A push to dev deploys staging (admin-dev.gdg-q.com, Backend/docs/STAGING.md);
+# a push to main, which only ever receives dev, deploys production. Run it by
+# hand on either branch to redeploy.
+on:
+  push:
+    branches: [main, dev]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# A deploy replaces its directory on the VPS; queue merges instead of overlapping them.
+concurrency:
+  group: deploy
+  cancel-in-progress: false
+
+# Everything that differs between the two deployments. Nothing below may name
+# prod or staging directly.
+env:
+  BRANCH: ${{ github.ref_name }}
+  INFISICAL_ENV: ${{ github.ref_name == 'dev' && 'staging' || 'prod' }}
+  FRONTEND_DIR: ${{ github.ref_name == 'dev' && 'GDG-admin-frontend-staging' || 'GDG-admin-frontend' }}
+  FRONTEND_CONTAINER: ${{ github.ref_name == 'dev' && 'gdg-admin-web-staging' || 'gdg-admin-web' }}
+  FRONTEND_PORT: ${{ github.ref_name == 'dev' && '3013' || '3012' }}
+
+jobs:
+  frontend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          envs: BRANCH,INFISICAL_ENV,FRONTEND_DIR,FRONTEND_CONTAINER,FRONTEND_PORT
+          script: |
+            set -e
+            DIR=~/$FRONTEND_DIR
+
+            TMP=$(mktemp -d)
+            git clone --depth 1 --branch "$BRANCH" https://github.com/${{ github.repository }}.git "$TMP"
+            rm -rf "$TMP/.git"
+            chmod 755 "$TMP"  # mktemp makes it 700
+            rm -rf "$DIR"
+            mv "$TMP" "$DIR"
+            cd "$DIR"
+
+            source /etc/infisical/prod.env
+            INFISICAL_TOKEN=$(infisical login --method="$INFISICAL_AUTH_METHOD" \
+              --client-id="$INFISICAL_UNIVERSAL_AUTH_CLIENT_ID" \
+              --client-secret="$INFISICAL_UNIVERSAL_AUTH_CLIENT_SECRET" --plain --silent)
+            export INFISICAL_TOKEN
+            infisical export --env=$INFISICAL_ENV --path=/admin-frontend --projectId=300b1e97-7e52-4a4e-872d-053b9082cac5 \
+              --format=dotenv --output-file=.env.production
+
+            # The compose project is named after $DIR, so prod and staging never replace each other.
+            CONTAINER_NAME=$FRONTEND_CONTAINER HOST_PORT=$FRONTEND_PORT \
+              docker compose -f docker-compose.production.yml --env-file .env.production up -d --build
+            docker image prune -f
