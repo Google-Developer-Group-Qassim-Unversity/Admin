@@ -3,7 +3,7 @@
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import * as React from "react";
-import { ArrowLeft, Info, Link2, Users, ClipboardCheck, Pencil, CalendarX, CalendarDays, Globe, MapPin, Building2 } from "lucide-react";
+import { ArrowLeft, Info, Link2, FolderUp, Users, ClipboardCheck, Pencil, CalendarX, CalendarDays, Globe, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { StatusBadge } from "@/components/status-badge";
@@ -19,6 +19,7 @@ import { useTranslations } from "next-intl";
 
 const TAB_ITEMS = [
   { value: "info", key: "info", icon: Info, path: "" },
+  { value: "content", key: "content", icon: FolderUp, path: "/content" },
   { value: "manage", key: "manage", icon: Link2, path: "/manage" },
   { value: "responses", key: "responses", icon: Users, path: "/responses" },
   { value: "attendance", key: "attendance", icon: ClipboardCheck, path: "/attendance" },
