@@ -17,9 +17,11 @@ import type {
   BackfillMember,
   BackfillResponse,
   CertificateEligibleCount,
+  CreateContentLinkPayload,
   CreateEventPayload,
   Department,
   Event,
+  EventContentLink,
   EventDetails,
   EventHistory,
   EventStatus,
@@ -33,6 +35,7 @@ import type {
   Semester,
   SemesterInput,
   SendCertificatesResponse,
+  UpdateContentLinkPayload,
   UpdateEventPayload,
   UpdateFormPayload,
 } from "@/lib/api-types";
@@ -138,6 +141,16 @@ export function createApi(request: Requester) {
       request.json<Event>(`/events/${id}/status`, { method: "PUT", body: { status } }),
 
     remove: (id: number) => request.json<{ detail: string }>(`/events/${id}`, { method: "DELETE" }),
+
+    /** Manually pasted links to event content (Drive/YouTube), for the Content tab. */
+    createContentLink: (id: number, payload: CreateContentLinkPayload) =>
+      request.json<EventContentLink>(`/events/${id}/content-links`, { method: "POST", body: payload }),
+
+    updateContentLink: (id: number, linkId: string, payload: UpdateContentLinkPayload) =>
+      request.json<EventContentLink>(`/events/${id}/content-links/${linkId}`, { method: "PUT", body: payload }),
+
+    removeContentLink: (id: number, linkId: string) =>
+      request.json<{ detail: string }>(`/events/${id}/content-links/${linkId}`, { method: "DELETE" }),
 
     /** Events that can carry certificates - the placeholder location types cannot. */
     withCertificates: async () => {

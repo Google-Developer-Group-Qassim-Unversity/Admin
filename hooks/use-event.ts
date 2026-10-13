@@ -1,6 +1,14 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
-import type { Event, UpdateEventPayload, BackfillMember, AttendanceType, EventsPageParams } from '@/lib/api-types';
+import type {
+  CreateContentLinkPayload,
+  Event,
+  UpdateContentLinkPayload,
+  UpdateEventPayload,
+  BackfillMember,
+  AttendanceType,
+  EventsPageParams,
+} from '@/lib/api-types';
 import type { Api, EventsFilters } from '@/lib/api/resources';
 import { pipelineKeys } from './use-pipeline';
 
@@ -11,9 +19,11 @@ export const eventKeys = {
   lists: () => [...eventKeysAll, 'list'] as const,
   list: (filters?: EventsFilters) => [...eventKeys.lists(), filters] as const,
   details: () => [...eventKeysAll, 'detail'] as const,
-  detail: (id: number | string) => [...eventKeys.details(), id] as const,
+  // Route params are strings, counters are numbers: one key per id, whatever
+  // type it arrives as, or invalidations miss the cached query silently.
+  detail: (id: number | string) => [...eventKeys.details(), String(id)] as const,
   fullDetails: () => [...eventKeysAll, 'fullDetail'] as const,
-  fullDetail: (id: number | string) => [...eventKeys.fullDetails(), id] as const,
+  fullDetail: (id: number | string) => [...eventKeys.fullDetails(), String(id)] as const,
   actions: () => [...eventKeysAll, 'actions'] as const,
   departmentsRoot: [...eventKeysAll, 'departments'] as const,
   departments: (endDate?: string) => [...eventKeys.departmentsRoot, endDate ?? 'all'] as const,
@@ -134,6 +144,51 @@ export function useUpdateEventMeetingUrl() {
     mutationFn: ({ id, meetingUrl }: { id: number; meetingUrl: string | null }) =>
       api.events.updateMeetingUrl(id, meetingUrl),
     onSuccess: (data, { id }) => onEventChanged(id, data),
+  });
+}
+
+/** Invalidate every cache a content-link change touches: the event's own
+ * detail caches and the events list. */
+function useContentLinkCacheInvalidation(id: number) {
+  const queryClient = useQueryClient();
+  return () => {
+    queryClient.invalidateQueries({ queryKey: eventKeys.fullDetail(id) });
+    queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
+    queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+  };
+}
+
+/** Paste a labeled link to event content (Drive/YouTube) on the Content tab. */
+export function useCreateContentLink(id: number) {
+  const api = useApi();
+  const onLinkChanged = useContentLinkCacheInvalidation(id);
+
+  return useMutation({
+    mutationFn: (data: CreateContentLinkPayload) => api.events.createContentLink(id, data),
+    onSuccess: onLinkChanged,
+  });
+}
+
+/** Edit a content link's label, URL, kind or publish state. */
+export function useUpdateContentLink(id: number) {
+  const api = useApi();
+  const onLinkChanged = useContentLinkCacheInvalidation(id);
+
+  return useMutation({
+    mutationFn: ({ linkId, data }: { linkId: string; data: UpdateContentLinkPayload }) =>
+      api.events.updateContentLink(id, linkId, data),
+    onSuccess: onLinkChanged,
+  });
+}
+
+/** Hard-delete a content link; it never comes back. */
+export function useDeleteContentLink(id: number) {
+  const api = useApi();
+  const onLinkChanged = useContentLinkCacheInvalidation(id);
+
+  return useMutation({
+    mutationFn: (linkId: string) => api.events.removeContentLink(id, linkId),
+    onSuccess: onLinkChanged,
   });
 }
 
