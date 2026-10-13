@@ -1795,7 +1795,7 @@
     "recordingsEmpty": "No recordings yet.",
     "addLink": "Add link manually",
     "labelField": "Label shown to members",
-    "labelPlaceholder": "Day 1 Slides",
+    "labelPlaceholder": "Day 1 slides / recordings",
     "urlField": "Link",
     "urlPlaceholder": "Paste the Google Drive link",
     "kindField": "Type of content",

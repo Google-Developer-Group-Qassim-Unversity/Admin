@@ -1795,7 +1795,7 @@
     "recordingsEmpty": "ما فيه تسجيلات للحين.",
     "addLink": "إضافة رابط يدويًا",
     "labelField": "الاسم اللي يشوفه الأعضاء",
-    "labelPlaceholder": "شرائح اليوم الأول",
+    "labelPlaceholder": "مثل: شرائح أو تسجيلات اليوم الأول",
     "urlField": "الرابط",
     "urlPlaceholder": "الصق رابط Google Drive",
     "kindField": "نوع المحتوى",
@@ -1834,7 +1834,7 @@
     "dialogDescription": "الرابط يظهر في صفحة الفعالية بعد إضافته مباشرة.",
     "hints": {
       "setting": "قبل ما تلصق: خلي الملف أو التسجيل <em>Anyone with the link – Viewer</em> في Google Drive.",
-      "personal": "المحتوى المرفوع من حسابات شخصية تشتغل للحين، بس ممكن يتوقف بعدين لو ينظف هالفولدر."
+      "personal": "المحتوى المرفوع من حسابات شخصية تشتغل، بس ممكن يتوقف لو انحذف."
     }
   },
   "palette": {
