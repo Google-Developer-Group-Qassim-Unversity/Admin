@@ -1823,6 +1823,13 @@
     "labelAria": "اسم الرابط",
     "urlAria": "رابط المحتوى",
     "urlInvalid": "هذا ما يبدو رابط صحيح — مثل https://drive.google.com/...",
+    "loadFailed": "فشل تحميل الروابط",
+    "retry": "حاول مجددًا",
+    "labelInvalid": "أعط الرابط اسمًا يراه الأعضاء.",
+    "rowInvalid": "لا يبدو هذا رابطًا.",
+    "deleteTitle": "حذف هذا الرابط؟",
+    "deleteDescription": "سيختفي من صفحة الفعالية فورًا ولا يمكن استرجاعه. لا يتغير أي شيء في Drive أو YouTube.",
+    "deleteCancel": "إبقاؤه",
     "dialogTitle": "إضافة رابط يدويًا",
     "dialogDescription": "الرابط يظهر في صفحة الفعالية بعد إضافته مباشرة.",
     "hints": {

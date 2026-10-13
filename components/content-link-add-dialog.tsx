@@ -19,6 +19,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useCreateContentLink } from '@/hooks/use-event';
+import { looksLikeUrl } from '@/lib/content-links';
 import type { ContentLinkKind } from '@/lib/api-types';
 
 interface ContentLinkAddDialogProps {
@@ -28,16 +29,6 @@ interface ContentLinkAddDialogProps {
 // `other` stays valid in the schema (Phase 2 resurfaces it); the dialog here
 // only offers the two choices admins always know.
 const KIND_OPTIONS: ContentLinkKind[] = ['slides', 'recording'];
-
-/**
- * A cheap "is this a link at all" check, matching what the backend accepts:
- * a full http(s) URL, or a bare domain with a TLD (which is normalized into
- * https:// server-side). Anything else would have been a paste accident.
- */
-function looksLikeUrl(text: string) {
-  const value = text.trim();
-  return /^https?:\/\/\S+$/.test(value) || /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+([/?#]\S*)?$/i.test(value);
-}
 
 export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
   const t = useTranslations('eventContent');
@@ -52,9 +43,11 @@ export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
     () => label.trim().length > 0 && url.trim().length > 0 && kind !== '' && looksLikeUrl(url.trim()),
     [label, url, kind]
   );
-
+  // One gate inside create(): the footer button and both Enter handlers read
+  // the same guard, and a second Enter while the first POST is in flight
+  // cannot double-insert (and then 409 on the duplicate label).
   const create = () => {
-    if (kind === '') return;
+    if (!canCreate || createLink.isPending || kind === '') return;
     createLink.mutate(
       { label: label.trim(), url: url.trim(), kind },
       {
@@ -126,6 +119,9 @@ export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
                     : `labelPlaceholder${kind.charAt(0).toUpperCase()}${kind.slice(1)}`) as Parameters<typeof t>[0]
                 )
               }
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') create();
+              }}
               enterKeyHint="go"
             />
           </div>
@@ -144,7 +140,7 @@ export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
               placeholder={t('urlPlaceholder')}
               aria-invalid={!isUrlValid}
               onKeyDown={(e) => {
-                if (e.key === 'Enter' && canCreate) create();
+                if (e.key === 'Enter') create();
               }}
             />
             {!isUrlValid && <p className="text-sm text-destructive">{t('urlInvalid')}</p>}

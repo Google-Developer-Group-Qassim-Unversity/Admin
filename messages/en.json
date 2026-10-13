@@ -1823,6 +1823,13 @@
     "labelAria": "Link label",
     "urlAria": "Link URL",
     "urlInvalid": "This doesn't look like a link — something like https://drive.google.com/... or youtu.be/...",
+    "loadFailed": "Failed to load the links",
+    "retry": "Try again",
+    "labelInvalid": "Give the link a name members will see.",
+    "rowInvalid": "This doesn't look like a link.",
+    "deleteTitle": "Delete this link?",
+    "deleteDescription": "It disappears from the event page at once and never comes back. Nothing in the Drive or YouTube changes.",
+    "deleteCancel": "Keep it",
     "dialogTitle": "Add link manually",
     "dialogDescription": "The link goes live on the event page as soon as you add it.",
     "hints": {

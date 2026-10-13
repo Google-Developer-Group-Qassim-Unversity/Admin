@@ -19,9 +19,11 @@ export const eventKeys = {
   lists: () => [...eventKeysAll, 'list'] as const,
   list: (filters?: EventsFilters) => [...eventKeys.lists(), filters] as const,
   details: () => [...eventKeysAll, 'detail'] as const,
-  detail: (id: number | string) => [...eventKeys.details(), id] as const,
+  // Route params are strings, counters are numbers: one key per id, whatever
+  // type it arrives as, or invalidations miss the cached query silently.
+  detail: (id: number | string) => [...eventKeys.details(), String(id)] as const,
   fullDetails: () => [...eventKeysAll, 'fullDetail'] as const,
-  fullDetail: (id: number | string) => [...eventKeys.fullDetails(), id] as const,
+  fullDetail: (id: number | string) => [...eventKeys.fullDetails(), String(id)] as const,
   actions: () => [...eventKeysAll, 'actions'] as const,
   departmentsRoot: [...eventKeysAll, 'departments'] as const,
   departments: (endDate?: string) => [...eventKeys.departmentsRoot, endDate ?? 'all'] as const,
