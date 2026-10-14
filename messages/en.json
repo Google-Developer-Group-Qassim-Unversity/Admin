@@ -2308,6 +2308,13 @@
       },
       "pickDates": "Set the start and end dates first."
     },
+    "notion": {
+      "open": "Open in Notion",
+      "openHint": "This request's card on the design team's board",
+      "pending": "Notion card pending",
+      "pendingHint": "The card is written in the background and retried every few minutes.",
+      "error": "The Notion card could not be written: {error}"
+    },
     "poster": {
       "title": "The poster",
       "hint": "Upload the finished poster. It becomes the event's image when the event is published; you can replace it until then.",

@@ -31,6 +31,7 @@ import { DetailsForm } from "@/components/pipeline/details-form";
 import { DraftSaveProvider } from "@/components/pipeline/draft-autosave";
 import { MissingProvider, READ_ONLY, focusField } from "@/components/pipeline/form-kit";
 import { LogisticsConfirmation } from "@/components/pipeline/logistics-confirmation";
+import { NotionLink } from "@/components/pipeline/notion-link";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { RequestHistory } from "@/components/pipeline/request-history";
 import { RequestProgress } from "@/components/pipeline/request-progress";
@@ -359,6 +360,7 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
           {departmentName(request.department)}
         </span>
         <StageBadge stage={request.stage} />
+        <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
         <p className="text-ink-2 tabular text-[13.5px]">{meta}</p>
       </div>
       <AlertDialog open={confirming} onOpenChange={setConfirming}>

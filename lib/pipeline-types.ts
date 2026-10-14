@@ -113,6 +113,12 @@ export interface RequestTask {
   /** Who marked this team's part done, and when. */
   done_at: string | null;
   done_by: PersonRef | null;
+  /** Design only: its card on the design team's Notion board, once written. */
+  notion_url: string | null;
+  /** A change still to be written to the card (retried by the backend). */
+  notion_pending: boolean;
+  /** Why the last write failed; super admins only. */
+  notion_error: string | null;
 }
 
 export interface PersonRef {
