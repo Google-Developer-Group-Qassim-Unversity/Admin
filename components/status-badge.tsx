@@ -28,6 +28,12 @@ export const URGENCY_TONE: Record<Urgency, DoorTone> = {
 };
 
 
+/** A content link on the event page: live for members (green) or hidden (umber). */
+export const CONTENT_LINK_TONE: Record<"published" | "unpublished", DoorTone> = {
+  published: "green",
+  unpublished: "umber",
+};
+
 const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
 const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";
 
