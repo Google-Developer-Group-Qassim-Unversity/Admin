@@ -4,7 +4,7 @@ import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { CircleCheck, ExternalLink, Info } from "lucide-react";
+import { CalendarCheck, CircleCheck, ExternalLink, Info, Loader2, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { Door, Fact, Mark, SectionHead } from "@/components/najdi";
@@ -15,10 +15,11 @@ import { useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { pipelineKeys, useCompleteTask, useSaveDeliverable } from "@/hooks/use-pipeline";
+import { pipelineKeys, useCompleteTask, useGenerateMeet, useSaveDeliverable } from "@/hooks/use-pipeline";
 import {
   EVENT_TYPES,
   VENUES,
+  type ConfirmedField,
   type DayMode,
   type EventRequestDetail,
   type LogisticsConfirmation as Confirmation,
@@ -46,7 +47,10 @@ const hhmm = (time: string | null | undefined) => time?.slice(0, 5) ?? "";
  * another day, time or room. Logistics gets this form prefilled from the
  * request and its brief, changes what differs, and confirms. Publish reads the
  * confirmed version, so nothing is typed twice. Confirming other dates moves
- * the request on the calendar and emails the requesting department.
+ * the request on the calendar and emails the requesting department. Anything
+ * confirmed differently from what was asked needs a reason, which goes in
+ * that email too; for an online day, a Meet link can be made on the club's
+ * calendar instead of pasted.
  */
 export function LogisticsConfirmation({ request }: { request: EventRequestDetail }) {
   const task = request.tasks.find((t) => t.team === "logistics");
@@ -66,6 +70,7 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   const task = request.tasks.find((x) => x.team === "logistics")!;
   const save = useSaveDeliverable(request.id, "logistics");
   const complete = useCompleteTask(request.id);
+  const generateMeet = useGenerateMeet(request.id);
   const behalf = useBehalfOf({ kind: "team", team: "logistics" });
   const { flushAll, state } = useDraftSave();
   // Missing fields turn red only after someone tries to confirm.
@@ -85,6 +90,7 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
         room: value.room || null,
         meet_link: value.meet_link?.trim() || null,
         description: value.description || null,
+        change_reason: value.change_reason?.trim() || null,
       });
     },
   });
@@ -105,7 +111,26 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   const timeChanged =
     hhmm(form.daily_start_time) !== hhmm(request.details.daily_start_time) ||
     hhmm(form.daily_end_time) !== hhmm(request.details.daily_end_time);
-  const busy = state === "saving" || complete.isPending;
+  const busy = state === "saving" || complete.isPending || generateMeet.isPending;
+  // What differs from the request: the backend's list from the last save, plus what is typed and not saved yet.
+  const changed = new Set<ConfirmedField>(task.confirmation_changes as ConfirmedField[]);
+  if (request.start_date && form.start_date && form.start_date !== request.start_date) changed.add("start_date");
+  if (request.end_date && form.end_date && form.end_date !== request.end_date) changed.add("end_date");
+  if (request.details.daily_start_time && form.daily_start_time && hhmm(form.daily_start_time) !== hhmm(request.details.daily_start_time)) changed.add("daily_start_time");
+  if (request.details.daily_end_time && form.daily_end_time && hhmm(form.daily_end_time) !== hhmm(request.details.daily_end_time)) changed.add("daily_end_time");
+  const canGenerate =
+    !!form.start_date && !!form.end_date && !!form.daily_start_time && !!form.daily_end_time && !busy;
+
+  const onGenerateMeet = async () => {
+    // The link is made from the saved dates and times, so they go up first.
+    if (!(await flushAll())) return;
+    try {
+      await generateMeet.mutateAsync();
+      toast.success(t("meetGenerated"));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("meetGenerateFailed"));
+    }
+  };
 
   const onConfirm = async () => {
     if (!(await flushAll())) return;
@@ -228,15 +253,43 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
               </div>
             ) : null}
             {modes.has("online") ? (
-              <Field label={t("meetLink")} name="confirm.meet_link" hint={t("meetLinkHint")} className="md:max-w-md">
-                <Input
-                  type="url"
-                  inputMode="url"
-                  dir="ltr"
-                  value={form.meet_link ?? ""}
-                  placeholder="https://meet.google.com/…"
-                  onChange={(e) => set("meet_link", e.target.value)}
-                />
+              <Field label={t("meetLink")} name="confirm.meet_link" hint={t("meetLinkHint")} className="md:max-w-xl">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+                  <Input
+                    type="url"
+                    inputMode="url"
+                    dir="ltr"
+                    value={form.meet_link ?? ""}
+                    placeholder="https://meet.google.com/…"
+                    onChange={(e) => set("meet_link", e.target.value)}
+                    className="sm:flex-1"
+                  />
+                  {request.actions.can_generate_meet ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={onGenerateMeet}
+                      disabled={!canGenerate}
+                      title={canGenerate || busy ? undefined : t("generateMeetNeeds")}
+                      className="shrink-0"
+                    >
+                      {generateMeet.isPending ? <Loader2 className="animate-spin" /> : <Video />}
+                      {form.meet_event_id ? t("regenerateMeet") : t("generateMeet")}
+                    </Button>
+                  ) : null}
+                </div>
+                {request.actions.can_generate_meet ? (
+                  <p className="text-ink-2 text-[13px]">
+                    {form.meet_event_id ? (
+                      <span className="text-door-green-ink inline-flex items-center gap-1 font-medium">
+                        <CalendarCheck className="size-3.5" />
+                        {t("meetOnCalendar")}
+                      </span>
+                    ) : (
+                      t("generateMeetHint")
+                    )}
+                  </p>
+                ) : null}
               </Field>
             ) : null}
             {!modes.size ? <p className="text-ink-2 text-sm">{t("pickModes")}</p> : null}
@@ -258,6 +311,27 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
               </Field>
             </div>
           </FormSection>
+
+          {changed.size ? (
+            <FormSection title={t("reasonTitle")}>
+              <p className="bg-door-ochre-soft text-door-ochre-ink flex items-start gap-2 rounded-lg px-3 py-2.5 text-sm font-medium">
+                <Info className="mt-0.5 size-4 shrink-0" />
+                <span>
+                  {t("reasonHint")}{" "}
+                  <span className="font-bold">{t("changed", { fields: [...changed].map((f) => t(`fields.${f}`)).join(locale === "ar" ? "، " : ", ") })}</span>
+                </span>
+              </p>
+              <Field label={t("reason")} name="confirm.change_reason" className="md:max-w-xl">
+                <Textarea
+                  rows={3}
+                  maxLength={1000}
+                  value={form.change_reason ?? ""}
+                  placeholder={t("reasonPlaceholder")}
+                  onChange={(e) => set("change_reason", e.target.value)}
+                />
+              </Field>
+            </FormSection>
+          ) : null}
 
           {/* Sticks to the bottom of the screen (above the phone's bottom bar)
               while the form is in view, so Confirm is always one tap away. */}
@@ -310,6 +384,14 @@ function ConfirmationSummary({ request }: { request: EventRequestDetail }) {
     ]);
   }
   rows.push([t("summary.type"), confirmed.event_type ? td(`eventTypes.${confirmed.event_type}`) : "-"]);
+  if (confirmed.change_reason) {
+    rows.push([
+      t("summary.reason"),
+      <span key="reason" className="whitespace-pre-wrap" dir="auto">
+        {confirmed.change_reason}
+      </span>,
+    ]);
+  }
 
   return (
     <section aria-labelledby="confirmed-title" className="flex flex-col gap-1">

@@ -2296,7 +2296,8 @@
         "ready_to_publish": "{title} جاهز للنشر",
         "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى",
         "overridden": "حجز سوبر ادمن تواريخ {title}",
-        "cancelled": "أُلغي {title}، فلا عمل متبقٍ عليه"
+        "cancelled": "أُلغي {title}، فلا عمل متبقٍ عليه",
+        "confirmation_changed": "أكّدت اللوجستيات {title} بتغييرات؛ اطّلعوا على السبب"
       },
       "scope": {
         "label": "أي إشعارات",
@@ -2317,7 +2318,8 @@
         "media_received": "وصل {title} إلى الإعلام",
         "ready_to_publish": "{title} جاهز للنشر",
         "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى",
-        "cancelled": "أُلغي {title}"
+        "cancelled": "أُلغي {title}",
+        "confirmation_changed": "أكّدت اللوجستيات {title} بتغييرات"
       }
     },
     "inbox": {
@@ -2426,13 +2428,37 @@
         "mode": "النوع",
         "place": "المكان",
         "meet": "Google Meet",
-        "type": "نوع الفعالية"
+        "type": "نوع الفعالية",
+        "reason": "سبب الاختلاف"
       },
       "pickDates": "حدّد تاريخي البداية والنهاية أولًا.",
       "titleFor": "دور اللوجستيات: تأكيد الفعالية",
       "hintFor": "تؤكد اللوجستيات ما حُجز فعلًا. النموذج بالأسفل لهم، ويمكنك تعبئته والتأكيد نيابة عنهم.",
       "asSuperAdmin": "تؤكد نيابة عن اللوجستيات بصفتك سوبر ادمن",
-      "buttonFor": "أكّد نيابة عن اللوجستيات"
+      "buttonFor": "أكّد نيابة عن اللوجستيات",
+      "reasonTitle": "سبب الاختلاف",
+      "reasonHint": "ما أكّدتموه يختلف عمّا طلبه القسم. اذكروا السبب؛ يصلهم في البريد.",
+      "changed": "ما تغيّر: {fields}",
+      "reason": "سبب التغيير",
+      "reasonPlaceholder": "القاعة محجوزة ذلك اليوم، فعرضت الجامعة…",
+      "fields": {
+        "start_date": "اليوم الأول",
+        "end_date": "اليوم الأخير",
+        "day_modes": "نوع كل يوم",
+        "daily_start_time": "وقت البداية",
+        "daily_end_time": "وقت النهاية",
+        "venue": "المكان",
+        "room": "القاعة",
+        "event_type": "نوع الفعالية",
+        "description": "الوصف"
+      },
+      "generateMeet": "إنشاء رابط",
+      "regenerateMeet": "إنشاء رابط جديد",
+      "generateMeetHint": "يُنشأ في تقويم Google الخاص بالنادي بالتواريخ والأوقات أعلاه، ويدخل به أي أحد لديه الرابط.",
+      "generateMeetNeeds": "حدّدوا التواريخ والأوقات أولًا.",
+      "meetGenerated": "أُنشئ رابط Meet.",
+      "meetGenerateFailed": "تعذّر إنشاء الرابط",
+      "meetOnCalendar": "في تقويم النادي"
     },
     "notion": {
       "open": "فتح في Notion",

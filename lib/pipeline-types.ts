@@ -130,6 +130,8 @@ export interface RequestTask {
   deliverable: Record<string, unknown> | null;
   /** What the team still has to hand over before it can finish: `confirm.venue`, `poster.poster_url`. */
   deliverable_missing: string[];
+  /** Logistics only: the confirmation's fields that differ from what was requested; any makes `confirm.change_reason` required. */
+  confirmation_changes: string[];
   opened_at: string | null;
   /** Who marked this team's part done, and when. */
   done_at: string | null;
@@ -215,9 +217,25 @@ export interface LogisticsConfirmation {
   venue: string | null;
   room: string | null;
   meet_link: string | null;
+  /** Set when the link was generated on the club's calendar: that calendar event. */
+  meet_event_id: string | null;
   event_type: EventType | null;
   description: string | null;
+  /** Why the confirmed event differs from the requested one; required once anything does. */
+  change_reason: string | null;
 }
+
+/** The confirmation's fields Logistics can confirm differently (`CONFIRMED_FIELDS` in the backend). */
+export type ConfirmedField =
+  | "start_date"
+  | "end_date"
+  | "day_modes"
+  | "daily_start_time"
+  | "daily_end_time"
+  | "venue"
+  | "room"
+  | "event_type"
+  | "description";
 
 /** Mirrors `VENUES` in Backend/app/services/event_briefs.py - the old Logistics form's list. */
 export const VENUES = [
@@ -266,6 +284,8 @@ export interface EventRequestDetail extends EventRequestSummary {
     can_publish: boolean;
     /** Design uploads or replaces the poster, until the request is published. */
     can_upload_poster: boolean;
+    /** Logistics can have a Google Meet link made on the club's calendar while it confirms. */
+    can_generate_meet: boolean;
     /** The requesting department drops it at any stage before publish, then deletes it for good. */
     can_cancel: boolean;
     can_delete: boolean;
@@ -311,6 +331,7 @@ export type NotificationKind =
   | "media_received"
   | "ready_to_publish"
   | "dates_changed"
+  | "confirmation_changed"
   | "overridden"
   | "cancelled";
 

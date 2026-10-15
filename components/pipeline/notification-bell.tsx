@@ -27,6 +27,7 @@ const KIND: Record<NotificationKind, { tone: Tone; icon: LucideIcon }> = {
   task_done: { tone: "green", icon: CheckCheck },
   // News, not a state: the dates moved, nothing is asked of the reader.
   dates_changed: { tone: "neutral", icon: CalendarClock },
+  confirmation_changed: { tone: "neutral", icon: CalendarClock },
   overridden: { tone: "madder", icon: CalendarX2 },
   // News too: the work stops, nothing is asked of the reader.
   cancelled: { tone: "neutral", icon: XCircle },
