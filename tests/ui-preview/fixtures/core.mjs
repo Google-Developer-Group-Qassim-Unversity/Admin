@@ -84,7 +84,9 @@ export const REQUESTS = [
   summary("r9", "cyber", "published", "تحدي التقاط العلم CTF", iso(-9), iso(-8), { published_at: at(-14 * DAY) }),
   summary("r10", "ai", "cancelled", "لقاء مجتمع البيانات", iso(15), iso(15)),
 ];
-export const byId = Object.fromEntries(REQUESTS.map((r) => [r.id, r]));
+// Cancelled requests hold no dates and stay out of the list until deleted.
+const CANCELLED = [summary("r8", "web", "cancelled", "ورشة React Native", null, null)];
+export const byId = Object.fromEntries([...REQUESTS, ...CANCELLED].map((r) => [r.id, r]));
 
 // Design's card on the team's Notion board, once the request reached Design.
 const NOTION_URL = "https://www.notion.so/Flutter-workshop-266b70e9ca448103bfb3dd7eab68f43e";
@@ -189,6 +191,8 @@ export function detail(id) {
     returned_by: s.stage === "returned" ? { member_id: 5, name: "Reem Alharbi" } : null,
     published_at: s.stage === "published" ? at(-DAY) : null,
     published_by: s.stage === "published" ? { member_id: 9, name: "Abdullah" } : null,
+    cancelled_at: s.stage === "cancelled" ? at(-3 * H) : null,
+    cancelled_by: s.stage === "cancelled" ? { member_id: 1, name: "Ibrahim" } : null,
     history: draft ? [{ action: "booked", at: at(-3 * DAY), actor: { member_id: 1, name: "Ibrahim" }, details: { start_date: s.start_date, end_date: s.end_date } }] : HISTORY(s),
     details: {
       title: s.title,
@@ -236,6 +240,8 @@ export function detail(id) {
       complete: id === "r2" ? ["design"] : id === "r7" ? ["logistics"] : id === "r4" ? ["media"] : [],
       can_publish: s.stage === "ready",
       can_upload_poster: id === "r2",
+      can_cancel: !["published", "cancelled"].includes(s.stage),
+      can_delete: s.stage === "cancelled",
     },
     now: new Date().toISOString(),
   };
@@ -252,7 +258,10 @@ function calendar({ from, to }) {
       bookings[d.toISOString().slice(0, 10)] = r;
     }
   }
-  const banned = { [iso(9)]: "اختبارات منتصف الفصل", [iso(16)]: "إجازة رسمية" };
+  // Days Logistics closed in blocks: one reason and one closer per block.
+  const midterms = { block_id: "b1", reason: "اختبارات منتصف الفصل", blocked_by: { member_id: 12, name: "Lama Alotaibi" } };
+  const holiday = { block_id: "b2", reason: "إجازة رسمية", blocked_by: { member_id: 13, name: "Saad Alqahtani" } };
+  const banned = { [iso(8)]: midterms, [iso(9)]: midterms, [iso(15)]: midterms, [iso(16)]: holiday };
   for (let d = start; d <= end; d = new Date(d.getTime() + DAY)) {
     const date = d.toISOString().slice(0, 10);
     const r = bookings[date];
@@ -262,7 +271,10 @@ function calendar({ from, to }) {
     days.push({
       date,
       status,
-      reason: banned[date] ?? null,
+      reason: banned[date]?.reason ?? null,
+      block_id: banned[date]?.block_id ?? null,
+      blocked_by: banned[date]?.blocked_by ?? null,
+      blocked_at: banned[date] ? at(-2 * DAY) : null,
       requests: r ? [{ id: r.id, department: r.department, title: r.title, stage: r.stage }] : [],
     });
   }
@@ -308,7 +320,14 @@ export default [
   { path: /^\/pipeline\/me$/, body: pipelineMe },
   { path: /^\/pipeline\/calendar$/, body: ({ query }) => calendar(query) },
   // A super admin sees every department's requests.
-  { path: /^\/pipeline\/requests$/, body: { items: REQUESTS, total: REQUESTS.length, page: 1, page_size: 20, total_pages: 1 } },
+  { path: /^\/pipeline\/requests$/, body: ({ query }) => {
+    // "past" is what was published or cancelled; cancelled requests show nowhere else.
+    const items =
+      query.stage === "cancelled" ? CANCELLED
+      : query.state === "past" ? [...REQUESTS.filter((r) => r.stage === "published"), ...CANCELLED]
+      : REQUESTS;
+    return { items, total: items.length, page: 1, page_size: 20, total_pages: 1 };
+  } },
   { path: /^\/pipeline\/requests\/[\w-]+$/, body: ({ pathname }) => detail(pathname.split("/").pop()) },
   { path: /^\/pipeline\/inbox$/, body: inbox },
   { path: /^\/pipeline\/notifications$/, body: { items: notifications, total: 5, unread: 3, page: 1, page_size: 20, total_pages: 1 } },

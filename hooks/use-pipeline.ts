@@ -29,12 +29,24 @@ export function usePipelineCalendar(from: string, to: string) {
   return useQuery({ queryKey: pipelineKeys.calendar(from, to), queryFn: () => api.pipeline.calendar(from, to) });
 }
 
+/** Close days as one block (with its reason), or reopen single days. */
 export function useBanDays() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ dates, reason, unban }: { dates: string[]; reason?: string | null; unban?: boolean }) =>
-      unban ? api.pipeline.unban(dates) : api.pipeline.ban(dates, reason ?? null),
+    mutationFn: ({ dates, reason, unban }: { dates: string[]; reason?: string; unban?: boolean }) =>
+      unban ? api.pipeline.unban(dates) : api.pipeline.ban(dates, reason ?? ""),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
+  });
+}
+
+/** Change a block's reason, or reopen every day of it (``reason`` left out). */
+export function useBlockMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blockId, reason }: { blockId: string; reason?: string }) =>
+      reason === undefined ? api.pipeline.removeBlock(blockId) : api.pipeline.editBlock(blockId, reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }
@@ -128,12 +140,22 @@ export function useBookRequest() {
   });
 }
 
-export function useCancelRequest() {
+/** Drop a request at any stage before publish. It stays readable, cancelled, until it is deleted. */
+export function useCancelRequest(id: string) {
+  const api = useApi();
+  return useRequestMutation<void>(id, () => api.pipelineRequests.cancel(id));
+}
+
+/** Delete a cancelled request for good. */
+export function useDeleteRequest() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.pipelineRequests.cancel(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
+    mutationFn: (id: string) => api.pipelineRequests.remove(id),
+    onSuccess: (_data, id) => {
+      queryClient.removeQueries({ queryKey: pipelineKeys.request(id) });
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.all });
+    },
   });
 }
 

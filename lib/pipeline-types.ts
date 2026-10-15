@@ -48,7 +48,11 @@ export interface CalendarDayRequest {
 export interface CalendarDay {
   date: string;
   status: CalendarDayStatus;
+  /** On a banned day: the block that closed it, why, who closed it and when. */
   reason: string | null;
+  block_id: string | null;
+  blocked_by: PersonRef | null;
+  blocked_at: string | null;
   /** Requests holding or booking this day. Present from the booking PR on. */
   requests?: CalendarDayRequest[];
 }
@@ -164,7 +168,9 @@ export type HistoryAction =
   | "days_banned"
   | "days_unbanned"
   | "event_deleted"
-  | "overridden";
+  | "overridden"
+  | "request_deleted"
+  | "block_edited";
 
 export interface HistoryItem {
   action: HistoryAction;
@@ -233,6 +239,8 @@ export interface EventRequestDetail extends EventRequestSummary {
   submitted_by: PersonRef | null;
   returned_by: PersonRef | null;
   published_by: PersonRef | null;
+  cancelled_at: string | null;
+  cancelled_by: PersonRef | null;
   /** Everything that happened to the request, oldest first. */
   history: HistoryItem[];
   details: EventDetails;
@@ -258,6 +266,9 @@ export interface EventRequestDetail extends EventRequestSummary {
     can_publish: boolean;
     /** Design uploads or replaces the poster, until the request is published. */
     can_upload_poster: boolean;
+    /** The requesting department drops it at any stage before publish, then deletes it for good. */
+    can_cancel: boolean;
+    can_delete: boolean;
   };
   now: string;
 }
@@ -300,7 +311,8 @@ export type NotificationKind =
   | "media_received"
   | "ready_to_publish"
   | "dates_changed"
-  | "overridden";
+  | "overridden"
+  | "cancelled";
 
 /** What happens to a request a super admin books over. */
 export type BumpOutcome = "reschedule" | "cancel";

@@ -6,12 +6,12 @@ import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import {
   ArrowLeft,
+  Ban,
   CalendarCheck,
   CalendarPlus,
   Check,
   ChevronRight,
   CircleDashed,
-  Ellipsis,
   FileQuestion,
   FileText,
   Palette,
@@ -60,13 +60,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useCancelRequest, usePipelineRequest, useRedate } from "@/hooks/use-pipeline";
-import { isolate, useListFormat } from "@/lib/format";
+import { useCancelRequest, useDeleteRequest, usePipelineRequest, useRedate } from "@/hooks/use-pipeline";
+import { isolate, useFormatters, useListFormat } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { EventRequestDetail, PipelineMe } from "@/lib/pipeline-types";
 
@@ -170,9 +169,10 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
     <RoleProvider role={role}>
     <MissingProvider missing={request.missing} shown={shown}>
       <div className={cn("flex flex-col gap-6", showBar && "max-md:pb-40")}>
-        <RequestHeader request={request} me={me} role={role} canAct={canAct} />
+        <RequestHeader request={request} me={me} role={role} />
         <OversightNote request={request} role={role} />
 
+        {request.stage === "cancelled" ? <CancelledDoor request={request} /> : null}
         {lostDates ? <Redate request={request} me={me} /> : null}
         {holding ? <HoldDoor request={request} /> : null}
         {isReturned ? <ReturnedNotice request={request} /> : null}
@@ -182,7 +182,8 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         <DesignPoster request={request} />
         <LogisticsConfirmation request={request} />
 
-        <RequestProgress request={request} />
+        {/* A cancelled request's door already says where it stands. */}
+        {request.stage !== "cancelled" ? <RequestProgress request={request} /> : null}
 
         {showMissing ? (
           <WhatIsLeft missingByTab={missingByTab} total={missing.length} shown={shown} onJump={jump} onOpen={openTab} />
@@ -363,28 +364,23 @@ function RequestHeader({
   request,
   me,
   role,
-  canAct,
 }: {
   request: EventRequestDetail;
   me: PipelineMe;
   role: PipelineRole;
-  canAct: boolean;
 }) {
   const t = useTranslations("pipeline.request");
   const td = useTranslations("pipeline.details.eventTypes");
-  const router = useRouter();
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
-  const cancel = useCancelRequest();
+  const cancel = useCancelRequest(request.id);
   const [confirming, setConfirming] = React.useState(false);
-  const canCancel =
-    canAct && (request.stage === "draft" || me.is_super_admin) && !["published", "cancelled"].includes(request.stage);
 
   const onCancel = async () => {
     try {
-      await cancel.mutateAsync(request.id);
+      await cancel.mutateAsync();
       toast.success(t("cancelled"));
-      router.push("/pipeline");
+      setConfirming(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     }
@@ -409,22 +405,18 @@ function RequestHeader({
           {t("back")}
         </Link>
         <div className="-me-2 flex items-center gap-1.5">
-        <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
-        {canCancel ? (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" aria-label={t("moreActions")}>
-                <Ellipsis className="size-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem variant="destructive" onSelect={() => setConfirming(true)}>
-                <Trash2 />
-                {t("cancel")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ) : null}
+          <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
+          {request.actions.can_cancel ? (
+            <Button
+              variant="ghost"
+              className="text-door-madder-ink hover:text-door-madder-ink min-h-11 max-sm:min-w-11 max-sm:px-0"
+              aria-label={t("cancel")}
+              onClick={() => setConfirming(true)}
+            >
+              <Ban />
+              <span className="max-sm:sr-only">{t("cancel")}</span>
+            </Button>
+          ) : null}
         </div>
       </div>
       <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[32px]">
@@ -448,17 +440,88 @@ function RequestHeader({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("cancelTitle")}</AlertDialogTitle>
-            <AlertDialogDescription>{t("cancelConfirm")}</AlertDialogDescription>
+            <AlertDialogDescription>
+              {t(request.stage === "draft" ? "cancelConfirm" : "cancelConfirmSubmitted")}
+            </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
-            <AlertDialogAction variant="madder" onClick={onCancel} disabled={cancel.isPending}>
+            <AlertDialogAction
+              variant="madder"
+              onClick={(e) => {
+                e.preventDefault();
+                onCancel();
+              }}
+              disabled={cancel.isPending}
+            >
               {t("cancel")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </header>
+  );
+}
+
+/** A cancelled request: who dropped it and when. It holds no dates, and can be deleted for good. */
+function CancelledDoor({ request }: { request: EventRequestDetail }) {
+  const t = useTranslations("pipeline.request");
+  const router = useRouter();
+  const fmt = useFormatters();
+  const remove = useDeleteRequest();
+  const [confirming, setConfirming] = React.useState(false);
+
+  const onDelete = async () => {
+    try {
+      await remove.mutateAsync(request.id);
+      toast.success(t("deleted"));
+      router.push("/pipeline");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+    }
+  };
+
+  return (
+    <Door tone="umber" aria-labelledby="cancelled-title">
+      <h2 id="cancelled-title" className="font-display text-[21px] leading-tight font-semibold">
+        {t("cancelledTitle")}
+      </h2>
+      <p className="text-sm font-medium">
+        {request.cancelled_by && request.cancelled_at
+          ? t("cancelledBy", { name: isolate(request.cancelled_by.name), when: fmt.dateTime(request.cancelled_at) })
+          : null}{" "}
+        {t("cancelledBody")}
+      </p>
+      {request.actions.can_delete ? (
+        <div>
+          <Button size="lg" className="bg-card text-foreground hover:bg-card/90" onClick={() => setConfirming(true)}>
+            <Trash2 />
+            {t("delete")}
+          </Button>
+        </div>
+      ) : null}
+      <AlertDialog open={confirming} onOpenChange={setConfirming}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{t("deleteConfirm")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("keep")}</AlertDialogCancel>
+            <AlertDialogAction
+              variant="madder"
+              onClick={(e) => {
+                e.preventDefault();
+                onDelete();
+              }}
+              disabled={remove.isPending}
+            >
+              {t("delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </Door>
   );
 }
 

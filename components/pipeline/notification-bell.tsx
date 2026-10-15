@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
-import { Ban, Bell, CalendarClock, CalendarX2, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, type LucideIcon } from "lucide-react";
+import { Ban, Bell, CalendarClock, CalendarX2, CheckCheck, CornerUpLeft, Hourglass, Inbox, Megaphone, Send, XCircle, type LucideIcon } from "lucide-react";
 
 import { useDepartmentName } from "@/components/pipeline/shared";
 import { Plate, type Tone } from "@/components/najdi";
@@ -28,6 +28,8 @@ const KIND: Record<NotificationKind, { tone: Tone; icon: LucideIcon }> = {
   // News, not a state: the dates moved, nothing is asked of the reader.
   dates_changed: { tone: "neutral", icon: CalendarClock },
   overridden: { tone: "madder", icon: CalendarX2 },
+  // News too: the work stops, nothing is asked of the reader.
+  cancelled: { tone: "neutral", icon: XCircle },
 };
 
 
