@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { Door, DoorPanel } from "@/components/najdi";
 import { Countdown } from "@/components/pipeline/countdown";
+import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -19,7 +20,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useCompleteTask, useReturnRequest } from "@/hooks/use-pipeline";
 import type { EventRequestDetail, PipelineTeam } from "@/lib/pipeline-types";
-import { intlLocale } from "@/lib/format";
+import { intlLocale, isolate } from "@/lib/format";
 
 /**
  * The caller's team's turn: mark its part done, or (Design, once, early on)
@@ -35,11 +36,25 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
   const teams = request.actions.complete.filter((team) => team === "media");
   const canReturn = request.actions.can_return;
 
+  const behalf = useBehalfOf(teams[0] ? { kind: "team", team: teams[0] } : null);
+
   if (!teams.length && !canReturn) return null;
   // On Design's turn the poster's door carries "Return with notes" too: one door, not two.
   if (!teams.length && request.actions.complete.includes("design")) return null;
 
   const formatTeams = teams.map((team) => tt(team)).join(" · ");
+
+  if (behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="team-turn"
+        title={<span id="team-turn">{t("teamTurn", { team: formatTeams })}</span>}
+        note={t("teamTurnFor", { team: isolate(formatTeams) })}
+        actions={<TeamActionButtons request={request} onWall />}
+      />
+    );
+  }
 
   return (
     <Door tone="ochre" aria-labelledby="team-turn">
@@ -73,7 +88,17 @@ export function TeamActions({ request }: { request: EventRequestDetail }) {
  * "Mark <team> done" per team whose turn it is, and "Return with notes" when
  * Design still may. Shared by the request view and the dashboard's door.
  */
-export function TeamActionButtons({ request }: { request: EventRequestDetail }) {
+export function TeamActionButtons({
+  request,
+  onWall = false,
+  teams: only,
+}: {
+  request: EventRequestDetail;
+  /** Drawn on the wall (a super admin's frame) rather than on an ochre door. */
+  onWall?: boolean;
+  /** Only these teams' buttons (the reader's own), when some are not theirs to press. */
+  teams?: PipelineTeam[];
+}) {
   const t = useTranslations("pipeline.review");
   const tt = useTranslations("pipeline.teams");
   const complete = useCompleteTask(request.id);
@@ -81,8 +106,8 @@ export function TeamActionButtons({ request }: { request: EventRequestDetail }) 
   // Design finishes with its poster (design-poster) and Logistics by
   // confirming the event (logistics-confirmation), so only Media's button is
   // left here.
-  const teams = request.actions.complete.filter((team) => team === "media");
-  const canReturn = request.actions.can_return;
+  const teams = request.actions.complete.filter((team) => team === "media" && (!only || only.includes(team)));
+  const canReturn = request.actions.can_return && (!only || only.includes("design"));
 
   if (!teams.length && !canReturn) return null;
 
@@ -107,14 +132,14 @@ export function TeamActionButtons({ request }: { request: EventRequestDetail }) 
         <Button
           variant="outline"
           size="lg"
-          className="text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"
+          className={onWall ? undefined : "text-on-door-ochre shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-black/8"}
           onClick={() => setReturning(true)}
         >
           <CornerUpLeft />
           {t("return")}
         </Button>
       ) : null}
-      <ReturnDialog request={request} open={returning} onOpenChange={setReturning} />
+      <ReturnDialog request={request} open={returning} onOpenChange={setReturning} onBehalf={onWall} />
     </div>
   );
 }
@@ -122,17 +147,46 @@ export function TeamActionButtons({ request }: { request: EventRequestDetail }) 
 /** Design sent it back: the notes, the clock, and what to do. */
 export function ReturnedNotice({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.review");
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const clock = request.return_due_at ? (
+    <Countdown until={request.return_due_at} serverNow={request.now} format="clock" plain className="text-[15px]" />
+  ) : null;
+
+  if (behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="returned-title"
+        title={<span id="returned-title">{t("returnedTitleFor")}</span>}
+        note={
+          clock ? (
+            <span className="inline-flex flex-wrap items-center gap-x-1.5">
+              {t("fixWithinFor")}
+              <span className="text-foreground font-bold">{clock}</span>
+            </span>
+          ) : undefined
+        }
+      >
+        {request.return_notes ? (
+          <blockquote className="bg-door-madder-soft text-door-madder-ink rounded-sm px-3.5 py-3 text-[15px] leading-relaxed font-medium whitespace-pre-wrap">
+            {request.return_notes}
+          </blockquote>
+        ) : null}
+      </BehalfFrame>
+    );
+  }
+
   return (
     <Door tone="madder" aria-labelledby="returned-title">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 id="returned-title" className="font-display text-[21px] leading-tight font-semibold">
           {t("returnedTitle")}
         </h2>
-        {request.return_due_at ? (
+        {clock ? (
           <span className="inline-flex items-center gap-1.5 text-[13px] font-medium">
             <Timer className="size-4" />
             {t("fixWithin")}
-            <Countdown until={request.return_due_at} serverNow={request.now} format="clock" plain className="text-[15px]" />
+            {clock}
           </span>
         ) : null}
       </div>
@@ -162,10 +216,13 @@ function ReturnDialog({
   request,
   open,
   onOpenChange,
+  onBehalf = false,
 }: {
   request: EventRequestDetail;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  /** A super admin returning it for Design. */
+  onBehalf?: boolean;
 }) {
   const t = useTranslations("pipeline.review");
   const [notes, setNotes] = React.useState("");
@@ -188,6 +245,7 @@ function ReturnDialog({
         <DialogHeader>
           <DialogTitle>{t("returnTitle")}</DialogTitle>
           <DialogDescription>{t("returnHint")}</DialogDescription>
+          {onBehalf ? <p className="text-door-madder-ink text-sm font-medium">{t("returnFor")}</p> : null}
         </DialogHeader>
         <Textarea rows={5} autoFocus value={notes} onChange={(e) => setNotes(e.target.value)} placeholder={t("notesPlaceholder")} />
         <DialogFooter>

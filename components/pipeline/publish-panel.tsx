@@ -7,7 +7,8 @@ import { ExternalLink, PartyPopper, Rocket, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
 import { Door, DoorPanel } from "@/components/najdi";
-import { useFormatDateRange } from "@/components/pipeline/shared";
+import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
+import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -37,6 +38,8 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
   const { can } = useAccess();
   const publish = usePublishRequest(request.id);
   const formatRange = useFormatDateRange();
+  const departmentName = useDepartmentName();
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
   const [asking, setAsking] = React.useState(false);
   const [checked, setChecked] = React.useState(false);
 
@@ -73,6 +76,8 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
     modes.has("online") ? t("online") : null,
   ].filter(Boolean);
 
+  const early = request.stage !== "ready";
+
   const onOpenChange = (open: boolean) => {
     setAsking(open);
     if (!open) setChecked(false);
@@ -88,62 +93,91 @@ export function PublishPanel({ request }: { request: EventRequestDetail }) {
     }
   };
 
+  const preview = (
+    <DoorPanel className="flex-row items-center gap-3">
+      {posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded
+        <img src={posterUrl} alt="" className="size-16 shrink-0 rounded-sm object-cover shadow-[0_0_0_1px_var(--door-panel-rule)]" />
+      ) : null}
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <bdi className="truncate text-[15px] font-bold">{request.title}</bdi>
+        {summary.length ? <span className="tabular text-[13px] opacity-80">{summary.map(String).map(isolate).join(" · ")}</span> : null}
+        {!posterUrl ? <span className="text-door-madder-ink text-[13px] font-medium">{t("noPoster")}</span> : null}
+      </div>
+    </DoorPanel>
+  );
+
+  const button = (
+    <div className="flex">
+      <Button variant="green" size="lg" className="max-sm:flex-1" onClick={() => setAsking(true)} disabled={publish.isPending}>
+        <Rocket />
+        {behalf ? t("buttonFor") : t("button")}
+      </Button>
+    </div>
+  );
+
+  const dialog = (
+    <AlertDialog open={asking} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <TriangleAlert className="text-door-madder-ink size-5 shrink-0" />
+            {t("confirmTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="flex flex-col gap-2">
+              <p>{t("confirmBody")}</p>
+              {behalf ? <p className="text-door-madder-ink font-medium">{t(early ? "confirmEarly" : "confirmFor", { name: isolate(departmentName(request.department)) })}</p> : null}
+              <p className="text-foreground font-medium">{t("confirmFinal")}</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex min-h-11 items-start gap-2.5">
+          <Checkbox id="publish-checked" checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" />
+          <Label htmlFor="publish-checked" className="text-sm leading-snug font-normal">
+            {t("confirmCheck")}
+          </Label>
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("confirmCancel")}</AlertDialogCancel>
+          <Button variant="green" onClick={onPublish} disabled={!checked || publish.isPending}>
+            <Rocket />
+            {t("confirmButton")}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  // A super admin publishing someone else's event: theirs to publish, and maybe not ready yet.
+  if (behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="publish-title"
+        title={<span id="publish-title">{early ? t("titleEarly") : t("titleFor")}</span>}
+        note={early ? t("hintEarly") : t("hintFor")}
+        actions={
+          <>
+            {button}
+            {dialog}
+          </>
+        }
+      >
+        <div className="[--door-panel:var(--sunk)] [--door-panel-ink:var(--foreground)] [--door-panel-rule:var(--rule)]">{preview}</div>
+      </BehalfFrame>
+    );
+  }
+
   return (
     <Door tone="ochre" aria-labelledby="publish-title">
       <h2 id="publish-title" className="font-display text-[21px] leading-tight font-semibold">
-        {t("title")}
+        {early ? t("titleEarly") : t("title")}
       </h2>
-      <p className="text-sm font-medium">{t("hint")}</p>
-
-      {/* What will go live, as the teams handed it over. */}
-      <DoorPanel className="flex-row items-center gap-3">
-        {posterUrl ? (
-          // eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded
-          <img src={posterUrl} alt="" className="size-16 shrink-0 rounded-sm object-cover shadow-[0_0_0_1px_var(--door-panel-rule)]" />
-        ) : null}
-        <div className="flex min-w-0 flex-col gap-0.5">
-          <bdi className="truncate text-[15px] font-bold">{request.title}</bdi>
-          {summary.length ? <span className="tabular text-[13px] opacity-80">{summary.map(String).map(isolate).join(" · ")}</span> : null}
-          {!posterUrl ? <span className="text-door-madder-ink text-[13px] font-medium">{t("noPoster")}</span> : null}
-        </div>
-      </DoorPanel>
-
-      <div className="flex">
-        <Button variant="green" size="lg" className="max-sm:flex-1" onClick={() => setAsking(true)} disabled={publish.isPending}>
-          <Rocket />
-          {t("button")}
-        </Button>
-      </div>
-
-      <AlertDialog open={asking} onOpenChange={onOpenChange}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <TriangleAlert className="text-door-madder-ink size-5 shrink-0" />
-              {t("confirmTitle")}
-            </AlertDialogTitle>
-            <AlertDialogDescription asChild>
-              <div className="flex flex-col gap-2">
-                <p>{t("confirmBody")}</p>
-                <p className="text-foreground font-medium">{t("confirmFinal")}</p>
-              </div>
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <div className="flex min-h-11 items-start gap-2.5">
-            <Checkbox id="publish-checked" checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" />
-            <Label htmlFor="publish-checked" className="text-sm leading-snug font-normal">
-              {t("confirmCheck")}
-            </Label>
-          </div>
-          <AlertDialogFooter>
-            <AlertDialogCancel>{t("confirmCancel")}</AlertDialogCancel>
-            <Button variant="green" onClick={onPublish} disabled={!checked || publish.isPending}>
-              <Rocket />
-              {t("confirmButton")}
-            </Button>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <p className="text-sm font-medium">{early ? t("hintEarly") : t("hint")}</p>
+      {preview}
+      {button}
+      {dialog}
     </Door>
   );
 }

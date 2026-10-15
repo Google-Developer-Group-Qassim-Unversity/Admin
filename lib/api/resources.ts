@@ -49,13 +49,14 @@ import type {
 } from "@/lib/club-structure-types";
 import type {
   EventRequestDetail,
-  EventRequestStage,
   InboxItem,
+  NotificationScope,
   PaginatedNotifications,
   PaginatedRequests,
   PipelineCalendar,
   PipelineMe,
   PipelineTeam,
+  RequestListParams,
   UpdateDetailsInput,
 } from "@/lib/pipeline-types";
 
@@ -333,17 +334,32 @@ export function createApi(request: Requester) {
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
     unban: (dates: string[]) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
-    notifications: (unread = false) =>
-      request.json<PaginatedNotifications>("/pipeline/notifications", { query: { unread: unread || undefined } }),
+    notifications: ({ unread = false, scope = "mine" }: { unread?: boolean; scope?: NotificationScope } = {}) =>
+      request.json<PaginatedNotifications>("/pipeline/notifications", {
+        query: { unread: unread || undefined, scope },
+      }),
     readNotification: (id: string) =>
       request.json<{ count: number }>(`/pipeline/notifications/${id}/read`, { method: "POST" }),
-    readAllNotifications: () => request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST" }),
+    readAllNotifications: (scope: NotificationScope = "mine") =>
+      request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST", query: { scope } }),
   };
 
   const pipelineRequests = {
-    list: (params: { departmentId?: number; stage?: EventRequestStage; page?: number; pageSize?: number } = {}) =>
+    /**
+     * The requests the caller can see. `team` is that team's desk instead:
+     * everything that reached the team, from any department.
+     */
+    list: (params: RequestListParams = {}) =>
       request.json<PaginatedRequests>("/pipeline/requests", {
-        query: { department_id: params.departmentId, stage: params.stage, page: params.page, page_size: params.pageSize },
+        query: {
+          department_id: params.departmentIds,
+          stage: params.stage,
+          state: params.state,
+          team: params.team,
+          team_status: params.teamStatuses,
+          page: params.page,
+          page_size: params.pageSize,
+        },
       }),
     get: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}`),
     book: (departmentId: number, startDate: string, endDate: string) =>
@@ -393,6 +409,8 @@ export function createApi(request: Requester) {
     superAdmins: () => request.json<SuperAdminEntry[]>("/permissions/super-admins"),
     /** What one member can do, and why. Super admins only. */
     member: (memberId: number) => request.json<MemberAccess>(`/permissions/members/${memberId}`),
+    /** The signed-in person's own access, explained: every staff member can see theirs. */
+    mine: () => request.json<MemberAccess>("/permissions/me"),
     addSuperAdmin: (memberId: number) =>
       request.json<SuperAdminEntry[]>("/permissions/super-admins", { method: "POST", body: { member_id: memberId } }),
     removeSuperAdmin: (memberId: number) =>

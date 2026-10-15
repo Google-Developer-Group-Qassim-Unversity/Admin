@@ -22,7 +22,7 @@ export const DEPARTMENTS = {
   media: { id: 23, name: "Media", ar_name: "الإعلام", color: "#12B5CB", icon: "megaphone" },
 };
 
-const ALL_PERMS = [
+export const ALL_PERMS = [
   "admin.access", "events.view", "members.view", "club_structure.view", "events.create", "events.edit", "events.delete",
   "attendance.take", "attendance.backfill", "attendance.copy", "forms.manage", "submissions.review", "emails.event",
   "emails.direct", "emails.blast", "emails.logs", "certificates.manual", "points.catalogue", "points.custom",
@@ -80,13 +80,16 @@ export const REQUESTS = [
   summary("r2", "cyber", "in_review", "ورشة أمن الشبكات اللاسلكية", iso(12), iso(12)),
   summary("r4", "web", "media", "لقاء مطوري الويب", iso(13), iso(13)),
   summary("r5", "ai", "ready", "معسكر تحليل البيانات", iso(23), iso(27)),
+  summary("r8", "web", "in_review", "أساسيات React للمبتدئين", iso(21), iso(21), { requested_at: at(-2 * DAY) }),
+  summary("r9", "cyber", "published", "تحدي التقاط العلم CTF", iso(-9), iso(-8), { published_at: at(-14 * DAY) }),
+  summary("r10", "ai", "cancelled", "لقاء مجتمع البيانات", iso(15), iso(15)),
 ];
-const byId = Object.fromEntries(REQUESTS.map((r) => [r.id, r]));
+export const byId = Object.fromEntries(REQUESTS.map((r) => [r.id, r]));
 
 // Design's card on the team's Notion board, once the request reached Design.
 const NOTION_URL = "https://www.notion.so/Flutter-workshop-266b70e9ca448103bfb3dd7eab68f43e";
 
-const TASKS = {
+export const TASKS = {
   r1: [
     { team: "design", status: "brief" },
     { team: "logistics", status: "brief" },
@@ -118,7 +121,32 @@ const TASKS = {
     { team: "logistics", status: "done" },
     { team: "media", status: "done" },
   ],
+  r8: [
+    { team: "design", status: "open" },
+    { team: "logistics", status: "open" },
+  ],
+  r9: [
+    { team: "design", status: "done" },
+    { team: "logistics", status: "done" },
+    { team: "media", status: "done" },
+  ],
+  r10: [
+    { team: "design", status: "brief" },
+    { team: "logistics", status: "brief" },
+  ],
 };
+
+// How long each team has had its part, so rows can say "arrived 5 hours ago".
+const OPENED = { r2: 26 * H, r7: 5 * H, r4: 2 * H, r3: 30 * H, r8: 50 * H };
+for (const r of REQUESTS) {
+  r.published_at ??= r.stage === "published" ? at(-DAY) : null;
+  r.task_states = (TASKS[r.id] ?? []).map((t, i) => ({
+    team: t.team,
+    status: t.status,
+    opened_at: t.status === "brief" ? null : at(-(OPENED[r.id] ?? DAY) - i * 60_000),
+    done_at: t.status === "done" ? at(-(5 + i * 20) * H) : null,
+  }));
+}
 
 // A stand-in poster: a mud-coloured square with the title area, as a data URI.
 const POSTER =
@@ -151,7 +179,7 @@ const HISTORY = (s) => [
   { action: "hold_expired", at: at(-10 * H), actor: null, details: null },
 ];
 
-function detail(id) {
+export function detail(id) {
   const s = byId[id] ?? REQUESTS[0];
   const draft = s.stage === "draft";
   return {
@@ -241,7 +269,7 @@ function calendar({ from, to }) {
   return { today: iso(0), first_bookable_date: iso(4), days };
 }
 
-const inbox = [
+export const inbox = [
   { request: byId.r2, team: "design", status: "open", opened_at: at(-DAY) },
   { request: byId.r7, team: "logistics", status: "open", opened_at: at(-5 * H) },
   { request: byId.r4, team: "media", status: "open", opened_at: at(-2 * H) },
@@ -256,7 +284,7 @@ const notification = (id, kind, req, ago, read) => ({
   created_at: at(-ago),
   read,
 });
-const notifications = [
+export const notifications = [
   notification("n1", "request_received", "r2", DAY, false),
   notification("n2", "task_done", "r7", 3 * H, false),
   notification("n3", "returned", "r3", 6 * H, false),

@@ -13,7 +13,8 @@ import { YourTurn, waitingOnYou } from "@/components/dashboard/your-turn";
 import { SectionHead } from "@/components/najdi";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { RequestList } from "@/components/pipeline/request-list";
-import { hasTeam, useOwnDepartmentIds } from "@/components/pipeline/shared";
+import { ClubPulse } from "@/components/dashboard/club-pulse";
+import { isMyTurn, usePipelineRole } from "@/components/pipeline/roles";
 import { Button } from "@/components/ui/button";
 import { useAccess } from "@/hooks/use-access";
 import { useAttention } from "@/hooks/use-attention";
@@ -40,10 +41,17 @@ export default function DashboardPage() {
 
   const me = usePipelineMe({ enabled: pipelineAllowed });
   const pipeline = pipelineAllowed && me.data?.has_access === true;
-  const ownIds = useOwnDepartmentIds(me.data);
+  const role = usePipelineRole(me.data);
+  const ownIds = role.ownDepartmentIds;
   const overview = usePipelineOverview(pipeline);
-  const withTeam = pipeline && hasTeam(me.data);
+  // Only the caller's own teams: a super admin's door and inbox are theirs, not every team's.
+  const withTeam = pipeline && role.ownTeams.length > 0;
   const inbox = useInbox(withTeam);
+  const ownInbox = React.useMemo(
+    () => (inbox.data ?? []).filter((item) => item.status === "open" && role.ownsTeam(item.team)),
+    [inbox.data, role],
+  );
+  const oversees = pipeline && role.isSuperAdmin;
   const { data: events, isPending: eventsPending } = useEvents(undefined);
   const attention = useAttention();
   const canSeeMembers = can("members.view");
@@ -66,10 +74,10 @@ export default function DashboardPage() {
   // Oldest first, one entry per request: the door takes the task that has waited longest.
   const teamTasks = React.useMemo(
     () =>
-      [...new Map((inbox.data ?? []).map((item) => [item.request.id, item])).values()].sort((a, b) =>
+      [...new Map(ownInbox.map((item) => [item.request.id, item])).values()].sort((a, b) =>
         (a.opened_at ?? "").localeCompare(b.opened_at ?? ""),
       ),
-    [inbox.data],
+    [ownInbox],
   );
   const mineSorted = React.useMemo(() => {
     const first = new Set(waiting.map((w) => w.request.id));
@@ -122,7 +130,8 @@ export default function DashboardPage() {
       <RequestList
         items={mineSorted}
         isPending={overview.isPending}
-        empty={t("noRequests")}
+        empty={ownIds.size ? t("noRequests") : t("noOwnDepartment")}
+        role={role}
         showDepartment={ownIds.size > 1}
       />
     </section>
@@ -134,7 +143,7 @@ export default function DashboardPage() {
         {greeting}
         <div className="grid gap-7 lg:grid-cols-2">
           <EventsNow events={events} isPending={eventsPending} panel />
-          <AttentionList items={attention.items} isPending={attention.isPending} panel />
+          <AttentionList items={attention.items} isPending={attention.isPending} club={access?.is_super_admin === true} panel />
         </div>
         <Stats stats={stats} />
       </div>
@@ -148,11 +157,12 @@ export default function DashboardPage() {
       {/* Phone: one column, in the order the job happens. */}
       <div className="flex flex-col gap-7 lg:hidden">
         <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} />
-        {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} /> : null}
+        {withTeam ? <TeamInbox items={ownInbox} isPending={inbox.isPending} /> : null}
+        {oversees ? <ClubPulse requests={all} isPending={overview.isPending} /> : null}
         {yourRequests}
-        <StageStrip requests={all} title={stagesTitle} isPending={overview.isPending} />
+        <StageStrip requests={all} title={stagesTitle} isPending={overview.isPending} quiet={role.isSuperAdmin} />
         <EventsNow events={events} isPending={eventsPending} />
-        <AttentionList items={attention.items} isPending={attention.isPending} />
+        <AttentionList items={attention.items} isPending={attention.isPending} club={access?.is_super_admin === true} />
         <Stats stats={stats} />
       </div>
 
@@ -160,15 +170,16 @@ export default function DashboardPage() {
       <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(340px,392px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
           <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} big />
-          {withTeam ? <TeamInbox items={inbox.data} isPending={inbox.isPending} panel /> : null}
+          {withTeam ? <TeamInbox items={ownInbox} isPending={inbox.isPending} panel /> : null}
           <div className="bg-card ring-rule rounded-xl px-5 pt-4 pb-2 ring-1">{yourRequests}</div>
+          {oversees ? <ClubPulse requests={all} isPending={overview.isPending} panel /> : null}
         </div>
         <DashboardCalendar />
         <div className="col-span-2">
-          <StageBoard requests={all} title={stagesTitle} isPending={overview.isPending} />
+          <StageBoard requests={all} title={stagesTitle} isPending={overview.isPending} isMine={(r) => isMyTurn(role, r)} />
         </div>
         <EventsNow events={events} isPending={eventsPending} panel />
-        <AttentionList items={attention.items} isPending={attention.isPending} panel />
+        <AttentionList items={attention.items} isPending={attention.isPending} club={access?.is_super_admin === true} panel />
         <div className="col-span-2">
           <Stats stats={stats} />
         </div>

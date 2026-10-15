@@ -27,6 +27,13 @@ export interface PipelineMe {
   has_access: boolean;
   departments: ActingDepartment[];
   teams: PipelineTeamEntry[];
+  /**
+   * What is the caller's own, through their roster, as if they were not a
+   * super admin. A super admin can act for every department and team; for
+   * everything outside these they act on someone else's behalf.
+   */
+  own_department_ids: number[];
+  own_teams: PipelineTeam[];
 }
 
 export type CalendarDayStatus = "locked" | "banned" | "open" | "held" | "booked" | "published";
@@ -96,6 +103,16 @@ export interface EventRequestSummary {
   hold_expires_at: string | null;
   undated_reason: "hold_expired" | "day_banned" | null;
   requested_at: string;
+  published_at: string | null;
+  /** Where each team's part stands, so a row can say whose turn it is. */
+  task_states: TaskState[];
+}
+
+export interface TaskState {
+  team: PipelineTeam;
+  status: TaskStatus;
+  opened_at: string | null;
+  done_at: string | null;
 }
 
 export type TaskStatus = "brief" | "open" | "returned" | "done";
@@ -214,7 +231,6 @@ export interface EventRequestDetail extends EventRequestSummary {
   requested_by: PersonRef;
   submitted_by: PersonRef | null;
   returned_by: PersonRef | null;
-  published_at: string | null;
   published_by: PersonRef | null;
   /** Everything that happened to the request, oldest first. */
   history: HistoryItem[];
@@ -252,6 +268,20 @@ export interface InboxItem {
   opened_at: string | null;
 }
 
+export interface RequestListParams {
+  /** Only these departments; the caller must request for each. */
+  departmentIds?: number[];
+  stage?: EventRequestStage;
+  /** `active`: still moving. `past`: published or cancelled. */
+  state?: "active" | "past";
+  /** A team's desk: what reached that team, from any department. */
+  team?: PipelineTeam;
+  /** With `team`: only the team's parts in these states. */
+  teamStatuses?: Exclude<TaskStatus, "brief">[];
+  page?: number;
+  pageSize?: number;
+}
+
 export interface PaginatedRequests {
   items: EventRequestSummary[];
   total: number;
@@ -279,6 +309,9 @@ export interface PipelineNotification {
   created_at: string;
   read: boolean;
 }
+
+/** `mine`: the caller's own departments and teams. `club`: everything they can see (only wider for a super admin). */
+export type NotificationScope = "mine" | "club";
 
 export interface PaginatedNotifications {
   items: PipelineNotification[];

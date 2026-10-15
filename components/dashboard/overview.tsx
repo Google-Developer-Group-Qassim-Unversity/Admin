@@ -7,7 +7,7 @@ import { Award, ChevronRight, ClockAlert, CornerUpLeft, FilePen, Users, type Luc
 
 import { INK, Mark, Mortar, Plate, SectionHead, SOFT, type DoorTone } from "@/components/najdi";
 import { TEAM_ICON, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
-import { EVENT_TONE, STAGE_STEP, STAGE_TONE, URGENCY_TONE } from "@/components/status-badge";
+import { EVENT_TONE, STAGE_STEP, URGENCY_TONE, stageToneFor } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AttentionItem, AttentionKind } from "@/hooks/use-attention";
@@ -37,11 +37,22 @@ export function stageCounts(requests: EventRequestSummary[]) {
  * The pipeline at a glance on a phone: five doorways in mortar, a count in
  * each, coloured by whose turn the step is.
  */
-export function StageStrip({ requests, title, isPending }: { requests: EventRequestSummary[]; title: string; isPending: boolean }) {
+export function StageStrip({
+  requests,
+  title,
+  isPending,
+  quiet = false,
+}: {
+  requests: EventRequestSummary[];
+  title: string;
+  isPending: boolean;
+  /** Counts that are not the reader's to act on (a super admin's club): no "your move" ochre. */
+  quiet?: boolean;
+}) {
   const t = useTranslations("pipeline");
   const td = useTranslations("dashboard.stages");
   const { counts, returned } = stageCounts(requests);
-  const tone: DoorTone[] = ["ochre", "indigo", "indigo", "ochre", "green"];
+  const tone: DoorTone[] = quiet ? ["umber", "indigo", "indigo", "umber", "green"] : ["ochre", "indigo", "indigo", "ochre", "green"];
 
   return (
     <section aria-labelledby="stage-strip" className="flex flex-col gap-2">
@@ -72,7 +83,18 @@ export function StageStrip({ requests, title, isPending }: { requests: EventRequ
  * The pipeline on a wide screen: one column per step, laid in mortar, each
  * request a card that names whose turn it is.
  */
-export function StageBoard({ requests, title, isPending }: { requests: EventRequestSummary[]; title: string; isPending: boolean }) {
+export function StageBoard({
+  requests,
+  title,
+  isPending,
+  isMine,
+}: {
+  requests: EventRequestSummary[];
+  title: string;
+  isPending: boolean;
+  /** Whether a request is the reader's move; only those get the "your move" ochre. Every request when absent. */
+  isMine?: (request: EventRequestSummary) => boolean;
+}) {
   const t = useTranslations("pipeline");
   const td = useTranslations("dashboard.stages");
   const departmentName = useDepartmentName();
@@ -109,7 +131,8 @@ export function StageBoard({ requests, title, isPending }: { requests: EventRequ
                   <span className="text-ink-2 tabular font-bold">{counts[i]}</span>
                 </header>
                 {items.slice(0, MAX).map((r) => {
-                  const tone = STAGE_TONE[r.stage];
+                  const mine = isMine ? isMine(r) : true;
+                  const tone = stageToneFor(r.stage, mine);
                   return (
                     <Link
                       key={r.id}
@@ -118,7 +141,7 @@ export function StageBoard({ requests, title, isPending }: { requests: EventRequ
                         "flex flex-col gap-1 rounded-lg px-3 py-2.5 transition-shadow outline-none focus-visible:outline-2 focus-visible:outline-ring",
                         r.stage === "returned"
                           ? "bg-door-madder-soft shadow-[inset_0_0_0_1px_var(--door-madder-ink)]"
-                          : r.stage === "draft" || r.stage === "ready"
+                          : (r.stage === "draft" || r.stage === "ready") && mine
                             ? "bg-card shadow-[inset_0_0_0_1.5px_var(--door-ochre)] hover:shadow-[inset_0_0_0_1.5px_var(--door-ochre),var(--shadow-lift)]"
                             : "bg-card shadow-[inset_0_0_0_1px_var(--rule)] hover:shadow-[inset_0_0_0_1px_var(--adobe),var(--shadow-lift)]",
                       )}
@@ -258,13 +281,25 @@ const ATTENTION_ICON: Record<AttentionKind, LucideIcon> = {
 };
 
 /** Everything waiting on an admin, ranked by how much it hurts to leave it. */
-export function AttentionList({ items, isPending, panel = false }: { items: AttentionItem[]; isPending: boolean; panel?: boolean }) {
+export function AttentionList({
+  items,
+  isPending,
+  panel = false,
+  club = false,
+}: {
+  items: AttentionItem[];
+  isPending: boolean;
+  panel?: boolean;
+  /** A super admin sees every department's events: say so, and name each event's department. */
+  club?: boolean;
+}) {
   const t = useTranslations("dashboard");
   const tq = useTranslations("dashboard.queue");
+  const locale = useLocale();
 
   return (
     <section aria-labelledby="attention" className={cn("flex flex-col gap-1", panel && "bg-card ring-rule rounded-xl px-5 pt-4 pb-2 ring-1")}>
-      <SectionHead id="attention" title={t("attention")} count={items.length || undefined} />
+      <SectionHead id="attention" title={club ? t("attentionClub") : t("attention")} count={items.length || undefined} />
       {isPending ? (
         <Skeleton className="my-2 h-14 w-full" />
       ) : !items.length ? (
@@ -285,7 +320,16 @@ export function AttentionList({ items, isPending, panel = false }: { items: Atte
               <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                 <b className="truncate text-[14.5px] font-bold">{tq(`${item.kind}.title`, { count: item.count ?? 0, days: item.days })}</b>
                 <span className="text-ink-2 truncate text-[13px]">
-                  <bdi>{item.event.name}</bdi> · {tq(`${item.kind}.detail`, { days: item.days })}
+                  <bdi>{item.event.name}</bdi>
+                  {club && (item.event.department_ar_name || item.event.department_name) ? (
+                    <>
+                      {" · "}
+                      <bdi className="font-bold">
+                        {locale === "ar" ? item.event.department_ar_name ?? item.event.department_name : item.event.department_name}
+                      </bdi>
+                    </>
+                  ) : null}{" "}
+                  · {tq(`${item.kind}.detail`, { days: item.days })}
                 </span>
               </div>
               <Button asChild variant="outline" size="sm" className="shrink-0">
