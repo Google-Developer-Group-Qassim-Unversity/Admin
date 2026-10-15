@@ -1977,19 +1977,25 @@
         "held": "Held (draft)",
         "booked": "Booked",
         "published": "Published event"
-      }
+      },
+      "closedBy": "Closed by {name}"
     },
     "bans": {
       "edit": "Close or reopen days",
-      "hint": "Tap the days to close or reopen. Requests on a closed day lose their dates.",
+      "hint": "Tap the days to close, give the reason, and close them together as one block. Requests on a closed day lose their dates.",
       "selected": "{count, plural, =0 {No days selected} one {# day selected} other {# days selected}}",
-      "reasonPlaceholder": "Reason, e.g. midterms",
+      "reasonPlaceholder": "Why? e.g. midterms, the spring break",
       "ban": "Close days",
       "unban": "Reopen days",
       "done": "Done",
       "banned": "{count, plural, one {# day closed} other {# days closed}}",
       "unbanned": "{count, plural, one {# day reopened} other {# days reopened}}",
-      "failed": "Could not update the days"
+      "failed": "Could not update the days",
+      "reasonRequired": "Say why these days are closed",
+      "editReason": "Change the reason",
+      "saveReason": "Save",
+      "reopenBlock": "Reopen these days",
+      "reasonSaved": "Reason updated"
     },
     "stage": {
       "draft": "Draft",
@@ -2064,7 +2070,15 @@
       "holdEndsFor": "The hold ends in",
       "nowWith": "Now:",
       "lostDatesBodyFor": "Everything they filled in is kept. They need to pick new dates, and they have been notified.",
-      "redateFor": "Pick new dates for them"
+      "redateFor": "Pick new dates for them",
+      "cancelConfirmSubmitted": "Every team stops working on it and is told, its dates become free, and Design's Notion card is marked cancelled. This can't be undone.",
+      "cancelledTitle": "This request was cancelled",
+      "cancelledBy": "{name} cancelled it on {when}.",
+      "cancelledBody": "It holds no dates and no team works on it. Delete it for good once you no longer need it.",
+      "delete": "Delete permanently",
+      "deleteTitle": "Delete this request for good?",
+      "deleteConfirm": "The request, its briefs and its files on the pipeline go away, and its Notion card moves to the trash. Its history is kept. This can't be undone.",
+      "deleted": "Request deleted"
     },
     "details": {
       "title": "Event title",
@@ -2281,7 +2295,8 @@
         "media_received": "{title} is ready for Media",
         "ready_to_publish": "{title} is ready to publish",
         "dates_changed": "Logistics moved {title} to other dates",
-        "overridden": "A super admin took the dates of {title}"
+        "overridden": "A super admin took the dates of {title}",
+        "cancelled": "{title} was cancelled; nothing left to do on it"
       },
       "scope": {
         "label": "Which notifications",
@@ -2301,7 +2316,8 @@
         "task_done": "A team finished its part of {title}",
         "media_received": "{title} reached Media",
         "ready_to_publish": "{title} is ready to publish",
-        "dates_changed": "Logistics moved {title} to other dates"
+        "dates_changed": "Logistics moved {title} to other dates",
+        "cancelled": "{title} was cancelled"
       }
     },
     "inbox": {
@@ -2473,7 +2489,8 @@
         "eventDeleted": "deleted the published event (#{id})",
         "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted",
         "overriddenRescheduled": "booked {dates} for another event; the request is back to a draft with no dates",
-        "overriddenCancelled": "booked {dates} for another event and cancelled the request"
+        "overriddenCancelled": "booked {dates} for another event and cancelled the request",
+        "cancelledAt": "cancelled the request while it was {stage}"
       }
     },
     "views": {

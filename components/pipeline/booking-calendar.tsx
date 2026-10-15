@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 import { Mortar } from "@/components/najdi";
-import { useDepartmentName } from "@/components/pipeline/shared";
+import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { PIPELINE_DAY_STYLES, type PipelineDayStatus } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -38,6 +38,7 @@ export function BookingCalendar({
   isSelectable,
   toolbar,
   showNotes = true,
+  blockActions,
   className,
 }: {
   selected?: Set<string>;
@@ -47,6 +48,8 @@ export function BookingCalendar({
   toolbar?: React.ReactNode;
   /** The first-bookable line and the list of closed days under the legend. */
   showNotes?: boolean;
+  /** Buttons at the end of each closed block's line (Logistics edits or reopens it). */
+  blockActions?: (block: ClosedBlock) => React.ReactNode;
   className?: string;
 }) {
   const t = useTranslations("pipeline.calendar");
@@ -74,7 +77,7 @@ export function BookingCalendar({
   const cells: Date[] = [];
   for (let day = gridStart; day <= gridEnd; day = addDays(day, 1)) cells.push(day);
 
-  const closed = (data?.days ?? []).filter((d) => d.status === "banned" && isSameMonth(parseISO(d.date), month));
+  const closed = groupBlocks((data?.days ?? []).filter((d) => d.status === "banned" && isSameMonth(parseISO(d.date), month)));
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
@@ -126,6 +129,7 @@ export function BookingCalendar({
               longDay.format(new Date(`${iso}T00:00:00Z`)),
               t(`status.${day.status}`),
               day.reason,
+              day.blocked_by ? t("closedBy", { name: day.blocked_by.name }) : null,
               first ? departmentName(first.department) : null,
             ]
               .filter(Boolean)
@@ -194,22 +198,69 @@ export function BookingCalendar({
             })}
           </p>
           {closed.length ? (
-            <ul className="flex flex-col gap-0.5 ps-6">
-              {closed.map((d) => (
-                <li key={d.date}>
-                  <span className="text-door-madder-ink font-bold">
-                    {new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
-                      new Date(`${d.date}T00:00:00Z`),
-                    )}
-                  </span>
-                  {" · "}
-                  {d.reason ? <bdi>{d.reason}</bdi> : t("status.banned")}
-                </li>
+            <ul className="flex flex-col gap-1.5 ps-6">
+              {closed.map((block) => (
+                <ClosedBlockLine key={block.id} block={block} actions={blockActions?.(block)} />
               ))}
             </ul>
           ) : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Days Logistics closed together: the block's days (this month's), why, and who closed them. */
+export interface ClosedBlock {
+  id: string;
+  days: string[];
+  reason: string | null;
+  blockedBy: string | null;
+}
+
+function groupBlocks(days: CalendarDay[]): ClosedBlock[] {
+  const blocks = new Map<string, ClosedBlock>();
+  for (const day of days) {
+    const id = day.block_id ?? day.date;
+    const block = blocks.get(id) ?? { id, days: [], reason: day.reason, blockedBy: day.blocked_by?.name ?? null };
+    block.days.push(day.date);
+    blocks.set(id, block);
+  }
+  return [...blocks.values()];
+}
+
+/** Consecutive days as one range: ["2026-03-01", "2026-03-02", "2026-03-05"] -> [[01, 02], [05, 05]]. */
+function runs(days: string[]): [string, string][] {
+  const out: [string, string][] = [];
+  for (const day of [...days].sort()) {
+    const last = out.at(-1);
+    if (last && format(addDays(parseISO(last[1]), 1), ISO) === day) last[1] = day;
+    else out.push([day, day]);
+  }
+  return out;
+}
+
+function ClosedBlockLine({ block, actions }: { block: ClosedBlock; actions?: React.ReactNode }) {
+  const t = useTranslations("pipeline.calendar");
+  const locale = useLocale();
+  const formatRange = useFormatDateRange();
+  return (
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="text-door-madder-ink tabular font-bold">
+        {runs(block.days)
+          .map(([start, end]) => formatRange(start, end))
+          .join(locale === "ar" ? "، " : ", ")}
+      </span>
+      <span>
+        · {block.reason ? <bdi>{block.reason}</bdi> : t("status.banned")}
+        {block.blockedBy ? (
+          <>
+            {" · "}
+            {t("closedBy", { name: block.blockedBy })}
+          </>
+        ) : null}
+      </span>
+      {actions ? <span className="ms-auto flex gap-1">{actions}</span> : null}
+    </li>
   );
 }

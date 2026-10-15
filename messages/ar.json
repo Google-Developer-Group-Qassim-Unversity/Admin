@@ -1977,19 +1977,25 @@
         "held": "محجوز مؤقتًا (مسودة)",
         "booked": "محجوز",
         "published": "فعالية منشورة"
-      }
+      },
+      "closedBy": "أغلقها {name}"
     },
     "bans": {
       "edit": "إغلاق أو فتح أيام",
-      "hint": "اضغط الأيام التي تريد إغلاقها أو إعادة فتحها. الطلبات في يوم مُغلق تفقد تواريخها.",
+      "hint": "اختر الأيام، واكتب السبب، وأغلقها معًا كمجموعة واحدة. الطلبات التي تقع في يوم مغلق تفقد تواريخها.",
       "selected": "{count, plural, =0 {لم تختر أي يوم} one {يوم واحد} two {يومان} few {# أيام} many {# يومًا} other {# يوم}}",
-      "reasonPlaceholder": "السبب، مثل: الاختبارات",
+      "reasonPlaceholder": "السبب، مثل: الاختبارات النصفية، إجازة الربيع",
       "ban": "إغلاق الأيام",
       "unban": "فتح الأيام",
       "done": "تم",
       "banned": "{count, plural, one {تم إغلاق يوم} other {تم إغلاق # أيام}}",
       "unbanned": "{count, plural, one {تم فتح يوم} other {تم فتح # أيام}}",
-      "failed": "تعذر تحديث الأيام"
+      "failed": "تعذر تحديث الأيام",
+      "reasonRequired": "اكتب سبب إغلاق هذه الأيام",
+      "editReason": "تعديل السبب",
+      "saveReason": "حفظ",
+      "reopenBlock": "إعادة فتح هذه الأيام",
+      "reasonSaved": "عُدّل السبب"
     },
     "stage": {
       "draft": "مسودة",
@@ -2064,7 +2070,15 @@
       "holdEndsFor": "ينتهي الحجز بعد",
       "nowWith": "الآن:",
       "lostDatesBodyFor": "كل ما عبّؤوه محفوظ. عليهم اختيار أيام جديدة، ووصلهم إشعار بذلك.",
-      "redateFor": "اختر لهم أيامًا جديدة"
+      "redateFor": "اختر لهم أيامًا جديدة",
+      "cancelConfirmSubmitted": "سيتوقف كل فريق عن العمل عليه ويُبلَّغ، وتصبح تواريخه متاحة، وتُعلَّم بطاقته في Notion بأنه ملغى. لا يمكن التراجع عن هذا.",
+      "cancelledTitle": "أُلغي هذا الطلب",
+      "cancelledBy": "ألغاه {name} في {when}.",
+      "cancelledBody": "لا يحجز أي تواريخ ولا يعمل عليه أي فريق. احذفه نهائيًا متى لم تعد بحاجة إليه.",
+      "delete": "حذف نهائي",
+      "deleteTitle": "حذف هذا الطلب نهائيًا؟",
+      "deleteConfirm": "سيُحذف الطلب ونماذجه، وتنتقل بطاقته في Notion إلى سلة المهملات. يبقى سجل ما حدث. لا يمكن التراجع عن هذا.",
+      "deleted": "حُذف الطلب"
     },
     "details": {
       "title": "عنوان الفعالية",
@@ -2281,7 +2295,8 @@
         "media_received": "{title} جاهز للإعلام",
         "ready_to_publish": "{title} جاهز للنشر",
         "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى",
-        "overridden": "حجز سوبر ادمن تواريخ {title}"
+        "overridden": "حجز سوبر ادمن تواريخ {title}",
+        "cancelled": "أُلغي {title}، فلا عمل متبقٍ عليه"
       },
       "scope": {
         "label": "أي إشعارات",
@@ -2301,7 +2316,8 @@
         "task_done": "أنهى قسم دوره في {title}",
         "media_received": "وصل {title} إلى الإعلام",
         "ready_to_publish": "{title} جاهز للنشر",
-        "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى"
+        "dates_changed": "نقلت اللوجستيات {title} إلى تواريخ أخرى",
+        "cancelled": "أُلغي {title}"
       }
     },
     "inbox": {
@@ -2473,7 +2489,8 @@
         "eventDeleted": "حذف الفعالية المنشورة (رقم {id})",
         "briefEditedAfterSubmit": "عدّل طلب {team} بعد إرسال الطلب",
         "overriddenRescheduled": "حجز {dates} لفعالية أخرى؛ عاد الطلب مسودة بلا تواريخ",
-        "overriddenCancelled": "حجز {dates} لفعالية أخرى وألغى الطلب"
+        "overriddenCancelled": "حجز {dates} لفعالية أخرى وألغى الطلب",
+        "cancelledAt": "ألغى الطلب وهو في مرحلة: {stage}"
       }
     },
     "views": {

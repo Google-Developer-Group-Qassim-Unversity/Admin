@@ -332,10 +332,17 @@ export function createApi(request: Requester) {
   const pipeline = {
     me: () => request.json<PipelineMe>("/pipeline/me"),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
-    ban: (dates: string[], reason: string | null) =>
-      request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
+    ban: (dates: string[], reason: string) =>
+      request.json<{ block_id: string; count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
     unban: (dates: string[]) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
+    editBlock: (blockId: string, reason: string) =>
+      request.json<{ block_id: string; count: number }>(`/pipeline/calendar/blocks/${blockId}`, {
+        method: "PATCH",
+        body: { reason },
+      }),
+    removeBlock: (blockId: string) =>
+      request.json<{ block_id: string; count: number }>(`/pipeline/calendar/blocks/${blockId}`, { method: "DELETE" }),
     notifications: ({ unread = false, scope = "mine" }: { unread?: boolean; scope?: NotificationScope } = {}) =>
       request.json<PaginatedNotifications>("/pipeline/notifications", {
         query: { unread: unread || undefined, scope },
@@ -376,7 +383,8 @@ export function createApi(request: Requester) {
       }),
     updateDetails: (id: string, body: UpdateDetailsInput) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/details`, { method: "PUT", body }),
-    cancel: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
+    cancel: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/cancel`, { method: "POST" }),
+    remove: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
     saveBrief: (id: string, team: PipelineTeam, brief: Record<string, unknown>) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
     saveDeliverable: (id: string, team: PipelineTeam, deliverable: Record<string, unknown>) =>
