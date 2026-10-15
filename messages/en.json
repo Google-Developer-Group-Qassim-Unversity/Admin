@@ -2741,7 +2741,7 @@
       "toc": "On this page",
       "path": {
         "title": "The path of a request",
-        "intro": "Every event goes through the same five steps. The triangles on a request show where it is: green ones are done, the outlined one is the step it is on now.",
+        "intro": "Every event goes through the same five steps. The triangles on each request in the lists show where it is: green ones are done, the outlined one is the step it is on now.",
         "steps": {
           "draft": {
             "who": "Your department",
@@ -2826,7 +2826,7 @@
           },
           "desk": {
             "title": "Team desks",
-            "body": "For Design, Logistics and Media: what waits on your team, what Design sent back, and what your team finished. The number on the tab is what waits on you."
+            "body": "For Design, Logistics and Media: what waits on your team, what Design sent back, and what your team finished. The number on the tab is what waits on you. When you finish a request, the page offers the next one, oldest first."
           },
           "club": {
             "title": "Whole club",
@@ -2860,7 +2860,7 @@
             },
             "1": {
               "title": "Fill in the request",
-              "body": "Three tabs: <b>Event details</b>, <b>Design brief</b> and <b>Logistics brief</b>. Everything saves as you type, so you can leave and come back. The bar at the bottom says what is still missing."
+              "body": "A request is five stations along the top: <b>Event</b>, <b>Design</b>, <b>Logistics</b>, <b>Media</b> and <b>Publish</b>. You fill in the first three: the event itself, Design's brief and Logistics' brief, and <b>Next</b> walks you through them. Everything saves as you type, so you can leave and come back. Each station counts what it is still missing."
             },
             "2": {
               "title": "Submit",
@@ -2991,7 +2991,7 @@
           },
           "submit": {
             "q": "Submit won't go",
-            "a": "The bar at the bottom lists what is still missing. If it says a team is not set up, tell a super admin."
+            "a": "The stations along the top count what is still missing, and each station lists its own. If it says a team is not set up, tell a super admin."
           },
           "change": {
             "q": "Something must change after submitting",
@@ -2999,7 +2999,7 @@
           },
           "changed": {
             "q": "Logistics changed my event",
-            "a": "They have to say why. The reason is in the notification and on the request, under <b>Confirmed by Logistics</b>."
+            "a": "They have to say why. The reason is in the notification and on the request's Logistics station, under <b>Confirmed by Logistics</b>."
           }
         }
       }
