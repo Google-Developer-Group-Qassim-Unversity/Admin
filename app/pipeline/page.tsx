@@ -1,9 +1,10 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Ban, Building2, CalendarPlus, Crown, Route } from "lucide-react";
+import { Ban, Building2, CalendarPlus, CircleHelp, Crown, Route } from "lucide-react";
 
 import { SectionHead } from "@/components/najdi";
 import { PageHeader } from "@/components/page-header";
@@ -92,6 +93,12 @@ function PipelineHome({ me }: { me: PipelineMe }) {
       <PageHeader title={t("title")} description={t("subtitle")} icon={Route}>
         {mode === "view" ? (
           <>
+            <Button asChild variant="outline">
+              <Link href="/pipeline/guide">
+                <CircleHelp />
+                {t("guide.open")}
+              </Link>
+            </Button>
             {canBan ? (
               <Button variant="outline" onClick={() => setBans(true)}>
                 <Ban />

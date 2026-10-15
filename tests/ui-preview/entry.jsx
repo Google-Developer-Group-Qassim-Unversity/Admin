@@ -13,6 +13,7 @@ import ar from "@/messages/ar.json";
 
 import DashboardPage from "@/app/page";
 import PipelinePage from "@/app/pipeline/page";
+import PipelineGuidePage from "@/app/pipeline/guide/page";
 import PipelineRequestPage from "@/app/pipeline/requests/[id]/page";
 import { EventsContent } from "@/app/events/events-content";
 import CreateEventPage from "@/app/events/create/page";
@@ -61,6 +62,7 @@ function points(Page) {
 const ROUTES = [
   ["/", DashboardPage],
   ["/pipeline", PipelinePage],
+  ["/pipeline/guide", PipelineGuidePage],
   ["/pipeline/requests/:id", PipelineRequestPage],
   ["/events", EventsContent],
   ["/events/create", CreateEventPage],
