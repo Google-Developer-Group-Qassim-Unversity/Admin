@@ -2045,8 +2045,6 @@
       "cancelConfirm": "Its dates become free for other departments. This can't be undone.",
       "cancelled": "Request cancelled",
       "failed": "Something went wrong",
-      "holdTitle": "Dates held",
-      "holdBody": "Fill in the event and both briefs, then submit before the hold runs out.",
       "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
       "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
       "lostDatesOverridden": "A super admin booked these dates for another event, so the request lost them",
@@ -2063,11 +2061,7 @@
       "cancelTitle": "Cancel this request?",
       "moreActions": "More actions",
       "keep": "Keep it",
-      "whatsLeft": "What is left",
-      "sectionDone": "All filled in",
       "requestedBy": "Requested by {name}",
-      "holdTitleFor": "Dates held while they fill it in",
-      "holdEndsFor": "The hold ends in",
       "nowWith": "Now:",
       "lostDatesBodyFor": "Everything they filled in is kept. They need to pick new dates, and they have been notified.",
       "redateFor": "Pick new dates for them",
@@ -2078,7 +2072,9 @@
       "delete": "Delete permanently",
       "deleteTitle": "Delete this request for good?",
       "deleteConfirm": "The request, its briefs and its files on the pipeline go away, and its Notion card moves to the trash. Its history is kept. This can't be undone.",
-      "deleted": "Request deleted"
+      "deleted": "Request deleted",
+      "holdLine": "Your days are held. Send before the hold runs out:",
+      "holdLineFor": "{department}'s days are held. The hold ends in"
     },
     "details": {
       "title": "Event title",
@@ -2164,7 +2160,9 @@
       "readyShort": "Ready",
       "incomplete": "{count, plural, one {# field still needs filling in} other {# fields still need filling in}}",
       "more": "+{count} more",
-      "forDepartment": "Submitting for {name}, as a super admin"
+      "forDepartment": "Submitting for {name}, as a super admin",
+      "next": "Next: {station}",
+      "nextShort": "Next"
     },
     "fields": {
       "dates": "Dates",
@@ -2351,8 +2349,6 @@
       "resubmit": "Resubmit to Design",
       "resubmitted": "Sent back to Design",
       "penalty": "Late fix: {points, plural, one {# point} other {# points}} off for {days, plural, one {# late day} other {# late days}}, taken when the event is published.",
-      "yourTurn": "Your team's turn",
-      "yourTurnHint": "Read the request below, then mark your part done when it's finished.",
       "markTeamDone": "Mark {team} done",
       "returnConfirm": "Send back",
       "returnedHint": "Fix what the notes ask for in the forms below, then resubmit.",
@@ -2397,9 +2393,7 @@
       "required": "Fill this in to submit"
     },
     "progress": {
-      "label": "Progress",
-      "step": "Step {current} of {total}",
-      "cancelled": "This request was cancelled."
+      "step": "Step {current} of {total}"
     },
     "confirm": {
       "title": "Confirm the event",
@@ -2597,6 +2591,147 @@
       "keep": "Pick other days",
       "publishedTitle": "A published event is on these days",
       "publishedBody": "A published event can't be booked over. Pick other days."
+    },
+    "stations": {
+      "label": "The request's stations",
+      "names": {
+        "event": "Event",
+        "design": "Design",
+        "logistics": "Logistics",
+        "media": "Media",
+        "publish": "Publish"
+      },
+      "status": {
+        "filling": "Filling in",
+        "yourTurn": "Your turn",
+        "fixIt": "Fix it",
+        "sent": "Sent",
+        "notSent": "Not sent",
+        "working": "Working",
+        "sentBack": "Sent back",
+        "done": "Done",
+        "later": "Later",
+        "waiting": "Waiting",
+        "published": "Live",
+        "cancelled": "Cancelled",
+        "left": "{count} left"
+      },
+      "you": "You are here",
+      "parallel": "Design and Logistics work at the same time.",
+      "owner": {
+        "yours": "Your part",
+        "yourTeam": "Your team's part",
+        "theirs": "For {name}"
+      },
+      "head": {
+        "event": {
+          "filling": "What the event is, when, and who it is for. It saves as you type.",
+          "fillingFor": "{department} is filling this in. It saves as you type.",
+          "returned": "Change whatever Design's notes ask for, then resend.",
+          "returnedFor": "{department} is fixing what Design's notes ask for.",
+          "sent": "Sent by {name} {ago}. It is frozen now: the teams work from it as it is.",
+          "cancelled": "This request was cancelled. Nothing here moves any more."
+        },
+        "design": {
+          "brief": "What Design needs to make the poster. Design gets it the moment the request is sent.",
+          "briefFor": "{department} writes this brief. Design gets it the moment the request is sent.",
+          "notSent": "Design gets this brief once {department} sends the request.",
+          "yours": "Make the poster from the brief, upload it, and finish Design.",
+          "working": "On Design's desk; it reached them {ago}. They upload the poster, then finish.",
+          "sentBack": "Design sent the request back with notes. It comes back here once it is resent.",
+          "done": "Finished by {name} {ago}."
+        },
+        "logistics": {
+          "brief": "Where and how the event runs. Logistics books it and confirms what the university gave.",
+          "briefFor": "{department} writes this brief. Logistics books the event from it.",
+          "notSent": "Logistics gets this brief once {department} sends the request.",
+          "yours": "Confirm the event as it was actually booked. The form starts from what was asked.",
+          "working": "On Logistics' desk; it reached them {ago}. They confirm the day, time and place.",
+          "done": "Confirmed by {name} {ago}."
+        },
+        "media": {
+          "later": "Media takes over once Design and Logistics are done, and works from what they hand over.",
+          "yours": "Announce the event from the poster and the confirmed details, then finish Media.",
+          "working": "On Media's desk; it reached them {ago}.",
+          "done": "Finished by {name} {ago}."
+        },
+        "publish": {
+          "later": "Once Media is done, {department} publishes it. The event goes live with exactly what the teams confirmed.",
+          "laterYours": "Once Media is done, you publish it. The event goes live with exactly what the teams confirmed.",
+          "ready": "Every team is done. Publishing is {department}'s step.",
+          "readyYours": "Every team is done. Publishing is your step.",
+          "published": "Published by {name} {ago}.",
+          "cancelled": "A cancelled request is never published."
+        }
+      },
+      "receives": {
+        "title": "What Media works from",
+        "poster": "The poster",
+        "posterFrom": "From Design",
+        "confirmed": "The confirmed event",
+        "confirmedFrom": "From Logistics",
+        "arrived": "Arrived",
+        "notYet": "Not yet",
+        "open": "Open"
+      },
+      "media": {
+        "title": "Media's part",
+        "doneLine": "Media finished {ago}.",
+        "door": "The poster and the confirmed event are below. Once the event is announced, finish Media: the department can then publish it."
+      },
+      "context": {
+        "asked": "What {department} asked for",
+        "event": "The event",
+        "brief": "The brief",
+        "show": "Show what they asked for"
+      },
+      "handoff": {
+        "sent": "Sent to Design and Logistics",
+        "sentBody": "Both teams have it now and work on it at the same time. You are notified as each one finishes.",
+        "sentFor": "Sent for {department}",
+        "sentForBody": "Design and Logistics both have it now. {department} is notified as each one finishes.",
+        "resent": "Sent back to Design",
+        "resentBody": "Design picks it up again from here.",
+        "returned": "Returned with notes",
+        "returnedBody": "{department} has 12 hours to fix it and resend.",
+        "designDone": "Design is done",
+        "designDoneBody": "Logistics is still confirming the event.",
+        "logisticsDone": "Logistics confirmed the event",
+        "logisticsDoneBody": "Design is still on the poster.",
+        "toMedia": "Design and Logistics are done",
+        "toMediaBody": "It went to Media, with the poster and the confirmed event.",
+        "mediaDone": "Media is done",
+        "mediaDoneBody": "It is ready for {department} to publish.",
+        "mediaDoneBodyYours": "It is ready for you to publish.",
+        "dismiss": "Dismiss"
+      },
+      "next": {
+        "title": "Your part is done",
+        "body": "Next on your desk, the one that has waited longest:",
+        "open": "Open it",
+        "clear": "Your desk is clear: nothing else is waiting on {team}.",
+        "desk": "Back to the desk"
+      },
+      "nav": {
+        "prev": "Back: {station}",
+        "next": "Next: {station}"
+      },
+      "copy": "Copy",
+      "copied": "Copied",
+      "notAnswered": "Not answered",
+      "none": "None",
+      "partnersNone": "No partners",
+      "links": "{count, plural, one {# link} other {# links}}",
+      "perDay": "Days",
+      "missingHere": "Still to fill in here:",
+      "checklist": {
+        "title": "What gets published",
+        "poster": "The poster, from Design",
+        "confirmed": "The event as Logistics confirmed it",
+        "media": "Media's part",
+        "ready": "Ready",
+        "waiting": "Waiting"
+      }
     }
   },
   "permissions": {

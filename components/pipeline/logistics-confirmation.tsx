@@ -4,12 +4,13 @@ import * as React from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { addDays, format, parseISO } from "date-fns";
 import { useLocale, useTranslations } from "next-intl";
-import { CalendarCheck, CircleCheck, ExternalLink, Info, Loader2, Video } from "lucide-react";
+import { CalendarCheck, CircleCheck, ExternalLink, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { Door, Fact, Mark, SectionHead } from "@/components/najdi";
 import { DraftSaveStatus, useAutosavedDraft, useDraftSave } from "@/components/pipeline/draft-autosave";
 import { Choice, ChoiceSelect, Field, FormSection, MissingProvider, focusField } from "@/components/pipeline/form-kit";
+import { MeetMark } from "@/components/pipeline/meet-mark";
 import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
 import { useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
@@ -265,17 +266,17 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
                     className="sm:flex-1"
                   />
                   {request.actions.can_generate_meet ? (
-                    <Button
+                    // Google's own white button with Meet's mark, like Notion's at the head of the request.
+                    <button
                       type="button"
-                      variant="outline"
                       onClick={onGenerateMeet}
                       disabled={!canGenerate}
                       title={canGenerate || busy ? undefined : t("generateMeetNeeds")}
-                      className="shrink-0"
+                      className="focus-visible:outline-ring inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-lg bg-white ps-3 pe-3.5 text-[14px] font-bold text-black shadow-[0_0_0_1px_rgb(0_0_0/0.14),0_1px_2px_rgb(0_0_0/0.08)] outline-none transition-[box-shadow,transform,opacity] enabled:hover:shadow-[0_0_0_1px_rgb(0_0_0/0.22),var(--shadow-lift)] enabled:active:translate-y-px focus-visible:outline-2 focus-visible:outline-offset-2 disabled:cursor-not-allowed disabled:opacity-55"
                     >
-                      {generateMeet.isPending ? <Loader2 className="animate-spin" /> : <Video />}
+                      {generateMeet.isPending ? <Loader2 className="size-[18px] animate-spin text-black/55" /> : <MeetMark />}
                       {form.meet_event_id ? t("regenerateMeet") : t("generateMeet")}
-                    </Button>
+                    </button>
                   ) : null}
                 </div>
                 {request.actions.can_generate_meet ? (

@@ -361,3 +361,43 @@
     animation-delay: calc(var(--i, 0) * 70ms);
   }
 }
+
+/* A request's station coming into view: from the side it was reached from, so
+   moving on reads as moving forward. Forward is the reading direction, so it
+   mirrors in Arabic. Opening a page (no direction) only fades. */
+@keyframes station-in {
+  from {
+    opacity: 0;
+    transform: translateX(var(--station-from, 0));
+  }
+}
+@utility animate-station {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: station-in 220ms cubic-bezier(0.16, 1, 0.3, 1) both;
+    &[data-direction="forward"] {
+      --station-from: 14px;
+    }
+    &[data-direction="back"] {
+      --station-from: -14px;
+    }
+    &:where([dir="rtl"] *)[data-direction="forward"] {
+      --station-from: -14px;
+    }
+    &:where([dir="rtl"] *)[data-direction="back"] {
+      --station-from: 14px;
+    }
+  }
+}
+
+/* "Sent to Design and Logistics": the line that says what just happened drops in once. */
+@keyframes handoff-in {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+@utility animate-handoff {
+  @media (prefers-reduced-motion: no-preference) {
+    animation: handoff-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
+  }
+}
