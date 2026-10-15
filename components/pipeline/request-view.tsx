@@ -35,6 +35,16 @@ import { NotionLink } from "@/components/pipeline/notion-link";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { RequestHistory } from "@/components/pipeline/request-history";
 import { RequestProgress } from "@/components/pipeline/request-progress";
+import {
+  BehalfFrame,
+  BehalfNote,
+  RoleProvider,
+  TurnLine,
+  useBehalfOf,
+  usePipelineRole,
+  whoseTurn,
+  type PipelineRole,
+} from "@/components/pipeline/roles";
 import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { DraftBar, tabOf, useFieldLabel, type FormTab } from "@/components/pipeline/submit-bar";
 import { PenaltyNote, ReturnedNotice, TeamActions } from "@/components/pipeline/team-actions";
@@ -55,6 +65,7 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCancelRequest, usePipelineRequest, useRedate } from "@/hooks/use-pipeline";
+import { isolate, useListFormat } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { EventRequestDetail, PipelineMe } from "@/lib/pipeline-types";
 
@@ -115,6 +126,7 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
   // Missing fields turn red only after someone tries to submit.
   const [shown, setShown] = React.useState(false);
 
+  const role = usePipelineRole(me);
   const canAct = me.is_super_admin || me.departments.some((d) => d.id === request.department.id);
   const isDraft = request.stage === "draft";
   const isReturned = request.stage === "returned";
@@ -154,9 +166,11 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
   };
 
   return (
+    <RoleProvider role={role}>
     <MissingProvider missing={request.missing} shown={shown}>
       <div className={cn("flex flex-col gap-6", showBar && "max-md:pb-40")}>
-        <RequestHeader request={request} me={me} canAct={canAct} />
+        <RequestHeader request={request} me={me} role={role} canAct={canAct} />
+        <OversightNote request={request} role={role} />
 
         {lostDates ? <Redate request={request} me={me} /> : null}
         {holding ? <HoldDoor request={request} /> : null}
@@ -203,22 +217,70 @@ function RequestBody({ request, me }: { request: EventRequestDetail; me: Pipelin
         {showBar ? <DraftBar request={request} onIncomplete={onIncomplete} /> : null}
       </div>
     </MissingProvider>
+    </RoleProvider>
   );
 }
 
 /** The days are held while the request is filled in: the clock, on an ochre door. */
 function HoldDoor({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.request");
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const clock = <Countdown until={request.hold_expires_at} serverNow={request.now} format="clock" plain className="text-2xl" />;
+
+  if (behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="hold-title"
+        title={<span id="hold-title">{t("holdTitleFor")}</span>}
+        note={
+          <span className="inline-flex flex-wrap items-center gap-x-1.5">
+            {t("holdEndsFor")}
+            <Countdown until={request.hold_expires_at} serverNow={request.now} format="clock" plain className="text-foreground text-[15px] font-bold" />
+          </span>
+        }
+      />
+    );
+  }
+
   return (
     <Door tone="ochre" aria-labelledby="hold-title">
       <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
         <h2 id="hold-title" className="font-display text-[21px] leading-tight font-semibold">
           {t("holdTitle")}
         </h2>
-        <Countdown until={request.hold_expires_at} serverNow={request.now} format="clock" plain className="text-2xl" />
+        {clock}
       </div>
       <p className="text-sm font-medium">{t("holdBody")}</p>
     </Door>
+  );
+}
+
+/**
+ * A super admin on a request that is not theirs: one line saying whose it is,
+ * who it waits on, and that they have been told. Every door below then shows
+ * as that party's, with the super admin's controls set apart.
+ */
+function OversightNote({ request, role }: { request: EventRequestDetail; role: PipelineRole }) {
+  const t = useTranslations("roles.oversight");
+  const tt = useTranslations("pipeline.teams");
+  const departmentName = useDepartmentName();
+  const list = useListFormat();
+  if (!role.isSuperAdmin || role.ownsDepartment(request.department.id)) return null;
+  const turn = whoseTurn(request);
+  if (turn?.kind === "teams" && turn.teams.some((team) => role.ownsTeam(team))) return null;
+  const department = isolate(departmentName(request.department));
+
+  return (
+    <BehalfNote>
+      <b className="font-bold">{t("whose", { department })}</b>{" "}
+      {turn?.kind === "teams" && turn.teams.length
+        ? t("waitsOnTeams", { teams: list(turn.teams.map((team) => tt(team))) })
+        : turn?.kind === "department"
+          ? t("waitsOnDepartment", { department })
+          : t("over")}{" "}
+      {turn ? t("canAct") : null}
+    </BehalfNote>
   );
 }
 
@@ -296,7 +358,17 @@ function WhatIsLeft({
   );
 }
 
-function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; me: PipelineMe; canAct: boolean }) {
+function RequestHeader({
+  request,
+  me,
+  role,
+  canAct,
+}: {
+  request: EventRequestDetail;
+  me: PipelineMe;
+  role: PipelineRole;
+  canAct: boolean;
+}) {
   const t = useTranslations("pipeline.request");
   const td = useTranslations("pipeline.details.eventTypes");
   const router = useRouter();
@@ -363,6 +435,12 @@ function RequestHeader({ request, me, canAct }: { request: EventRequestDetail; m
         <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
         <p className="text-ink-2 tabular text-[13.5px]">{meta}</p>
       </div>
+      {whoseTurn(request) ? (
+        <p className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[13.5px]">
+          <span className="text-ink-2 font-medium">{t("nowWith")}</span>
+          <TurnLine request={request} role={role} />
+        </p>
+      ) : null}
       <AlertDialog open={confirming} onOpenChange={setConfirming}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -389,6 +467,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
   const [open, setOpen] = React.useState(false);
   const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
   const redate = useRedate(request.id);
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
 
   const onSave = async () => {
     if (!range.start || !range.end) return;
@@ -403,20 +482,39 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
 
   return (
     <div id="request-dates" className="flex scroll-mt-24 flex-col gap-3">
-      <Door tone="madder" aria-labelledby="lost-dates">
-        <h2 id="lost-dates" className="font-display text-[21px] leading-tight font-semibold">
-          {t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}
-        </h2>
-        <p className="text-sm font-medium">{t("lostDatesBody")}</p>
-        {!open ? (
-          <div>
-            <Button size="lg" className="bg-card text-foreground hover:bg-card/90" onClick={() => setOpen(true)}>
-              <CalendarPlus />
-              {t("redate")}
-            </Button>
-          </div>
-        ) : null}
-      </Door>
+      {behalf ? (
+        <BehalfFrame
+          party={behalf}
+          aria-labelledby="lost-dates"
+          title={<span id="lost-dates">{t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}</span>}
+          note={t("lostDatesBodyFor")}
+          actions={
+            !open ? (
+              <div>
+                <Button variant="outline" size="lg" onClick={() => setOpen(true)}>
+                  <CalendarPlus />
+                  {t("redateFor")}
+                </Button>
+              </div>
+            ) : undefined
+          }
+        />
+      ) : (
+        <Door tone="madder" aria-labelledby="lost-dates">
+          <h2 id="lost-dates" className="font-display text-[21px] leading-tight font-semibold">
+            {t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}
+          </h2>
+          <p className="text-sm font-medium">{t("lostDatesBody")}</p>
+          {!open ? (
+            <div>
+              <Button size="lg" className="bg-card text-foreground hover:bg-card/90" onClick={() => setOpen(true)}>
+                <CalendarPlus />
+                {t("redate")}
+              </Button>
+            </div>
+          ) : null}
+        </Door>
+      )}
       {open ? (
         <section className="bg-card ring-door-ochre flex flex-col gap-4 rounded-xl p-4 ring-2 sm:p-5">
           <BookingCalendar

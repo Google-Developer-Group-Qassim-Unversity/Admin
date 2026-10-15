@@ -8,9 +8,11 @@ import { CalendarCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
+import { BehalfNote } from "@/components/pipeline/roles";
 import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { useBookRequest } from "@/hooks/use-pipeline";
+import { isolate } from "@/lib/format";
 import type { CalendarDay, PipelineMe } from "@/lib/pipeline-types";
 
 export const MAX_BOOKING_DAYS = 4;
@@ -61,21 +63,25 @@ function useDayCount() {
  * The days are held for 24 hours while the request is filled in. On a phone the
  * summary and the ochre Book button ride in a bar above the bottom navigation.
  */
-export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () => void; ownIds?: Set<number> }) {
+export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () => void; ownIds?: ReadonlySet<number> }) {
   const t = useTranslations("pipeline.book");
   const router = useRouter();
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
   const dayCount = useDayCount();
   const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
-  // The caller's own department first; a super admin can still pick any.
-  const ordered = React.useMemo(
-    () => [...me.departments].sort((a, b) => Number(ownIds?.has(b.id) ?? 0) - Number(ownIds?.has(a.id) ?? 0)),
+  // The caller's own departments; a super admin can also book for any other, on its behalf.
+  const own = React.useMemo(
+    () => me.departments.filter((d) => !ownIds || ownIds.has(d.id)),
     [me.departments, ownIds],
   );
-  const [departmentId, setDepartmentId] = React.useState<string>(() =>
-    ordered.length === 1 || (ownIds && ordered[0] && ownIds.has(ordered[0].id)) ? String(ordered[0].id) : "",
+  const others = React.useMemo(
+    () => (me.is_super_admin ? me.departments.filter((d) => !own.includes(d)) : []),
+    [me.departments, me.is_super_admin, own],
   );
+  const ordered = React.useMemo(() => [...own, ...others], [own, others]);
+  // Start on the caller's own department; someone else's is always a deliberate pick.
+  const [departmentId, setDepartmentId] = React.useState<string>(() => (own[0] ? String(own[0].id) : ""));
   const book = useBookRequest();
   const chosen = me.departments.find((d) => String(d.id) === departmentId);
 
@@ -111,27 +117,27 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
 
       {/* One department is the answer already; only ask when there is a choice. */}
       {ordered.length > 1 ? (
-        <fieldset className="flex flex-col gap-2">
+        <fieldset className="flex flex-col gap-3">
           <legend className="border-foreground mb-2 w-full border-b pb-2 text-base font-bold">{t("pickDepartment")}</legend>
-          <div role="radiogroup" aria-label={t("pickDepartment")} className="flex flex-wrap gap-2">
-            {ordered.map((d) => {
-              const on = String(d.id) === departmentId;
-              return (
-                <button
-                  key={d.id}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  onClick={() => setDepartmentId(String(d.id))}
-                  className={`inline-flex min-h-11 items-center rounded-lg px-3.5 text-sm font-bold transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
-                    on ? "bg-foreground text-background" : "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--rule)] hover:shadow-[inset_0_0_0_1px_var(--adobe)]"
-                  }`}
-                >
-                  {departmentName(d)}
-                </button>
-              );
-            })}
-          </div>
+          {own.length ? (
+            <DepartmentChoices
+              label={others.length ? t("yourDepartments") : undefined}
+              departments={own}
+              value={departmentId}
+              onChange={setDepartmentId}
+            />
+          ) : null}
+          {others.length ? (
+            <DepartmentChoices
+              label={t("otherDepartments")}
+              departments={others}
+              value={departmentId}
+              onChange={setDepartmentId}
+            />
+          ) : null}
+          {chosen && others.includes(chosen) ? (
+            <BehalfNote>{t("onBehalf", { name: isolate(departmentName(chosen)) })}</BehalfNote>
+          ) : null}
         </fieldset>
       ) : null}
 
@@ -153,6 +159,44 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
           <CalendarCheck />
           {t("book")}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+function DepartmentChoices({
+  label,
+  departments,
+  value,
+  onChange,
+}: {
+  label?: string;
+  departments: PipelineMe["departments"];
+  value: string;
+  onChange: (id: string) => void;
+}) {
+  const departmentName = useDepartmentName();
+  return (
+    <div className="flex flex-col gap-2">
+      {label ? <span className="text-ink-2 text-[12.5px] font-bold">{label}</span> : null}
+      <div role="radiogroup" aria-label={label} className="flex flex-wrap gap-2">
+        {departments.map((d) => {
+          const on = String(d.id) === value;
+          return (
+            <button
+              key={d.id}
+              type="button"
+              role="radio"
+              aria-checked={on}
+              onClick={() => onChange(String(d.id))}
+              className={`inline-flex min-h-11 items-center rounded-lg px-3.5 text-sm font-bold transition-colors outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                on ? "bg-foreground text-background" : "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--rule)] hover:shadow-[inset_0_0_0_1px_var(--adobe)]"
+              }`}
+            >
+              <bdi>{departmentName(d)}</bdi>
+            </button>
+          );
+        })}
       </div>
     </div>
   );

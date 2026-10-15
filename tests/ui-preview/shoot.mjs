@@ -8,7 +8,11 @@
 //
 //   node tests/ui-preview/shoot.mjs [--routes /,/pipeline] [--out dir]
 //        [--viewports phone,desktop] [--locales ar,en] [--themes light,dark]
-//        [--full] [--scroll 600]
+//        [--full] [--scroll 600] [--as super,design,logistics,dept]
+//
+// `--as` signs in as a sample person (see fixtures/a-roles.mjs): a super admin
+// (the default), a Design or Logistics leader, or a department leader. Each
+// fixture's body gets it as `ctx.as`.
 //
 // Writes <out>/<route>-<viewport>-<locale>-<theme>.png and prints page errors.
 // Uses CHROMIUM_PATH, or /usr/bin/chromium when present.
@@ -40,6 +44,10 @@ const themes = list(args.themes, ["light"]);
 const out = path.resolve(args.out || path.join(frontend, ".preview-shots"));
 const full = args.full === "1";
 const scroll = Number(args.scroll || 0);
+const personas = list(args.as, ["super"]);
+// `--click "<selector>"` presses something before the screenshot, e.g. a popover's trigger.
+const click = args.click && args.click !== "1" ? args.click : null;
+let persona = personas[0];
 const SIZES = { phone: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
 
 await mkdir(out, { recursive: true });
@@ -138,12 +146,14 @@ async function answer(route) {
     } catch {
       json = undefined;
     }
-    body = body({ url, pathname, query: Object.fromEntries(url.searchParams), match: pathname.match(hit.path), body: json });
+    body = body({ url, pathname, query: Object.fromEntries(url.searchParams), match: pathname.match(hit.path), body: json, as: persona });
   }
   return route.fulfill({ status: hit.status || 200, contentType: "application/json", body: JSON.stringify(body ?? null) });
 }
 
 try {
+  for (const who of personas) {
+  persona = who;
   for (const viewport of viewports) {
     const context = await browser.newContext({
       viewport: SIZES[viewport] || SIZES.desktop,
@@ -175,7 +185,11 @@ try {
             await page.evaluate((y) => window.scrollTo(0, y), scroll);
             await page.waitForTimeout(200);
           }
-          const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}.png`;
+          if (click) {
+            await page.locator(click).first().click().catch((e) => errors.push(`click ${click}: ${e.message}`));
+            await page.waitForTimeout(500);
+          }
+          const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}.png`;
           await page.screenshot({ path: path.join(out, name), fullPage: full });
           console.log(`${errors.length ? "✗" : "✓"} ${path.join(out, name)}`);
           for (const e of errors) console.log(`    ${e.split("\n")[0]}`);
@@ -185,6 +199,7 @@ try {
       }
     }
     await context.close();
+  }
   }
 } finally {
   await browser.close();

@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { Door, Fact, Mark, SectionHead } from "@/components/najdi";
 import { DraftSaveStatus, useAutosavedDraft, useDraftSave } from "@/components/pipeline/draft-autosave";
 import { Choice, ChoiceSelect, Field, FormSection, MissingProvider, focusField } from "@/components/pipeline/form-kit";
+import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
 import { useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -65,6 +66,7 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   const task = request.tasks.find((x) => x.team === "logistics")!;
   const save = useSaveDeliverable(request.id, "logistics");
   const complete = useCompleteTask(request.id);
+  const behalf = useBehalfOf({ kind: "team", team: "logistics" });
   const { flushAll, state } = useDraftSave();
   // Missing fields turn red only after someone tries to confirm.
   const [shown, setShown] = React.useState(false);
@@ -128,13 +130,22 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
   return (
     <MissingProvider missing={task.deliverable_missing} shown={shown}>
       <section aria-labelledby="confirm-title" className="flex flex-col gap-3">
-        {/* The door says whose turn it is; the form sits on the wall under it. */}
-        <Door tone="ochre" innerClassName="gap-1.5">
-          <h2 id="confirm-title" className="font-display text-[21px] leading-tight font-semibold">
-            {t("title")}
-          </h2>
-          <p className="text-sm font-medium">{t("hint")}</p>
-        </Door>
+        {/* The door says whose turn it is; the form sits on the wall under it. A super
+            admin not on Logistics sees Logistics' turn instead, and confirms for them. */}
+        {behalf ? (
+          <BehalfFrame
+            party={behalf}
+            title={<span id="confirm-title">{t("titleFor")}</span>}
+            note={t("hintFor")}
+          />
+        ) : (
+          <Door tone="ochre" innerClassName="gap-1.5">
+            <h2 id="confirm-title" className="font-display text-[21px] leading-tight font-semibold">
+              {t("title")}
+            </h2>
+            <p className="text-sm font-medium">{t("hint")}</p>
+          </Door>
+        )}
 
         <div className="bg-card ring-rule flex flex-col gap-6 rounded-xl p-4 ring-1 sm:p-6">
           <FormSection title={t("sections.when")}>
@@ -251,12 +262,13 @@ function ConfirmationForm({ request }: { request: EventRequestDetail }) {
           {/* Sticks to the bottom of the screen (above the phone's bottom bar)
               while the form is in view, so Confirm is always one tap away. */}
           <div className="bg-card border-foreground sticky bottom-[calc(4rem+env(safe-area-inset-bottom))] z-20 -mx-4 -mb-4 flex items-center gap-3 border-t px-4 py-3 sm:-mx-6 sm:-mb-6 sm:px-6 md:bottom-0 md:rounded-b-xl">
-            <div className="min-w-0 flex-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+              {behalf ? <span className="text-door-madder-ink text-[12.5px] font-bold">{t("asSuperAdmin")}</span> : null}
               <DraftSaveStatus />
             </div>
             <Button variant="green" size="lg" onClick={onConfirm} disabled={busy}>
               <CircleCheck />
-              {t("button")}
+              {behalf ? t("buttonFor") : t("button")}
             </Button>
           </div>
         </div>

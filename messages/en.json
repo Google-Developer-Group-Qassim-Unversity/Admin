@@ -262,7 +262,7 @@
     "permissions": "Permissions",
     "brand": "GDG Qassim",
     "pipelineShort": "Pipeline",
-    "waitingCount": "{count, plural, one {# waiting on your team} other {# waiting on your teams}}"
+    "waitingCount": "{count, plural, one {# waiting on you} other {# waiting on you}}"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -1931,6 +1931,17 @@
         "detail": "closed {days, plural, one {# day} other {# days}} ago",
         "action": "Send"
       }
+    },
+    "noOwnDepartment": "You are not on a department's roster this semester, so no requests are yours.",
+    "attentionClub": "Needs attention across the club",
+    "club": {
+      "title": "Who has what",
+      "hint": "Each of these is waiting on that team or department, not on you.",
+      "departments": "departments",
+      "waitingOn": "Waiting on {name}",
+      "oldest": "Oldest arrived {ago}",
+      "count": "{count, plural, one {# request} other {# requests}}",
+      "clear": "Nothing waiting"
     }
   },
   "pipeline": {
@@ -2006,7 +2017,10 @@
       "booked": "Dates held for 24 hours",
       "failed": "Could not book these days",
       "days": "{count, plural, one {# day} other {# days}}",
-      "heldFor": "held for 24 hours"
+      "heldFor": "held for 24 hours",
+      "yourDepartments": "Yours",
+      "otherDepartments": "Other departments",
+      "onBehalf": "You are booking for {name} as a super admin. The request will be theirs: their leaders and VPs will see it and fill it in."
     },
     "requests": {
       "mine": "Your department's requests",
@@ -2044,7 +2058,12 @@
       "keep": "Keep it",
       "whatsLeft": "What is left",
       "sectionDone": "All filled in",
-      "requestedBy": "Requested by {name}"
+      "requestedBy": "Requested by {name}",
+      "holdTitleFor": "Dates held while they fill it in",
+      "holdEndsFor": "The hold ends in",
+      "nowWith": "Now:",
+      "lostDatesBodyFor": "Everything they filled in is kept. They need to pick new dates, and they have been notified.",
+      "redateFor": "Pick new dates for them"
     },
     "details": {
       "title": "Event title",
@@ -2129,7 +2148,8 @@
       "leftShort": "{count} left",
       "readyShort": "Ready",
       "incomplete": "{count, plural, one {# field still needs filling in} other {# fields still need filling in}}",
-      "more": "+{count} more"
+      "more": "+{count} more",
+      "forDepartment": "Submitting for {name}, as a super admin"
     },
     "fields": {
       "dates": "Dates",
@@ -2260,6 +2280,26 @@
         "media_received": "{title} is ready for Media",
         "ready_to_publish": "{title} is ready to publish",
         "dates_changed": "Logistics moved {title} to other dates"
+      },
+      "scope": {
+        "label": "Which notifications",
+        "mine": "Yours",
+        "club": "Whole club",
+        "mineHint": "Your own departments and teams. Only these ring the bell.",
+        "clubHint": "Every department's news, for when you want the whole picture. These never ring the bell."
+      },
+      "failed": "Could not load notifications.",
+      "noneMine": "Nothing new for your own departments or teams. The rest of the club's news is under Whole club.",
+      "forDepartment": "For {name}",
+      "kindsClub": {
+        "request_received": "New request reached the team: {title}",
+        "dates_banned": "Logistics closed a day of {title}",
+        "hold_expired": "The hold on {title} ran out",
+        "returned": "Design returned {title} with notes",
+        "task_done": "A team finished its part of {title}",
+        "media_received": "{title} reached Media",
+        "ready_to_publish": "{title} is ready to publish",
+        "dates_changed": "Logistics moved {title} to other dates"
       }
     },
     "inbox": {
@@ -2295,7 +2335,12 @@
       "yourTurnHint": "Read the request below, then mark your part done when it's finished.",
       "markTeamDone": "Mark {team} done",
       "returnConfirm": "Send back",
-      "returnedHint": "Fix what the notes ask for in the forms below, then resubmit."
+      "returnedHint": "Fix what the notes ask for in the forms below, then resubmit.",
+      "teamTurn": "{team}'s turn",
+      "teamTurnFor": "It is on {team}'s desk and they have been notified.",
+      "returnedTitleFor": "Design sent it back with notes",
+      "fixWithinFor": "They have to fix it and resubmit within",
+      "returnFor": "You are returning it on Design's behalf, as a super admin. It still counts as Design's one return."
     },
     "publish": {
       "title": "Publish the event",
@@ -2312,7 +2357,14 @@
       "confirmFinal": "You cannot undo this from the pipeline. Check the date, time, place and poster before you continue.",
       "confirmCheck": "I checked everything and the event is ready to go public.",
       "confirmCancel": "Not yet",
-      "confirmButton": "Yes, publish it now"
+      "confirmButton": "Yes, publish it now",
+      "titleEarly": "Publish before the teams are done",
+      "hintEarly": "Only a super admin can do this: the event goes live with what has been confirmed so far.",
+      "titleFor": "Ready for the department to publish",
+      "hintFor": "Every team is done. Publishing is the department's step; they have been notified.",
+      "buttonFor": "Publish for them",
+      "confirmEarly": "You are publishing {name}'s event before every team is done.",
+      "confirmFor": "You are publishing {name}'s event for them."
     },
     "autosave": {
       "saving": "Saving…",
@@ -2358,7 +2410,11 @@
         "meet": "Google Meet",
         "type": "Event type"
       },
-      "pickDates": "Set the start and end dates first."
+      "pickDates": "Set the start and end dates first.",
+      "titleFor": "Logistics' turn: confirm the event",
+      "hintFor": "Logistics confirms what was actually booked. The form below is theirs; you can fill it in and confirm for them.",
+      "asSuperAdmin": "Confirming for Logistics, as a super admin",
+      "buttonFor": "Confirm for Logistics"
     },
     "notion": {
       "open": "Open in Notion",
@@ -2383,7 +2439,9 @@
       "uploaded": "Poster uploaded",
       "wrongType": "The poster must be a PNG, JPEG or WebP image.",
       "tooLarge": "The poster must be 10 MB or smaller.",
-      "failed": "Something went wrong"
+      "failed": "Something went wrong",
+      "titleFor": "Design's turn: the poster",
+      "finishFor": "Finish Design for them"
     },
     "history": {
       "title": "Who did what",
@@ -2412,6 +2470,66 @@
         "penaltyGrown": "grew the late penalty to {points, plural, one {# point} other {# points}} ({days, plural, one {# day} other {# days}} late)",
         "eventDeleted": "deleted the published event (#{id})",
         "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted"
+      }
+    },
+    "views": {
+      "label": "Whose requests",
+      "tabs": {
+        "department": "My department",
+        "club": "Whole club"
+      },
+      "showMore": "{count, plural, one {Show # more} other {Show # more}}",
+      "past": "Past",
+      "arrived": "Arrived {ago}",
+      "doneAgo": "Done {ago}",
+      "why": {
+        "returned": "Returned: fix it",
+        "lost": "Lost its dates",
+        "ready": "Ready: publish it",
+        "hold": "Being filled in"
+      },
+      "department": {
+        "title": "Your department's requests",
+        "description": "What waits on you comes first: drafts to finish, returned requests to fix, lost dates and events ready to publish. Then what is with the teams, and what is over.",
+        "noneSuperAdmin": "You are not on a department's roster this semester, so no requests are yours. The whole club is under Whole club.",
+        "waiting": "Waiting on you",
+        "waitingNone": "Nothing is waiting on you.",
+        "book": "Book dates",
+        "withTeams": "With the teams",
+        "withTeamsNone": "None of your requests is with Design, Logistics or Media right now.",
+        "pastNone": "Nothing published or cancelled yet."
+      },
+      "desk": {
+        "title": "{team} desk",
+        "about": {
+          "design": "Design makes the poster for every request, and may send a request back once, within two days of getting it.",
+          "logistics": "Logistics confirms the venue, days and times of every request, and closes calendar days.",
+          "media": "Media takes a request once Design is done, and announces the event."
+        },
+        "yours": "Your team",
+        "overseen": "You are looking at {team}'s desk as a super admin. These requests are waiting on {team}, not on you, and {team} has been notified of each one. Step in only when they need you to.",
+        "waitingYours": "Waiting on your team",
+        "waiting": "Waiting on {team}",
+        "waitingNoneYours": "Nothing is waiting on your team.",
+        "waitingNone": "Nothing is waiting on {team}.",
+        "returned": "Sent back to departments",
+        "returnedHint": "Design returned these with notes. They come back here when the department resubmits.",
+        "doneYours": "Done by your team",
+        "done": "Done by {team}",
+        "doneNone": "Nothing finished yet."
+      },
+      "club": {
+        "title": "The whole club",
+        "description": "Every department's requests, by who has them. Each one waits on the team or department named on it, and they have been notified; you only oversee.",
+        "departments": "Departments",
+        "waitingOn": "Waiting on {name}",
+        "yoursToo": "{count, plural, one {# of these is yours: it is in My department or your team's desk.} other {# of these are yours: they are in My department or your team's desk.}}",
+        "teamQueue": "Waiting on {team}",
+        "openDesk": "{team} desk",
+        "teamClear": "Nothing is waiting on {team}.",
+        "departmentQueue": "Waiting on departments",
+        "departmentsClear": "No department has a draft, a returned request or an event to publish.",
+        "pastNone": "Nothing published or cancelled yet."
       }
     }
   },
@@ -2605,6 +2723,49 @@
       "form_updated": "changed the registration form",
       "formAttached": "attached a Google Form",
       "form_detached": "detached the Google Form"
+    }
+  },
+  "roles": {
+    "superAdmin": "Super admin",
+    "badge": {
+      "open": "Your access: {who}",
+      "more": "{count, plural, one {+# department} other {+# departments}}"
+    },
+    "behalf": {
+      "forTeam": "For {name}",
+      "forDepartment": "{name}'s request",
+      "teamKnows": "It is on {name}'s desk and they have been notified.",
+      "departmentKnows": "It is {name}'s to move, and they have been notified.",
+      "actFor": "Act on {name}'s behalf.",
+      "recorded": "Only if they need you to: it is recorded under your name, and the request stays theirs."
+    },
+    "turn": {
+      "you": "Waiting on you",
+      "yourTeam": "Waiting on your team",
+      "withDepartment": "With {name}",
+      "withYourDepartment": "With your department"
+    },
+    "oversight": {
+      "whose": "This is {department}'s request.",
+      "waitsOnTeams": "It is waiting on {teams}, who have been notified.",
+      "waitsOnDepartment": "It is waiting on {department}, who have been notified.",
+      "over": "It is finished.",
+      "canAct": "As a super admin you can edit it and act for them, but nothing here is waiting on you."
+    },
+    "access": {
+      "title": "Your access",
+      "semester": "This semester: {semester}",
+      "superAdminTitle": "You are a super admin",
+      "superAdminBody": "You can do anything, in any department, and skip every time rule. The work still belongs to its teams and departments: they get the notifications and the \"your turn\" doors. When you step in for them, it is recorded under your name.",
+      "departments": "Your departments",
+      "noDepartments": "You are not on any department's roster this semester.",
+      "permissions": "What you can do",
+      "ownPermissions": "What your roster gives you",
+      "ownPermissionsHint": "What you would have without super admin. Everything else you do as a super admin.",
+      "failed": "Could not load your permissions.",
+      "manage": "Manage permissions",
+      "none": "Nothing beyond opening the console.",
+      "basics": "Everyone on staff"
     }
   }
 }

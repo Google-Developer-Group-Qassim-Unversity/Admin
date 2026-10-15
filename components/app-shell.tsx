@@ -23,6 +23,7 @@ import {
 
 import { AuthButton } from "@/components/auth-button";
 import { GdgLogo } from "@/components/brand-mark";
+import { IdentityBadge } from "@/components/identity-badge";
 import { Count, Plate, Shurfa } from "@/components/najdi";
 import { CommandPalette } from "@/components/command-palette";
 import { LanguageSegmented, LanguageToggle } from "@/components/language-toggle";
@@ -39,7 +40,9 @@ import {
 } from "@/components/ui/sheet";
 import { AccessDenied } from "@/components/ui/access-denied";
 import { useAccess } from "@/hooks/use-access";
-import { useInbox, usePipelineMe } from "@/hooks/use-pipeline";
+import { waitingOnYou } from "@/components/dashboard/your-turn";
+import { usePipelineRole } from "@/components/pipeline/roles";
+import { useInbox, usePipelineMe, useRequestSlice } from "@/hooks/use-pipeline";
 
 /** Routes that render bare - the QR projector screen, the access wall and sign-in. */
 const MINIMAL_ROUTES = ["/qr-display", "/access-denied", "/sign-in"];
@@ -141,17 +144,28 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 /**
- * How many pipeline tasks are waiting on the signed-in person's teams. Shown
- * as a count on the Pipeline entry; zero (and no request) for anyone without
- * pipeline access or a team.
+ * How much in the pipeline is waiting on the signed-in person: their own
+ * teams' open tasks and their own department's requests that need them. A
+ * super admin's count stays theirs too: other teams' queues are not their
+ * chores. Zero (and no request) for anyone without pipeline access.
  */
 function useWaitingOnYou() {
   const { canOpen, access } = useAccess();
   const allowed = Boolean(access) && canOpen("/pipeline");
   const me = usePipelineMe({ enabled: allowed });
-  const hasTeam = Boolean(me.data?.is_super_admin || me.data?.departments.some((d) => d.teams.length > 0));
-  const inbox = useInbox(allowed && hasTeam);
-  return allowed ? new Set(inbox.data?.map((item) => item.request.id)).size : 0;
+  const role = usePipelineRole(me.data);
+  const inbox = useInbox(allowed && role.ownTeams.length > 0);
+  const departmentIds = [...role.ownDepartmentIds].sort((a, b) => a - b);
+  const department = useRequestSlice(
+    { departmentIds, state: "active", pageSize: 100 },
+    { enabled: allowed && departmentIds.length > 0 },
+  );
+  if (!allowed) return 0;
+  const teamTasks = new Set(
+    (inbox.data ?? []).filter((item) => item.status === "open" && role.ownsTeam(item.team)).map((item) => item.request.id),
+  );
+  const departmentTasks = waitingOnYou(department.data?.items ?? []).filter((w) => !teamTasks.has(w.request.id));
+  return teamTasks.size + departmentTasks.length;
 }
 
 /** The ochre door that starts every event: the booking calendar, in booking mode. */
@@ -408,6 +422,7 @@ function Topbar({ onOpenSearch }: { onOpenSearch: () => void }) {
             <LanguageToggle />
             <ThemeToggle />
           </div>
+          <IdentityBadge />
           <NotificationBell />
           <div className="flex size-11 items-center justify-center">
             <AuthButton />

@@ -1,7 +1,13 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
-import type { EventRequestDetail, PipelineTeam, UpdateDetailsInput } from "@/lib/pipeline-types";
+import type {
+  EventRequestDetail,
+  NotificationScope,
+  PipelineTeam,
+  RequestListParams,
+  UpdateDetailsInput,
+} from "@/lib/pipeline-types";
 
 export const pipelineKeys = {
   all: ["pipeline"] as const,
@@ -37,6 +43,21 @@ export function usePipelineRequests(page = 1) {
   return useQuery({
     queryKey: [...pipelineKeys.requests(), "list", page],
     queryFn: () => api.pipelineRequests.list({ page, pageSize: 20 }),
+  });
+}
+
+/**
+ * One slice of the requests: a department's active or past ones, a team's
+ * desk, the whole club. Keyed by its params, so each slice caches on its own
+ * and every write refetches them all (they share the `list` prefix).
+ */
+export function useRequestSlice(params: RequestListParams, { enabled = true }: { enabled?: boolean } = {}) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...pipelineKeys.requests(), "list", "slice", params],
+    queryFn: () => api.pipelineRequests.list(params),
+    enabled,
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -128,22 +149,31 @@ export function useSubmitRequest(id: string) {
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
 }
 
-/** `enabled` lets the top bar's bell skip the call for someone without pipeline access. */
-export function usePipelineNotifications({ enabled = true }: { enabled?: boolean } = {}) {
+/**
+ * The caller's notifications. `mine` (the default, and the bell's count) is
+ * their own departments and teams; `club` is everything they can see, which is
+ * only wider for a super admin. `enabled` lets the bell skip the call for
+ * someone without pipeline access; only `mine` polls.
+ */
+export function usePipelineNotifications({
+  enabled = true,
+  scope = "mine",
+}: { enabled?: boolean; scope?: NotificationScope } = {}) {
   const api = useApi();
   return useQuery({
-    queryKey: [...pipelineKeys.all, "notifications"],
-    queryFn: () => api.pipeline.notifications(),
-    refetchInterval: 60_000,
+    queryKey: [...pipelineKeys.all, "notifications", scope],
+    queryFn: () => api.pipeline.notifications({ scope }),
+    refetchInterval: scope === "mine" ? 60_000 : false,
     enabled,
   });
 }
 
-export function useReadNotifications() {
+export function useReadNotifications(scope: NotificationScope = "mine") {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
+    mutationFn: (id: string | "all") =>
+      id === "all" ? api.pipeline.readAllNotifications(scope) : api.pipeline.readNotification(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...pipelineKeys.all, "notifications"] }),
   });
 }

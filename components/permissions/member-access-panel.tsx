@@ -42,11 +42,15 @@ const SOURCE_ICONS: Record<PermissionSource | "staff", LucideIcon> = {
   grant: HandHeart,
 };
 
-/** Full class strings for the member's standing - Tailwind cannot see built-up names. */
+/**
+ * Full class strings for the member's standing - Tailwind cannot see built-up
+ * names. A super admin wears the same madder seal as on the top bar
+ * (`ROLE_TONE`); someone outside the roster is inactive, so umber.
+ */
 const STATUS = {
-  superAdmin: { icon: Crown, pill: "bg-door-indigo-soft text-door-indigo-ink", meter: "bg-door-indigo" },
+  superAdmin: { icon: Crown, pill: "bg-door-madder-soft text-door-madder-ink", meter: "bg-door-madder" },
   staff: { icon: ShieldCheck, pill: "bg-door-green-soft text-door-green-ink", meter: "bg-door-green" },
-  regular: { icon: Ban, pill: "bg-door-madder-soft text-door-madder-ink", meter: "bg-door-madder" },
+  regular: { icon: Ban, pill: "bg-door-umber-soft text-door-umber-ink", meter: "bg-door-umber" },
 } as const;
 
 /**

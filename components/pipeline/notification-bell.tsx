@@ -12,7 +12,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
 import { usePipelineNotifications, useReadNotifications } from "@/hooks/use-pipeline";
-import type { NotificationKind } from "@/lib/pipeline-types";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import type { NotificationKind, NotificationScope } from "@/lib/pipeline-types";
 import { useTimeAgo } from "@/lib/format";
 
 /** Each kind on its plate: ochre is waiting on the reader, madder went wrong, green moved on, neutral is news. */
@@ -45,16 +46,30 @@ function NotificationPopover() {
   const tr = useTranslations("pipeline.requests");
   const departmentName = useDepartmentName();
   const timeAgo = useTimeAgo();
+  const { isSuperAdmin } = useAccess();
   const [open, setOpen] = React.useState(false);
-  const { data, isPending, error } = usePipelineNotifications();
-  const read = useReadNotifications();
+  // A super admin's bell rings for their own departments and teams only; the
+  // rest of the club is one tap away and never adds to the count.
+  const [scope, setScope] = React.useState<NotificationScope>("mine");
+  const mine = usePipelineNotifications();
+  const club = usePipelineNotifications({ scope: "club", enabled: isSuperAdmin && open && scope === "club" });
+  const shown = scope === "club" ? club : mine;
+  const read = useReadNotifications(scope);
+  const { data, isPending } = shown;
 
   // The pipeline has its own access check; if it refuses, there is no bell.
-  if (error) return null;
-  const unread = data?.unread ?? 0;
+  if (mine.error) return null;
+  const unread = mine.data?.unread ?? 0;
+  const shownUnread = data?.unread ?? 0;
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) setScope("mine");
+      }}
+    >
       <PopoverTrigger asChild>
         <Button variant="ghost" size="icon" className="relative">
           <Bell className="size-5" strokeWidth={1.75} />
@@ -76,7 +91,7 @@ function NotificationPopover() {
       >
         <div className="border-foreground flex min-h-12 items-center justify-between gap-2 border-b py-1.5 ps-4 pe-2">
           <h2 className="font-display text-[17px] font-semibold">{t("title")}</h2>
-          {unread > 0 ? (
+          {shownUnread > 0 ? (
             <Button variant="link" size="sm" onClick={() => read.mutate("all")} disabled={read.isPending}>
               <CheckCheck />
               {t("readAll")}
@@ -85,18 +100,34 @@ function NotificationPopover() {
             <span className="h-8" />
           )}
         </div>
+        {isSuperAdmin ? (
+          <div className="border-rule flex flex-col gap-2 border-b px-3 py-2.5">
+            <SegmentedControl
+              label={t("scope.label")}
+              value={scope}
+              onValueChange={(v) => setScope(v as NotificationScope)}
+              options={[
+                { value: "mine", label: unread ? `${t("scope.mine")} · ${unread}` : t("scope.mine") },
+                { value: "club", label: t("scope.club") },
+              ]}
+            />
+            <p className="text-ink-2 px-1 text-[12.5px] text-pretty">{scope === "mine" ? t("scope.mineHint") : t("scope.clubHint")}</p>
+          </div>
+        ) : null}
         {isPending ? (
           <div className="flex flex-col gap-2 p-3">
             <Skeleton className="h-10 w-full" />
             <Skeleton className="h-10 w-full" />
           </div>
+        ) : shown.error ? (
+          <p className="text-door-madder-ink px-4 py-8 text-center text-sm font-medium">{t("failed")}</p>
         ) : !data?.items.length ? (
-          <div className="text-ink-2 flex flex-col items-center gap-2 px-4 py-10 text-sm">
+          <div className="text-ink-2 flex flex-col items-center gap-2 px-6 py-10 text-center text-sm text-pretty">
             <Bell className="size-6 opacity-50" />
-            {t("none")}
+            {isSuperAdmin && scope === "mine" ? t("noneMine") : t("none")}
           </div>
         ) : (
-          <ul className="divide-rule max-h-[min(30rem,70dvh)] divide-y overflow-y-auto overscroll-contain">
+          <ul className="divide-rule max-h-[min(30rem,60dvh)] divide-y overflow-y-auto overscroll-contain">
             {data.items.map((n) => (
               <li key={n.id}>
                 <Link
@@ -107,17 +138,26 @@ function NotificationPopover() {
                   }}
                   className="hover:bg-sunk focus-visible:bg-sunk flex items-center gap-3 px-4 py-3 outline-none transition-colors"
                 >
-                  <Plate tone={KIND[n.kind].tone} icon={KIND[n.kind].icon} size="sm" className={n.read ? "opacity-55" : undefined} />
+                  <Plate
+                    tone={scope === "club" ? "neutral" : KIND[n.kind].tone}
+                    icon={KIND[n.kind].icon}
+                    size="sm"
+                    className={n.read ? "opacity-55" : undefined}
+                  />
                   <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                     <span className={`text-sm leading-snug ${n.read ? "text-ink-2 font-medium" : "font-bold"}`}>
-                      {t(`kinds.${n.kind}`, { title: `\u2068${n.request.title || tr("untitled")}\u2069` })}
+                      {t(`${scope === "club" ? "kindsClub" : "kinds"}.${n.kind}`, { title: `\u2068${n.request.title || tr("untitled")}\u2069` })}
                     </span>
                     <span className="text-ink-2 text-xs">
-                      {departmentName(n.department)} · {timeAgo(n.created_at)}
+                      {scope === "club" ? t("forDepartment", { name: `\u2068${departmentName(n.department)}\u2069` }) : departmentName(n.department)} ·{" "}
+                      {timeAgo(n.created_at)}
                     </span>
                   </div>
                   {n.read ? null : (
-                    <span className="bg-door-ochre size-2 shrink-0 rounded-[1px]" aria-hidden="true" />
+                    <span
+                      className={`size-2 shrink-0 rounded-[1px] ${scope === "club" ? "bg-adobe" : "bg-door-ochre"}`}
+                      aria-hidden="true"
+                    />
                   )}
                 </Link>
               </li>

@@ -13,6 +13,7 @@ export const permissionKeys = {
   assignments: ["permissions", "assignments"] as const,
   superAdmins: ["permissions", "super-admins"] as const,
   member: (memberId: number) => ["permissions", "member", memberId] as const,
+  mine: ["permissions", "mine"] as const,
   grants: (departmentId: number, history: boolean) => ["permissions", "grants", departmentId, history] as const,
 };
 
@@ -48,6 +49,17 @@ export function useMemberAccess(memberId: number | null) {
     queryKey: permissionKeys.member(memberId ?? 0),
     queryFn: () => api.permissions.member(memberId as number),
     enabled: memberId !== null,
+  });
+}
+
+/** The signed-in person's own access, explained. Only fetched when asked for (the top bar's badge opens it). */
+export function useMyAccess(enabled: boolean) {
+  const api = useApi();
+  return useQuery({
+    queryKey: permissionKeys.mine,
+    queryFn: () => api.permissions.mine(),
+    enabled,
+    staleTime: 5 * 60 * 1000,
   });
 }
 

@@ -3,20 +3,23 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useTranslations } from "next-intl";
-import { Ban, CalendarPlus, Route } from "lucide-react";
+import { Ban, Building2, CalendarPlus, Crown, Route } from "lucide-react";
 
+import { SectionHead } from "@/components/najdi";
 import { PageHeader } from "@/components/page-header";
 import { BanEditor } from "@/components/pipeline/ban-editor";
 import { BookPanel } from "@/components/pipeline/book-panel";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
-import { RequestList, RequestRow } from "@/components/pipeline/request-list";
-import { PipelineGate, hasTeam, useOwnDepartmentIds } from "@/components/pipeline/shared";
+import { usePipelineRole, type PipelineRole } from "@/components/pipeline/roles";
+import { PipelineGate, TEAM_ICON } from "@/components/pipeline/shared";
+import { ClubView, DepartmentView, DeskView, ViewCount } from "@/components/pipeline/views";
+import { waitingOnYou } from "@/components/dashboard/your-turn";
 import { Button } from "@/components/ui/button";
-import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useInbox, usePipelineRequests } from "@/hooks/use-pipeline";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useInbox, useRequestSlice } from "@/hooks/use-pipeline";
 import { cn } from "@/lib/utils";
-import type { EventRequestSummary, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
+import type { PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
 
 export default function PipelinePage() {
   return (
@@ -33,71 +36,122 @@ export default function PipelinePage() {
   );
 }
 
+type View = "department" | PipelineTeam | "club";
+
+/** The views the caller has, in the order the tabs show them. */
+function viewsFor(role: PipelineRole, hasDepartment: boolean): View[] {
+  return [
+    ...(hasDepartment ? (["department"] as const) : []),
+    ...role.deskTeams,
+    ...(role.isSuperAdmin ? (["club"] as const) : []),
+  ];
+}
+
 /**
- * Two jobs: see where requests stand, and book new dates. Booking mode lives in
- * the URL (`?book=1`) so the shell's Book dates door can open it from anywhere.
- * On a phone the requests lead and the calendar follows; in booking mode the
- * calendar takes the whole screen.
+ * Where requests stand and where new ones start. Each team works its own desk
+ * (Design, Logistics and Media never share a list), a department sees its own
+ * requests, and a super admin also gets the whole club. The view lives in the
+ * URL (`?view=design`), and booking mode too (`?book=1`) so the shell's Book
+ * dates door can open it from anywhere.
  */
 function PipelineHome({ me }: { me: PipelineMe }) {
   const t = useTranslations("pipeline");
+  const tv = useTranslations("pipeline.views");
   const router = useRouter();
   const searchParams = useSearchParams();
-  const ownIds = useOwnDepartmentIds(me);
+  const role = usePipelineRole(me);
   const [bans, setBans] = React.useState(false);
   const booking = searchParams.get("book") === "1";
   const mode = booking ? "book" : bans ? "bans" : "view";
-  const isLogistics = me.is_super_admin || me.departments.some((d) => d.teams.includes("logistics"));
+  const canRequest = role.isSuperAdmin || role.ownDepartmentIds.size > 0;
+  const canBan = role.isSuperAdmin || role.ownsTeam("logistics");
   const calendarRef = React.useRef<HTMLElement>(null);
+
+  const views = viewsFor(role, role.ownDepartmentIds.size > 0);
+  const counts = useViewCounts(role, views);
+  const asked = searchParams.get("view") as View | null;
+  // Open on what waits on the caller: their team's desk, then their department; a super admin with nothing of their own, the club.
+  const fallback =
+    role.ownTeams.find((team) => counts[team]) ??
+    (counts.department ? "department" : role.isSuperAdmin && !role.ownTeams.length && !counts.department ? "club" : views[0]);
+  const view: View = asked && views.includes(asked) ? asked : (fallback ?? "department");
 
   React.useEffect(() => {
     if (mode !== "view") calendarRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, [mode]);
 
+  const setView = (next: View) => router.replace(`/pipeline?view=${next}`, { scroll: false });
   const openBooking = () => {
     setBans(false);
-    router.push("/pipeline?book=1", { scroll: false });
+    router.push(`/pipeline?view=${view}&book=1`, { scroll: false });
   };
-  const closeBooking = () => router.replace("/pipeline", { scroll: false });
+  const closeBooking = () => router.replace(`/pipeline?view=${view}`, { scroll: false });
 
   return (
     <>
       <PageHeader title={t("title")} description={t("subtitle")} icon={Route}>
         {mode === "view" ? (
           <>
-            {isLogistics ? (
+            {canBan ? (
               <Button variant="outline" onClick={() => setBans(true)}>
                 <Ban />
                 {t("bans.edit")}
               </Button>
             ) : null}
-            <Button variant="ochre" onClick={openBooking}>
-              <CalendarPlus />
-              {t("book.start")}
-            </Button>
+            {canRequest ? (
+              <Button variant="ochre" onClick={openBooking}>
+                <CalendarPlus />
+                {t("book.start")}
+              </Button>
+            ) : null}
           </>
         ) : null}
       </PageHeader>
 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(340px,400px)]">
+        <div className={cn("flex min-w-0 flex-col gap-5", mode !== "view" && "max-lg:hidden")}>
+          {views.length > 1 ? (
+            <Tabs value={view} onValueChange={(v) => setView(v as View)} className="gap-5">
+              <TabsList aria-label={tv("label")} className="w-full sm:w-fit">
+                {views.map((v) => {
+                  const Icon = v === "department" ? Building2 : v === "club" ? Crown : TEAM_ICON[v];
+                  const own = v === "department" || (v !== "club" && role.ownsTeam(v));
+                  return (
+                    <TabsTrigger key={v} value={v} className="gap-1.5 px-3.5 max-sm:flex-none">
+                      <Icon aria-hidden="true" />
+                      {v === "department" ? tv("tabs.department") : v === "club" ? tv("tabs.club") : t(`teams.${v}`)}
+                      {v !== "club" ? <ViewCount count={counts[v] ?? 0} own={own} /> : null}
+                    </TabsTrigger>
+                  );
+                })}
+              </TabsList>
+              {views.map((v) => (
+                <TabsContent key={v} value={v}>
+                  <ViewBody view={v} role={role} onBook={openBooking} onOpenView={setView} />
+                </TabsContent>
+              ))}
+            </Tabs>
+          ) : (
+            <ViewBody view={view} role={role} onBook={openBooking} onOpenView={setView} />
+          )}
+        </div>
+
         <section
           ref={calendarRef}
-          aria-label={t("calendar.title")}
+          aria-labelledby="pipeline-calendar"
           className={cn(
-            "bg-card flex scroll-mt-24 flex-col gap-4 rounded-xl p-4 ring-1 sm:p-5",
-            mode === "view" ? "ring-rule max-lg:order-2" : "ring-door-ochre ring-2",
+            "bg-card flex scroll-mt-24 flex-col gap-4 rounded-xl p-4 ring-1 sm:p-5 lg:sticky lg:top-24",
+            mode === "view" ? "ring-rule" : "ring-door-ochre ring-2 lg:col-span-2 lg:static",
           )}
         >
           {mode === "book" ? (
-            <BookPanel me={me} ownIds={ownIds} onDone={closeBooking} />
+            <BookPanel me={me} ownIds={role.ownDepartmentIds} onDone={closeBooking} />
           ) : mode === "bans" ? (
             <BanEditor onDone={() => setBans(false)} />
           ) : (
             <>
-              <div className="flex flex-col gap-1">
-                <h2 className="text-base font-bold">{t("calendar.title")}</h2>
-                <p className="text-ink-2 text-[13px]">{t("calendar.subtitle")}</p>
-              </div>
+              <SectionHead id="pipeline-calendar" title={t("calendar.title")} />
+              <p className="text-ink-2 -mt-2 text-[13px]">{t("calendar.subtitle")}</p>
               <BookingCalendar
                 onDayClick={(day) => {
                   const first = day.requests?.[0];
@@ -108,95 +162,44 @@ function PipelineHome({ me }: { me: PipelineMe }) {
             </>
           )}
         </section>
-
-        <div className={cn("max-lg:order-1", mode !== "view" && "max-lg:hidden")}>
-          <RequestsCard me={me} />
-        </div>
       </div>
     </>
   );
 }
 
-/**
- * One list, two views: what is waiting on the caller's teams, and the
- * requests the caller can see. Opens on whichever has something to do.
- */
-function RequestsCard({ me }: { me: PipelineMe }) {
-  const t = useTranslations("pipeline");
-  const withTeam = hasTeam(me);
-  const requests = usePipelineRequests();
-  const inbox = useInbox(withTeam);
-  // The inbox has one entry per open task, so a request two of the caller's teams
-  // are working on (every team, for a super admin) would show twice.
-  const inboxRequests = inbox.data
-    ? [...new Map(inbox.data.map((item) => [item.request.id, item.request])).values()]
-    : undefined;
-  const teamsOf = React.useMemo(() => {
-    const map = new Map<string, PipelineTeam[]>();
-    for (const item of inbox.data ?? []) map.set(item.request.id, [...(map.get(item.request.id) ?? []), item.team]);
-    return map;
-  }, [inbox.data]);
-
-  const [picked, setPicked] = React.useState<"inbox" | "mine" | null>(null);
-  const view = !withTeam ? "mine" : (picked ?? (inboxRequests?.length ? "inbox" : "mine"));
-  const count = (n: number | undefined) => (n ? ` · ${n}` : "");
-  const mineLabel = me.is_super_admin ? t("requests.title") : t("requests.tab");
-
-  return (
-    <section className="flex flex-col gap-3 lg:bg-card lg:rounded-xl lg:p-5 lg:ring-1 lg:ring-rule">
-      {withTeam ? (
-        <SegmentedControl
-          label={t("requests.title")}
-          value={view}
-          onValueChange={(v) => setPicked(v as "inbox" | "mine")}
-          options={[
-            { value: "inbox", label: `${t("inbox.tab")}${count(inboxRequests?.length)}` },
-            { value: "mine", label: `${mineLabel}${count(requests.data?.total)}` },
-          ]}
-        />
-      ) : (
-        <h2 className="border-foreground border-b pb-2 text-base font-bold">{t("requests.mine")}</h2>
-      )}
-      {view === "inbox" ? (
-        <InboxList items={inboxRequests} teamsOf={teamsOf} isPending={inbox.isPending} />
-      ) : (
-        <RequestList items={requests.data?.items} isPending={requests.isPending} empty={t("requests.none")} />
-      )}
-    </section>
-  );
+function ViewBody({
+  view,
+  role,
+  onBook,
+  onOpenView,
+}: {
+  view: View;
+  role: PipelineRole;
+  onBook: () => void;
+  onOpenView: (view: View) => void;
+}) {
+  if (view === "department") return <DepartmentView role={role} onBook={onBook} />;
+  if (view === "club") return <ClubView role={role} onOpenView={onOpenView} />;
+  return <DeskView team={view} role={role} />;
 }
 
-/** What is waiting on the caller's teams, each row naming the team. */
-function InboxList({
-  items,
-  teamsOf,
-  isPending,
-}: {
-  items: EventRequestSummary[] | undefined;
-  teamsOf: Map<string, PipelineTeam[]>;
-  isPending: boolean;
-}) {
-  const t = useTranslations("pipeline");
-  if (isPending || !items?.length) return <RequestList items={items} isPending={isPending} empty={t("inbox.none")} />;
-  return (
-    <ul className="flex flex-col">
-      {items.map((r) => {
-        const teams = teamsOf.get(r.id) ?? [];
-        return (
-          <li key={r.id}>
-            <RequestRow
-              request={r}
-              extra={
-                teams.length ? (
-                  <span className="bg-door-ochre-soft text-door-ochre-ink rounded-sm px-1.5 py-0.5">
-                    {teams.map((team) => t(`teams.${team}`)).join(" · ")}
-                  </span>
-                ) : null
-              }
-            />
-          </li>
-        );
-      })}
-    </ul>
+/**
+ * What waits in each view, for the tab counts: a team's open tasks (one
+ * inbox call), and the caller's own department's requests that need them.
+ */
+function useViewCounts(role: PipelineRole, views: View[]): Partial<Record<View, number>> {
+  const inbox = useInbox(role.deskTeams.length > 0);
+  const departmentIds = [...role.ownDepartmentIds].sort((a, b) => a - b);
+  const department = useRequestSlice(
+    { departmentIds, state: "active", pageSize: 100 },
+    { enabled: views.includes("department") && departmentIds.length > 0 },
   );
+  return React.useMemo(() => {
+    const out: Partial<Record<View, number>> = {};
+    for (const item of inbox.data ?? []) {
+      if (item.status === "open") out[item.team] = (out[item.team] ?? 0) + 1;
+    }
+    out.department = waitingOnYou(department.data?.items ?? []).length;
+    return out;
+  }, [inbox.data, department.data]);
 }

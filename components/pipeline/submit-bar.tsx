@@ -4,12 +4,15 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Clock, ListTodo, Send } from "lucide-react";
+import { CircleCheck, Clock, Crown, ListTodo, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { DraftSaveStatus, useDraftSave } from "@/components/pipeline/draft-autosave";
+import { useBehalfOf } from "@/components/pipeline/roles";
+import { useDepartmentName } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { pipelineKeys, useResubmit, useSubmitRequest } from "@/hooks/use-pipeline";
+import { isolate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { EventRequestDetail } from "@/lib/pipeline-types";
 
@@ -115,6 +118,8 @@ export function DraftBar({
   const { flushAll, state } = useDraftSave();
   const isReturned = request.stage === "returned";
   const busy = state === "saving" || submit.isPending || resubmit.isPending;
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const departmentName = useDepartmentName();
 
   const onSubmit = async () => {
     // Anything still waiting to autosave goes in first, so submit checks what is on screen.
@@ -157,6 +162,12 @@ export function DraftBar({
   return (
     <div className="bg-card border-foreground z-30 flex items-center gap-2 border-t px-3 py-2.5 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] md:sticky md:bottom-4 md:gap-4 md:rounded-xl md:border-0 md:px-5 md:py-3 md:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)] md:ring-1 md:ring-rule">
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        {behalf ? (
+          <p className="text-door-madder-ink flex w-full min-w-0 items-center gap-1.5 text-[12.5px] font-bold">
+            <Crown className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{t("forDepartment", { name: isolate(departmentName(request.department)) })}</span>
+          </p>
+        ) : null}
         {left ? (
           <p className="text-door-ochre-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
             <ListTodo className="size-[18px] shrink-0" />
