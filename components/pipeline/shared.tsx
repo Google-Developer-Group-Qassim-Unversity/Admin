@@ -19,7 +19,6 @@ import {
 import { STAGE_STEP, STAGE_TONE } from "@/components/status-badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAccess } from "@/hooks/use-access";
 import { usePipelineMe } from "@/hooks/use-pipeline";
 import type { EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
 import { intlLocale } from "@/lib/format";
@@ -73,26 +72,6 @@ export function useFormatDateRange() {
       return formatter.formatRange(from, new Date(`${end}T00:00:00Z`));
     };
   }, [locale]);
-}
-
-/**
- * The departments that are the caller's own: their roster departments. A super
- * admin acts for every department, so the pipeline's own list would be all of
- * them; the roster says which one they actually sit in. Falls back to every
- * acting department for someone on no roster (a super admin from outside).
- */
-export function useOwnDepartmentIds(me: PipelineMe | undefined) {
-  const { access } = useAccess();
-  return React.useMemo(() => {
-    const roster = new Set((access?.departments ?? []).map((d) => d.id));
-    const acting = (me?.departments ?? []).map((d) => d.id).filter((id) => roster.has(id));
-    return new Set(acting.length ? acting : (me?.departments ?? []).map((d) => d.id));
-  }, [access, me]);
-}
-
-/** Whether the caller works on at least one pipeline team (or is a super admin). */
-export function hasTeam(me: PipelineMe | undefined) {
-  return Boolean(me && (me.is_super_admin || me.departments.some((d) => d.teams.length > 0)));
 }
 
 /** The icon on a request's plate, by stage. */
