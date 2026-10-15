@@ -393,6 +393,9 @@ export function createApi(request: Requester) {
         body: { deliverable },
       }),
     uploadPoster: (id: string, file: File) => request.file<EventRequestDetail>(`/pipeline/requests/${id}/poster`, file),
+    /** Logistics has a Google Meet link made on the club's calendar from the confirmation's dates and times. */
+    generateMeet: (id: string) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/deliverables/logistics/meet`, { method: "POST" }),
     submit: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
     returnToTeam: (id: string, notes: string) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),

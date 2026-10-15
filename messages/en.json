@@ -2296,7 +2296,8 @@
         "ready_to_publish": "{title} is ready to publish",
         "dates_changed": "Logistics moved {title} to other dates",
         "overridden": "A super admin took the dates of {title}",
-        "cancelled": "{title} was cancelled; nothing left to do on it"
+        "cancelled": "{title} was cancelled; nothing left to do on it",
+        "confirmation_changed": "Logistics confirmed {title} with changes; see why"
       },
       "scope": {
         "label": "Which notifications",
@@ -2317,7 +2318,8 @@
         "media_received": "{title} reached Media",
         "ready_to_publish": "{title} is ready to publish",
         "dates_changed": "Logistics moved {title} to other dates",
-        "cancelled": "{title} was cancelled"
+        "cancelled": "{title} was cancelled",
+        "confirmation_changed": "Logistics confirmed {title} with changes"
       }
     },
     "inbox": {
@@ -2426,13 +2428,37 @@
         "mode": "Mode",
         "place": "Place",
         "meet": "Google Meet",
-        "type": "Event type"
+        "type": "Event type",
+        "reason": "Why it differs"
       },
       "pickDates": "Set the start and end dates first.",
       "titleFor": "Logistics' turn: confirm the event",
       "hintFor": "Logistics confirms what was actually booked. The form below is theirs; you can fill it in and confirm for them.",
       "asSuperAdmin": "Confirming for Logistics, as a super admin",
-      "buttonFor": "Confirm for Logistics"
+      "buttonFor": "Confirm for Logistics",
+      "reasonTitle": "Why it differs",
+      "reasonHint": "What you confirmed differs from what the department asked for. Tell them why; it goes in their email.",
+      "changed": "Changed: {fields}",
+      "reason": "Reason for the change",
+      "reasonPlaceholder": "The hall was taken that day, so the university offered…",
+      "fields": {
+        "start_date": "first day",
+        "end_date": "last day",
+        "day_modes": "each day's mode",
+        "daily_start_time": "start time",
+        "daily_end_time": "end time",
+        "venue": "venue",
+        "room": "room",
+        "event_type": "event type",
+        "description": "description"
+      },
+      "generateMeet": "Generate a link",
+      "regenerateMeet": "Generate a new link",
+      "generateMeetHint": "Made on the club's Google Calendar with the dates and times above; anyone with the link can join.",
+      "generateMeetNeeds": "Set the dates and times first.",
+      "meetGenerated": "Meet link generated.",
+      "meetGenerateFailed": "Could not generate the link",
+      "meetOnCalendar": "On the club's calendar"
     },
     "notion": {
       "open": "Open in Notion",

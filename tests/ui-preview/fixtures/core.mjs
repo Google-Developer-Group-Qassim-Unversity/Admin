@@ -165,8 +165,10 @@ function confirmation(s) {
     venue: "التيك فالي (60)",
     room: "قاعة 2",
     meet_link: s.end_date && s.end_date !== s.start_date ? "https://meet.google.com/abc-defg-hij" : null,
+    meet_event_id: null,
     event_type: "workshop",
     description: "وصف الفعالية.",
+    change_reason: null,
   };
 }
 
@@ -224,6 +226,7 @@ export function detail(id) {
       done_by: t.done_by ?? (t.status === "done" ? { member_id: 7, name: "Sara" } : null),
       deliverable: t.status === "brief" ? null : t.team === "design" ? (t.status === "done" ? { poster_url: POSTER } : null) : t.team === "logistics" ? confirmation(s) : null,
       deliverable_missing: t.team === "design" && t.status !== "done" ? ["poster.poster_url"] : [],
+      confirmation_changes: [],
       ...t,
     })),
     missing: draft ? ["details.presenter_email", "design.content", "logistics.venue"] : [],
@@ -240,6 +243,7 @@ export function detail(id) {
       complete: id === "r2" ? ["design"] : id === "r7" ? ["logistics"] : id === "r4" ? ["media"] : [],
       can_publish: s.stage === "ready",
       can_upload_poster: id === "r2",
+      can_generate_meet: false,
       can_cancel: !["published", "cancelled"].includes(s.stage),
       can_delete: s.stage === "cancelled",
     },

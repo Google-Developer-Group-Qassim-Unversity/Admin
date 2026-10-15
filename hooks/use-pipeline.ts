@@ -171,6 +171,11 @@ export function useSaveDeliverable(id: string, team: PipelineTeam) {
   );
 }
 
+export function useGenerateMeet(id: string) {
+  const api = useApi();
+  return useRequestMutation<void>(id, () => api.pipelineRequests.generateMeet(id));
+}
+
 export function useUploadPoster(id: string) {
   const api = useApi();
   return useRequestMutation(id, (file: File) => api.pipelineRequests.uploadPoster(id, file));

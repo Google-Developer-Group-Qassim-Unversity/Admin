@@ -79,11 +79,15 @@ function useDescribe() {
           note: d.late_days ? t("late", { days: Number(d.late_days), points: Number(d.points) }) : undefined,
         };
       case "dates_moved":
-        return { text: t("datesMoved", { from: range(d.from), to: range(d.to) }) };
+        return {
+          text: t("datesMoved", { from: range(d.from), to: range(d.to) }),
+          note: typeof d.reason === "string" ? d.reason : undefined,
+        };
       case "poster_uploaded":
         return { text: t(d.replaced ? "posterReplaced" : "posterUploaded") };
       case "task_done":
-        return { text: t("taskDone", { team }) };
+        // Logistics' finishing carries what it confirmed differently, and why.
+        return { text: t("taskDone", { team }), note: typeof d.reason === "string" ? d.reason : undefined };
       case "published":
         return { text: t("published", { id: Number(d.event_id) }) };
       case "hold_expired":
