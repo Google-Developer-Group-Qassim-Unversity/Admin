@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Clock, Crown, ListTodo, Send } from "lucide-react";
+import { ArrowRight, CircleCheck, Clock, Crown, ListTodo, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { DraftSaveStatus, useDraftSave } from "@/components/pipeline/draft-autosave";
@@ -101,13 +101,20 @@ export function MissingList({
  * The bar that follows a draft (or a returned request) down the page: whether
  * everything is saved, "Finish later", and Submit. Submit stays pressable when
  * something is missing - pressing it shows what, instead of a dead button.
+ *
+ * A draft is filled in one station at a time, so until the last form the bar
+ * walks forward ("Next: Design") instead; once nothing is missing it offers
+ * Submit from anywhere.
  */
 export function DraftBar({
   request,
   onIncomplete,
+  next,
 }: {
   request: EventRequestDetail;
   onIncomplete: (missing: string[]) => void;
+  /** The next form to fill in, when there is one after this. */
+  next?: { label: string; onGo: () => void } | null;
 }) {
   const t = useTranslations("pipeline.submit");
   const tr = useTranslations("pipeline.review");
@@ -192,10 +199,18 @@ export function DraftBar({
             {t("finishLater")}
           </Button>
         ) : null}
-        <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
-          <Send className="rtl:-scale-x-100" />
-          {isReturned ? tr("resubmit") : t("button")}
-        </Button>
+        {next && !isReturned && left ? (
+          <Button size="lg" className="max-md:h-11 max-md:px-4" onClick={next.onGo}>
+            <span className="md:hidden">{t("nextShort")}</span>
+            <span className="max-md:hidden">{t("next", { station: next.label })}</span>
+            <ArrowRight className="rtl:-scale-x-100" />
+          </Button>
+        ) : (
+          <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
+            <Send className="rtl:-scale-x-100" />
+            {isReturned ? tr("resubmit") : t("button")}
+          </Button>
+        )}
       </div>
     </div>
   );

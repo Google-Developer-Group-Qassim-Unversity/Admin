@@ -175,7 +175,7 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
           )}
         </div>
         {/* Design may still send the request back early on; the button lives here
-            so Design's turn is one door (TeamActions steps aside). */}
+            so Design's turn is one door. */}
         {request.actions.can_return ? (
           <div className="flex flex-col gap-2 border-t border-current/20 pt-3">
             {request.return_deadline ? (

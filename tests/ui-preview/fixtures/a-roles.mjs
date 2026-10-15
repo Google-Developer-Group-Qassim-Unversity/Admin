@@ -4,6 +4,7 @@
 //   super      a super admin who also leads Mobile Development (the default)
 //   design     a Design leader: Design's desk is theirs
 //   logistics  a Logistics leader: Logistics' desk and the calendar bans are theirs
+//   media      a Media leader: Media's desk is theirs
 //   dept       an AI leader on no team: only their department's requests
 //
 // Sample data only.
@@ -22,6 +23,7 @@ const PERSONAS = {
   super: { name: "Ibrahim", dept: "mobile", super: true, teams: [] },
   design: { name: "Reem", dept: "design", super: false, teams: ["design"] },
   logistics: { name: "Faisal", dept: "logistics", super: false, teams: ["logistics"] },
+  media: { name: "Huda", dept: "media", super: false, teams: ["media"] },
   dept: { name: "Noura", dept: "ai", super: false, teams: [] },
 };
 
