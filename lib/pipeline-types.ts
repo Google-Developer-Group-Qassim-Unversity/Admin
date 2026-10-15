@@ -101,7 +101,7 @@ export interface EventRequestSummary {
   start_date: string | null;
   end_date: string | null;
   hold_expires_at: string | null;
-  undated_reason: "hold_expired" | "day_banned" | null;
+  undated_reason: "hold_expired" | "day_banned" | "overridden" | null;
   requested_at: string;
   published_at: string | null;
   /** Where each team's part stands, so a row can say whose turn it is. */
@@ -163,7 +163,8 @@ export type HistoryAction =
   | "penalty_grown"
   | "days_banned"
   | "days_unbanned"
-  | "event_deleted";
+  | "event_deleted"
+  | "overridden";
 
 export interface HistoryItem {
   action: HistoryAction;
@@ -298,7 +299,18 @@ export type NotificationKind =
   | "task_done"
   | "media_received"
   | "ready_to_publish"
-  | "dates_changed";
+  | "dates_changed"
+  | "overridden";
+
+/** What happens to a request a super admin books over. */
+export type BumpOutcome = "reschedule" | "cancel";
+
+/** `GET /pipeline/overlaps`: the requests a booking would bump, and who each email goes to. */
+export interface PipelineOverlaps {
+  requests: { request: EventRequestSummary; recipients: PersonRef[] }[];
+  /** Off: the emails go only to the super admin, as trial copies. */
+  emails_live: boolean;
+}
 
 export interface PipelineNotification {
   id: string;

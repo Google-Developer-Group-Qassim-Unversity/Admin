@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { Count, Door, Mark, Plate, SectionHead } from "@/components/najdi";
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
 import { MAX_BOOKING_DAYS, useRangePicker } from "@/components/pipeline/book-panel";
+import { useBookOver } from "@/components/pipeline/override-dialog";
 import { Countdown } from "@/components/pipeline/countdown";
 import { DesignBriefForm, LogisticsBriefForm } from "@/components/pipeline/brief-forms";
 import { DesignPoster } from "@/components/pipeline/design-poster";
@@ -45,7 +46,7 @@ import {
   whoseTurn,
   type PipelineRole,
 } from "@/components/pipeline/roles";
-import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
+import { isBookable, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { DraftBar, tabOf, useFieldLabel, type FormTab } from "@/components/pipeline/submit-bar";
 import { PenaltyNote, ReturnedNotice, TeamActions } from "@/components/pipeline/team-actions";
 import { StageBadge } from "@/components/status-badge";
@@ -461,22 +462,36 @@ function RequestHeader({
   );
 }
 
-/** The dates were lost (the hold ran out, or Logistics closed a day): pick new ones. */
+const LOST_DATES = {
+  hold_expired: "lostDatesExpired",
+  day_banned: "lostDatesBanned",
+  overridden: "lostDatesOverridden",
+} as const;
+
+/** The dates were lost (the hold ran out, Logistics closed a day, or a super admin took them): pick new ones. */
 function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }) {
   const t = useTranslations("pipeline.request");
   const tb = useTranslations("pipeline.book");
   const formatRange = useFormatDateRange();
   const [open, setOpen] = React.useState(false);
-  const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
+  const range = useRangePicker(MAX_BOOKING_DAYS);
   const redate = useRedate(request.id);
   const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const bookOver = useBookOver(me);
 
   const onSave = async () => {
     if (!range.start || !range.end) return;
+    const [start, end] = [range.start, range.end];
     try {
-      await redate.mutateAsync({ start: range.start, end: range.end });
-      toast.success(t("redated"));
-      setOpen(false);
+      await bookOver.guard(start, end, request.id, async (bumps) => {
+        try {
+          await redate.mutateAsync({ start, end, bumps });
+          toast.success(t("redated"));
+          setOpen(false);
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("failed"));
+        }
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     }
@@ -484,11 +499,12 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
 
   return (
     <div id="request-dates" className="flex scroll-mt-24 flex-col gap-3">
+      {bookOver.dialog}
       {behalf ? (
         <BehalfFrame
           party={behalf}
           aria-labelledby="lost-dates"
-          title={<span id="lost-dates">{t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}</span>}
+          title={<span id="lost-dates">{t(LOST_DATES[request.undated_reason ?? "hold_expired"])}</span>}
           note={t("lostDatesBodyFor")}
           actions={
             !open ? (
@@ -504,7 +520,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
       ) : (
         <Door tone="madder" aria-labelledby="lost-dates">
           <h2 id="lost-dates" className="font-display text-[21px] leading-tight font-semibold">
-            {t(request.undated_reason === "day_banned" ? "lostDatesBanned" : "lostDatesExpired")}
+            {t(LOST_DATES[request.undated_reason ?? "hold_expired"])}
           </h2>
           <p className="text-sm font-medium">{t("lostDatesBody")}</p>
           {!open ? (
@@ -523,7 +539,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
             selected={range.selected}
             range={{ start: range.start, end: range.end }}
             onDayClick={range.onDayClick}
-            isSelectable={(d) => me.is_super_admin || d.status === "open"}
+            isSelectable={(d) => isBookable(d, me)}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <span className={cn("flex-1 text-sm", range.start ? "tabular text-[17px] font-bold" : "text-ink-2")}>

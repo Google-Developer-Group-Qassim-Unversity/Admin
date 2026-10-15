@@ -2008,7 +2008,7 @@
     "book": {
       "start": "Book dates",
       "hint": "Tap the first day, then the last (up to {max} days). We hold them for 24 hours while you fill in the request.",
-      "hintSuperAdmin": "Tap the first day, then the last. As a super admin you can book any day.",
+      "hintSuperAdmin": "Tap the first day, then the last (up to {max} days). As a super admin you can also book a closed day, or a held one: you'll decide what happens to the request holding it.",
       "pickDays": "Pick the days on the calendar",
       "range": "{start} → {end}",
       "pickDepartment": "Which department?",
@@ -2043,6 +2043,7 @@
       "holdBody": "Fill in the event and both briefs, then submit before the hold runs out.",
       "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
       "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
+      "lostDatesOverridden": "A super admin booked these dates for another event, so the request lost them",
       "lostDatesBody": "Everything you filled in is kept. Pick new dates to carry on.",
       "redate": "Pick new dates",
       "redateSave": "Book these days",
@@ -2279,7 +2280,8 @@
         "task_done": "A team finished its part of {title}",
         "media_received": "{title} is ready for Media",
         "ready_to_publish": "{title} is ready to publish",
-        "dates_changed": "Logistics moved {title} to other dates"
+        "dates_changed": "Logistics moved {title} to other dates",
+        "overridden": "A super admin took the dates of {title}"
       },
       "scope": {
         "label": "Which notifications",
@@ -2469,7 +2471,9 @@
         "datesBanned": "closed a day of {dates}, so the request lost its dates",
         "penaltyGrown": "grew the late penalty to {points, plural, one {# point} other {# points}} ({days, plural, one {# day} other {# days}} late)",
         "eventDeleted": "deleted the published event (#{id})",
-        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted"
+        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted",
+        "overriddenRescheduled": "booked {dates} for another event; the request is back to a draft with no dates",
+        "overriddenCancelled": "booked {dates} for another event and cancelled the request"
       }
     },
     "views": {
@@ -2531,6 +2535,25 @@
         "departmentsClear": "No department has a draft, a returned request or an event to publish.",
         "pastNone": "Nothing published or cancelled yet."
       }
+    },
+    "override": {
+      "title": "Book over {count, plural, one {another request} other {# other requests}}?",
+      "warning": "These days are already held. Booking them takes them away from the requests below, right now, and their departments are told. Decide what happens to each one.",
+      "untitled": "Untitled request",
+      "choose": "What happens to this request",
+      "chooseHint": "Choose: reschedule or delete.",
+      "reschedule": "Reschedule",
+      "rescheduleBody": "It goes back to a draft with no dates. Everything in it is kept, but the teams' work on it stops; the department books new dates and submits it again.",
+      "delete": "Delete",
+      "deleteBody": "It is cancelled for good. This can't be undone.",
+      "email": "{count, plural, =0 {No email: {department} has no members with an email.} one {An email goes to # member of {department}.} other {An email goes to # members of {department}.}}",
+      "trial": "Emails are in trial mode: instead of reaching these members, a copy of each email goes to you.",
+      "showMore": "Show names",
+      "showLess": "Hide names",
+      "confirm": "Book over them",
+      "keep": "Pick other days",
+      "publishedTitle": "A published event is on these days",
+      "publishedBody": "A published event can't be booked over. Pick other days."
     }
   },
   "permissions": {

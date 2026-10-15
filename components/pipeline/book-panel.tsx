@@ -8,8 +8,9 @@ import { CalendarCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
+import { useBookOver } from "@/components/pipeline/override-dialog";
 import { BehalfNote } from "@/components/pipeline/roles";
-import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
+import { isBookable, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { useBookRequest } from "@/hooks/use-pipeline";
 import { isolate } from "@/lib/format";
@@ -69,7 +70,7 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
   const dayCount = useDayCount();
-  const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
+  const range = useRangePicker(MAX_BOOKING_DAYS);
   // The caller's own departments; a super admin can also book for any other, on its behalf.
   const own = React.useMemo(
     () => me.departments.filter((d) => !ownIds || ownIds.has(d.id)),
@@ -83,17 +84,24 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
   // Start on the caller's own department; someone else's is always a deliberate pick.
   const [departmentId, setDepartmentId] = React.useState<string>(() => (own[0] ? String(own[0].id) : ""));
   const book = useBookRequest();
+  const bookOver = useBookOver(me);
   const chosen = me.departments.find((d) => String(d.id) === departmentId);
 
-  // Super admins can book any day; everyone else only open ones.
-  const isSelectable = (day: CalendarDay) => me.is_super_admin || day.status === "open";
+  const isSelectable = (day: CalendarDay) => isBookable(day, me);
 
   const onBook = async () => {
     if (!range.start || !range.end || !departmentId) return;
+    const [start, end] = [range.start, range.end];
     try {
-      const request = await book.mutateAsync({ departmentId: Number(departmentId), start: range.start, end: range.end });
-      toast.success(t("booked"));
-      router.push(`/pipeline/requests/${request.id}`);
+      await bookOver.guard(start, end, undefined, async (bumps) => {
+        try {
+          const request = await book.mutateAsync({ departmentId: Number(departmentId), start, end, bumps });
+          toast.success(t("booked"));
+          router.push(`/pipeline/requests/${request.id}`);
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("failed"));
+        }
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     }
@@ -101,6 +109,7 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
 
   return (
     <div className="flex flex-col gap-5 max-md:pb-28">
+      {bookOver.dialog}
       <p className="text-ink-2 text-sm text-pretty">{t(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}</p>
       <BookingCalendar
         selected={range.selected}

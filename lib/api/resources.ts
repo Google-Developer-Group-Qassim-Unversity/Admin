@@ -48,6 +48,7 @@ import type {
   RosterEntry,
 } from "@/lib/club-structure-types";
 import type {
+  BumpOutcome,
   EventRequestDetail,
   InboxItem,
   NotificationScope,
@@ -55,6 +56,7 @@ import type {
   PaginatedRequests,
   PipelineCalendar,
   PipelineMe,
+  PipelineOverlaps,
   PipelineTeam,
   RequestListParams,
   UpdateDetailsInput,
@@ -342,6 +344,8 @@ export function createApi(request: Requester) {
       request.json<{ count: number }>(`/pipeline/notifications/${id}/read`, { method: "POST" }),
     readAllNotifications: (scope: NotificationScope = "mine") =>
       request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST", query: { scope } }),
+    overlaps: (from: string, to: string, ignore?: string) =>
+      request.json<PipelineOverlaps>("/pipeline/overlaps", { query: { from, to, ignore } }),
   };
 
   const pipelineRequests = {
@@ -362,13 +366,13 @@ export function createApi(request: Requester) {
         },
       }),
     get: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}`),
-    book: (departmentId: number, startDate: string, endDate: string) =>
+    book: (departmentId: number, startDate: string, endDate: string, bumps: Record<string, BumpOutcome> = {}) =>
       request.json<EventRequestDetail>("/pipeline/requests", {
-        method: "POST", body: { department_id: departmentId, start_date: startDate, end_date: endDate },
+        method: "POST", body: { department_id: departmentId, start_date: startDate, end_date: endDate, bumps },
       }),
-    redate: (id: string, startDate: string, endDate: string) =>
+    redate: (id: string, startDate: string, endDate: string, bumps: Record<string, BumpOutcome> = {}) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/dates`, {
-        method: "PUT", body: { start_date: startDate, end_date: endDate },
+        method: "PUT", body: { start_date: startDate, end_date: endDate, bumps },
       }),
     updateDetails: (id: string, body: UpdateDetailsInput) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/details`, { method: "PUT", body }),

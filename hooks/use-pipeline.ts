@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
 import type {
+  BumpOutcome,
   EventRequestDetail,
   NotificationScope,
   PipelineTeam,
@@ -103,8 +104,8 @@ export function useUpdateDetails(id: string) {
 
 export function useRedate(id: string) {
   const api = useApi();
-  return useRequestMutation(id, ({ start, end }: { start: string; end: string }) =>
-    api.pipelineRequests.redate(id, start, end),
+  return useRequestMutation(id, ({ start, end, bumps }: { start: string; end: string; bumps?: Record<string, BumpOutcome> }) =>
+    api.pipelineRequests.redate(id, start, end, bumps),
   );
 }
 
@@ -112,8 +113,17 @@ export function useBookRequest() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ departmentId, start, end }: { departmentId: number; start: string; end: string }) =>
-      api.pipelineRequests.book(departmentId, start, end),
+    mutationFn: ({
+      departmentId,
+      start,
+      end,
+      bumps,
+    }: {
+      departmentId: number;
+      start: string;
+      end: string;
+      bumps?: Record<string, BumpOutcome>;
+    }) => api.pipelineRequests.book(departmentId, start, end, bumps),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }
