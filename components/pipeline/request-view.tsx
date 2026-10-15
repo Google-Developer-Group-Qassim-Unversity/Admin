@@ -45,7 +45,7 @@ import {
   whoseTurn,
   type PipelineRole,
 } from "@/components/pipeline/roles";
-import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
+import { isBookable, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { DraftBar, tabOf, useFieldLabel, type FormTab } from "@/components/pipeline/submit-bar";
 import { PenaltyNote, ReturnedNotice, TeamActions } from "@/components/pipeline/team-actions";
 import { StageBadge } from "@/components/status-badge";
@@ -467,7 +467,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
   const tb = useTranslations("pipeline.book");
   const formatRange = useFormatDateRange();
   const [open, setOpen] = React.useState(false);
-  const range = useRangePicker(me.is_super_admin ? null : MAX_BOOKING_DAYS);
+  const range = useRangePicker(MAX_BOOKING_DAYS);
   const redate = useRedate(request.id);
   const behalf = useBehalfOf({ kind: "department", department: request.department });
 
@@ -523,7 +523,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
             selected={range.selected}
             range={{ start: range.start, end: range.end }}
             onDayClick={range.onDayClick}
-            isSelectable={(d) => me.is_super_admin || d.status === "open"}
+            isSelectable={(d) => isBookable(d, me)}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <span className={cn("flex-1 text-sm", range.start ? "tabular text-[17px] font-bold" : "text-ink-2")}>

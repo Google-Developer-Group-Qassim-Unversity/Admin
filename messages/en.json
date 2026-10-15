@@ -2008,7 +2008,7 @@
     "book": {
       "start": "Book dates",
       "hint": "Tap the first day, then the last (up to {max} days). We hold them for 24 hours while you fill in the request.",
-      "hintSuperAdmin": "Tap the first day, then the last. As a super admin you can book any day.",
+      "hintSuperAdmin": "Tap the first day, then the last (up to {max} days). As a super admin you can also book a closed or taken day.",
       "pickDays": "Pick the days on the calendar",
       "range": "{start} → {end}",
       "pickDepartment": "Which department?",

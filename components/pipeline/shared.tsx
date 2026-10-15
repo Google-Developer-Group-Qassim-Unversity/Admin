@@ -20,7 +20,7 @@ import { STAGE_STEP, STAGE_TONE } from "@/components/status-badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePipelineMe } from "@/hooks/use-pipeline";
-import type { EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
+import type { CalendarDay, EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
 import { intlLocale } from "@/lib/format";
 
 /** A department's name in the reader's language. */
@@ -72,6 +72,16 @@ export function useFormatDateRange() {
       return formatter.formatRange(from, new Date(`${end}T00:00:00Z`));
     };
   }, [locale]);
+}
+
+/** Whether the caller can pick this day to book: an open one, or for a super admin also a closed or taken one. Never inside the lockout. */
+export function isBookable(day: CalendarDay, me: PipelineMe) {
+  return day.status === "open" || (me.is_super_admin && day.status !== "locked");
+}
+
+/** Whether the caller works on at least one pipeline team (or is a super admin). */
+export function hasTeam(me: PipelineMe | undefined) {
+  return Boolean(me && (me.is_super_admin || me.departments.some((d) => d.teams.length > 0)));
 }
 
 /** The icon on a request's plate, by stage. */
