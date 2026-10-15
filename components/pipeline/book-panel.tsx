@@ -8,6 +8,7 @@ import { CalendarCheck, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { BookingCalendar } from "@/components/pipeline/booking-calendar";
+import { useBookOver } from "@/components/pipeline/override-dialog";
 import { BehalfNote } from "@/components/pipeline/roles";
 import { isBookable, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
@@ -83,16 +84,24 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
   // Start on the caller's own department; someone else's is always a deliberate pick.
   const [departmentId, setDepartmentId] = React.useState<string>(() => (own[0] ? String(own[0].id) : ""));
   const book = useBookRequest();
+  const bookOver = useBookOver(me);
   const chosen = me.departments.find((d) => String(d.id) === departmentId);
 
   const isSelectable = (day: CalendarDay) => isBookable(day, me);
 
   const onBook = async () => {
     if (!range.start || !range.end || !departmentId) return;
+    const [start, end] = [range.start, range.end];
     try {
-      const request = await book.mutateAsync({ departmentId: Number(departmentId), start: range.start, end: range.end });
-      toast.success(t("booked"));
-      router.push(`/pipeline/requests/${request.id}`);
+      await bookOver.guard(start, end, undefined, async (bumps) => {
+        try {
+          const request = await book.mutateAsync({ departmentId: Number(departmentId), start, end, bumps });
+          toast.success(t("booked"));
+          router.push(`/pipeline/requests/${request.id}`);
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("failed"));
+        }
+      });
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     }
@@ -100,6 +109,7 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
 
   return (
     <div className="flex flex-col gap-5 max-md:pb-28">
+      {bookOver.dialog}
       <p className="text-ink-2 text-sm text-pretty">{t(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}</p>
       <BookingCalendar
         selected={range.selected}

@@ -42,6 +42,7 @@ const TONE: Partial<Record<HistoryItem["action"], Tone>> = {
   hold_expired: "madder",
   penalty_grown: "madder",
   event_deleted: "madder",
+  overridden: "madder",
   task_done: "green",
   published: "green",
 };
@@ -94,6 +95,12 @@ function useDescribe() {
         return { text: t("penaltyGrown", { days: Number(d.late_days), points: Number(d.points) }) };
       case "event_deleted":
         return { text: t("eventDeleted", { id: Number(d.event_id) }) };
+      case "overridden":
+        return {
+          text: t(d.outcome === "cancel" ? "overriddenCancelled" : "overriddenRescheduled", {
+            dates: range([d.start_date, d.end_date]),
+          }),
+        };
       default:
         return { text: t(item.action) };
     }

@@ -74,9 +74,13 @@ export function useFormatDateRange() {
   }, [locale]);
 }
 
-/** Whether the caller can pick this day to book: an open one, or for a super admin also a closed or taken one. Never inside the lockout. */
+/**
+ * Whether the caller can pick this day to book: an open one, or for a super
+ * admin also a closed or held one (booking over a request bumps it). Never
+ * inside the lockout, and never a published event's day.
+ */
 export function isBookable(day: CalendarDay, me: PipelineMe) {
-  return day.status === "open" || (me.is_super_admin && day.status !== "locked");
+  return day.status === "open" || (me.is_super_admin && day.status !== "locked" && day.status !== "published");
 }
 
 /** Whether the caller works on at least one pipeline team (or is a super admin). */

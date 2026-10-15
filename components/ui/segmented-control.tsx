@@ -60,7 +60,8 @@ export function SegmentedControl({
             type="button"
             role="radio"
             aria-checked={selected}
-            tabIndex={selected ? 0 : -1}
+            // With nothing chosen yet, the first option takes the tab stop.
+            tabIndex={selected || (index === 0 && !options.some((o) => o.value === value)) ? 0 : -1}
             disabled={disabled}
             onClick={() => onValueChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
