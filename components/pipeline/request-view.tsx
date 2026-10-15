@@ -802,7 +802,7 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
   const tb = useTranslations("pipeline.book");
   const formatRange = useFormatDateRange();
   const [open, setOpen] = React.useState(false);
-  const range = useRangePicker(MAX_BOOKING_DAYS);
+  const range = useRangePicker(MAX_BOOKING_DAYS, (d) => isBookable(d, me));
   const redate = useRedate(request.id);
   const behalf = useBehalfOf({ kind: "department", department: request.department });
   const bookOver = useBookOver(me);
@@ -866,12 +866,13 @@ function Redate({ request, me }: { request: EventRequestDetail; me: PipelineMe }
           <BookingCalendar
             selected={range.selected}
             range={{ start: range.start, end: range.end }}
+            flash={range.flash}
             onDayClick={range.onDayClick}
             isSelectable={(d) => isBookable(d, me)}
           />
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <span className={cn("flex-1 text-sm", range.start ? "tabular text-[17px] font-bold" : "text-ink-2")}>
-              {range.start ? formatRange(range.start, range.end) : tb(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}
+            <span className={cn("flex-1 text-sm", range.start && range.end ? "tabular text-[17px] font-bold" : "text-ink-2")}>
+              {range.start && range.end ? formatRange(range.start, range.end) : tb(me.is_super_admin ? "hintSuperAdmin" : "hint", { max: MAX_BOOKING_DAYS })}
             </span>
             <div className="flex gap-2 *:flex-1 sm:*:flex-none">
               <Button variant="ghost" size="lg" onClick={() => setOpen(false)}>
