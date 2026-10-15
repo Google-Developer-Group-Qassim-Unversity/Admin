@@ -27,13 +27,15 @@ const LEGEND: PipelineDayStatus[] = ["open", "locked", "held", "booked", "publis
  *
  * What a tap means (picking days to close, a range to book, opening the
  * request on a day) is the parent's business: `onDayClick`, `isSelectable`.
- * `range` marks the two ends of a picked range; `toolbar` sits at the trailing
+ * `flash` briefly paints those days madder, to refuse a tap (each new `n`
+ * flashes again). `range` marks the two ends of a picked range; `toolbar` sits at the trailing
  * end of the month header. On wide screens bricks are tall enough to name the
  * department or the closing reason.
  */
 export function BookingCalendar({
   selected,
   range,
+  flash,
   onDayClick,
   isSelectable,
   toolbar,
@@ -43,7 +45,9 @@ export function BookingCalendar({
 }: {
   selected?: Set<string>;
   range?: { start: string | null; end: string | null };
-  onDayClick?: (day: CalendarDay) => void;
+  flash?: { days: string[]; n: number } | null;
+  /** `days` is every day loaded for this month's grid, by date. */
+  onDayClick?: (day: CalendarDay, days: ReadonlyMap<string, CalendarDay>) => void;
   isSelectable?: (day: CalendarDay) => boolean;
   toolbar?: React.ReactNode;
   /** The first-bookable line and the list of closed days under the legend. */
@@ -62,6 +66,26 @@ export function BookingCalendar({
   const { data, isPending, error } = usePipelineCalendar(format(gridStart, ISO), format(gridEnd, ISO));
 
   const byDate = React.useMemo(() => new Map((data?.days ?? []).map((d) => [d.date, d])), [data]);
+
+  const grid = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!flash || !grid.current) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // A painted layer, not background-color: picked days hold their ochre with !important.
+    const red = { backgroundImage: "linear-gradient(var(--door-madder), var(--door-madder))", color: "#fff" };
+    const frames = still
+      ? [red, red, {}]
+      : [
+          { ...red, transform: "translateX(0)" },
+          { transform: "translateX(-3px)", offset: 0.15 },
+          { transform: "translateX(3px)", offset: 0.3 },
+          { ...red, transform: "translateX(0)", offset: 0.5 },
+          {},
+        ];
+    for (const date of flash.days) {
+      grid.current.querySelector<HTMLElement>(`[data-date="${date}"]`)?.animate(frames, { duration: 700, easing: "ease-out" });
+    }
+  }, [flash]);
   const weekdays = React.useMemo(() => {
     const short = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short" });
     const narrow = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "narrow" });
@@ -98,7 +122,7 @@ export function BookingCalendar({
 
       {error ? <p className="text-door-madder-ink text-sm">{error.message}</p> : null}
 
-      <div>
+      <div ref={grid}>
         <div className="grid grid-cols-7 gap-1 px-1 pb-1" aria-hidden="true">
           {weekdays.map((w) => (
             <span key={w.short} className="text-ink-2 text-center text-xs font-bold">
@@ -138,11 +162,12 @@ export function BookingCalendar({
               <button
                 key={iso}
                 type="button"
+                data-date={iso}
                 disabled={!clickable}
                 aria-pressed={onDayClick ? isSelected : undefined}
                 aria-label={words}
                 title={words}
-                onClick={() => onDayClick?.(day)}
+                onClick={() => onDayClick?.(day, byDate)}
                 className={cn(
                   "relative flex h-12 flex-col items-center justify-center rounded-[2px] text-[15px] transition-[background-color,filter,transform] duration-150 outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring sm:h-[76px] sm:items-start sm:justify-between sm:px-2 sm:pt-1.5 sm:pb-1.5",
                   "shadow-[inset_0_-2px_0_rgb(58_42_31/0.08)]",

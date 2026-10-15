@@ -2013,9 +2013,10 @@
     },
     "book": {
       "start": "Book dates",
-      "hint": "Tap the first day, then the last (up to {max} days). We hold them for 24 hours while you fill in the request.",
-      "hintSuperAdmin": "Tap the first day, then the last (up to {max} days). As a super admin you can also book a closed day, or a held one: you'll decide what happens to the request holding it.",
+      "hint": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. We hold them for 24 hours while you fill in the request.",
+      "hintSuperAdmin": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. As a super admin you can also book a closed day, or a held one: you'll decide what happens to the request holding it.",
       "pickDays": "Pick the days on the calendar",
+      "limit": "That's the limit: a booking is at most {max} days in a row",
       "range": "{start} → {end}",
       "pickDepartment": "Which department?",
       "book": "Book",

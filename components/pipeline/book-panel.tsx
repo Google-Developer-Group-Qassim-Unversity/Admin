@@ -18,39 +18,73 @@ import type { CalendarDay, PipelineMe } from "@/lib/pipeline-types";
 
 export const MAX_BOOKING_DAYS = 4;
 
-/** Picks a date range on the calendar: the first click starts it, the second ends it. */
-export function useRangePicker(maxDays: number | null) {
+const ISO = "yyyy-MM-dd";
+const shift = (iso: string, by: number) => format(addDays(parseISO(iso), by), ISO);
+
+/**
+ * Picks a run of days on the calendar, one tap per day. A tap on a free day
+ * adds it (and any days between it and the pick, since a booking is one run);
+ * a tap on a picked day drops it and every day after it. A tap that would run
+ * past `maxDays` adds nothing: `flash` names the days to flash madder and a
+ * toast says why. A tap across a day that cannot be picked starts a new run.
+ */
+export function useRangePicker(maxDays: number | null, isSelectable?: (day: CalendarDay) => boolean) {
+  const t = useTranslations("pipeline.book");
   const [start, setStart] = React.useState<string | null>(null);
   const [end, setEnd] = React.useState<string | null>(null);
-
-  const onDayClick = (day: CalendarDay) => {
-    if (!start || end) {
-      setStart(day.date);
-      setEnd(null);
-      return;
-    }
-    const length = differenceInCalendarDays(parseISO(day.date), parseISO(start)) + 1;
-    if (length < 1 || (maxDays !== null && length > maxDays)) {
-      setStart(day.date);
-      return;
-    }
-    setEnd(day.date);
-  };
+  const [flash, setFlash] = React.useState<{ days: string[]; n: number } | null>(null);
 
   const selected = React.useMemo(() => {
     const days = new Set<string>();
-    if (!start) return days;
-    const last = end ?? start;
-    for (let d = parseISO(start); format(d, "yyyy-MM-dd") <= last; d = addDays(d, 1)) days.add(format(d, "yyyy-MM-dd"));
+    if (!start || !end) return days;
+    for (let d = start; d <= end; d = shift(d, 1)) days.add(d);
     return days;
   }, [start, end]);
+
+  const onDayClick = (day: CalendarDay, days: ReadonlyMap<string, CalendarDay>) => {
+    if (!start || !end) {
+      setStart(day.date);
+      setEnd(day.date);
+      return;
+    }
+    if (selected.has(day.date)) {
+      if (day.date === start) {
+        // The first day: drop it alone, or clear the pick if it was the only one.
+        if (start === end) {
+          setStart(null);
+          setEnd(null);
+        } else {
+          setStart(shift(start, 1));
+        }
+      } else {
+        setEnd(shift(day.date, -1));
+      }
+      return;
+    }
+    const [from, to] = day.date < start ? [day.date, end] : [start, day.date];
+    if (maxDays !== null && differenceInCalendarDays(parseISO(to), parseISO(from)) + 1 > maxDays) {
+      setFlash((f) => ({ days: [...selected, day.date], n: (f?.n ?? 0) + 1 }));
+      toast.error(t("limit", { max: maxDays }), { id: "booking-limit" });
+      return;
+    }
+    for (let d = from; d <= to; d = shift(d, 1)) {
+      const between = days.get(d);
+      if (!between || (isSelectable && !isSelectable(between))) {
+        setStart(day.date);
+        setEnd(day.date);
+        return;
+      }
+    }
+    setStart(from);
+    setEnd(to);
+  };
 
   const reset = () => {
     setStart(null);
     setEnd(null);
   };
 
-  return { start, end: end ?? start, selected, onDayClick, reset };
+  return { start, end, selected, flash, onDayClick, reset };
 }
 
 /** "2 days" in the reader's language. */
@@ -60,7 +94,7 @@ function useDayCount() {
 }
 
 /**
- * Booking mode: tap the first day and the last, say which department, book.
+ * Booking mode: tap each day, say which department, book.
  * The days are held for 24 hours while the request is filled in. On a phone the
  * summary and the ochre Book button ride in a bar above the bottom navigation.
  */
@@ -70,7 +104,8 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
   const departmentName = useDepartmentName();
   const formatRange = useFormatDateRange();
   const dayCount = useDayCount();
-  const range = useRangePicker(MAX_BOOKING_DAYS);
+  const isSelectable = (day: CalendarDay) => isBookable(day, me);
+  const range = useRangePicker(MAX_BOOKING_DAYS, isSelectable);
   // The caller's own departments; a super admin can also book for any other, on its behalf.
   const own = React.useMemo(
     () => me.departments.filter((d) => !ownIds || ownIds.has(d.id)),
@@ -86,8 +121,6 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
   const book = useBookRequest();
   const bookOver = useBookOver(me);
   const chosen = me.departments.find((d) => String(d.id) === departmentId);
-
-  const isSelectable = (day: CalendarDay) => isBookable(day, me);
 
   const onBook = async () => {
     if (!range.start || !range.end || !departmentId) return;
@@ -114,6 +147,7 @@ export function BookPanel({ me, onDone, ownIds }: { me: PipelineMe; onDone: () =
       <BookingCalendar
         selected={range.selected}
         range={{ start: range.start, end: range.end }}
+        flash={range.flash}
         onDayClick={range.onDayClick}
         isSelectable={isSelectable}
         toolbar={
