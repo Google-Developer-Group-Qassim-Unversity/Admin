@@ -407,10 +407,12 @@ function RequestHeader({
           <ArrowLeft className="size-4 rtl:-scale-x-100" />
           {t("back")}
         </Link>
+        <div className="-me-2 flex items-center gap-1.5">
+        <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
         {canCancel ? (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="-me-2" aria-label={t("moreActions")}>
+              <Button variant="ghost" size="icon" aria-label={t("moreActions")}>
                 <Ellipsis className="size-5" />
               </Button>
             </DropdownMenuTrigger>
@@ -422,6 +424,7 @@ function RequestHeader({
             </DropdownMenuContent>
           </DropdownMenu>
         ) : null}
+        </div>
       </div>
       <h1 className="font-display text-[26px] leading-tight font-semibold text-balance sm:text-[32px]">
         <bdi>{request.title || t("untitled")}</bdi>
@@ -432,7 +435,6 @@ function RequestHeader({
           {departmentName(request.department)}
         </span>
         <StageBadge stage={request.stage} />
-        <NotionLink request={request} isSuperAdmin={me.is_super_admin} />
         <p className="text-ink-2 tabular text-[13.5px]">{meta}</p>
       </div>
       {whoseTurn(request) ? (
