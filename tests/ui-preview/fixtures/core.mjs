@@ -83,13 +83,16 @@ export const REQUESTS = [
 ];
 const byId = Object.fromEntries(REQUESTS.map((r) => [r.id, r]));
 
+// Design's card on the team's Notion board, once the request reached Design.
+const NOTION_URL = "https://www.notion.so/Flutter-workshop-266b70e9ca448103bfb3dd7eab68f43e";
+
 const TASKS = {
   r1: [
     { team: "design", status: "brief" },
     { team: "logistics", status: "brief" },
   ],
   r7: [
-    { team: "design", status: "done", done_by: { member_id: 5, name: "Reem Alharbi" } },
+    { team: "design", status: "done", done_by: { member_id: 5, name: "Reem Alharbi" }, notion_url: NOTION_URL },
     { team: "logistics", status: "open" },
   ],
   r6: [
@@ -98,11 +101,11 @@ const TASKS = {
     { team: "media", status: "done" },
   ],
   r3: [
-    { team: "design", status: "returned" },
+    { team: "design", status: "returned", notion_url: NOTION_URL },
     { team: "logistics", status: "done" },
   ],
   r2: [
-    { team: "design", status: "open" },
+    { team: "design", status: "open", notion_url: NOTION_URL },
     { team: "logistics", status: "done" },
   ],
   r4: [
