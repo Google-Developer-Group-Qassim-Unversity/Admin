@@ -2732,6 +2732,277 @@
         "ready": "Ready",
         "waiting": "Waiting"
       }
+    },
+    "guide": {
+      "open": "How it works",
+      "title": "How the pipeline works",
+      "subtitle": "What staff need to take an event from booked dates to published, and what each team does along the way.",
+      "back": "Pipeline",
+      "toc": "On this page",
+      "path": {
+        "title": "The path of a request",
+        "intro": "Every event goes through the same five steps. The triangles on a request show where it is: green ones are done, the outlined one is the step it is on now.",
+        "steps": {
+          "draft": {
+            "who": "Your department",
+            "body": "Book the dates, then fill in the event details, the Design brief and the Logistics brief. The dates are held for you for 24 hours.",
+            "next": "<b>Submit</b> sends it to Design and Logistics at the same time."
+          },
+          "in_review": {
+            "who": "Design and Logistics, side by side",
+            "body": "Design makes the poster. Logistics confirms the dates, times and venue as they were actually booked. Your details are frozen from here on.",
+            "next": "When Design is done, the request also goes to Media."
+          },
+          "media": {
+            "who": "Media, and Logistics if it is not done yet",
+            "body": "Media prepares the announcement, using Design's poster.",
+            "next": "When Design, Logistics and Media are all done, the request is ready."
+          },
+          "ready": {
+            "who": "Your department",
+            "body": "Every team is done. Check the date, time, place and poster one last time.",
+            "next": "<b>Publish</b> puts the event live."
+          },
+          "published": {
+            "who": "Events",
+            "body": "The event is created in Events with exactly what the teams confirmed, and is live: members see it and can register. From here it is run from its page in Events: responses, attendance, closing it and awarding points."
+          }
+        },
+        "offPath": "Off the path",
+        "returned": {
+          "title": "Returned",
+          "body": "Design can send a request back once, with notes, within two days of receiving it. Your department then has 12 hours to fix it and press <b>Resubmit to Design</b>. Each day late costs a point."
+        },
+        "cancelled": {
+          "title": "Cancelled",
+          "body": "The department can cancel a request at any step before it is published. Its dates go back to the calendar and every team it reached is told. A cancelled request can then be deleted for good."
+        }
+      },
+      "rules": {
+        "title": "The rules in numbers",
+        "intro": "The system enforces these, so a button that refuses usually means one of them.",
+        "items": {
+          "lead": {
+            "value": "4 days",
+            "text": "Lead time. Today and the next three days can't be booked; the first day you can book is four days away."
+          },
+          "length": {
+            "value": "Up to 4 days",
+            "text": "The longest one request can book, as days in a row."
+          },
+          "hold": {
+            "value": "24 hours",
+            "text": "How long booked dates are held while the request is a draft. Submit before the hold runs out, or the dates are released (what you filled in is kept)."
+          },
+          "oneHold": {
+            "value": "1 draft",
+            "text": "A department holds dates for one draft at a time. Submit or cancel it before booking the next one."
+          },
+          "returnWindow": {
+            "value": "2 days",
+            "text": "Design can return a request once, within two days of receiving it."
+          },
+          "fix": {
+            "value": "12 hours",
+            "text": "To fix a returned request and resubmit it."
+          },
+          "penalty": {
+            "value": "1 point",
+            "text": "Taken off the department for every started day a fix is late, when the event is published."
+          },
+          "hours": {
+            "value": "Sun–Thu, 8:00–15:00",
+            "text": "Official working hours. The details form tells you whether your event falls inside them."
+          }
+        }
+      },
+      "page": {
+        "title": "Finding your way",
+        "intro": "Everything starts on the Pipeline page.",
+        "items": {
+          "department": {
+            "title": "My department",
+            "body": "Your department's requests. What waits on you comes first (drafts to finish, returned requests, lost dates, events to publish), then what is with the teams, then what is over."
+          },
+          "desk": {
+            "title": "Team desks",
+            "body": "For Design, Logistics and Media: what waits on your team, what Design sent back, and what your team finished. The number on the tab is what waits on you."
+          },
+          "club": {
+            "title": "Whole club",
+            "body": "Super admins only: every department's requests, grouped by who has them."
+          },
+          "calendar": {
+            "title": "Booking calendar",
+            "body": "Which days are free. Tap a taken day to open the request on it."
+          },
+          "book": {
+            "title": "Book dates",
+            "body": "Starts a new request. It is also in the side bar, and in the middle of the bottom bar on a phone."
+          },
+          "bell": {
+            "title": "The bell",
+            "body": "Notifications for your department and teams: a request reached your team, Design returned yours, a team finished, it is ready to publish, Logistics changed something. Each one opens its request."
+          }
+        }
+      },
+      "roles": {
+        "title": "Who does what",
+        "intro": "Your part is open. The others are here so you know what to expect from them.",
+        "yours": "Your part",
+        "department": {
+          "name": "Departments",
+          "who": "Leaders and VPs of any department",
+          "steps": {
+            "0": {
+              "title": "Book dates",
+              "body": "Press <b>Book dates</b>, tap the first day and then the last, and pick the department if you lead more than one. The days are now held for 24 hours."
+            },
+            "1": {
+              "title": "Fill in the request",
+              "body": "Three tabs: <b>Event details</b>, <b>Design brief</b> and <b>Logistics brief</b>. Everything saves as you type, so you can leave and come back. The bar at the bottom says what is still missing."
+            },
+            "2": {
+              "title": "Submit",
+              "body": "<b>Submit</b> sends it to Design and Logistics together. The dates stay yours without a timer now, and the details can no longer be edited."
+            },
+            "3": {
+              "title": "If Design returns it",
+              "body": "Read the notes, fix the forms, and press <b>Resubmit to Design</b> within 12 hours. Late costs a point a day."
+            },
+            "4": {
+              "title": "Publish",
+              "body": "When it says <b>Ready to publish</b>, check everything and press <b>Publish</b>. The event goes live in Events, and you run it from there."
+            }
+          },
+          "cancel": "Changed your plans? <b>Cancel request</b> at the top of the request, at any step before publishing. Its dates go back to the calendar."
+        },
+        "design": {
+          "name": "Design",
+          "who": "Design's leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "The moment a department submits, the request is on the Design desk and you are notified."
+            },
+            "1": {
+              "title": "Return it if it needs fixing",
+              "body": "Once, within two days of receiving it: <b>Return with notes</b>, saying exactly what to fix. The department gets 12 hours, and it comes back to you."
+            },
+            "2": {
+              "title": "Upload the poster",
+              "body": "PNG, JPEG or WebP, up to 10 MB. It becomes the event's image. You can replace it until the event is published."
+            },
+            "3": {
+              "title": "Finish Design",
+              "body": "<b>Finish Design</b> needs the poster. The request then also goes to Media."
+            }
+          }
+        },
+        "logistics": {
+          "name": "Logistics",
+          "who": "Logistics' leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "At the same moment as Design; the two teams work at once."
+            },
+            "1": {
+              "title": "Confirm the event",
+              "body": "The confirmation opens filled in from the request: dates, each day's mode, times, venue and room, event type and description. Change whatever the booking turned out differently, then press <b>Confirm</b>. The event is published with exactly this."
+            },
+            "2": {
+              "title": "Say why anything changed",
+              "body": "If what you confirm differs from what was asked, give the reason; the department sees it. New dates follow the same booking rules, and the department is told."
+            },
+            "3": {
+              "title": "Online days",
+              "body": "Paste the Google Meet link, or press <b>Generate a link</b> to make one on the club's calendar."
+            },
+            "4": {
+              "title": "Close days",
+              "body": "<b>Close or reopen days</b>: pick the days, give the reason, and close them as one block. A request holding a closed day loses its dates, and its department is told."
+            }
+          }
+        },
+        "media": {
+          "name": "Media",
+          "who": "Media's leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "Once Design is done, so the poster is ready."
+            },
+            "1": {
+              "title": "Announce the event",
+              "body": "Prepare the announcement from the request and its poster."
+            },
+            "2": {
+              "title": "Mark Media done",
+              "body": "When all three teams are done, the department can publish."
+            }
+          }
+        },
+        "superAdmin": {
+          "name": "Super admins",
+          "who": "Can act for every department and team",
+          "steps": {
+            "0": {
+              "title": "Step in only when needed",
+              "body": "You can do any department's or team's step, and the screen says when you are acting on someone's behalf. They were already notified of their own work."
+            },
+            "1": {
+              "title": "Closed and taken days",
+              "body": "You can book a day Logistics closed, or over another request (never a published event). For each request you bump, you choose: back to a draft without dates, or cancelled. Its department is told."
+            },
+            "2": {
+              "title": "The rest binds you too",
+              "body": "The four-day lead time, four days per request, one hold per department, details frozen after submit, Design's one return, and publishing only once every team is done."
+            }
+          }
+        }
+      },
+      "calendar": {
+        "title": "The calendar's colours",
+        "intro": "Each day on the booking calendar is one of these.",
+        "days": {
+          "open": "Free to book.",
+          "locked": "In the next four days. Nobody can book it.",
+          "banned": "Logistics closed it. The reason is listed under the calendar.",
+          "held": "A draft holds it for 24 hours. It frees up if the draft isn't submitted.",
+          "booked": "A submitted request has it.",
+          "published": "A published event is on it."
+        }
+      },
+      "trouble": {
+        "title": "When something goes wrong",
+        "items": {
+          "lost": {
+            "q": "My request lost its dates",
+            "a": "The hold ran out, Logistics closed one of the days, or a super admin needed them. Everything you filled in is kept: open the request and press <b>Pick new dates</b>."
+          },
+          "day": {
+            "q": "I can't pick a day",
+            "a": "It is in the next four days, Logistics closed it, or another request has it. Your range can't cross any of those."
+          },
+          "hold": {
+            "q": "It says my department already holds dates",
+            "a": "Only one draft holds dates at a time. Submit that draft, or cancel it, first."
+          },
+          "submit": {
+            "q": "Submit won't go",
+            "a": "The bar at the bottom lists what is still missing. If it says a team is not set up, tell a super admin."
+          },
+          "change": {
+            "q": "Something must change after submitting",
+            "a": "The details are frozen once submitted. Logistics confirms the final dates, times and venue, so tell them; if it is bigger than that, cancel the request and start again."
+          },
+          "changed": {
+            "q": "Logistics changed my event",
+            "a": "They have to say why. The reason is in the notification and on the request, under <b>Confirmed by Logistics</b>."
+          }
+        }
+      }
     }
   },
   "permissions": {
