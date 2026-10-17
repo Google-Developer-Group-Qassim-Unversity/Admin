@@ -1,14 +1,18 @@
 'use client';
 
+import * as React from 'react';
 import { useTranslations } from 'next-intl';
 import { AlertCircle, Presentation, Video } from 'lucide-react';
 
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ContentLinkAddDialog } from '@/components/content-link-add-dialog';
 import { ContentLinkItem } from '@/components/content-link-item';
+import { DriveStorageBadge } from '@/components/drive-storage-badge';
+import { RecordingPickerDialog } from '@/components/recording-picker-dialog';
+import { SlidesDropzone } from '@/components/slides-dropzone';
 import { useEventContext } from '@/contexts/event-context';
 import { useEventDetails } from '@/hooks/use-event';
 import type { EventContentLink } from '@/lib/api-types';
@@ -18,6 +22,7 @@ export default function EventContentPage() {
   const { event } = useEventContext();
   const eventId = event?.id ?? 0;
   const { data: details, isLoading, error, refetch } = useEventDetails(eventId, eventId !== 0);
+  const [driveConfigured, setDriveConfigured] = React.useState(true);
 
   // The details endpoint is the admin's own view: every link, published or not.
   const links: EventContentLink[] = details?.content_links ?? [];
@@ -34,13 +39,15 @@ export default function EventContentPage() {
   return (
     <Card className="mx-auto max-w-3xl max-sm:gap-4 max-sm:bg-transparent max-sm:py-0 max-sm:shadow-none max-sm:ring-0">
       <CardHeader className="max-sm:px-0">
-        <CardTitle className="font-display text-lg font-semibold tracking-tight">{t('title')}</CardTitle>
-        <CardDescription>{t('subtitle')}</CardDescription>
-        <CardAction>
-          <ContentLinkAddDialog eventId={event.id} />
-        </CardAction>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <CardTitle className="font-display text-lg font-semibold tracking-tight">{t('title')}</CardTitle>
+            <CardDescription>{t('subtitle')}</CardDescription>
+          </div>
+          <DriveStorageBadge />
+        </div>
       </CardHeader>
-      <CardContent className="space-y-6 max-sm:px-0">
+      <CardContent className="space-y-8 max-sm:px-0">
         {/* Loading, error and empty look nothing alike: a failed call must
             never read as "there are no links here". */}
         {isLoading ? (
@@ -62,11 +69,36 @@ export default function EventContentPage() {
           </Alert>
         ) : (
           <>
-            <section className="space-y-3">
-              <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Presentation className="h-4 w-4" />
-                {t('slidesSection')}
-              </h2>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Presentation className="h-4 w-4" />
+                  {t('slidesSection')}
+                </h2>
+                {!driveConfigured && (
+                  <ContentLinkAddDialog
+                    eventId={event.id}
+                    initialKind="slides"
+                    buttonLabel={t('addSlideLink')}
+                    size="sm"
+                  />
+                )}
+              </div>
+
+              {!driveConfigured && (
+                <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
+                  <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                  <AlertDescription className="text-xs">
+                    {t('driveUnconfiguredNotice')}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              <SlidesDropzone
+                eventId={event.id}
+                onDriveUnconfigured={() => setDriveConfigured(false)}
+              />
+
               {slides.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('slidesEmpty')}</p>
               ) : (
@@ -78,11 +110,23 @@ export default function EventContentPage() {
               )}
             </section>
 
-            <section className="space-y-3">
-              <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                <Video className="h-4 w-4" />
-                {t('recordingsSection')}
-              </h2>
+            <section className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                  <Video className="h-4 w-4" />
+                  {t('recordingsSection')}
+                </h2>
+                <div className="flex items-center gap-2">
+                  <RecordingPickerDialog eventId={event.id} />
+                  <ContentLinkAddDialog
+                    eventId={event.id}
+                    initialKind="recording"
+                    buttonLabel={t('addRecordingLink')}
+                    size="sm"
+                  />
+                </div>
+              </div>
+
               {recordings.length === 0 ? (
                 <p className="text-sm text-muted-foreground">{t('recordingsEmpty')}</p>
               ) : (

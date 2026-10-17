@@ -46,6 +46,7 @@ export interface EventContentLink {
   kind: ContentLinkKind;
   published: boolean;
   created_at: string | null;
+  drive_file_id?: string | null;
 }
 
 export interface CreateContentLinkPayload {
@@ -54,6 +55,36 @@ export interface CreateContentLinkPayload {
   kind: ContentLinkKind;
   // A manually pasted link goes live at once (Phase 1 has no approval gating).
   published?: boolean;
+  drive_file_id?: string | null;
+}
+
+export interface DriveRecordingCandidate {
+  file_id: string;
+  web_view_link: string;
+  is_public: boolean;
+  name: string;
+  created_time: string | null;
+}
+
+export type DriveRecordingState = 'processing' | 'ready' | 'absent';
+
+export interface DriveRecordingCandidatesResponse {
+  state: DriveRecordingState;
+  candidates: DriveRecordingCandidate[];
+}
+
+export interface MakeRecordingCandidatePublicResponse {
+  file_id: string;
+  is_public: boolean;
+}
+
+export interface DriveStorageQuotaResponse {
+  configured: boolean;
+  usage: number | null;
+  limit: number | null;
+  usage_in_drive: number | null;
+  usage_in_drive_trash: number | null;
+  usage_percentage: number | null;
 }
 
 export interface UpdateContentLinkPayload {

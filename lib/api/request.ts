@@ -35,8 +35,8 @@ export interface Requester {
   json<T>(path: string, options?: RequestOptions): Promise<T>;
   /** The upload service, which takes multipart rather than JSON. */
   upload<T>(path: string, file: File): Promise<T>;
-  /** A file to a backend route, as the `file` field of a multipart form. */
-  file<T>(path: string, file: File): Promise<T>;
+  /** A file to a backend route, as the `file` field of a multipart form, with optional progress callback. */
+  file<T>(path: string, file: File, onProgress?: (progress: number) => void): Promise<T>;
   /** This app's own Next route handlers, on the same origin. */
   route<T>(path: string, options?: RequestOptions): Promise<T>;
 }
@@ -157,11 +157,80 @@ export function createRequester(getToken: GetToken): Requester {
     },
 
     /** A file to a backend route, as the `file` field of a multipart form. */
-    async file<T>(path: string, file: File) {
+    async file<T>(path: string, file: File, onProgress?: (progress: number) => void): Promise<T> {
+      const url = `${config.backendApiUrl}${path}`;
+      const token = await getToken();
+
+      if (typeof XMLHttpRequest !== "undefined" && onProgress) {
+        return new Promise<T>((resolve, reject) => {
+          const xhr = new XMLHttpRequest();
+          const formData = new FormData();
+          formData.append("file", file);
+
+          xhr.upload.addEventListener("progress", (event) => {
+            if (event.lengthComputable && event.total > 0) {
+              const percent = Math.round((event.loaded / event.total) * 100);
+              onProgress(percent);
+            }
+          });
+
+          xhr.addEventListener("load", () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              if (xhr.status === 204 || !xhr.responseText) {
+                resolve(undefined as T);
+              } else {
+                try {
+                  resolve(JSON.parse(xhr.responseText) as T);
+                } catch {
+                  resolve(undefined as T);
+                }
+              }
+            } else {
+              let message = "Upload failed";
+              try {
+                const body = JSON.parse(xhr.responseText);
+                if (Array.isArray(body?.detail)) {
+                  message = body.detail.map((i: { msg?: string }) => i?.msg).filter(Boolean).join(", ") || message;
+                } else if (typeof body?.detail === "string") {
+                  message = body.detail;
+                } else if (typeof body?.message === "string") {
+                  message = body.message;
+                }
+              } catch {
+                // ignore
+              }
+              reject(
+                new ApiRequestError({
+                  message,
+                  status: xhr.status,
+                  isValidationError: xhr.status === 422,
+                  isServerError: xhr.status >= 500,
+                  isNotFound: xhr.status === 404,
+                })
+              );
+            }
+          });
+
+          xhr.addEventListener("error", () => {
+            reject(asNetworkError(new Error("Network error occurred during upload"), "Upload error occurred"));
+          });
+
+          xhr.addEventListener("abort", () => {
+            reject(new ApiRequestError({ message: "Upload aborted", status: 0 }));
+          });
+
+          xhr.open("POST", url);
+          if (token) {
+            xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+          }
+          xhr.send(formData);
+        });
+      }
+
       const formData = new FormData();
       formData.append("file", file);
       try {
-        const response = await fetch(`${config.backendApiUrl}${path}`, {
+        const response = await fetch(url, {
           method: "POST",
           headers: await authHeaders(),
           body: formData,

@@ -20,6 +20,8 @@ import type {
   CreateContentLinkPayload,
   CreateEventPayload,
   Department,
+  DriveRecordingCandidatesResponse,
+  DriveStorageQuotaResponse,
   Event,
   EventContentLink,
   EventDetails,
@@ -27,6 +29,7 @@ import type {
   EventStatus,
   EventsPageParams,
   Form,
+  MakeRecordingCandidatePublicResponse,
   Member,
   MemberStats,
   MembersPageParams,
@@ -146,11 +149,30 @@ export function createApi(request: Requester) {
     createContentLink: (id: number, payload: CreateContentLinkPayload) =>
       request.json<EventContentLink>(`/events/${id}/content-links`, { method: "POST", body: payload }),
 
+    /** Streamed multipart upload of slides into Google Drive under GDG Website/{event name} (event #{id})/. */
+    uploadDriveSlides: (id: number, file: File, onProgress?: (progress: number) => void) =>
+      request.file<EventContentLink>(`/upload/drive-slides/?event_id=${id}`, file, onProgress),
+
     updateContentLink: (id: number, linkId: string, payload: UpdateContentLinkPayload) =>
       request.json<EventContentLink>(`/events/${id}/content-links/${linkId}`, { method: "PUT", body: payload }),
 
     removeContentLink: (id: number, linkId: string) =>
       request.json<{ detail: string }>(`/events/${id}/content-links/${linkId}`, { method: "DELETE" }),
+
+    /** Google Meet recording candidates in Drive for this event. */
+    getRecordingCandidates: (id: number) =>
+      request.json<DriveRecordingCandidatesResponse>(`/events/${id}/drive-recording-candidates`),
+
+    /** Grant public view permission to a recording candidate file in Drive. */
+    makeRecordingCandidatePublic: (id: number, fileId: string) =>
+      request.json<MakeRecordingCandidatePublicResponse>(
+        `/events/${id}/drive-recording-candidates/${fileId}/make-public`,
+        { method: "POST" }
+      ),
+
+    /** Storage quota telemetry for the organizer's Google Drive (fail-soft). */
+    getDriveStorageQuota: () =>
+      request.json<DriveStorageQuotaResponse>("/upload/drive-storage-quota", { revalidate: 60 }),
 
     /** Events that can carry certificates - the placeholder location types cannot. */
     withCertificates: async () => {
