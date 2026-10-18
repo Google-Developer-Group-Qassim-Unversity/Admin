@@ -84,10 +84,10 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
 
   return (
     <div className="grid gap-6">
-      <Card className="shadow-sm">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <UserPlus className="h-4 w-4 text-primary" />
+            <UserPlus className="h-4 w-4 text-ink-2" />
             {t("recipients")} {recipientList.recipients.length > 0 && `(${recipientList.recipients.length})`}
           </CardTitle>
           <CardDescription className="text-xs">
@@ -141,19 +141,19 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             <UserPlus className="h-3.5 w-3.5" /> {t("pickMembers")}
           </Button>
           {recipientList.recipients.length > 0 && (
-            <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg border divide-y sm:max-h-40">
+            <div className="max-h-60 overflow-y-auto overscroll-contain rounded-lg ring-1 ring-rule divide-y divide-rule sm:max-h-40">
               {recipientList.recipients.map((r) => (
                 <div key={r.email} className="flex items-center gap-2 px-3 py-1.5">
                   <div className="flex-1 min-w-0">
                     <p dir="auto" className="text-sm font-medium truncate sm:text-xs">{r.name}</p>
-                    <p className="text-xs text-muted-foreground truncate">{r.email}</p>
+                    <p className="text-xs text-muted-foreground truncate"><bdi>{r.email}</bdi></p>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon-sm"
                     aria-label={tc("remove")}
-                    className="hover:text-destructive sm:size-6"
+                    className="hover:text-door-madder-ink sm:size-6"
                     onClick={() => recipientList.remove(r.email)}
                     disabled={isBusy}
                   >
@@ -166,10 +166,10 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Mail className="h-4 w-4 text-primary" />
+            <Mail className="h-4 w-4 text-ink-2" />
             {t("compose")}
           </CardTitle>
           <CardDescription className="text-xs">{t("composeHint")}</CardDescription>
@@ -190,7 +190,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                   className="w-auto shrink-0 p-0.5 [&>button]:min-h-8 [&>button]:px-2.5 [&>button]:text-xs [&>button]:whitespace-nowrap pointer-coarse:[&>button]:min-h-9"
                 />
               </div>
-              <div className="border rounded-md overflow-auto h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[500px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
+              <div className="ring-1 ring-rule rounded-lg overflow-auto bg-white h-[65dvh] min-h-[420px] w-full max-w-full resize-none lg:h-[500px] lg:w-[375px] lg:min-w-[280px] lg:resize-x">
                 {composer.viewMode === "raw" ? (
                   <textarea
                     value={composer.rawHtml}
@@ -229,10 +229,10 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
         </CardContent>
       </Card>
 
-      <Card className="shadow-sm">
+      <Card>
         <CardHeader className="pb-2">
           <CardTitle className="text-base flex items-center gap-2">
-            <Paperclip className="h-4 w-4 text-primary" />
+            <Paperclip className="h-4 w-4 text-ink-2" />
             {t("attachments")}
           </CardTitle>
           <CardDescription className="text-xs">{t("attachmentsHint")}</CardDescription>
@@ -260,7 +260,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
                 <FileUploadItem key={`${entry.file.name}-${entry.file.lastModified}`} value={entry.file}>
                   <FileUploadItemPreview />
                   <FileUploadItemMetadata />
-                  {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                  {entry.status === "uploading" && <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none text-muted-foreground" />}
                   <FileUploadItemDelete asChild>
                     <Button
                       type="button"
@@ -277,7 +277,7 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
             </FileUploadList>
           </FileUpload>
           {attachments.attachmentSizeExceeded && (
-            <p className="text-xs text-destructive">
+            <p className="text-[13px] font-medium text-door-madder-ink">
               {t("sizeExceeded", {
                 total: formatSize(attachments.totalAttachmentSize),
                 limit: formatSize(MAX_TOTAL_ATTACHMENT_SIZE),
@@ -288,8 +288,8 @@ export function DirectEmailTab({ onGoToLogs }: { onGoToLogs: () => void }) {
       </Card>
 
       <FormActions>
-        <Button type="button" onClick={handleSend} disabled={isSendDisabled} className="gap-2 shadow-sm">
-          {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+        <Button type="button" variant="ochre" size="lg" onClick={handleSend} disabled={isSendDisabled}>
+          {isBusy ? <Loader2 className="h-4 w-4 animate-spin motion-reduce:animate-none" /> : <Send className="h-4 w-4" />}
           {t("send", { count: recipientList.recipients.length })}
         </Button>
       </FormActions>

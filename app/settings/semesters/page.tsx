@@ -17,25 +17,28 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Plate, SectionHead } from "@/components/najdi";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { SemesterDialog } from "@/components/manage-semesters/semester-dialog";
 import { useCreateSemester, useDeleteSemester, useSemesters, useUpdateSemester } from "@/hooks/use-semesters";
 import type { Semester, SemesterInput } from "@/lib/api-types";
-import { useTranslations } from "next-intl";
-
-const DATE_FORMAT = new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" });
-
-function formatDate(isoDate: string) {
-  // The API sends plain YYYY-MM-DD; parsing as UTC keeps the day from shifting in negative offsets.
-  return DATE_FORMAT.format(new Date(`${isoDate}T00:00:00Z`));
-}
+import { useLocale, useTranslations } from "next-intl";
+import { intlLocale, isolate } from "@/lib/format";
 
 export default function ManageSemestersPage() {
   const t = useTranslations("semestersPage");
   const tc = useTranslations("common.actions");
+  const locale = useLocale();
+  // The API sends plain YYYY-MM-DD; reading it as UTC keeps the day from shifting.
+  const dates = React.useMemo(
+    () => new Intl.DateTimeFormat(intlLocale(locale), { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" }),
+    [locale],
+  );
+  const day = (isoDate: string) => new Date(`${isoDate}T00:00:00Z`);
+  const formatDate = (isoDate: string) => dates.format(day(isoDate));
+  const formatRange = (start: string, end: string) => dates.formatRange(day(start), day(end));
   const { data: semesters, isLoading, error } = useSemesters();
   const createSemester = useCreateSemester();
   const updateSemester = useUpdateSemester();
@@ -75,7 +78,7 @@ export default function ManageSemestersPage() {
     if (!pendingDelete) return;
     try {
       await deleteSemester.mutateAsync(pendingDelete.id);
-      toast.success(t("semesterDeleted", { name: pendingDelete.name }));
+      toast.success(t("semesterDeleted", { name: isolate(pendingDelete.name) }));
       setPendingDelete(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("deleteFailed"));
@@ -85,14 +88,14 @@ export default function ManageSemestersPage() {
   const renderBadges = (semester: Semester) => (
     <div className="flex flex-wrap items-center gap-1.5">
       {semester.is_current && (
-        <Badge variant="secondary" className="bg-brand-green-soft text-brand-green-ink gap-1 border-transparent">
-          <CheckCircle2 className="h-3 w-3" />
+        <Badge variant="green">
+          <CheckCircle2 />
           {t("current")}
         </Badge>
       )}
       {!semester.is_public && (
-        <Badge variant="outline" className="gap-1">
-          <EyeOff className="h-3 w-3" />
+        <Badge variant="outline">
+          <EyeOff />
           {t("private")}
         </Badge>
       )}
@@ -108,17 +111,18 @@ export default function ManageSemestersPage() {
       <Button
         variant="ghost"
         size="icon-sm"
+        className="text-door-madder-ink hover:bg-door-madder-soft"
         onClick={() => setPendingDelete(semester)}
         title={t("delete")}
       >
-        <Trash2 className="h-4 w-4 text-destructive" />
+        <Trash2 className="h-4 w-4" />
         <span className="sr-only">{t("deleteSr", { name: semester.name })}</span>
       </Button>
     </div>
   );
 
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={CalendarRange}>
         <Button onClick={openAdd}>
           <CalendarPlus className="h-4 w-4" />
@@ -137,33 +141,33 @@ export default function ManageSemestersPage() {
       )}
 
       {!isLoading && !error && (
-        <Card>
-          <CardHeader>
-            <CardTitle>{t("allSemesters")}</CardTitle>
-            <CardDescription>
-              {t("countDescription", { count: rows.length })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+        <section className="flex flex-col gap-3">
+          <div className="flex flex-col gap-1.5">
+            <SectionHead title={t("allSemesters")} count={rows.length} />
+            {/* A sentence, not a heading action: it has to wrap on a phone. */}
+            <p className="text-ink-2 text-[13px] text-pretty">{t("countDescription", { count: rows.length })}</p>
+          </div>
+          <div>
             {rows.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-6 text-center">
+              <p className="text-ink-2 py-6 text-center text-sm">
                 {t("noneYet")}
               </p>
             ) : (
               <>
               {/* Phones: one row per semester - name, codes and dates, badges, actions. */}
-              <ul className="divide-border -mx-4 divide-y md:hidden">
+              <ul className="-mt-3 flex flex-col md:hidden">
                 {rows.map((semester) => (
-                  <li key={semester.id} className="flex items-start gap-3 px-4 py-3.5">
+                  <li key={semester.id} className="border-rule flex items-start gap-3 border-b px-1 py-3.5">
+                    <Plate tone={semester.is_current ? "green" : "umber"} icon={CalendarRange} size="sm" />
                     <div className="flex min-w-0 flex-1 flex-col gap-1.5">
-                      <span className="font-semibold" dir="auto">
+                      <span className="font-bold" dir="auto">
                         {semester.name}
                       </span>
-                      <span className="text-muted-foreground tabular text-[13px]">
+                      <span className="text-ink-2 tabular text-[13px]">
                         {semester.hijri_code} · {semester.gregorian_code}
                       </span>
-                      <span className="text-muted-foreground tabular text-[13px]">
-                        {formatDate(semester.start_date)} – {formatDate(semester.end_date)}
+                      <span className="text-ink-2 tabular text-[13px]">
+                        {formatRange(semester.start_date, semester.end_date)}
                       </span>
                       {renderBadges(semester)}
                     </div>
@@ -171,7 +175,7 @@ export default function ManageSemestersPage() {
                   </li>
                 ))}
               </ul>
-              <div className="hidden overflow-x-auto md:block">
+              <div className="bg-card ring-rule hidden overflow-x-auto rounded-xl ring-1 md:block">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -187,11 +191,11 @@ export default function ManageSemestersPage() {
                   <TableBody>
                     {rows.map((semester) => (
                       <TableRow key={semester.id}>
-                        <TableCell className="font-medium" dir="auto">{semester.name}</TableCell>
-                        <TableCell>{semester.hijri_code}</TableCell>
-                        <TableCell>{semester.gregorian_code}</TableCell>
-                        <TableCell>{formatDate(semester.start_date)}</TableCell>
-                        <TableCell>{formatDate(semester.end_date)}</TableCell>
+                        <TableCell className="font-bold" dir="auto">{semester.name}</TableCell>
+                        <TableCell className="tabular">{semester.hijri_code}</TableCell>
+                        <TableCell className="tabular">{semester.gregorian_code}</TableCell>
+                        <TableCell className="tabular">{formatDate(semester.start_date)}</TableCell>
+                        <TableCell className="tabular">{formatDate(semester.end_date)}</TableCell>
                         <TableCell>
                           {renderBadges(semester)}
                         </TableCell>
@@ -205,8 +209,8 @@ export default function ManageSemestersPage() {
               </div>
               </>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </section>
       )}
 
       <SemesterDialog
@@ -223,14 +227,14 @@ export default function ManageSemestersPage() {
       <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t("deleteConfirmTitle", { name: pendingDelete?.name ?? "" })}</AlertDialogTitle>
+            <AlertDialogTitle>{t("deleteConfirmTitle", { name: isolate(pendingDelete?.name ?? "") })}</AlertDialogTitle>
             <AlertDialogDescription>
               {t("deleteConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={deleteSemester.isPending}>{tc("cancel")}</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete} disabled={deleteSemester.isPending}>
+            <AlertDialogAction variant="madder" onClick={handleDelete} disabled={deleteSemester.isPending}>
               {deleteSemester.isPending ? t("deleting") : t("delete")}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -1,0 +1,88 @@
+'use client';
+
+import { useTranslations } from 'next-intl';
+import { AlertCircle } from 'lucide-react';
+
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { ContentLinkAddDialog } from '@/components/content-link-add-dialog';
+import { ContentLinkItem } from '@/components/content-link-item';
+import { EmptyLine, RowsSkeleton, SectionHead } from '@/components/najdi';
+import { useEventContext } from '@/contexts/event-context';
+import { useEventDetails } from '@/hooks/use-event';
+import type { EventContentLink } from '@/lib/api-types';
+
+/**
+ * The Content tab: the links members open from the event page, as rows on
+ * the wall under two section heads (slides & files, recordings). The tab's
+ * own head carries the one action, adding a link.
+ */
+export default function EventContentPage() {
+  const t = useTranslations('eventContent');
+  const { event } = useEventContext();
+  const eventId = event?.id ?? 0;
+  const { data: details, isLoading, error, refetch } = useEventDetails(eventId, eventId !== 0);
+
+  // The details endpoint is the admin's own view: every link, published or not.
+  const links: EventContentLink[] = details?.content_links ?? [];
+  const slides = links.filter((link) => link.kind !== 'recording');
+  const recordings = links.filter((link) => link.kind === 'recording');
+
+  // Changing a link invalidates the caches this query reads, so the lists
+  // stay current without wiring callbacks through.
+
+  if (!event) {
+    return null;
+  }
+
+  const groups = [
+    { id: 'content-slides', title: t('slidesSection'), empty: t('slidesEmpty'), items: slides },
+    { id: 'content-recordings', title: t('recordingsSection'), empty: t('recordingsEmpty'), items: recordings },
+  ];
+
+  return (
+    <section aria-labelledby="content-title" className="mx-auto flex w-full max-w-3xl flex-col gap-6">
+      <div className="border-foreground flex flex-wrap items-end justify-between gap-3 border-b pb-3">
+        <div className="flex min-w-0 flex-col gap-1">
+          <h2 id="content-title" className="text-base font-bold">
+            {t('title')}
+          </h2>
+          <p className="text-ink-2 text-sm">{t('subtitle')}</p>
+        </div>
+        <ContentLinkAddDialog eventId={event.id} />
+      </div>
+
+      {/* Loading, error and empty look nothing alike: a failed call must
+          never read as "there are no links here". */}
+      {isLoading ? (
+        <RowsSkeleton rows={3} />
+      ) : error ? (
+        <Alert variant="destructive">
+          <AlertCircle className="size-4" />
+          <AlertTitle>{t('loadFailed')}</AlertTitle>
+          <AlertDescription className="flex flex-col gap-2">
+            <span>{error.message}</span>
+            <Button size="sm" variant="outline" className="w-fit" onClick={() => void refetch()}>
+              {t('retry')}
+            </Button>
+          </AlertDescription>
+        </Alert>
+      ) : (
+        groups.map((group) => (
+          <section key={group.id} aria-labelledby={group.id} className="flex flex-col gap-1">
+            <SectionHead as="h3" id={group.id} title={group.title} count={group.items.length} />
+            {group.items.length === 0 ? (
+              <EmptyLine>{group.empty}</EmptyLine>
+            ) : (
+              <ul className="flex flex-col">
+                {group.items.map((link) => (
+                  <ContentLinkItem key={link.id} eventId={event.id} link={link} />
+                ))}
+              </ul>
+            )}
+          </section>
+        ))
+      )}
+    </section>
+  );
+}

@@ -2,110 +2,182 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
-import { useLocale, useTranslations } from "next-intl";
-import { ExternalLink, PartyPopper, Rocket } from "lucide-react";
+import { useTranslations } from "next-intl";
+import { ExternalLink, PartyPopper, Rocket, TriangleAlert } from "lucide-react";
 import { toast } from "sonner";
 
-import { Field } from "@/components/pipeline/form-kit";
+import { Door, DoorPanel } from "@/components/najdi";
+import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
+import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import { usePublishRequest } from "@/hooks/use-pipeline";
 import { useAccess } from "@/hooks/use-access";
-import { useApi } from "@/lib/api/client";
-import type { EventRequestDetail } from "@/lib/pipeline-types";
+import type { EventRequestDetail, LogisticsConfirmation } from "@/lib/pipeline-types";
+import { isolate } from "@/lib/format";
+
+const hhmm = (time: string | null | undefined) => time?.slice(0, 5) ?? "";
 
 /**
- * The last step: pick the points tier and publish. The event is created in
- * /events as a draft, for an admin to review before members can see it.
+ * The last step. Nothing is typed here: the event is built from the request
+ * and what the teams handed over, and goes live the moment it is published,
+ * with no admin review after it. So the button asks first, in plain words.
  */
 export function PublishPanel({ request }: { request: EventRequestDetail }) {
   const t = useTranslations("pipeline.publish");
-  const locale = useLocale();
-  const api = useApi();
   const { can } = useAccess();
   const publish = usePublishRequest(request.id);
-  const [pair, setPair] = React.useState("");
-  const [imageUrl, setImageUrl] = React.useState("");
-  const { data: actions } = useQuery({
-    queryKey: ["actions"],
-    queryFn: () => api.actions.list(),
-    enabled: request.actions.can_publish,
-  });
+  const formatRange = useFormatDateRange();
+  const departmentName = useDepartmentName();
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const [asking, setAsking] = React.useState(false);
+  const [checked, setChecked] = React.useState(false);
 
   if (request.stage === "published" && request.event_id) {
     return (
-      <section className="bg-brand-green-soft text-brand-green-ink border-brand-green/30 flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 sm:p-5">
-        <span className="flex items-center gap-2.5 text-sm font-medium">
-          <PartyPopper className="h-5 w-5 shrink-0" />
-          {t("done", { id: request.event_id })}
-        </span>
-        {can("events.view") ? (
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/events/${request.event_id}`}>
-              <ExternalLink className="h-4 w-4" />
-              {t("open")}
-            </Link>
-          </Button>
-        ) : null}
-      </section>
+      <Door tone="green" aria-label={t("published")}>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <span className="flex items-center gap-2.5 text-[15px] font-bold">
+            <PartyPopper className="size-5 shrink-0" />
+            {t("done", { id: request.event_id })}
+          </span>
+          {can("events.view") ? (
+            <Button asChild variant="outline" className="text-on-door shadow-[inset_0_0_0_1.5px_currentColor] hover:bg-white/12">
+              <Link href={`/events/${request.event_id}`}>
+                <ExternalLink />
+                {t("open")}
+              </Link>
+            </Button>
+          ) : null}
+        </div>
+      </Door>
     );
   }
   if (!request.actions.can_publish) return null;
 
-  const pairs = (actions?.composite_actions ?? []).filter((p) => p.length === 2);
+  const confirmed = request.tasks.find((x) => x.team === "logistics")?.deliverable as LogisticsConfirmation | null;
+  const posterUrl = request.tasks.find((x) => x.team === "design")?.deliverable?.poster_url as string | undefined;
+  const modes = new Set(Object.values(confirmed?.day_modes ?? {}));
+  const place = [confirmed?.venue, confirmed?.room].filter(Boolean).join(" · ");
+  const summary = [
+    confirmed?.start_date ? formatRange(confirmed.start_date, confirmed.end_date) : null,
+    confirmed?.daily_start_time ? `${hhmm(confirmed.daily_start_time)}–${hhmm(confirmed.daily_end_time)}` : null,
+    modes.has("on_site") ? place : null,
+    modes.has("online") ? t("online") : null,
+  ].filter(Boolean);
+
+  const early = request.stage !== "ready";
+
+  const onOpenChange = (open: boolean) => {
+    setAsking(open);
+    if (!open) setChecked(false);
+  };
 
   const onPublish = async () => {
-    const [departmentActionId, memberActionId] = pair.split(":").map(Number);
     try {
-      await publish.mutateAsync({
-        department_action_id: departmentActionId,
-        member_action_id: memberActionId,
-        image_url: imageUrl.trim() || null,
-      });
+      await publish.mutateAsync();
       toast.success(t("published"));
+      onOpenChange(false);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     }
   };
 
-  return (
-    <section className="bg-card border-brand-green/40 flex flex-col gap-4 rounded-xl border p-4 sm:p-5">
-      <div className="flex items-start gap-3">
-        <span className="bg-brand-green-soft text-brand-green-ink flex h-9 w-9 shrink-0 items-center justify-center rounded-lg">
-          <Rocket className="h-[18px] w-[18px]" />
-        </span>
-        <div className="flex flex-col gap-0.5">
-          <h2 className="font-display text-base font-semibold tracking-tight">{t("title")}</h2>
-          <p className="text-muted-foreground text-[13px]">{t("hint")}</p>
+  const preview = (
+    <DoorPanel className="flex-row items-center gap-3">
+      {posterUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- an R2 URL, shown as uploaded
+        <img src={posterUrl} alt="" className="size-16 shrink-0 rounded-sm object-cover shadow-[0_0_0_1px_var(--door-panel-rule)]" />
+      ) : null}
+      <div className="flex min-w-0 flex-col gap-0.5">
+        <bdi className="truncate text-[15px] font-bold">{request.title}</bdi>
+        {summary.length ? <span className="tabular text-[13px] opacity-80">{summary.map(String).map(isolate).join(" · ")}</span> : null}
+        {!posterUrl ? <span className="text-door-madder-ink text-[13px] font-medium">{t("noPoster")}</span> : null}
+      </div>
+    </DoorPanel>
+  );
+
+  const button = (
+    <div className="flex">
+      <Button variant="green" size="lg" className="max-sm:flex-1" onClick={() => setAsking(true)} disabled={publish.isPending}>
+        <Rocket />
+        {behalf ? t("buttonFor") : t("button")}
+      </Button>
+    </div>
+  );
+
+  const dialog = (
+    <AlertDialog open={asking} onOpenChange={onOpenChange}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle className="flex items-center gap-2">
+            <TriangleAlert className="text-door-madder-ink size-5 shrink-0" />
+            {t("confirmTitle")}
+          </AlertDialogTitle>
+          <AlertDialogDescription asChild>
+            <div className="flex flex-col gap-2">
+              <p>{t("confirmBody")}</p>
+              {behalf ? <p className="text-door-madder-ink font-medium">{t(early ? "confirmEarly" : "confirmFor", { name: isolate(departmentName(request.department)) })}</p> : null}
+              <p className="text-foreground font-medium">{t("confirmFinal")}</p>
+            </div>
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex min-h-11 items-start gap-2.5">
+          <Checkbox id="publish-checked" checked={checked} onCheckedChange={(v) => setChecked(v === true)} className="mt-0.5" />
+          <Label htmlFor="publish-checked" className="text-sm leading-snug font-normal">
+            {t("confirmCheck")}
+          </Label>
         </div>
-      </div>
-      <div className="grid gap-4 md:grid-cols-2">
-        <Field label={t("tier")}>
-          <Select value={pair} onValueChange={setPair}>
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder={t("pickTier")} />
-            </SelectTrigger>
-            <SelectContent>
-              {pairs.map(([dept, member]) => (
-                <SelectItem key={`${dept.id}:${member.id}`} value={`${dept.id}:${member.id}`}>
-                  {locale === "ar" ? dept.ar_action_name : dept.action_name} · {member.points}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </Field>
-        <Field label={t("image")} hint={t("imageHint")} optional>
-          <Input dir="ltr" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://" />
-        </Field>
-      </div>
-      <div className="flex">
-        <Button className="max-sm:flex-1" onClick={onPublish} disabled={!pair || publish.isPending}>
-          <Rocket className="h-4 w-4" />
-          {t("button")}
-        </Button>
-      </div>
-    </section>
+        <AlertDialogFooter>
+          <AlertDialogCancel>{t("confirmCancel")}</AlertDialogCancel>
+          <Button variant="green" onClick={onPublish} disabled={!checked || publish.isPending}>
+            <Rocket />
+            {t("confirmButton")}
+          </Button>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+
+  // A super admin publishing someone else's event: theirs to publish, and maybe not ready yet.
+  if (behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="publish-title"
+        title={<span id="publish-title">{early ? t("titleEarly") : t("titleFor")}</span>}
+        note={early ? t("hintEarly") : t("hintFor")}
+        actions={
+          <>
+            {button}
+            {dialog}
+          </>
+        }
+      >
+        <div className="[--door-panel:var(--sunk)] [--door-panel-ink:var(--foreground)] [--door-panel-rule:var(--rule)]">{preview}</div>
+      </BehalfFrame>
+    );
+  }
+
+  return (
+    <Door tone="ochre" aria-labelledby="publish-title">
+      <h2 id="publish-title" className="font-display text-[21px] leading-tight font-semibold">
+        {early ? t("titleEarly") : t("title")}
+      </h2>
+      <p className="text-sm font-medium">{early ? t("hintEarly") : t("hint")}</p>
+      {preview}
+      {button}
+      {dialog}
+    </Door>
   );
 }

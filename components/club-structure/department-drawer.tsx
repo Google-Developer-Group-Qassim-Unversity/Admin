@@ -37,6 +37,7 @@ import type {
 } from "@/lib/club-structure-types";
 import { normalizeArabic } from "@/lib/search-utils";
 import { useClubError } from "@/components/club-structure/use-club-error";
+import { isolate } from "@/lib/format";
 
 function DepartmentRoster({
   semester,
@@ -103,7 +104,6 @@ function DepartmentRoster({
           <Button
             size="sm"
             disabled={disabled || add.isPending || remove.isPending}
-            className="min-h-10 sm:min-h-0"
             onClick={() => {
               add.reset();
               setPicker(true);
@@ -115,24 +115,24 @@ function DepartmentRoster({
         )}
       </div>
       {add.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-door-madder-ink text-sm">
           {describeError(add.error, true)}
         </p>
       )}
       {add.isPending && (
-        <p role="status" className="text-sm text-muted-foreground">
+        <p role="status" className="text-ink-2 text-sm">
           {t("addingMember")}
         </p>
       )}
-      <p className="text-xs text-muted-foreground">{t("memberCount", { count: entries.length })}</p>
+      <p className="border-foreground border-b pb-2 text-sm font-bold tabular">{t("memberCount", { count: entries.length })}</p>
       {visible.length ? (
-        <ul className="space-y-1">
+        <ul className="-mt-2 flex flex-col">
           {visible.map((entry) => (
-            <li key={entry.member.id} className="flex items-center gap-3 rounded-lg p-2 hover:bg-muted/50">
+            <li key={entry.member.id} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2">
               <MemberDetailsTrigger member={entry.member} className="flex min-w-0 flex-1 items-center gap-3">
                 <MemberAvatar name={entry.member.name} />
                 <span className="block min-w-0 flex-1">
-                  <span className="block wrap-anywhere text-sm font-medium underline-offset-2 group-hover/member:underline" dir="auto">
+                  <span className="block text-sm font-bold wrap-anywhere underline-offset-2 group-hover/member:underline" dir="auto">
                     {entry.member.name}
                   </span>
                   <span className="mt-1 flex flex-wrap gap-1">
@@ -144,9 +144,9 @@ function DepartmentRoster({
               </MemberDetailsTrigger>
               {canEdit && (
                 <Button
-                  variant="ghost"
+                  variant="destructive"
                   size="sm"
-                  className="min-h-10 shrink-0 text-destructive sm:min-h-0"
+                  className="shrink-0"
                   disabled={disabled || remove.isPending || add.isPending}
                   aria-label={t("removeMemberNamed", { name: entry.member.name })}
                   onClick={() => {
@@ -161,7 +161,7 @@ function DepartmentRoster({
           ))}
         </ul>
       ) : (
-        <div className="space-y-3 py-10 text-center text-sm text-muted-foreground">
+        <div className="text-ink-2 space-y-3 py-10 text-center text-sm">
           <p>{t(search.trim() ? "noMembersFound" : "noRosterMembers")}</p>
           {search.trim() && (
             <Button variant="outline" size="sm" onClick={() => setSearch("")}>
@@ -180,7 +180,7 @@ function DepartmentRoster({
       )}
       {removing && canEdit && (
         <ConfirmChange
-          title={t("removeConfirm", { name: removing.member.name })}
+          title={t("removeConfirm", { name: isolate(removing.member.name) })}
           description={t("removeHint")}
           pending={remove.isPending}
           disabled={disabled}
@@ -254,7 +254,7 @@ function DepartmentSettingsPanel({
   return (
     <div className="space-y-6">
       {update.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-door-madder-ink text-sm">
           {describeError(update.error, true)}
         </p>
       )}
@@ -267,8 +267,8 @@ function DepartmentSettingsPanel({
         onSubmit={save}
       />
       {canEdit && (
-        <div className="space-y-3 border-t pt-5">
-          <h3 className="text-xs font-semibold text-muted-foreground">{t("departmentStatus")}</h3>
+        <div className="space-y-3 pt-2">
+          <h3 className="border-foreground border-b pb-2 text-base font-bold">{t("departmentStatus")}</h3>
           <Button
             className="w-full"
             variant="outline"
@@ -280,7 +280,7 @@ function DepartmentSettingsPanel({
           >
             {t(department.active ? "archiveDepartment" : "restoreDepartment")}
           </Button>
-          <p className="text-xs leading-relaxed text-muted-foreground">{t("archiveHint")}</p>
+          <p className="text-ink-2 text-[13px] leading-relaxed">{t("archiveHint")}</p>
           {inSemester && (
             <>
               <Button
@@ -294,7 +294,7 @@ function DepartmentSettingsPanel({
               >
                 {t("removeFromSemester", { semester: semester.name })}
               </Button>
-              <p className="text-xs leading-relaxed text-muted-foreground">{t("removeFromSemesterHint")}</p>
+              <p className="text-ink-2 text-[13px] leading-relaxed">{t("removeFromSemesterHint")}</p>
             </>
           )}
         </div>
@@ -372,11 +372,11 @@ export function DepartmentDrawer({
         className="w-full! sm:max-w-[480px]! gap-0"
         closeLabel={common("actions.close")}
       >
-        <SheetHeader className="border-b p-4 pe-12 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6 sm:pe-12">
+        <SheetHeader className="border-rule border-b p-4 pe-12 pt-[max(1rem,env(safe-area-inset-top))] sm:p-6 sm:pe-12">
           <div className="flex items-center gap-3">
-            {current && <DepartmentIcon {...current} />}
+            {current && <DepartmentIcon {...current} size="lg" />}
             <div className="min-w-0 space-y-1">
-              <SheetTitle className="wrap-anywhere">
+              <SheetTitle className="text-xl wrap-anywhere">
                 {current ? name({ ...current, ...(card ?? {}) }) : t("department")}
               </SheetTitle>
               <SheetDescription>{t("drawerDescription", { semester: semester.name })}</SheetDescription>
@@ -428,7 +428,7 @@ export function DepartmentDrawer({
               </ClubTabsTrigger>
             </ClubTabsList>
             {!card && (
-              <p className="border-b bg-muted/40 px-4 py-3 text-xs sm:px-6 text-muted-foreground">
+              <p className="bg-door-indigo-soft text-door-indigo-ink border-rule border-b px-4 py-3 text-[13px] sm:px-6">
                 {t("notInSemesterHint", { semester: semester.name })}
               </p>
             )}
@@ -472,7 +472,7 @@ export function DepartmentDrawer({
                           disabled={disabled}
                         />
                       ))}
-                      <p className="border-t pt-4 text-xs leading-relaxed text-muted-foreground">
+                      <p className="text-ink-2 pt-2 text-[13px] leading-relaxed">
                         {t("leadershipChangeHint")}
                       </p>
                     </>

@@ -4,9 +4,13 @@ import { NextResponse } from 'next/server';
 import { stagingSignIn } from '@/lib/staging-sign-in';
 
 /**
- * Exchange a developer email and the fixed staging code for a Clerk sign-in
- * ticket, which the sign-in page redeems with `signIn.create({ strategy: 'ticket' })`.
- * See lib/staging-sign-in.ts for when this exists at all.
+ * Exchange any email and the fixed staging code for a Clerk sign-in ticket,
+ * which the sign-in page redeems with `signIn.create({ strategy: 'ticket' })`.
+ * Without a code it only checks the email is there, for the page's email step.
+ *
+ * There is no list of who may sign in: whoever does is then just a signed-in
+ * person, and the middleware lets in only current staff, exactly as on
+ * production. See lib/staging-sign-in.ts for when this exists at all.
  */
 export async function POST(request: Request) {
   const staging = stagingSignIn();
@@ -21,8 +25,11 @@ export async function POST(request: Request) {
   const email = typeof body?.email === 'string' ? body.email.trim().toLowerCase() : '';
   const code = typeof body?.code === 'string' ? body.code.trim() : '';
 
-  if (!staging.emails.includes(email)) {
-    return NextResponse.json({ error: 'not_a_developer' }, { status: 403 });
+  if (!email.includes('@')) {
+    return NextResponse.json({ error: 'invalid_email' }, { status: 400 });
+  }
+  if (body?.code === undefined) {
+    return NextResponse.json({ ok: true });
   }
   if (code !== staging.code) {
     return NextResponse.json({ error: 'wrong_code' }, { status: 401 });
@@ -41,8 +48,13 @@ export async function POST(request: Request) {
 
   // The development instance's session token carries publicMetadata but no
   // email claim, and the backend finds a member it has not seen under this
-  // Clerk id by `metadata.email` (Backend/app/helpers.py, resolve_member).
-  await clerk.users.updateUserMetadata(user.id, { publicMetadata: { email } });
+  // Clerk id by `metadata.uni_id`, then `metadata.email` (Backend/app/helpers.py,
+  // resolve_member). A university address is the uni id, and many members'
+  // rows hold a personal email instead, so it is passed as both.
+  const uniId = /^(\d+)@qu\.edu\.sa$/.exec(email)?.[1];
+  await clerk.users.updateUserMetadata(user.id, {
+    publicMetadata: uniId ? { email, uni_id: uniId } : { email },
+  });
 
   const token = await clerk.signInTokens.createSignInToken({
     userId: user.id,

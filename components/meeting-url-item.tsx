@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { Check, Copy, ExternalLink, Loader2, Trash2, Video } from 'lucide-react';
+import { Copy, ExternalLink, Loader2, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -11,7 +11,6 @@ import {
   Item,
   ItemContent,
   ItemDescription,
-  ItemMedia,
   ItemTitle,
 } from '@/components/ui/item';
 import { useUpdateEventMeetingUrl } from '@/hooks/use-event';
@@ -63,20 +62,10 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
   };
 
   return (
-    <Item variant="outline" className={`bg-card ${savedUrl ? 'border-brand-green/40' : ''}`}>
-      <ItemMedia>
-        {/* Green = done: members already have a link to join with. */}
-        <div
-          className={`flex size-10 items-center justify-center rounded-lg ${
-            savedUrl ? 'bg-brand-green-soft text-brand-green-ink' : 'bg-muted text-muted-foreground'
-          }`}
-        >
-          {savedUrl ? <Check className="h-5 w-5" /> : <Video className="h-5 w-5" />}
-        </div>
-      </ItemMedia>
+    <Item className="px-0 py-0">
       <ItemContent className="min-w-0">
-        <ItemTitle>{t('title')}</ItemTitle>
-        <ItemDescription className="line-clamp-none">
+        <ItemTitle className="text-[15px] font-bold">{t('title')}</ItemTitle>
+        <ItemDescription className="text-ink-2 line-clamp-none">
           {savedUrl
             ? t('descriptionSaved')
             : t('descriptionEmpty')}
@@ -114,7 +103,7 @@ export function MeetingUrlItem({ event, onEventChange }: MeetingUrlItemProps) {
           >
             {updateMeetingUrl.isPending ? (
               <>
-                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 {tc('saving')}
               </>
             ) : (

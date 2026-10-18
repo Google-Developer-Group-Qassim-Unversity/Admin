@@ -57,7 +57,7 @@ function CommandDialog({
         // can't cover it; the results scroll inside.
         className={cn(
           "rounded-xl! overflow-hidden p-0 [&>[data-slot=dialog-handle]]:hidden",
-          "max-sm:top-[calc(env(safe-area-inset-top)+0.5rem)] max-sm:bottom-auto max-sm:inset-x-2 max-sm:w-auto max-sm:rounded-2xl! max-sm:pb-0 max-sm:max-h-[calc(100dvh-1rem)] max-sm:[--tw-enter-translate-y:-1rem]! max-sm:[--tw-exit-translate-y:-1rem]!",
+          "max-sm:top-[calc(env(safe-area-inset-top)+0.5rem)] max-sm:bottom-auto max-sm:inset-x-2 max-sm:w-auto max-sm:rounded-xl! max-sm:pb-0 max-sm:max-h-[calc(100dvh-1rem)] max-sm:[--tw-enter-translate-y:-1rem]! max-sm:[--tw-exit-translate-y:-1rem]!",
           className
         )}
         showCloseButton={showCloseButton}

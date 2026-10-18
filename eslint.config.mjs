@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Design mockups, not part of the app.
+    "design-options/**",
   ]),
   {
     // This file builds a manual external store (mutable closure state read
@@ -21,6 +23,16 @@ const eslintConfig = defineConfig([
     files: ["components/ui/file-upload.tsx"],
     rules: {
       "react-hooks/immutability": "off",
+    },
+  },
+  {
+    // The preview harness stands in for Next and Clerk: its stubs swallow
+    // props they do not use and render plain <img>s on purpose.
+    files: ["tests/ui-preview/**"],
+    rules: {
+      "@typescript-eslint/no-unused-vars": "off",
+      "@next/next/no-img-element": "off",
+      "import/no-anonymous-default-export": "off",
     },
   },
 ]);

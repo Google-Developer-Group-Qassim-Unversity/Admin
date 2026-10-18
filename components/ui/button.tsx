@@ -4,27 +4,38 @@ import { Slot } from "radix-ui"
 
 import { cn } from "@/lib/utils"
 
+/**
+ * Mud & Doors buttons. `default` is mud ink, the everyday action. The four door
+ * variants are painted plates and carry state like everything else coloured:
+ * `ochre` for the action that is waiting on the reader (Book dates, Continue),
+ * `green` for finishing something (Submit, Mark done, Publish), `madder` for
+ * an irreversible destructive action, `indigo` rarely, for opening a team's work.
+ */
 const buttonVariants = cva(
-  "focus-visible:border-ring focus-visible:ring-ring/50 aria-invalid:ring-destructive/20 dark:aria-invalid:ring-destructive/40 aria-invalid:border-destructive dark:aria-invalid:border-destructive/50 rounded-md border border-transparent bg-clip-padding text-sm font-medium focus-visible:ring-[3px] aria-invalid:ring-[3px] [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-all active:scale-[0.97] motion-reduce:active:scale-100 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
+  "rounded-lg border border-transparent bg-clip-padding text-sm font-bold focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring aria-invalid:border-destructive [&_svg:not([class*='size-'])]:size-4 inline-flex items-center justify-center whitespace-nowrap transition-[background-color,color,box-shadow,transform,filter] duration-150 active:translate-y-px motion-reduce:active:translate-y-0 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none shrink-0 [&_svg]:shrink-0 outline-none group/button select-none",
   {
     variants: {
       variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/80",
-        outline: "border-border bg-background hover:bg-muted hover:text-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50 aria-expanded:bg-muted aria-expanded:text-foreground shadow-xs",
-        secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80 aria-expanded:bg-secondary aria-expanded:text-secondary-foreground",
-        ghost: "hover:bg-muted hover:text-foreground dark:hover:bg-muted/50 aria-expanded:bg-muted aria-expanded:text-foreground",
-        destructive: "bg-destructive/10 hover:bg-destructive/20 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/20 text-destructive focus-visible:border-destructive/40 dark:hover:bg-destructive/30",
-        link: "text-primary underline-offset-4 hover:underline",
+        default: "bg-primary text-primary-foreground hover:bg-primary/88",
+        outline: "bg-transparent text-foreground shadow-[inset_0_0_0_1px_var(--adobe)] hover:bg-sunk aria-expanded:bg-sunk",
+        secondary: "bg-sunk text-foreground hover:bg-rule aria-expanded:bg-rule",
+        ghost: "text-foreground hover:bg-sunk aria-expanded:bg-sunk",
+        destructive: "bg-door-madder-soft text-door-madder-ink hover:bg-door-madder hover:text-on-door",
+        link: "text-door-indigo-ink underline-offset-4 hover:underline",
+        ochre: "plate-depth bg-door-ochre text-on-door-ochre hover:brightness-105",
+        green: "plate-depth bg-door-green text-on-door hover:brightness-110",
+        madder: "plate-depth bg-door-madder text-on-door hover:brightness-110",
+        indigo: "plate-depth bg-door-indigo text-on-door hover:brightness-110",
       },
       size: {
-        default: "h-9 pointer-coarse:h-10 gap-1.5 px-2.5 pointer-coarse:px-3.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
-        xs: "h-6 gap-1 rounded-[min(var(--radius-md),8px)] px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&_svg:not([class*='size-'])]:size-3",
-        sm: "h-8 pointer-coarse:h-9 gap-1 rounded-[min(var(--radius-md),10px)] px-2.5 in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5",
-        lg: "h-10 pointer-coarse:h-11 gap-1.5 px-2.5 has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3",
-        icon: "size-9 pointer-coarse:size-10",
-        "icon-xs": "size-6 rounded-[min(var(--radius-md),8px)] in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
-        "icon-sm": "size-8 pointer-coarse:size-9 rounded-[min(var(--radius-md),10px)] in-data-[slot=button-group]:rounded-md",
-        "icon-lg": "size-10 pointer-coarse:size-11",
+        default: "h-10 pointer-coarse:h-11 gap-2 px-4 in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-3 has-data-[icon=inline-start]:ps-3",
+        xs: "h-7 gap-1 rounded-md px-2 text-xs in-data-[slot=button-group]:rounded-md has-data-[icon=inline-end]:pe-1.5 has-data-[icon=inline-start]:ps-1.5 [&_svg:not([class*='size-'])]:size-3",
+        sm: "h-8 pointer-coarse:h-10 gap-1.5 px-3 text-[13px] in-data-[slot=button-group]:rounded-lg has-data-[icon=inline-end]:pe-2 has-data-[icon=inline-start]:ps-2",
+        lg: "h-11 pointer-coarse:h-12 gap-2 px-5 text-[15px] has-data-[icon=inline-end]:pe-4 has-data-[icon=inline-start]:ps-4",
+        icon: "size-10 pointer-coarse:size-11",
+        "icon-xs": "size-7 rounded-md in-data-[slot=button-group]:rounded-md [&_svg:not([class*='size-'])]:size-3",
+        "icon-sm": "size-8 pointer-coarse:size-10 in-data-[slot=button-group]:rounded-lg",
+        "icon-lg": "size-11 pointer-coarse:size-12",
       },
     },
     defaultVariants: {

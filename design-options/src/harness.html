@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GDG Admin Directions</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'><circle cx='8' cy='8' r='7' fill='%234285F4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Arabic:wght@400;500;600;700&display=swap">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+<style>
+  :root {
+    --h-bg: #f3f3f1; --h-panel: #ffffff; --h-ink: #1b1b1a; --h-mute: #66655f; --h-line: #e1e0db;
+    --h-accent: #1a73e8; --h-chip: #ecebe6;
+    color-scheme: light;
+  }
+  :root[data-chrome="dark"] {
+    --h-bg: #121212; --h-panel: #1b1b1b; --h-ink: #ecebe7; --h-mute: #a3a29c; --h-line: #2c2c2b;
+    --h-accent: #8ab4f8; --h-chip: #262625;
+    color-scheme: dark;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--h-bg); color: var(--h-ink);
+    font: 15px/1.55 system-ui, "Noto Sans Arabic", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: color-mix(in srgb, var(--h-accent) 30%, transparent); }
+  .h-wrap { max-width: 1760px; margin: 0 auto; padding: 0 24px; }
+  header.h-top { padding: 28px 0 8px; }
+  .h-top-row { display: flex; align-items: center; gap: 14px; }
+  .h-top-row img { height: 30px; width: auto; }
+  .h-top h1 { font-size: 22px; line-height: 1.25; margin: 0; font-weight: 700; letter-spacing: -0.01em; }
+  .h-top p { margin: 6px 0 0; color: var(--h-mute); max-width: 82ch; }
+
+  .h-bar {
+    position: sticky; top: 0; z-index: 100;
+    background: color-mix(in srgb, var(--h-bg) 88%, transparent);
+    backdrop-filter: saturate(1.4) blur(10px);
+    border-bottom: 1px solid var(--h-line);
+  }
+  .h-bar-in { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding-block: 10px; }
+  .h-tabs { display: flex; gap: 4px; flex-wrap: wrap; flex: 1; }
+  .h-tab {
+    appearance: none; border: 1px solid transparent; background: transparent; color: var(--h-mute);
+    font: inherit; font-weight: 600; font-size: 14px; padding: 7px 12px; border-radius: 9px; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 8px; white-space: nowrap;
+  }
+  .h-tab:hover { color: var(--h-ink); background: var(--h-chip); }
+  .h-tab[aria-selected="true"] { color: var(--h-ink); background: var(--h-panel); border-color: var(--h-line); box-shadow: 0 1px 2px rgb(0 0 0 / .06); }
+  .h-tab .n { font-variant-numeric: tabular-nums; opacity: .55; }
+  .h-tab .sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+  .h-seg { display: inline-flex; background: var(--h-chip); border-radius: 10px; padding: 3px; gap: 2px; }
+  .h-seg button {
+    appearance: none; border: 0; background: transparent; color: var(--h-mute); font: inherit; font-size: 13px; font-weight: 600;
+    padding: 5px 11px; border-radius: 8px; cursor: pointer;
+  }
+  .h-seg button[aria-pressed="true"] { background: var(--h-panel); color: var(--h-ink); box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+  .h-tab:focus-visible, .h-seg button:focus-visible, .h-open:focus-visible { outline: 2px solid var(--h-accent); outline-offset: 2px; }
+
+  main { padding: 26px 0 80px; }
+  .h-section-title { font-size: 13px; font-weight: 700; color: var(--h-mute); margin: 34px 0 14px; display: flex; align-items: center; gap: 10px; }
+  .h-section-title::after { content: ""; flex: 1; height: 1px; background: var(--h-line); }
+
+  /* Design intro */
+  .h-intro { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: 28px; background: var(--h-panel); border: 1px solid var(--h-line); border-radius: 16px; padding: 24px 26px; }
+  .h-intro h2 { margin: 0; font-size: 26px; line-height: 1.2; letter-spacing: -0.015em; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; }
+  .h-intro h2 small { font-size: 14px; font-weight: 600; color: var(--h-mute); letter-spacing: 0; }
+  .h-badge { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 99px; background: var(--h-chip); color: var(--h-ink); white-space: nowrap; }
+  .h-intro .thesis { margin: 10px 0 0; font-size: 16px; max-width: 70ch; }
+  .h-dl { display: grid; grid-template-columns: max-content 1fr; gap: 8px 16px; margin: 0; font-size: 14px; }
+  .h-dl dt { color: var(--h-mute); font-weight: 600; }
+  .h-dl dd { margin: 0; }
+  .h-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .h-chip { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; padding: 4px 9px 4px 5px; border-radius: 8px; background: var(--h-chip); }
+  [dir="rtl"] .h-chip { padding: 4px 5px 4px 9px; }
+  .h-chip i { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / .12); display: inline-block; }
+  .h-chip code { font: 11px/1 ui-monospace, monospace; opacity: .7; direction: ltr; }
+  .h-raises { margin: 14px 0 0; padding: 0; list-style: none; display: grid; gap: 6px; font-size: 13.5px; color: var(--h-mute); }
+  .h-raises b { color: var(--h-ink); font-weight: 600; }
+
+  /* Phones */
+  .h-phones { display: flex; gap: 28px; overflow-x: auto; padding: 4px 4px 18px; scroll-snap-type: x mandatory; }
+  .h-phone-col { flex: none; display: flex; flex-direction: column; gap: 12px; scroll-snap-align: start; }
+  .h-cap { font-size: 13px; font-weight: 600; color: var(--h-mute); text-align: center; }
+  .h-cap b { color: var(--h-ink); display: block; font-size: 14px; }
+  .phone {
+    width: 414px; height: 868px; padding: 12px; border-radius: 62px; flex: none;
+    background: #0d0d0d; box-shadow: 0 0 0 1.5px #3a3a3a inset, 0 24px 60px -24px rgb(0 0 0 / .45), 0 2px 6px rgb(0 0 0 / .2);
+    position: relative; zoom: var(--pz, 1);
+  }
+  .screen {
+    width: 390px; height: 844px; border-radius: 50px; overflow: hidden auto; position: relative;
+    scrollbar-width: none; isolation: isolate;
+  }
+  .screen::-webkit-scrollbar { display: none; }
+  .sb {
+    position: sticky; top: 0; z-index: 60; height: 47px; display: flex; align-items: center; justify-content: space-between;
+    padding: 6px 32px 0; font: 600 16px/1 system-ui, sans-serif; color: var(--sb, #000); background: var(--sb-bg, transparent);
+    direction: ltr;
+  }
+  .sb .isl { position: absolute; left: 50%; top: 11px; width: 122px; height: 35px; border-radius: 20px; background: #000; transform: translateX(-50%); }
+  .sb svg { height: 12px; fill: currentColor; }
+  .sb .icons { display: flex; gap: 6px; align-items: center; }
+  .screen-body { min-height: 797px; display: flex; flex-direction: column; }
+  .screen-body > * { flex: 1 0 auto; }
+  .home-ind { position: sticky; bottom: 0; height: 0; z-index: 70; pointer-events: none; }
+  .home-ind::after { content: ""; position: absolute; bottom: 8px; left: 50%; width: 134px; height: 5px; border-radius: 3px; background: var(--sb, #000); transform: translateX(-50%); opacity: .9; }
+
+  /* Desktop */
+  .desk { border-radius: 14px; overflow: hidden; border: 1px solid var(--h-line); box-shadow: 0 30px 70px -30px rgb(0 0 0 / .35); background: #000; }
+  .desk-chrome { height: 40px; background: var(--h-panel); display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--h-line); direction: ltr; }
+  .desk-chrome .dots { display: flex; gap: 7px; }
+  .desk-chrome .dots i { width: 12px; height: 12px; border-radius: 50%; background: var(--h-line); display: block; }
+  .desk-chrome .url { flex: 1; max-width: 520px; margin: 0 auto; height: 26px; border-radius: 8px; background: var(--h-chip); color: var(--h-mute); font-size: 12.5px; display: flex; align-items: center; justify-content: center; }
+  .desk-stage { overflow: hidden; }
+  .desk-screen { width: 1440px; height: 900px; overflow: hidden auto; zoom: var(--dz, 1); position: relative; isolation: isolate; scrollbar-width: thin; }
+
+  /* Compare */
+  .h-compare { display: grid; grid-template-columns: repeat(4, max-content); gap: 26px; justify-content: center; overflow-x: auto; padding-bottom: 10px; }
+  .h-compare .h-phone-col { align-items: center; }
+  .h-open { appearance: none; border: 1px solid var(--h-line); background: var(--h-panel); color: var(--h-ink); font: inherit; font-weight: 600; font-size: 14px; padding: 9px 14px; border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
+  .h-open:hover { border-color: var(--h-mute); }
+  .h-cmp-head { text-align: center; max-width: 380px; }
+  .h-cmp-head h3 { margin: 0; font-size: 18px; display: flex; gap: 8px; align-items: center; justify-content: center; flex-wrap: wrap; }
+  .h-cmp-head p { margin: 4px 0 0; color: var(--h-mute); font-size: 13.5px; }
+  .h-also { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 10px; }
+  .h-also > div { background: var(--h-panel); border: 1px solid var(--h-line); border-radius: 12px; padding: 12px 14px; font-size: 13.5px; color: var(--h-mute); }
+  .h-also b { color: var(--h-ink); display: block; font-size: 14px; margin-bottom: 2px; }
+
+  @media (max-width: 1100px) {
+    .h-intro { grid-template-columns: 1fr; }
+    .h-compare { grid-template-columns: repeat(2, max-content); }
+  }
+  @media (max-width: 700px) {
+    .h-wrap { padding: 0 16px; }
+    .h-compare { grid-template-columns: max-content; }
+    .h-intro { padding: 18px; }
+  }
+  [dir="rtl"] .flip-rtl { transform: scaleX(-1); }
+</style>
+</head>
+<body>
+<header class="h-top"><div class="h-wrap">
+  <div class="h-top-row"><img id="h-logo" alt="GDG" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" width="54" height="30"><h1 id="h-title"></h1></div>
+  <p id="h-sub"></p>
+</div></header>
+<div class="h-bar"><div class="h-wrap h-bar-in">
+  <div class="h-tabs" role="tablist" id="h-tabs"></div>
+  <div class="h-seg" id="h-lang" aria-label="Language">
+    <button data-v="ar">عربي</button><button data-v="en">English</button>
+  </div>
+  <div class="h-seg" id="h-theme" aria-label="Theme">
+    <button data-v="light"></button><button data-v="dark"></button>
+  </div>
+</div></div>
+<main><div class="h-wrap" id="h-main"></div></main>
+
+<!--SCRIPTS-->
+
+<script>
+(function () {
+  const D = window.GDG_DATA;
+  const DESIGNS = (window.GDG_DESIGNS || []).slice().sort((a, b) => a.order - b.order);
+  const LOAD = Date.now();
+  const params = new URLSearchParams(location.search);
+  const state = {
+    view: params.get("d") || "compare",
+    lang: params.get("lang") || "ar",
+    theme: params.get("theme") || "light",
+  };
+
+  // Fonts each design asked for.
+  const fams = new Set();
+  DESIGNS.forEach((d) => (d.meta.fonts || []).forEach((f) => fams.add(f)));
+  if (fams.size) {
+    const l = document.createElement("link");
+    l.rel = "stylesheet";
+    l.href = "https://fonts.googleapis.com/css2?" + [...fams].map((f) => "family=" + f).join("&") + "&display=swap";
+    document.head.appendChild(l);
+  }
+  // Each design's CSS, once.
+  DESIGNS.forEach((d) => {
+    const s = document.createElement("style");
+    s.dataset.design = d.id;
+    s.textContent = d.css;
+    document.head.appendChild(s);
+  });
+
+  const AR_DIGITS = "٠١٢٣٤٥٦٧٨٩";
+  function makeCtx(scope) {
+    const lang = state.lang;
+    const loc = lang === "ar" ? "ar-u-nu-arab" : "en-GB";
+    const nf = new Intl.NumberFormat(loc);
+    const t = (ar, en) => (lang === "ar" ? ar : en);
+    const L = (o) => (o == null ? "" : typeof o === "string" || typeof o === "number" ? String(o) : o[lang] ?? o.en ?? "");
+    const digits = (s) => (lang === "ar" ? String(s).replace(/[0-9]/g, (c) => AR_DIGITS[c]) : String(s));
+    const toDate = (iso) => new Date(iso + "T00:00:00Z");
+    const date = (iso, opts) => new Intl.DateTimeFormat(loc, { timeZone: "UTC", ...(opts || { day: "numeric", month: "short" }) }).format(toDate(iso));
+    const range = (a, b, opts) => {
+      const f = new Intl.DateTimeFormat(loc, { timeZone: "UTC", ...(opts || { day: "numeric", month: "short" }) });
+      return !b || b === a ? f.format(toDate(a)) : f.formatRange(toDate(a), toDate(b));
+    };
+    const weekday = (iso, style) => new Intl.DateTimeFormat(loc, { timeZone: "UTC", weekday: style || "short" }).format(toDate(iso));
+    const cd = (ms, style) => `<span class="cd" data-cd-target="${LOAD + ms}" data-cd-style="${style || "hm"}">${fmtCd(ms, style || "hm")}</span>`;
+    const icon = (name, cls) => `<i data-lucide="${name}"${cls ? ` class="${cls}"` : ""}></i>`;
+    const logo = (h, cls) => `<img src="${window.GDG_LOGO}" alt="GDG" style="height:${h}px;width:auto" class="${cls || ""}">`;
+    return {
+      lang, dir: lang === "ar" ? "rtl" : "ltr", theme: state.theme, scope, data: D,
+      t, L, n: (x) => nf.format(x), digits, date, range, weekday, cd, icon, logo,
+      dept: (k) => D.departments[k], req: (id) => D.byId[id],
+    };
+  }
+  function fmtCd(ms, style) {
+    const lang = state.lang;
+    if (ms <= 0) return lang === "ar" ? "انتهى" : "expired";
+    const s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+    const p = (x) => String(x).padStart(2, "0");
+    let out;
+    if (style === "hms") out = `${p(h)}:${p(m)}:${p(sec)}`;
+    else out = lang === "ar" ? `${h}س ${m}د` : `${h}h ${m}m`;
+    return lang === "ar" ? out.replace(/[0-9]/g, (c) => AR_DIGITS[c]) : out;
+  }
+  setInterval(() => {
+    const now = Date.now();
+    document.querySelectorAll(".cd[data-cd-target]").forEach((el) => {
+      el.textContent = fmtCd(+el.dataset.cdTarget - now, el.dataset.cdStyle);
+    });
+  }, 1000);
+
+  const STATUS_SVG = `<span class="icons"><svg viewBox="0 0 18 12"><rect x="0" y="8" width="3" height="4" rx="1"/><rect x="5" y="5.5" width="3" height="6.5" rx="1"/><rect x="10" y="3" width="3" height="9" rx="1"/><rect x="15" y="0" width="3" height="12" rx="1"/></svg><svg viewBox="0 0 16 12"><path d="M8 2.6c2.2 0 4.2.9 5.7 2.3l1.1-1.1A9.6 9.6 0 0 0 8 1 9.6 9.6 0 0 0 1.2 3.8l1.1 1.1A8 8 0 0 1 8 2.6Zm0 3.2c1.3 0 2.5.5 3.4 1.4l1.1-1.1A6.4 6.4 0 0 0 8 4.2c-1.8 0-3.4.7-4.5 1.9l1.1 1.1c.9-.9 2.1-1.4 3.4-1.4Zm0 3.2c-.5 0-1 .2-1.3.6L8 11l1.3-1.4c-.3-.4-.8-.6-1.3-.6Z"/></svg><svg viewBox="0 0 27 12"><rect x=".5" y=".5" width="22" height="11" rx="3" fill="none" stroke="currentColor" opacity=".45"/><rect x="2" y="2" width="17" height="8" rx="1.8"/><rect x="24" y="4" width="2" height="4" rx="1" opacity=".5"/></svg></span>`;
+
+  const PHONES = [
+    { key: "home", cap: { ar: "الرئيسية", en: "Home" }, sub: { ar: "المسار مدمج في لوحة التحكم", en: "The pipeline, built into the dashboard" } },
+    { key: "book", cap: { ar: "حجز الأيام", en: "Book dates" }, sub: { ar: "أول خطوة في كل فعالية", en: "The first step of every event" } },
+    { key: "request", cap: { ar: "داخل الطلب", en: "Inside a request" }, sub: { ar: "وين وصل وش باقي", en: "Where it stands, what is left" } },
+    { key: "inbox", cap: { ar: "بانتظار فريقك", en: "Team inbox" }, sub: { ar: "التصميم · اللوجستيات · الإعلام", en: "Design · Logistics · Media" } },
+  ];
+
+  function phone(design, key) {
+    const ctx = makeCtx("phone");
+    let body = "";
+    try { body = design.phone[key](ctx); } catch (e) { body = `<pre style="padding:20px;white-space:pre-wrap">${e.stack}</pre>`; console.error(e); }
+    return `<div class="phone"><div class="screen dz d-${design.id}" data-theme="${state.theme}" dir="${ctx.dir}" lang="${ctx.lang}" data-screen="${key}">
+      <div class="sb"><span>${ctx.digits("9:41")}</span><span class="isl"></span>${STATUS_SVG}</div>
+      <div class="screen-body">${body}</div><div class="home-ind"></div></div></div>`;
+  }
+  function desktop(design) {
+    const ctx = makeCtx("desktop");
+    let body = "";
+    try { body = design.desktop(ctx); } catch (e) { body = `<pre style="padding:20px;white-space:pre-wrap">${e.stack}</pre>`; console.error(e); }
+    return `<div class="desk"><div class="desk-chrome"><span class="dots"><i></i><i></i><i></i></span><span class="url">admin · GDG Qassim</span></div>
+      <div class="desk-stage"><div class="desk-screen dz d-${design.id}" data-theme="${state.theme}" dir="${ctx.dir}" lang="${ctx.lang}" data-screen="desktop">${body}</div></div></div>`;
+  }
+
+  const T = (o) => o[state.lang];
+  const UI = {
+    title: { ar: "لوحة إدارة GDG القصيم: أربعة اتجاهات للتصميم", en: "GDG Qassim admin: four design directions" },
+    sub: {
+      ar: "نفس البيانات ونفس الشاشات في الأربعة، والفرق في التصميم فقط. مسار الفعاليات مدمج في الرئيسية. جرّب الشاشات على الجوال (تقدر تمرر داخل كل جوال)، وبدّل اللغة والوضع الداكن من الشريط. البيانات أمثلة توضيحية.",
+      en: "Same data and the same screens in all four; only the design differs. The event pipeline lives on the home screen. Scroll inside each phone, and switch language and dark mode from the bar. All data is sample data.",
+    },
+    compare: { ar: "مقارنة", en: "Compare" },
+    light: { ar: "فاتح", en: "Light" }, dark: { ar: "داكن", en: "Dark" },
+    phones: { ar: "الجوال", en: "Phone" }, desktop: { ar: "سطح المكتب", en: "Desktop" },
+    open: { ar: "افتح التصميم", en: "Open this design" },
+    cmpTitle: { ar: "الرئيسية في كل تصميم", en: "Home, in each design" },
+    also: { ar: "اتجاهات درسناها واستبعدناها", en: "Directions weighed and set aside" },
+    dl: { palette: { ar: "الألوان", en: "Palette" }, type: { ar: "الخط", en: "Type" }, why: { ar: "ليش يناسب", en: "Why it fits" }, risk: { ar: "المخاطرة", en: "Honest risk" }, nav: { ar: "التنقل", en: "Navigation" } },
+    borrowed: { ar: "أخذ من غيره", en: "Borrowed" },
+  };
+
+  const ALSO = [
+    { name: { ar: "لوحة المغادرة (ألواح متقلبة)", en: "Split-flap departures board" }, why: { ar: "ممتاز لمتابعة الحالة لكنه يخنق النماذج الطويلة في خلايا ثابتة، والأسود مع الكهرماني مزعج للعين. أخذنا منه صفوف الأعمدة الثابتة في «خط المترو».", en: "Great for status, but it squeezes long forms into fixed cells, and black-and-amber is not comfortable. Its fixed-column rows went into Metro Line." } },
+    { name: { ar: "شبكة كراوِل الطباعية", en: "Crouwel type grid" }, why: { ar: "بعيد عن جمهور النادي. أخذنا منه الشبكة الظاهرة كهيكل حقيقي، فصار التقويم في «الطين والأبواب» مداميك طوب.", en: "Far from the club's world. Its visible, structural grid became Mud & Doors' brick-course calendar." } },
+    { name: { ar: "صفحة المراجع ذات العمود الأوسط", en: "Centre-rail reference page" }, why: { ar: "كتابي أكثر من اللازم لأداة تشغيل. أخذنا منه الانضباط: ثلاث قيم لونية في الوضع الهادئ وخطوط بدقة بكسل واحد.", en: "Too bookish for an operations tool. Kept its discipline: three values at rest, one-pixel rules." } },
+    { name: { ar: "الوضع المعتاد", en: "The category standard" }, why: { ar: "قائمة جانبية وبطاقات أرقام وجداول، مثل التطبيق الحالي تقريبًا. متاح دائمًا لو تبيه، بس ما نوصي فيه.", en: "Sidebar, KPI tiles and tables, close to today's app. Always available if you want it; not what we recommend." } },
+  ];
+
+  function renderTabs() {
+    const tabs = [{ id: "compare", label: T(UI.compare) }].concat(
+      DESIGNS.map((d, i) => ({ id: d.id, label: d.meta.name[state.lang], n: i + 1, sw: d.meta.swatch })),
+    );
+    document.getElementById("h-tabs").innerHTML = tabs
+      .map((t) => `<button class="h-tab" role="tab" data-v="${t.id}" aria-selected="${state.view === t.id}">${t.n ? `<span class="n">${t.n}</span>` : ""}${t.sw ? `<span class="sw" style="background:${t.sw}"></span>` : ""}${t.label}</button>`)
+      .join("");
+  }
+
+  function renderIntro(d) {
+    const m = d.meta;
+    const chips = (m.palette || []).map((p) => `<span class="h-chip"><i style="background:${p.hex}"></i>${T(p.name)} <code>${p.hex}</code></span>`).join("");
+    const raises = (m.raises || []).map((r) => `<li><b>${T(UI.borrowed)}:</b> ${T(r)}</li>`).join("");
+    return `<section class="h-intro">
+      <div>
+        <h2>${T(m.name)} <small>${T(m.tagline)}</small>${m.badge ? `<span class="h-badge">${T(m.badge)}</span>` : ""}</h2>
+        <p class="thesis">${T(m.thesis)}</p>
+        <div class="h-chips">${chips}</div>
+        ${raises ? `<ul class="h-raises">${raises}</ul>` : ""}
+      </div>
+      <dl class="h-dl">
+        <dt>${T(UI.dl.type)}</dt><dd>${T(m.type)}</dd>
+        <dt>${T(UI.dl.nav)}</dt><dd>${T(m.nav)}</dd>
+        <dt>${T(UI.dl.why)}</dt><dd>${T(m.why)}</dd>
+        <dt>${T(UI.dl.risk)}</dt><dd>${T(m.risk)}</dd>
+      </dl>
+    </section>`;
+  }
+
+  function renderDesign(d) {
+    return `${renderIntro(d)}
+      <div class="h-section-title">${T(UI.phones)}</div>
+      <div class="h-phones">${PHONES.map((p) => `<div class="h-phone-col">${phone(d, p.key)}<div class="h-cap"><b>${T(p.cap)}</b>${T(p.sub)}</div></div>`).join("")}</div>
+      <div class="h-section-title">${T(UI.desktop)}</div>
+      ${desktop(d)}`;
+  }
+
+  function renderCompare() {
+    return `<div class="h-section-title" style="margin-top:6px">${T(UI.cmpTitle)}</div>
+      <div class="h-compare">${DESIGNS.map((d, i) => `<div class="h-phone-col">
+        <div class="h-cmp-head"><h3><span style="opacity:.5">${i + 1}</span> ${T(d.meta.name)}${d.meta.badge ? ` <span class="h-badge">${T(d.meta.badge)}</span>` : ""}</h3><p>${T(d.meta.tagline)}</p></div>
+        ${phone(d, "home")}
+        <button class="h-open" data-open="${d.id}">${T(UI.open)} ${state.lang === "ar" ? "←" : "→"}</button>
+      </div>`).join("")}</div>
+      <div class="h-section-title">${T(UI.also)}</div>
+      <div class="h-also">${ALSO.map((a) => `<div><b>${T(a.name)}</b>${T(a.why)}</div>`).join("")}</div>`;
+  }
+
+  function fit() {
+    const main = document.getElementById("h-main");
+    const w = main.clientWidth;
+    document.querySelectorAll(".desk-stage").forEach((st) => st.firstElementChild.style.setProperty("--dz", st.clientWidth / 1440));
+    let pz = w < 440 ? Math.max(0.6, (w - 16) / 414) : 1;
+    // Compare: fit the columns the grid shows (4, 2 or 1) without clipping.
+    const cmp = document.querySelector(".h-compare");
+    if (cmp) {
+      const cols = getComputedStyle(cmp).gridTemplateColumns.split(" ").length;
+      pz = Math.min(pz, (w - 26 * (cols - 1) - 8) / (cols * 414));
+    }
+    document.documentElement.style.setProperty("--pz", pz);
+  }
+
+  function render() {
+    document.documentElement.lang = state.lang;
+    document.documentElement.dir = state.lang === "ar" ? "rtl" : "ltr";
+    document.documentElement.dataset.chrome = state.theme;
+    document.getElementById("h-logo").src = window.GDG_LOGO;
+    document.getElementById("h-title").textContent = T(UI.title);
+    document.getElementById("h-sub").textContent = T(UI.sub);
+    document.querySelectorAll("#h-theme button").forEach((b) => (b.textContent = T(UI[b.dataset.v])));
+    document.querySelectorAll("#h-lang button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === state.lang));
+    document.querySelectorAll("#h-theme button").forEach((b) => b.setAttribute("aria-pressed", b.dataset.v === state.theme));
+    renderTabs();
+    const d = DESIGNS.find((x) => x.id === state.view);
+    const main = document.getElementById("h-main");
+    main.innerHTML = d ? renderDesign(d) : renderCompare();
+    if (window.lucide) window.lucide.createIcons();
+    fit();
+    const ctx = makeCtx("after");
+    (d ? [d] : DESIGNS).forEach((x) => { try { x.after && x.after(main, ctx); } catch (e) { console.error(e); } });
+    const u = new URL(location.href);
+    u.searchParams.set("d", state.view); u.searchParams.set("lang", state.lang); u.searchParams.set("theme", state.theme);
+    history.replaceState(null, "", u);
+  }
+
+  document.getElementById("h-tabs").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]"); if (!b) return;
+    state.view = b.dataset.v; render(); window.scrollTo({ top: 0 });
+  });
+  document.getElementById("h-main").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-open]"); if (!b) return;
+    state.view = b.dataset.open; render(); window.scrollTo({ top: 0 });
+  });
+  document.getElementById("h-lang").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]"); if (!b) return; state.lang = b.dataset.v; render();
+  });
+  document.getElementById("h-theme").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-v]"); if (!b) return; state.theme = b.dataset.v; render();
+  });
+  window.addEventListener("resize", fit);
+  render();
+})();
+</script>
+</body>
+</html>

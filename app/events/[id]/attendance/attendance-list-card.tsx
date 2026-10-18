@@ -1,13 +1,14 @@
 'use client';
 
 import { useMemo } from 'react';
-import { Search, Users, Loader2, RefreshCw, UserPlus } from 'lucide-react';
+import { Search, Users, RefreshCw, UserPlus } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Empty, EmptyDescription, EmptyHeader, EmptyMedia } from '@/components/ui/empty';
+import { SectionHead } from '@/components/najdi';
 import { MemberDetailsTrigger } from '@/components/member-details';
-import { Card, CardHeader, CardTitle, CardDescription, CardAction, CardContent } from '@/components/ui/card';
 import {
   Select,
   SelectContent,
@@ -80,26 +81,20 @@ export function AttendanceListCard({
   const showDaySelect = isMultiDay || dayOptions.length > 1;
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2 font-display text-base font-semibold tracking-tight">
-          <Users className="h-5 w-5 text-muted-foreground" />
-          {t('title')}
-        </CardTitle>
-        <CardDescription className="text-[13px] sm:text-sm">{t('description')}</CardDescription>
-        <CardAction>
-          <Badge variant="secondary" className="tabular h-7 px-3 text-sm">
-            {t('attendeesCount', { count: attendanceCount })}
-          </Badge>
-        </CardAction>
-      </CardHeader>
-      <CardContent>
+    <section aria-labelledby="attendance-list" className="flex flex-col gap-3">
+      <SectionHead
+        id="attendance-list"
+        title={t('title')}
+        action={<span className="tabular text-ink-2 font-bold">{t('attendeesCount', { count: attendanceCount })}</span>}
+      />
+      <p className="text-ink-2 -mt-1 text-[13.5px]">{t('description')}</p>
+      <div>
         {/* Phone: search + refresh, then day filter + manage. sm+: one row
             (the wrappers dissolve with `contents`). */}
         <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:gap-3">
           <div className="flex gap-2 sm:contents">
             <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
               <Input
                 type="search"
                 inputMode="search"
@@ -118,7 +113,7 @@ export function AttendanceListCard({
               disabled={isFetching}
               title={t('refresh')}
               aria-label={t('refresh')}
-              className="shrink-0 pointer-coarse:size-10"
+              className="shrink-0"
             >
               <RefreshCw className={`h-4 w-4 ${isFetching ? 'animate-spin' : ''}`} />
             </Button>
@@ -140,33 +135,42 @@ export function AttendanceListCard({
               </Select>
             )}
             <Button variant="outline" onClick={onManageClick} className="w-full sm:w-auto">
-              <UserPlus className="h-4 w-4" />
+              <UserPlus />
               {t('manage')}
             </Button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Loader2 className="mb-3 h-8 w-8 animate-spin" />
-            <p className="text-sm">{t('loading')}</p>
-          </div>
+          <ul className="flex flex-col" aria-busy="true" aria-label={t('loading')}>
+            {[0, 1, 2, 3].map((i) => (
+              <li key={i} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2.5">
+                <div className="flex flex-1 flex-col gap-1.5">
+                  <Skeleton className="h-4 w-2/5" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+                <Skeleton className="h-4 w-14" />
+              </li>
+            ))}
+          </ul>
         ) : filteredAttendance.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-            <Users className="mb-3 h-10 w-10 opacity-40" />
-            <p className="text-sm">
-              {searchQuery.trim() ? t('noMatchSearch') : t('noneYet')}
-            </p>
-          </div>
+          <Empty className="py-10">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyDescription>{searchQuery.trim() ? t('noMatchSearch') : t('noneYet')}</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <>
             {searchQuery.trim() && (
-              <p className="mb-3 text-[13px] text-muted-foreground tabular">
+              <p className="mb-3 text-[13px] text-ink-2 tabular">
                 {t('showingOf', { shown: filteredAttendance.length, total: attendanceCount })}
               </p>
             )}
 
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border">
+            <ul className="flex flex-col">
               {filteredAttendance.map((record) => {
                 const member = record.Member;
                 const dayNumbers = record.dates
@@ -179,10 +183,10 @@ export function AttendanceListCard({
                   : null;
 
                 return (
-                  <li key={member.id} className="flex min-h-14 items-center gap-3 px-3 py-2.5 sm:px-4">
+                  <li key={member.id} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2.5">
                     <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-medium"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
-                      <p className="truncate text-[13px] text-muted-foreground">
+                      <p className="truncate text-[15px] font-bold"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
+                      <p className="truncate text-[13px] text-ink-2">
                         <span className="tabular" dir="ltr">
                           {member.uni_id ?? member.email}
                         </span>
@@ -192,7 +196,7 @@ export function AttendanceListCard({
                       {latest && !Number.isNaN(latest.getTime()) && (
                         <time
                           dateTime={latest.toISOString()}
-                          className="tabular text-[13px] text-muted-foreground"
+                          className="tabular text-[13px] text-ink-2"
                         >
                           {format.dateTime(latest, { hour: 'numeric', minute: '2-digit' })}
                         </time>
@@ -203,7 +207,7 @@ export function AttendanceListCard({
                             <span
                               key={dayNum}
                               title={t('day', { number: dayNum })}
-                              className="tabular inline-flex h-5 min-w-5 items-center justify-center rounded-md bg-brand-green-soft px-1 text-xs font-semibold text-brand-green-ink"
+                              className="tabular inline-flex h-6 min-w-6 items-center justify-center rounded-sm bg-door-green px-1 text-xs font-bold text-on-door"
                             >
                               {dayNum}
                             </span>
@@ -217,7 +221,7 @@ export function AttendanceListCard({
             </ul>
           </>
         )}
-      </CardContent>
-    </Card>
+      </div>
+    </section>
   );
 }

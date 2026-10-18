@@ -10,8 +10,9 @@ import { MemberAvatar } from "@/components/club-structure/shared";
 import { MemberDetailsTrigger } from "@/components/member-details";
 import { useClubMutation } from "@/hooks/use-club-structure";
 import type { ClubMember, ClubRoleKey } from "@/lib/club-structure-types";
-import { cn } from "@/lib/utils";
+import { Mark } from "@/components/najdi";
 import { useClubError } from "@/components/club-structure/use-club-error";
+import { isolate } from "@/lib/format";
 
 /** What the confirmation is about to do: give the role to `member`, or take it from `previous`. */
 type PendingChange = { member: ClubMember | null; previous: ClubMember | null };
@@ -69,23 +70,22 @@ export function RoleSeatCard({
   }
 
   return (
-    <section aria-label={label} className={cn("min-w-0 rounded-xl border bg-card p-4", !holders.length && "border-dashed")}>
-      <h3 className="mb-3 text-xs font-semibold text-muted-foreground">
+    <section aria-label={label} className="min-w-0">
+      <h3 className="border-foreground flex items-center gap-2 border-b pb-2 text-base font-bold">
         {maxHolders === null ? label : t("seatCount", { role: label, count: holders.length, max: maxHolders })}
       </h3>
-      <ul className="space-y-3">
+      <ul className="flex flex-col">
         {holders.map((holder) => (
-          <li key={holder.id} className="flex flex-wrap items-center justify-between gap-3">
+          <li key={holder.id} className="border-rule flex min-h-14 flex-wrap items-center justify-between gap-3 border-b px-1 py-2">
             <MemberDetailsTrigger member={holder} className="flex min-w-0 items-center gap-3">
               <MemberAvatar name={holder.name} />
-              <bdi className="min-w-0 wrap-anywhere text-sm font-medium group-hover/member:underline">{holder.name}</bdi>
+              <bdi className="min-w-0 text-sm font-bold wrap-anywhere group-hover/member:underline">{holder.name}</bdi>
             </MemberDetailsTrigger>
             {canEdit && (
               <div className="flex gap-2">
                 <Button
                   size="sm"
                   variant="outline"
-                  className="min-h-10 sm:min-h-0"
                   disabled={disabled || mutation.isPending}
                   onClick={() => setPicker({ previous: holder })}
                 >
@@ -94,7 +94,6 @@ export function RoleSeatCard({
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="min-h-10 sm:min-h-0"
                   disabled={disabled || mutation.isPending}
                   onClick={() => {
                     mutation.reset();
@@ -108,12 +107,15 @@ export function RoleSeatCard({
           </li>
         ))}
         {hasFreeSeat && (
-          <li className="flex flex-wrap items-center justify-between gap-3">
-            <p className="text-sm italic text-muted-foreground">{t("vacant")}</p>
+          <li className="border-rule flex min-h-14 flex-wrap items-center justify-between gap-3 border-b px-1 py-2">
+            <p className="text-door-ochre-ink flex items-center gap-2 text-sm font-bold">
+              <Mark tone="ochre" />
+              {t("vacant")}
+            </p>
             {canEdit && (
               <Button
                 size="sm"
-                className="min-h-10 sm:min-h-0"
+                variant="ochre"
                 disabled={disabled || mutation.isPending}
                 onClick={() => setPicker({ previous: null })}
               >
@@ -139,9 +141,9 @@ export function RoleSeatCard({
           title={
             change.member
               ? change.previous
-                ? t("replaceConfirm", { name: change.member.name, previous: change.previous.name, role: label })
-                : t("assignConfirm", { name: change.member.name, role: label })
-              : t("clearConfirm", { name: change.previous?.name ?? "", role: label })
+                ? t("replaceConfirm", { name: isolate(change.member.name), previous: isolate(change.previous.name), role: label })
+                : t("assignConfirm", { name: isolate(change.member.name), role: label })
+              : t("clearConfirm", { name: isolate(change.previous?.name ?? ""), role: label })
           }
           description={t("leadershipChangeHint")}
           pending={mutation.isPending}

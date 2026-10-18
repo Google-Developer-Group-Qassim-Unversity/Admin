@@ -3,12 +3,13 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
 
 import { Button } from "@/components/ui/button";
 import { PointsEditorShell } from "@/components/points-editor-shell";
+import { PointsEmpty, PointsLoadError } from "@/components/points-list-states";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   CustomEventForm,
@@ -442,34 +443,20 @@ if (actionsRes.success) {
     );
   }
 
-  if (error) {
+  if (error || (!initialData && !initialMemberData)) {
     return (
-      <div className="space-y-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/points" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
+      <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+        <Button variant="ghost" size="sm" asChild className="-ms-2 w-fit">
+          <Link href="/points">
+            <ArrowLeft className="rtl:-scale-x-100" />
             {tl("backToPoints")}
           </Link>
         </Button>
-        <div className="text-center py-12 text-destructive">
-          {tl("errorPrefix", { message: error })}
-        </div>
-      </div>
-    );
-  }
-
-  if (!initialData && !initialMemberData) {
-    return (
-      <div className="space-y-6">
-        <Button variant="ghost" size="sm" asChild>
-          <Link href="/points" className="flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4 rtl:-scale-x-100" />
-            {tl("backToPoints")}
-          </Link>
-        </Button>
-        <div className="text-center py-12 text-muted-foreground">
-          {tl("eventNotFound")}
-        </div>
+        {error ? (
+          <PointsLoadError message={tl("errorPrefix", { message: error })} />
+        ) : (
+          <PointsEmpty icon={SearchX} title={tl("eventNotFound")} description={tl("eventNotFoundDescription")} />
+        )}
       </div>
     );
   }

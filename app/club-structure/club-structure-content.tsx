@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ConfirmChange } from "@/components/club-structure/confirm-change";
 import { PageHeader } from "@/components/page-header";
+import { Plate } from "@/components/najdi";
 import { DepartmentCard } from "@/components/club-structure/department-card";
 import { DepartmentDrawer } from "@/components/club-structure/department-drawer";
 import {
@@ -68,16 +69,22 @@ function CopyStructure({ overview, semesters }: { overview: ClubOverview; semest
   }
 
   return (
-    <section className="space-y-3 rounded-xl border border-dashed p-4" aria-labelledby="club-copy">
-      <div>
-        <h2 id="club-copy" className="text-sm font-semibold">
-          {t("copyTitle", { semester: target.name })}
-        </h2>
-        <p className="mt-1 text-xs text-muted-foreground">{t("copyHint")}</p>
+    <section
+      className="bg-door-ochre-soft text-door-ochre-ink space-y-3 rounded-xl p-4 shadow-[inset_0_0_0_1px_var(--door-ochre)] sm:p-5"
+      aria-labelledby="club-copy"
+    >
+      <div className="flex items-start gap-3">
+        <Plate tone="ochre" icon={Copy} size="sm" />
+        <div>
+          <h2 id="club-copy" className="text-foreground text-base font-bold">
+            {t("copyTitle", { semester: target.name })}
+          </h2>
+          <p className="mt-1 text-sm">{t("copyHint")}</p>
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Select value={sourceId} onValueChange={setSourceId}>
-          <SelectTrigger className="w-full min-w-0 sm:w-72" aria-label={t("copySource")}>
+          <SelectTrigger className="w-full min-w-0 sm:w-80" aria-label={t("copySource")}>
             <SelectValue placeholder={t("copySource")} />
           </SelectTrigger>
           <SelectContent>
@@ -89,6 +96,7 @@ function CopyStructure({ overview, semesters }: { overview: ClubOverview; semest
           </SelectContent>
         </Select>
         <Button
+          variant="ochre"
           disabled={!source || copy.isPending}
           onClick={() => {
             copy.reset();
@@ -157,7 +165,7 @@ function AddDepartmentToSemester({ overview }: { overview: ClubOverview }) {
         </Button>
       </div>
       {add.error && (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-door-madder-ink text-sm">
           {describeError(add.error, true)}
         </p>
       )}
@@ -210,13 +218,13 @@ function ClubStructureOverview() {
   };
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Network}>
         {/* Phones: the semester picker takes its own full-width row above the
             two actions; from sm everything sits on the header's trailing side. */}
         <div className="flex w-full flex-wrap items-center gap-2 *:flex-1 sm:w-auto sm:*:flex-none">
           <Select value={semester?.id} onValueChange={selectSemester} disabled={!semesters.data}>
-            <SelectTrigger className="bg-card w-full min-w-0 basis-full sm:w-64 sm:basis-auto" aria-label={t("semester")}>
+            <SelectTrigger className="w-full min-w-0 max-sm:basis-full! sm:w-72" aria-label={t("semester")}>
               <SelectValue placeholder={t("semester")} />
             </SelectTrigger>
             <SelectContent>
@@ -239,41 +247,47 @@ function ClubStructureOverview() {
           )}
         </div>
       </PageHeader>
-      {!canEdit && <p className="text-sm text-muted-foreground">{t("readOnlyHint")}</p>}
+      {!canEdit && <p className="text-ink-2 text-sm">{t("readOnlyHint")}</p>}
       {overview.error && (
         <QueryError error={overview.error} stale={!!overview.data} retry={() => void overview.refetch()} />
       )}
       {!overview.data && !overview.error && <ClubLoading overview />}
       {overview.data && semester && (
         <>
-          <dl className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-3">
+          {/* One quiet strip of numbers, not a row of tiles; on a phone, one line of text. */}
+          <dl className="text-ink-2 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[13px] sm:bg-card sm:ring-rule sm:grid sm:grid-cols-3 sm:overflow-hidden sm:rounded-xl sm:ring-1">
             {[
               { label: t("semesterDepartments", { semester: semester.name }), value: departments.length },
               { label: t("active"), value: departments.filter((department) => department.active).length },
               { label: t("totalMembers"), value: overview.data.total_members },
             ].map((stat) => (
-              <div key={stat.label} className="rounded-xl border bg-card px-4 py-3.5">
-                <dt className="text-xs font-medium text-muted-foreground">{stat.label}</dt>
-                <dd className="mt-1 text-2xl font-bold tabular-nums">{format.number(stat.value)}</dd>
+              <div
+                key={stat.label}
+                className="border-rule flex min-w-0 items-baseline gap-1 after:ps-0.5 after:content-['·'] last:after:content-none sm:flex-col-reverse sm:items-stretch sm:gap-0.5 sm:border-e sm:px-5 sm:py-3 sm:after:content-none sm:last:border-e-0"
+              >
+                <dt className="leading-snug sm:text-[13px]">{stat.label}</dt>
+                <dd className="text-foreground font-bold tabular-nums max-sm:order-first sm:text-[21px] sm:leading-tight">
+                  {format.number(stat.value)}
+                </dd>
               </div>
             ))}
           </dl>
           {canEdit && overview.data.total_members === 0 && semesters.data && (
             <CopyStructure key={semester.id} overview={overview.data} semesters={semesters.data} />
           )}
-          <section aria-label={t("departments")} className="space-y-5">
-            <div className="flex flex-wrap items-center justify-between gap-4 border-b pb-3">
+          <section aria-label={t("departments")} className="flex flex-col gap-2">
+            <div className="border-foreground flex flex-wrap items-center justify-between gap-3 border-b pb-3">
               {canEdit ? <AddDepartmentToSemester key={semester.id} overview={overview.data} /> : <span />}
               <div className="relative w-full sm:w-64">
                 <Search
-                  className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  className="text-ink-2 pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2"
                   aria-hidden="true"
                 />
                 <Input
                   type="search"
                   inputMode="search"
                   enterKeyHint="search"
-                  className="bg-card ps-9"
+                  className="ps-9"
                   aria-label={t("searchDepartments")}
                   placeholder={t("searchDepartments")}
                   value={search}
@@ -282,7 +296,7 @@ function ClubStructureOverview() {
               </div>
             </div>
             {visible.length ? (
-              <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div className="flex flex-col">
                 {visible.map((department) => (
                   <DepartmentCard
                     key={department.id}
@@ -294,13 +308,13 @@ function ClubStructureOverview() {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center rounded-xl border border-dashed px-6 py-16 text-center">
-                <Network className="mb-4 size-8 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
+              <div className="border-adobe mt-2 flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-14 text-center">
+                <Plate tone="neutral" icon={Network} />
+                <p className="text-ink-2 max-w-sm text-sm">
                   {search.trim() ? t("noDepartmentsFound") : t("noSemesterDepartments", { semester: semester.name })}
                 </p>
                 {search.trim() && (
-                  <Button variant="outline" className="mt-4" onClick={() => setSearch("")}>
+                  <Button variant="outline" onClick={() => setSearch("")}>
                     {t("clearSearch")}
                   </Button>
                 )}

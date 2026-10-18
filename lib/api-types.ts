@@ -25,12 +25,42 @@ export interface Event {
   created_at: string;
   /** UUID of the semester the event counts toward. */
   semester_id?: string | null;
+  /** Published content links, attached server-side on the detail payloads. */
+  content_links?: EventContentLink[];
   /** Set on the paginated admin list - null when the event has no department */
   department_id?: number | null;
   department_name?: string | null;
   department_ar_name?: string | null;
   /** Distinct members who attended any day of the event */
   attendance_count?: number;
+}
+
+// A link to event content (slides, recordings) the admin pasted in. The label
+// is what members see on the website - the Drive filename behind the URL is not.
+export type ContentLinkKind = "slides" | "recording" | "other";
+
+export interface EventContentLink {
+  id: string;
+  label: string;
+  url: string;
+  kind: ContentLinkKind;
+  published: boolean;
+  created_at: string | null;
+}
+
+export interface CreateContentLinkPayload {
+  label: string;
+  url: string;
+  kind: ContentLinkKind;
+  // A manually pasted link goes live at once (Phase 1 has no approval gating).
+  published?: boolean;
+}
+
+export interface UpdateContentLinkPayload {
+  label?: string;
+  url?: string;
+  kind?: ContentLinkKind;
+  published?: boolean;
 }
 
 export interface CreateEventPayload {
@@ -84,6 +114,38 @@ export interface EventDetails {
   // responsible member is the requester and created_by whoever published it.
   responsible: EventPerson | null;
   created_by: EventPerson | null;
+  // Admin view: every content link, published or not. The leaderboard-facing
+  // payloads carry published rows only.
+  content_links: EventContentLink[];
+}
+
+/** Mirrors `EventHistoryAction` in Backend/app/DB/schema.py. */
+export type EventHistoryAction =
+  | "created"
+  | "edited"
+  | "status_changed"
+  | "meeting_url_changed"
+  | "deleted"
+  | "attendance_marked"
+  | "attendance_scanned"
+  | "attendance_backfilled"
+  | "attendance_removed"
+  | "submissions_reviewed"
+  | "form_updated"
+  | "form_attached"
+  | "form_detached";
+
+// GET /events/{id}/history: who did what to the event from /events, oldest first.
+export interface EventHistory {
+  items: {
+    action: EventHistoryAction;
+    at: string;
+    actor: EventPerson | null;
+    /** An edit lists each changed field as `[before, after]`. */
+    details: Record<string, unknown> | null;
+  }[];
+  /** The pipeline request that published the event; its history has the steps before. */
+  pipeline_request_id: string | null;
 }
 
 // Upload types

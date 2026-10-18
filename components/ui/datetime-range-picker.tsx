@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import {
   format,
   setHours,
@@ -11,6 +11,7 @@ import {
   startOfDay,
   addMinutes,
 } from "date-fns";
+import { ar, enGB } from "date-fns/locale";
 import { CalendarIcon, ClockIcon } from "lucide-react";
 import type { DateRange } from "react-day-picker";
 
@@ -81,10 +82,15 @@ function shiftTime(time: string, minutes: number): string {
   return format(shifted, "HH:mm");
 }
 
-/** "14:30" -> "2:30 PM", matching the format used in the trigger label. */
-function formatTimeLabel(time: string): string {
+/** date-fns locale for the reader's language: Arabic or English month and AM/PM words, Western digits. */
+function useDateFnsLocale() {
+  return useLocale() === "ar" ? ar : enGB;
+}
+
+/** "14:30" -> "2:30 PM" / "2:30 م", matching the format used in the trigger label. */
+function formatTimeLabel(time: string, locale: typeof enGB): string {
   const [hours, mins] = time.split(":").map(Number);
-  return format(setMinutes(setHours(new Date(), hours), mins), "h:mm a");
+  return format(setMinutes(setHours(new Date(), hours), mins), "h:mm a", { locale });
 }
 
 function TimeSelect({
@@ -99,14 +105,15 @@ function TimeSelect({
   disabled?: boolean;
 }) {
   const options = React.useMemo(() => buildTimeOptions(value), [value]);
+  const dateLocale = useDateFnsLocale();
 
   return (
     <div className="flex flex-col gap-1.5">
-      <Label className="text-xs font-normal text-muted-foreground">{label}</Label>
+      <Label className="text-xs font-normal text-ink-2">{label}</Label>
       <Select value={value} onValueChange={onChange} disabled={disabled}>
         <SelectTrigger className="w-full justify-between font-medium tabular-nums">
           <span className="flex items-center gap-2">
-            <ClockIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <ClockIcon className="size-3.5 shrink-0 text-ink-2" />
             {/* The label is always Latin ("10:00 AM"), so keep it LTR in Arabic. */}
             <span dir="ltr">
               <SelectValue />
@@ -121,7 +128,7 @@ function TimeSelect({
         >
           {options.map((option) => (
             <SelectItem key={option} value={option} className="tabular-nums">
-              <span dir="ltr">{formatTimeLabel(option)}</span>
+              <span dir="ltr">{formatTimeLabel(option, dateLocale)}</span>
             </SelectItem>
           ))}
         </SelectContent>
@@ -137,6 +144,7 @@ export function DateTimeRangePicker({
   className,
 }: DateTimeRangePickerProps) {
   const t = useTranslations("dateTimeRangePicker");
+  const dateLocale = useDateFnsLocale();
   const [open, setOpen] = React.useState(false);
 
   // Extract time from dates
@@ -243,9 +251,9 @@ export function DateTimeRangePicker({
   const getDisplayText = () => {
     if (!value.startDate) return t("selectDateTime");
 
-    const startDay = format(value.startDate, "d");
-    const startMonth = format(value.startDate, "MMM");
-    const startTimeStr = format(value.startDate, "h:mm a");
+    const startDay = format(value.startDate, "d", { locale: dateLocale });
+    const startMonth = format(value.startDate, "MMM", { locale: dateLocale });
+    const startTimeStr = format(value.startDate, "h:mm a", { locale: dateLocale });
 
     if (!value.endDate) {
       return `${startDay} ${startMonth}, ${startTimeStr}`;
@@ -253,9 +261,9 @@ export function DateTimeRangePicker({
 
     const dayCount = getEventDayCount(value.startDate, value.endDate);
     const effectiveEnd = getEffectiveEndDate(value.startDate, value.endDate);
-    const endDay = format(effectiveEnd, "d");
-    const endMonth = format(effectiveEnd, "MMM");
-    const endTimeStr = format(value.endDate, "h:mm a");
+    const endDay = format(effectiveEnd, "d", { locale: dateLocale });
+    const endMonth = format(effectiveEnd, "MMM", { locale: dateLocale });
+    const endTimeStr = format(value.endDate, "h:mm a", { locale: dateLocale });
 
     // Single day event (same day or overnight < 24 hours)
     if (dayCount === 1) {
@@ -291,14 +299,14 @@ export function DateTimeRangePicker({
           disabled={disabled}
           className={cn(
             "w-full justify-start text-start font-normal",
-            !value.startDate && "text-muted-foreground",
+            !value.startDate && "text-ink-2",
             className
           )}
         >
           <CalendarIcon className="me-2 h-4 w-4 shrink-0" />
-          {/* The summary is a Latin date string ("10 Sep, 10:00 AM - 11:00 AM"),
-              which bidi reorders into nonsense inside an RTL button. */}
-          <span dir={value.startDate ? "ltr" : undefined} className="tabular min-w-0 truncate">
+          {/* The summary is in the reader's language ("10 Sep, 10:00 AM" / "10 سبتمبر، 10:00 ص"); dir="auto"
+              keeps its parts in order inside the button. */}
+          <span dir="auto" className="tabular min-w-0 truncate">
             {getDisplayText()}
           </span>
         </Button>

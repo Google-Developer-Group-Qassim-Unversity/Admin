@@ -56,7 +56,7 @@ export function AcceptAllDialog({
           >
             {isLoading ? (
               <>
-                <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                <Loader2 className="animate-spin" />
                 {t("processing")}
               </>
             ) : (

@@ -17,10 +17,13 @@ import type {
   BackfillMember,
   BackfillResponse,
   CertificateEligibleCount,
+  CreateContentLinkPayload,
   CreateEventPayload,
   Department,
   Event,
+  EventContentLink,
   EventDetails,
+  EventHistory,
   EventStatus,
   EventsPageParams,
   Form,
@@ -32,6 +35,7 @@ import type {
   Semester,
   SemesterInput,
   SendCertificatesResponse,
+  UpdateContentLinkPayload,
   UpdateEventPayload,
   UpdateFormPayload,
 } from "@/lib/api-types";
@@ -44,14 +48,17 @@ import type {
   RosterEntry,
 } from "@/lib/club-structure-types";
 import type {
+  BumpOutcome,
   EventRequestDetail,
-  EventRequestStage,
   InboxItem,
+  NotificationScope,
   PaginatedNotifications,
   PaginatedRequests,
   PipelineCalendar,
   PipelineMe,
+  PipelineOverlaps,
   PipelineTeam,
+  RequestListParams,
   UpdateDetailsInput,
 } from "@/lib/pipeline-types";
 
@@ -119,6 +126,9 @@ export function createApi(request: Requester) {
     details: (id: number | string) =>
       request.json<EventDetails>(`/events/${id}/details`, { revalidate: CACHE_TTL, tags: ["events", `event-${id}`] }),
 
+    /** Who did what to the event from /events, oldest first. Never cached: it changes with every edit. */
+    history: (id: number | string) => request.json<EventHistory>(`/events/${id}/history`),
+
     create: (payload: CreateEventPayload) => request.json<Event>("/events", { method: "POST", body: payload }),
 
     update: (id: number, payload: UpdateEventPayload) =>
@@ -134,6 +144,16 @@ export function createApi(request: Requester) {
       request.json<Event>(`/events/${id}/status`, { method: "PUT", body: { status } }),
 
     remove: (id: number) => request.json<{ detail: string }>(`/events/${id}`, { method: "DELETE" }),
+
+    /** Manually pasted links to event content (Drive/YouTube), for the Content tab. */
+    createContentLink: (id: number, payload: CreateContentLinkPayload) =>
+      request.json<EventContentLink>(`/events/${id}/content-links`, { method: "POST", body: payload }),
+
+    updateContentLink: (id: number, linkId: string, payload: UpdateContentLinkPayload) =>
+      request.json<EventContentLink>(`/events/${id}/content-links/${linkId}`, { method: "PUT", body: payload }),
+
+    removeContentLink: (id: number, linkId: string) =>
+      request.json<{ detail: string }>(`/events/${id}/content-links/${linkId}`, { method: "DELETE" }),
 
     /** Events that can carry certificates - the placeholder location types cannot. */
     withCertificates: async () => {
@@ -312,36 +332,70 @@ export function createApi(request: Requester) {
   const pipeline = {
     me: () => request.json<PipelineMe>("/pipeline/me"),
     calendar: (from: string, to: string) => request.json<PipelineCalendar>("/pipeline/calendar", { query: { from, to } }),
-    ban: (dates: string[], reason: string | null) =>
-      request.json<{ count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
+    ban: (dates: string[], reason: string) =>
+      request.json<{ block_id: string; count: number }>("/pipeline/calendar/bans", { method: "PUT", body: { dates, reason } }),
     unban: (dates: string[]) =>
       request.json<{ count: number }>("/pipeline/calendar/bans", { method: "DELETE", body: { dates } }),
-    notifications: (unread = false) =>
-      request.json<PaginatedNotifications>("/pipeline/notifications", { query: { unread: unread || undefined } }),
+    editBlock: (blockId: string, reason: string) =>
+      request.json<{ block_id: string; count: number }>(`/pipeline/calendar/blocks/${blockId}`, {
+        method: "PATCH",
+        body: { reason },
+      }),
+    removeBlock: (blockId: string) =>
+      request.json<{ block_id: string; count: number }>(`/pipeline/calendar/blocks/${blockId}`, { method: "DELETE" }),
+    notifications: ({ unread = false, scope = "mine" }: { unread?: boolean; scope?: NotificationScope } = {}) =>
+      request.json<PaginatedNotifications>("/pipeline/notifications", {
+        query: { unread: unread || undefined, scope },
+      }),
     readNotification: (id: string) =>
       request.json<{ count: number }>(`/pipeline/notifications/${id}/read`, { method: "POST" }),
-    readAllNotifications: () => request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST" }),
+    readAllNotifications: (scope: NotificationScope = "mine") =>
+      request.json<{ count: number }>("/pipeline/notifications/read-all", { method: "POST", query: { scope } }),
+    overlaps: (from: string, to: string, ignore?: string) =>
+      request.json<PipelineOverlaps>("/pipeline/overlaps", { query: { from, to, ignore } }),
   };
 
   const pipelineRequests = {
-    list: (params: { departmentId?: number; stage?: EventRequestStage; page?: number; pageSize?: number } = {}) =>
+    /**
+     * The requests the caller can see. `team` is that team's desk instead:
+     * everything that reached the team, from any department.
+     */
+    list: (params: RequestListParams = {}) =>
       request.json<PaginatedRequests>("/pipeline/requests", {
-        query: { department_id: params.departmentId, stage: params.stage, page: params.page, page_size: params.pageSize },
+        query: {
+          department_id: params.departmentIds,
+          stage: params.stage,
+          state: params.state,
+          team: params.team,
+          team_status: params.teamStatuses,
+          page: params.page,
+          page_size: params.pageSize,
+        },
       }),
     get: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}`),
-    book: (departmentId: number, startDate: string, endDate: string) =>
+    book: (departmentId: number, startDate: string, endDate: string, bumps: Record<string, BumpOutcome> = {}) =>
       request.json<EventRequestDetail>("/pipeline/requests", {
-        method: "POST", body: { department_id: departmentId, start_date: startDate, end_date: endDate },
+        method: "POST", body: { department_id: departmentId, start_date: startDate, end_date: endDate, bumps },
       }),
-    redate: (id: string, startDate: string, endDate: string) =>
+    redate: (id: string, startDate: string, endDate: string, bumps: Record<string, BumpOutcome> = {}) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/dates`, {
-        method: "PUT", body: { start_date: startDate, end_date: endDate },
+        method: "PUT", body: { start_date: startDate, end_date: endDate, bumps },
       }),
     updateDetails: (id: string, body: UpdateDetailsInput) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/details`, { method: "PUT", body }),
-    cancel: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
+    cancel: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/cancel`, { method: "POST" }),
+    remove: (id: string) => request.json<{ detail: string }>(`/pipeline/requests/${id}`, { method: "DELETE" }),
     saveBrief: (id: string, team: PipelineTeam, brief: Record<string, unknown>) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/briefs/${team}`, { method: "PUT", body: { brief } }),
+    saveDeliverable: (id: string, team: PipelineTeam, deliverable: Record<string, unknown>) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/deliverables/${team}`, {
+        method: "PUT",
+        body: { deliverable },
+      }),
+    uploadPoster: (id: string, file: File) => request.file<EventRequestDetail>(`/pipeline/requests/${id}/poster`, file),
+    /** Logistics has a Google Meet link made on the club's calendar from the confirmation's dates and times. */
+    generateMeet: (id: string) =>
+      request.json<EventRequestDetail>(`/pipeline/requests/${id}/deliverables/logistics/meet`, { method: "POST" }),
     submit: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/submit`, { method: "POST" }),
     returnToTeam: (id: string, notes: string) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/return`, { method: "POST", body: { notes } }),
@@ -349,8 +403,7 @@ export function createApi(request: Requester) {
     complete: (id: string, team: PipelineTeam) =>
       request.json<EventRequestDetail>(`/pipeline/requests/${id}/tasks/${team}/complete`, { method: "POST" }),
     inbox: () => request.json<InboxItem[]>("/pipeline/inbox"),
-    publish: (id: string, body: { department_action_id: number; member_action_id: number; image_url: string | null }) =>
-      request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST", body }),
+    publish: (id: string) => request.json<EventRequestDetail>(`/pipeline/requests/${id}/publish`, { method: "POST" }),
   };
 
   const access = {
@@ -371,6 +424,8 @@ export function createApi(request: Requester) {
     superAdmins: () => request.json<SuperAdminEntry[]>("/permissions/super-admins"),
     /** What one member can do, and why. Super admins only. */
     member: (memberId: number) => request.json<MemberAccess>(`/permissions/members/${memberId}`),
+    /** The signed-in person's own access, explained: every staff member can see theirs. */
+    mine: () => request.json<MemberAccess>("/permissions/me"),
     addSuperAdmin: (memberId: number) =>
       request.json<SuperAdminEntry[]>("/permissions/super-admins", { method: "POST", body: { member_id: memberId } }),
     removeSuperAdmin: (memberId: number) =>

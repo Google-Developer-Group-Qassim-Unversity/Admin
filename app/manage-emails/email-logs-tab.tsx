@@ -4,7 +4,8 @@ import * as React from "react";
 import { Activity, ChevronLeft, ChevronRight, Loader2, Radio } from "lucide-react";
 import { useAuth } from "@clerk/nextjs";
 
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { Mark } from "@/components/najdi";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { buildEnrichedStreamUrl, getEmailLogsEnriched } from "@/lib/api";
@@ -172,37 +173,33 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
         onLiveToggle={handleLiveToggle}
       />
 
-      <div className="rounded-lg border bg-card">
-        <div className="flex items-center justify-between gap-2 px-3 py-2 border-b">
+      <div className="bg-card ring-rule overflow-hidden rounded-xl ring-1">
+        <div className="border-rule flex min-h-11 items-center justify-between gap-2 border-b px-3">
           <div className="flex items-center gap-2">
-            <span className="tabular text-xs text-muted-foreground">
-              {t("logsCount", { count: logs.length })}
-            </span>
+            <span className="tabular text-sm font-bold">{t("logsCount", { count: logs.length })}</span>
             {isStreaming && isLive && (
-              <span
-                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11.5px] font-semibold ${URGENCY_STYLES.done.pill}`}
-              >
-                <Activity className="h-3 w-3 animate-pulse" />
+              <Badge variant="green">
+                <Mark tone="green" className="size-2 motion-safe:animate-pulse" />
                 {t("live")}
-              </span>
+              </Badge>
             )}
           </div>
-          <span className="text-xs text-muted-foreground">{isLive ? t("autoUpdating") : t("staticView")}</span>
+          <span className="text-ink-2 text-xs">{isLive ? t("autoUpdating") : t("staticView")}</span>
         </div>
         {/* On a phone the list flows with the page - a scroll box inside a
             scrolling page is a thumb trap. From md it is the fixed-height pane. */}
         <ScrollArea className="md:h-[520px] [&_[data-slot=scroll-area-viewport]>div]:block!">
           {isLoading && !isLive ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground gap-2">
-              <Loader2 className="h-4 w-4 animate-spin" />
+            <div className="text-ink-2 flex items-center justify-center gap-2 py-12 text-sm">
+              <Loader2 className="size-4 animate-spin" />
               {t("loading")}
             </div>
           ) : logs.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12 text-sm text-muted-foreground gap-3">
+            <div className="text-ink-2 flex flex-col items-center justify-center gap-3 px-4 py-12 text-center text-sm">
               {isLive && isStreaming ? (
                 hasActiveFilters ? (
                   <>
-                    <Radio className="h-4 w-4 animate-pulse text-brand-green" />
+                    <Radio className="text-door-green-ink size-5 motion-safe:animate-pulse" />
                     <span>{t("listeningFiltered")}</span>
                     <Button variant="outline" size="sm" onClick={clearAllFilters}>
                       {t("clearFilters")}
@@ -210,13 +207,13 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
                   </>
                 ) : (
                   <>
-                    <Radio className="h-4 w-4 animate-pulse text-brand-green" />
+                    <Radio className="text-door-green-ink size-5 motion-safe:animate-pulse" />
                     <span>{t("listening")}</span>
                   </>
                 )
               ) : isLive && !isStreaming ? (
                 <>
-                  <Activity className="h-4 w-4 opacity-50" />
+                  <Activity className="text-door-madder-ink size-5" />
                   <span>{t("disconnected")}</span>
                 </>
               ) : (
@@ -224,7 +221,7 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
               )}
             </div>
           ) : (
-            <div className="divide-y">
+            <div className="divide-rule divide-y">
               {logs.map((log) => (
                 <EmailLogRow key={log.id} log={log} onViewHtml={handleViewHtml} isNew={newIds.has(log.id)} />
               ))}
@@ -232,8 +229,8 @@ export function EmailLogsTab({ onLogsLoaded }: EmailLogsTabProps) {
           )}
         </ScrollArea>
         {!isLive && (
-          <div className="flex items-center justify-between border-t px-3 py-2">
-            <span className="tabular text-xs text-muted-foreground">{tp("page", { page })}</span>
+          <div className="border-rule flex items-center justify-between border-t px-3 py-2">
+            <span className="tabular text-ink-2 text-xs">{tp("page", { page })}</span>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"

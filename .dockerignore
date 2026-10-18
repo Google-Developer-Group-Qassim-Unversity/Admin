@@ -31,3 +31,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+
+# design mockups, not part of the app
+design-options

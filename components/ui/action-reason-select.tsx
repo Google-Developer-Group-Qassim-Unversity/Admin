@@ -147,10 +147,10 @@ export function ActionReasonSelect({
           aria-expanded={open}
           disabled={disabled || isCompositeAction}
           className={cn(
-            "w-full justify-between font-normal",
-            !displayValue && "text-muted-foreground",
+            "bg-card w-full justify-between font-medium shadow-[inset_0_0_0_1px_var(--input)]",
+            !displayValue && "text-ink-3",
             isCompositeAction && "cursor-not-allowed opacity-80",
-            error && !displayValue && "border-destructive focus-visible:ring-destructive",
+            error && !displayValue && "shadow-[inset_0_0_0_1.5px_var(--door-madder)]",
             className
           )}
         >
@@ -162,7 +162,7 @@ export function ActionReasonSelect({
               <span
                 role="button"
                 tabIndex={0}
-                className="rounded-sm hover:bg-accent p-0.5"
+                className="hover:bg-sunk -m-1 grid size-8 place-items-center rounded-sm"
                 onClick={handleClear}
                 onPointerDown={(e) => e.preventDefault()}
                 onKeyDown={(e) => {
@@ -172,10 +172,10 @@ export function ActionReasonSelect({
                   }
                 }}
               >
-                <X className="h-4 w-4 opacity-50 hover:opacity-100" />
+                <X className="text-ink-2 size-4 hover:text-foreground" />
               </span>
             )}
-            {!isCompositeAction && <ChevronsUpDown className="h-4 w-4 opacity-50" />}
+            {!isCompositeAction && <ChevronsUpDown className="text-ink-2 size-4" />}
           </div>
         </Button>
       </PopoverTrigger>
@@ -200,7 +200,7 @@ export function ActionReasonSelect({
                 <CommandGroup>
                   <CommandItem
                     onSelect={handleCreateCustom}
-                    className="flex items-center gap-2 text-primary"
+                    className="text-door-indigo-ink flex items-center gap-2 font-bold"
                   >
                     <Plus className="h-4 w-4" />
                     <span>{t("createCustom", { value: searchValue.trim() })}</span>

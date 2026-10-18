@@ -43,3 +43,10 @@ next-env.d.ts
 
 # clerk configuration (can include secrets)
 /.clerk/
+
+# Thmanyah Sans: fetched by scripts/fetch-thmanyah.mjs; its licence forbids re-hosting it
+/public/fonts/thmanyah/
+
+# ui-preview screenshots
+/.preview-shots/
+/.impeccable/review/

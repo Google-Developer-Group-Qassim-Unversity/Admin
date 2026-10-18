@@ -25,7 +25,7 @@ import { useAccess } from "@/hooks/use-access";
 export default function PermissionsPage() {
   const t = useTranslations("permissions");
   return (
-    <div className="space-y-4 sm:space-y-6">
+    <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={KeyRound} />
       {/* useSearchParams needs a Suspense boundary for the static build. */}
       <Suspense fallback={<Skeleton className="h-60 w-full" />}>
@@ -67,21 +67,21 @@ function PermissionsTabs() {
         {isSuperAdmin ? <TabsTrigger value="member">{t("tabs.member")}</TabsTrigger> : null}
         {isSuperAdmin ? <TabsTrigger value="super-admins">{t("tabs.superAdmins")}</TabsTrigger> : null}
       </TabsList>
-      <TabsContent value="grants" className="mt-4">
+      <TabsContent value="grants" className="mt-5">
         <GrantsPanel />
       </TabsContent>
       {manage ? (
-        <TabsContent value="leaders" className="mt-4">
+        <TabsContent value="leaders" className="mt-5">
           <LeadersPanel />
         </TabsContent>
       ) : null}
       {isSuperAdmin ? (
-        <TabsContent value="member" className="mt-4">
+        <TabsContent value="member" className="mt-5">
           <MemberAccessPanel memberId={memberId} onMemberChange={(member) => navigate({ tab: "member", member })} />
         </TabsContent>
       ) : null}
       {isSuperAdmin ? (
-        <TabsContent value="super-admins" className="mt-4">
+        <TabsContent value="super-admins" className="mt-5">
           <SuperAdminsPanel />
         </TabsContent>
       ) : null}

@@ -14,6 +14,9 @@ import type { DepartmentSettings } from "@/lib/club-structure-types";
 import { cn } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 
+const TYPE_OPTION =
+  "bg-card text-ink-2 h-10 flex-1 gap-2 rounded-sm border-0 px-4 font-bold shadow-none hover:bg-card hover:text-foreground data-[state=on]:bg-foreground data-[state=on]:text-background sm:flex-none";
+
 const EMPTY_SETTINGS: DepartmentSettings = {
   name: "",
   ar_name: "",
@@ -76,7 +79,7 @@ export function DepartmentForm({
       className="space-y-6"
     >
       {sourceChanged && !pending && (
-        <div role="alert" className="space-y-2 rounded-lg border bg-muted/50 p-3 text-sm">
+        <div role="alert" className="bg-door-ochre-soft text-door-ochre-ink space-y-2 rounded-xl p-3.5 text-sm shadow-[inset_0_0_0_1px_var(--door-ochre)]">
           <p>{t("settingsChanged")}</p>
           <Button type="button" variant="outline" size="sm" onClick={() => setDraft(null)}>
             {t("reloadSettings")}
@@ -95,7 +98,7 @@ export function DepartmentForm({
               value={values.name}
               onChange={(event) => setValues({ ...values, name: event.target.value })}
             />
-            {draft && !values.name.trim() && <p className="text-xs text-destructive">{t("nameRequired")}</p>}
+            {draft && !values.name.trim() && <p className="text-door-madder-ink text-[13px]">{t("nameRequired")}</p>}
           </div>
           <div className="space-y-2">
             <Label htmlFor={`${id}-ar-name`}>{t("arabicName")}</Label>
@@ -107,7 +110,7 @@ export function DepartmentForm({
               value={values.ar_name}
               onChange={(event) => setValues({ ...values, ar_name: event.target.value })}
             />
-            {draft && !values.ar_name.trim() && <p className="text-xs text-destructive">{t("arabicNameRequired")}</p>}
+            {draft && !values.ar_name.trim() && <p className="text-door-madder-ink text-[13px]">{t("arabicNameRequired")}</p>}
           </div>
         </div>
         <div className="space-y-2">
@@ -118,27 +121,27 @@ export function DepartmentForm({
             aria-labelledby={`${id}-type-label`}
             value={values.type}
             disabled={pending || readOnly || disabled}
-            variant="outline"
-            className="justify-start"
+            spacing={1}
+            className="bg-mortar w-full justify-start gap-1 rounded-lg p-1 sm:w-fit"
             onValueChange={(type) => {
               // Like the event location toggle, keep one option selected.
               if (type === "administrative" || type === "practical") setValues({ ...values, type });
             }}
           >
-            <ToggleGroupItem value="administrative" className="flex items-center gap-2">
+            <ToggleGroupItem value="administrative" className={TYPE_OPTION}>
               <Building2 className="h-4 w-4" aria-hidden="true" />
               {t("types.administrative")}
             </ToggleGroupItem>
-            <ToggleGroupItem value="practical" className="flex items-center gap-2">
+            <ToggleGroupItem value="practical" className={TYPE_OPTION}>
               <Code2 className="h-4 w-4" aria-hidden="true" />
               {t("types.practical")}
             </ToggleGroupItem>
           </ToggleGroup>
         </div>
-        <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
+        <div className="bg-card ring-rule flex items-center justify-between gap-4 rounded-xl p-3.5 ring-1">
           <div className="space-y-0.5">
             <Label htmlFor={`${id}-leaderboard`}>{t("showInLeaderboard")}</Label>
-            <p className="text-xs text-muted-foreground">{t("showInLeaderboardHint")}</p>
+            <p className="text-ink-2 text-[13px]">{t("showInLeaderboardHint")}</p>
           </div>
           <Switch
             id={`${id}-leaderboard`}
@@ -148,7 +151,7 @@ export function DepartmentForm({
           />
         </div>
         <fieldset>
-          <legend className="mb-3 text-sm font-medium">{t("color")}</legend>
+          <legend className="mb-3 text-sm font-bold">{t("color")}</legend>
           <div className="flex flex-wrap gap-2">
             {DEPARTMENT_COLORS.map((color) => (
               <button
@@ -158,8 +161,8 @@ export function DepartmentForm({
                 aria-pressed={values.color.toLowerCase() === color}
                 onClick={() => setValues({ ...values, color })}
                 className={cn(
-                  "size-10 rounded-full border focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring sm:size-8",
-                  values.color.toLowerCase() === color && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
+                  "plate-depth h-11 w-10 rounded-t-[4px] rounded-b-[2px] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+                  values.color.toLowerCase() === color && "ring-foreground ring-offset-background ring-2 ring-offset-2",
                 )}
                 style={{ backgroundColor: color }}
               />
@@ -170,15 +173,15 @@ export function DepartmentForm({
             <Input
               id={`${id}-color`}
               type="color"
-              className="h-9 w-14 p-1"
+              className="h-11 w-16 cursor-pointer p-1"
               value={values.color}
               onChange={(event) => setValues({ ...values, color: event.target.value })}
             />
           </div>
         </fieldset>
         <fieldset>
-          <legend className="mb-3 text-sm font-medium">{t("icon")}</legend>
-          <p className="mb-3 text-sm text-muted-foreground">{t("iconHint")}</p>
+          <legend className="mb-1 text-sm font-bold">{t("icon")}</legend>
+          <p className="text-ink-2 mb-3 text-[13px]">{t("iconHint")}</p>
           <div
             className={
               mode === "create"
@@ -199,9 +202,9 @@ export function DepartmentForm({
                   title={label}
                   aria-pressed={values.icon === icon}
                   className={cn(
-                    "flex aspect-square min-h-11 items-center justify-center rounded-md border p-2 transition-colors hover:bg-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50",
+                    "bg-card hover:bg-sunk flex aspect-square min-h-11 items-center justify-center rounded-lg p-2 shadow-[inset_0_0_0_1px_var(--rule)] transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring disabled:pointer-events-none disabled:opacity-50",
                     mode === "create" && "size-11 shrink-0",
-                    values.icon === icon && "border-primary bg-primary/10 ring-1 ring-primary",
+                    values.icon === icon && "bg-sunk shadow-[inset_0_0_0_2px_var(--foreground)]",
                   )}
                   onClick={() => setValues({ ...values, icon })}
                 >
@@ -214,7 +217,7 @@ export function DepartmentForm({
       </fieldset>
       {!readOnly && (
         <div className="space-y-2">
-          <Button type="submit" className="w-full" disabled={!valid || pending || disabled || sourceChanged || !dirty}>
+          <Button type="submit" size="lg" className="w-full" disabled={!valid || pending || disabled || sourceChanged || !dirty}>
             {pending ? (
               <>
                 <Loader2 className="me-2 h-4 w-4 animate-spin" aria-hidden="true" />

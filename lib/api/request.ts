@@ -9,8 +9,8 @@ export interface RequestOptions {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   /** Serialised as JSON. Pass the object, not a string. */
   body?: unknown;
-  /** Nullish entries are dropped rather than sent as "undefined". */
-  query?: Record<string, QueryValue>;
+  /** Nullish entries are dropped rather than sent as "undefined". A list repeats the key once per value. */
+  query?: Record<string, QueryValue | readonly QueryValue[]>;
   /**
    * Opt this GET into Next's server Data Cache for this many seconds. Omit it
    * (the default) to leave the request exactly as Next treats it today - no
@@ -35,16 +35,20 @@ export interface Requester {
   json<T>(path: string, options?: RequestOptions): Promise<T>;
   /** The upload service, which takes multipart rather than JSON. */
   upload<T>(path: string, file: File): Promise<T>;
+  /** A file to a backend route, as the `file` field of a multipart form. */
+  file<T>(path: string, file: File): Promise<T>;
   /** This app's own Next route handlers, on the same origin. */
   route<T>(path: string, options?: RequestOptions): Promise<T>;
 }
 
-function buildQuery(query: Record<string, QueryValue> | undefined): string {
+function buildQuery(query: Record<string, QueryValue | readonly QueryValue[]> | undefined): string {
   if (!query) return "";
   const params = new URLSearchParams();
-  for (const [key, value] of Object.entries(query)) {
-    if (value === undefined || value === null || value === "") continue;
-    params.append(key, String(value));
+  for (const [key, entry] of Object.entries(query)) {
+    for (const value of Array.isArray(entry) ? entry : [entry]) {
+      if (value === undefined || value === null || value === "") continue;
+      params.append(key, String(value));
+    }
   }
   const serialised = params.toString();
   return serialised ? `?${serialised}` : "";
@@ -144,6 +148,22 @@ export function createRequester(getToken: GetToken): Requester {
       formData.append("file", file);
       try {
         const response = await fetch(`${config.uploadSource.replace(/\/$/, "")}${path}`, {
+          method: "POST",
+          headers: await authHeaders(),
+          body: formData,
+        });
+        return await toResult<T>(response);
+      } catch (error) {
+        throw asNetworkError(error, "Upload error occurred");
+      }
+    },
+
+    /** A file to a backend route, as the `file` field of a multipart form. */
+    async file<T>(path: string, file: File) {
+      const formData = new FormData();
+      formData.append("file", file);
+      try {
+        const response = await fetch(`${config.backendApiUrl}${path}`, {
           method: "POST",
           headers: await authHeaders(),
           body: formData,

@@ -275,7 +275,7 @@ export function ManageAttendanceDialog({
 
           {/* Five tabs never fit a phone: the strip scrolls sideways instead of squashing. */}
           <div className="no-scrollbar -mx-5 shrink-0 overflow-x-auto px-5 sm:mx-0 sm:px-0">
-            <div role="tablist" className="flex w-max min-w-full gap-1 rounded-xl bg-muted p-1 sm:rounded-lg">
+            <div role="tablist" className="bg-mortar flex w-max min-w-full gap-1 rounded-lg p-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
@@ -287,10 +287,8 @@ export function ManageAttendanceDialog({
                   setSelectedMemberIds(new Set());
                   setSearchQuery("");
                 }}
-                className={`flex min-h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium whitespace-nowrap transition-colors pointer-coarse:min-h-10 sm:flex-1 sm:rounded-md ${
-                  activeTab === tab.id
-                    ? "bg-background text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
+                className={`focus-visible:outline-ring flex min-h-10 shrink-0 items-center justify-center gap-1.5 rounded-sm px-3 text-sm font-bold whitespace-nowrap outline-none transition-colors focus-visible:outline-2 pointer-coarse:min-h-11 sm:flex-1 ${
+                  activeTab === tab.id ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground"
                 }`}
               >
                 {tab.icon}
@@ -366,7 +364,7 @@ export function ManageAttendanceDialog({
           </div>
 
           {activeTab !== "backfill" && activeTab !== "emails" && (
-            <DialogFooter className="shrink-0 border-t pt-4">
+            <DialogFooter className="border-rule shrink-0 border-t pt-4">
               {/* The sheet already has a close button and swipes away; on a phone
                   the footer keeps only the action, full width and in thumb reach. */}
               <Button
@@ -379,13 +377,14 @@ export function ManageAttendanceDialog({
               </Button>
               {activeTab === "mark" && (
                 <Button
+                  variant="green"
                   onClick={() => (isMultiDay ? setDaySelectDialogOpen(true) : handleMark())}
                   disabled={selectedMemberIds.size === 0 || isSubmitting}
                 >
                   {isSubmitting ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <UserPlus className="me-2 h-4 w-4" />
+                    <UserPlus />
                   )}
                   {t("markButton", { count: selectedMemberIds.size })}
                 </Button>
@@ -397,9 +396,9 @@ export function ManageAttendanceDialog({
                   disabled={selectedMemberIds.size === 0 || isSubmitting}
                 >
                   {isSubmitting ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <UserMinus className="me-2 h-4 w-4" />
+                    <UserMinus />
                   )}
                   {t("removeButton", { count: selectedMemberIds.size })}
                   {isMultiDay && t("forDay", { day: selectedDay })}
@@ -408,9 +407,9 @@ export function ManageAttendanceDialog({
               {activeTab === "copy" && (
                 <Button onClick={handleCopy} disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <Loader2 className="me-2 h-4 w-4 animate-spin" />
+                    <Loader2 className="animate-spin" />
                   ) : (
-                    <Copy className="me-2 h-4 w-4" />
+                    <Copy />
                   )}
                   {t("copyAttendance")}
                 </Button>

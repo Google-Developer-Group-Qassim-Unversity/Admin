@@ -46,7 +46,7 @@ export function SegmentedControl({
     <div
       role="radiogroup"
       aria-label={label}
-      className={cn("bg-muted flex w-full gap-1 rounded-xl p-1", disabled && "opacity-60", className)}
+      className={cn("bg-mortar flex w-full gap-1 rounded-lg p-1", disabled && "opacity-60", className)}
     >
       {options.map((option, index) => {
         const selected = option.value === value;
@@ -60,15 +60,14 @@ export function SegmentedControl({
             type="button"
             role="radio"
             aria-checked={selected}
-            tabIndex={selected ? 0 : -1}
+            // With nothing chosen yet, the first option takes the tab stop.
+            tabIndex={selected || (index === 0 && !options.some((o) => o.value === value)) ? 0 : -1}
             disabled={disabled}
             onClick={() => onValueChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              "focus-visible:ring-ring/50 flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-lg px-3 text-sm font-medium transition-[background-color,color,box-shadow] outline-none focus-visible:ring-[3px]",
-              selected
-                ? "bg-card text-foreground shadow-[0_1px_2px_oklch(0_0_0/0.08),0_1px_6px_oklch(0_0_0/0.06)]"
-                : "text-muted-foreground hover:text-foreground",
+              "focus-visible:outline-ring flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-sm font-bold transition-[background-color,color] outline-none focus-visible:outline-2 focus-visible:outline-offset-2",
+              selected ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground",
             )}
           >
             {Icon ? <Icon className="size-4 shrink-0" /> : null}

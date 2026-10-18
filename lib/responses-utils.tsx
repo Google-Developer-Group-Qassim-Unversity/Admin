@@ -16,8 +16,8 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { ArrowUpDown, ArrowUp, ArrowDown, Eye, EyeOff, Check, X } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { URGENCY_STYLES } from "@/components/status-badge";
+import { useFormatter, useTranslations } from "next-intl";
+import { SOFT } from "@/components/najdi";
 import { MemberDetailsTrigger } from "@/components/member-details";
 
 // Type for transformed table row data
@@ -173,6 +173,18 @@ export function getDuplicateQuestionKeys(
 // `titleKey` looks up responsesTable.{titleKey} unless `isLiteral` is set, which
 // is used for dynamic Google Form question columns - their titles are the
 // form's own question text and must not be run through the app's translations.
+/** When a response came in, in the reader's language. */
+function SubmittedAt({ value }: { value: string }) {
+  const format = useFormatter();
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return (
+    <time dateTime={date.toISOString()} className="tabular text-ink-2">
+      {format.dateTime(date, { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}
+    </time>
+  );
+}
+
 function createHeaderWithDropdown(titleKey: string, sortable: boolean = false, isLiteral: boolean = false) {
   function HeaderDropdown({ column }: HeaderContext<TableRowData, unknown>) {
     const t = useTranslations("responsesTable");
@@ -200,14 +212,14 @@ function createHeaderWithDropdown(titleKey: string, sortable: boolean = false, i
                 onClick={() => column.toggleSorting(false)}
                 disabled={sortDirection === "asc"}
               >
-                <ArrowUp className="me-2 h-4 w-4" />
+                <ArrowUp />
                 {t("sortAscending")}
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => column.toggleSorting(true)}
                 disabled={sortDirection === "desc"}
               >
-                <ArrowDown className="me-2 h-4 w-4" />
+                <ArrowDown />
                 {t("sortDescending")}
               </DropdownMenuItem>
               {sortDirection && (
@@ -224,12 +236,12 @@ function createHeaderWithDropdown(titleKey: string, sortable: boolean = false, i
           >
             {isVisible ? (
               <>
-                <Eye className="me-2 h-4 w-4" />
+                <Eye />
                 {t("hideColumn")}
               </>
             ) : (
               <>
-                <EyeOff className="me-2 h-4 w-4" />
+                <EyeOff />
                 {t("showColumn")}
               </>
             )}
@@ -303,11 +315,11 @@ export function createColumns(
       cell: ({ row }) => {
         const isAccepted = row.original.is_accepted;
         return isAccepted ? (
-          <span className={`inline-flex size-6 items-center justify-center rounded-full ${URGENCY_STYLES.done.pill}`}>
+          <span className={`inline-flex size-6 items-center justify-center rounded-sm ${SOFT.green}`}>
             <Check className="h-3.5 w-3.5" />
           </span>
         ) : (
-          <X className="h-4 w-4 text-muted-foreground" />
+          <X className="h-4 w-4 text-ink-2" />
         );
       },
     },
@@ -321,11 +333,11 @@ export function createColumns(
       cell: ({ row }) => {
         const isInvited = row.original.is_invited;
         return isInvited ? (
-          <span className={`inline-flex size-6 items-center justify-center rounded-full ${URGENCY_STYLES.info.pill}`}>
+          <span className={`inline-flex size-6 items-center justify-center rounded-sm ${SOFT.indigo}`}>
             <Check className="h-3.5 w-3.5" />
           </span>
         ) : (
-          <X className="h-4 w-4 text-muted-foreground" />
+          <X className="h-4 w-4 text-ink-2" />
         );
       },
     },
@@ -427,15 +439,7 @@ export function createColumns(
     {
       accessorKey: "submitted_at",
       header: createHeaderWithDropdown("submittedAt", true),
-      cell: ({ row }) => {
-        const date = new Date(row.getValue("submitted_at"));
-        return (
-          <span className="tabular text-muted-foreground">
-            {date.toLocaleDateString()}{" "}
-            {date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-          </span>
-        );
-      },
+      cell: ({ row }) => <SubmittedAt value={row.getValue("submitted_at")} />,
     },
   ];
 
@@ -453,7 +457,7 @@ export function createColumns(
       cell: ({ row }) => {
         const value = row.getValue(key);
         if (value === null || value === undefined || value === "") {
-          return <span className="text-muted-foreground">—</span>;
+          return <span className="text-ink-2">—</span>;
         }
         const stringValue = String(value);
         // Show tooltip only if content is long enough to be truncated
