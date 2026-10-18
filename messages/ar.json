@@ -1834,6 +1834,8 @@
     "dropFilesToAdd": "أفلت الملفات هنا لإضافتها",
     "uploadSuccess": "تم رفع \"{name}\" إلى Google Drive",
     "uploadFailed": "تعذر رفع \"{name}\"",
+    "uploadSizeLimit": "يتجاوز حجم الملف الحد الأقصى 100 ميجابايت",
+    "uploadUnsupportedType": "يتم دعم ملفات PDF أو PPTX أو PPT أو Keynote أو ODP فقط",
     "driveUnconfigured": "تكامل Google Drive غير مهيأ — يرجى التواصل مع المسؤول",
     "driveUnconfiguredNotice": "تكامل Google Drive غير مهيأ حالياً. يمكنك إضافة الروابط يدوياً.",
     "storageUsage": "{used} مستخدم",

@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
+import { ApiRequestError } from '@/lib/api';
 import type {
   CreateContentLinkPayload,
   Event,
@@ -213,6 +214,8 @@ export function useRecordingCandidates(id: number, enabled: boolean = true) {
     queryFn: () => api.events.getRecordingCandidates(id),
     enabled: enabled && id !== 0,
     staleTime: 10_000,
+    retry: (failureCount, error) =>
+      !(error instanceof ApiRequestError && error.status === 503) && failureCount < 3,
   });
 }
 

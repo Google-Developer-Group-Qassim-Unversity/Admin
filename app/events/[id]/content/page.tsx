@@ -24,6 +24,10 @@ export default function EventContentPage() {
   const { data: details, isLoading, error, refetch } = useEventDetails(eventId, eventId !== 0);
   const [driveConfigured, setDriveConfigured] = React.useState(true);
 
+  React.useEffect(() => {
+    setDriveConfigured(true);
+  }, [event?.id]);
+
   // The details endpoint is the admin's own view: every link, published or not.
   const links: EventContentLink[] = details?.content_links ?? [];
   const slides = links.filter((link) => link.kind !== 'recording');

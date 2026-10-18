@@ -16,7 +16,7 @@ import {
 } from '@/components/ui/dialog';
 import { useUploadDriveSlides } from '@/hooks/use-event';
 import { ApiRequestError } from '@/lib/api';
-import { cn } from '@/lib/utils';
+import { cn, formatBytes } from '@/lib/utils';
 
 interface SlidesDropzoneProps {
   eventId: number;
@@ -25,14 +25,6 @@ interface SlidesDropzoneProps {
 
 const ALLOWED_EXTENSIONS = ['.pdf', '.pptx', '.ppt', '.key', '.odp'];
 const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
-
-function formatFileSize(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
-}
 
 function isValidPresentation(file: File): { valid: boolean; reason?: string } {
   const name = file.name.toLowerCase();
@@ -64,6 +56,17 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
   const mainFileInputRef = React.useRef<HTMLInputElement>(null);
   const addMoreInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Prevent browser navigation when files are dropped anywhere on the window
+  React.useEffect(() => {
+    const swallow = (e: DragEvent) => e.preventDefault();
+    window.addEventListener('dragover', swallow);
+    window.addEventListener('drop', swallow);
+    return () => {
+      window.removeEventListener('dragover', swallow);
+      window.removeEventListener('drop', swallow);
+    };
+  }, []);
+
   const processIncomingFiles = (incoming: File[], openModalAfter = true) => {
     const validFiles: File[] = [];
     for (const f of incoming) {
@@ -72,11 +75,11 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
         validFiles.push(f);
       } else if (check.reason === 'too_large') {
         toast.error(t('uploadFailed', { name: f.name }), {
-          description: 'File exceeds 100MB limit',
+          description: t('uploadSizeLimit'),
         });
       } else {
         toast.error(t('uploadFailed', { name: f.name }), {
-          description: 'Only PDF, PPTX, PPT, Keynote, or ODP files are supported',
+          description: t('uploadUnsupportedType'),
         });
       }
     }
@@ -206,10 +209,15 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
     if (stagedFiles.length === 0 || isUploading) return;
     setIsUploading(true);
 
+    const successfulIndices = new Set<number>();
     try {
-      for (const file of stagedFiles) {
+      for (let i = 0; i < stagedFiles.length; i++) {
+        const file = stagedFiles[i];
         try {
+          // Note: Modal upload uses an indeterminate spinner for fast uploads. useUploadDriveSlides'
+          // onProgress parameter remains available for callers needing fine-grained progress bars.
           await uploadSlides.mutateAsync({ file });
+          successfulIndices.add(i);
           toast.success(t('uploadSuccess', { name: file.name }));
         } catch (err: unknown) {
           const error = err instanceof Error ? err : new Error(String(err));
@@ -217,7 +225,7 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
             if (err.status === 503 || err.message.toLowerCase().includes('not configured')) {
               onDriveUnconfigured?.();
               toast.error(t('driveUnconfigured'));
-              continue;
+              break;
             }
           }
           toast.error(t('uploadFailed', { name: file.name }), {
@@ -227,10 +235,16 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
       }
     } finally {
       setIsUploading(false);
-      setConfirmOpen(false);
-      setStagedFiles([]);
       modalDragCounter.current = 0;
       setIsModalDragging(false);
+
+      if (successfulIndices.size === stagedFiles.length) {
+        setConfirmOpen(false);
+        setStagedFiles([]);
+      } else {
+        // Retain failed AND unattempted files so user can review and retry
+        setStagedFiles((prev) => prev.filter((_, idx) => !successfulIndices.has(idx)));
+      }
     }
   };
 
@@ -251,7 +265,12 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
         role="button"
         tabIndex={0}
         onClick={() => mainFileInputRef.current?.click()}
-        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && mainFileInputRef.current?.click()}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            mainFileInputRef.current?.click();
+          }
+        }}
         onDragEnter={handleDropzoneDragEnter}
         onDragLeave={handleDropzoneDragLeave}
         onDragOver={handleDropzoneDragOver}
@@ -321,7 +340,7 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
                     <p className="truncate font-medium text-foreground" title={file.name}>
                       {file.name}
                     </p>
-                    <p className="text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
+                    <p className="text-muted-foreground mt-0.5">{formatBytes(file.size)}</p>
                   </div>
                 </div>
 

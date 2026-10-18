@@ -55,14 +55,22 @@ interface CandidateRowProps {
 function CandidateRow({ eventId, candidate, onApproved }: CandidateRowProps) {
   const t = useTranslations('eventContent');
   const [label, setLabel] = React.useState(() => cleanCandidateLabel(candidate.name));
-  const [isPublic, setIsPublic] = React.useState(candidate.is_public);
+  const [justMadePublic, setJustMadePublic] = React.useState(false);
   const makePublicMutation = useMakeRecordingPublic(eventId);
   const createLinkMutation = useCreateContentLink(eventId);
+
+  const isPublic = candidate.is_public || justMadePublic;
+
+  React.useEffect(() => {
+    if (candidate.is_public && justMadePublic) {
+      setJustMadePublic(false);
+    }
+  }, [candidate.is_public, justMadePublic]);
 
   const handleMakePublic = async () => {
     try {
       await makePublicMutation.mutateAsync(candidate.file_id);
-      setIsPublic(true);
+      setJustMadePublic(true);
       toast.success(t('madePublicSuccess'));
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : t('makePublicFailed');

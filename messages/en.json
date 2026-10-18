@@ -1834,6 +1834,8 @@
     "dropFilesToAdd": "Drop files here to add them",
     "uploadSuccess": "Uploaded \"{name}\" to Google Drive",
     "uploadFailed": "Failed to upload \"{name}\"",
+    "uploadSizeLimit": "File exceeds 100MB limit",
+    "uploadUnsupportedType": "Only PDF, PPTX, PPT, Keynote, or ODP files are supported",
     "driveUnconfigured": "Drive integration not configured — contact a super admin",
     "driveUnconfiguredNotice": "Google Drive upload is unavailable. You can still add links manually.",
     "storageUsage": "{used} used",
