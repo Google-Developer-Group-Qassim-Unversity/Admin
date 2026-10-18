@@ -90,6 +90,14 @@ The migrated calls throw `ApiRequestError` rather than returning
 re-exports it - defining a second would break the `instanceof` check that stops
 react-query retrying 404s.
 
+## Linear: use `linear-gdg`, never `linear`
+
+This project's tickets live in the GDG Linear workspace, reached through the
+`linear-gdg` MCP server declared in `.mcp.json` (run `/mcp` once to sign in with
+the account that owns that workspace). A `linear` server, if one is loaded, is
+some other workspace configured outside this repo: never read or write GDG
+tickets through it.
+
 ## Commands
 
 ```bash
