@@ -71,7 +71,8 @@ export type Registration = "acceptance" | "open" | "none";
 export type LocationScope = "inside" | "outside";
 
 export const EVENT_TYPES: EventType[] = ["course", "bootcamp", "meetup", "workshop", "competition"];
-export const AUDIENCES: Audience[] = ["male", "female", "mixed", "none"];
+// "none" stays in the type so older requests still render, but is no longer offered.
+export const AUDIENCES: Audience[] = ["male", "female", "mixed"];
 export const REGISTRATIONS: Registration[] = ["acceptance", "open", "none"];
 export const LOCATION_SCOPES: LocationScope[] = ["inside", "outside"];
 
