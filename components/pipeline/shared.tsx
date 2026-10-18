@@ -19,9 +19,8 @@ import {
 import { STAGE_STEP, STAGE_TONE } from "@/components/status-badge";
 import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useAccess } from "@/hooks/use-access";
 import { usePipelineMe } from "@/hooks/use-pipeline";
-import type { EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
+import type { CalendarDay, EventRequestStage, PipelineDepartment, PipelineMe, PipelineTeam } from "@/lib/pipeline-types";
 import { intlLocale } from "@/lib/format";
 
 /** A department's name in the reader's language. */
@@ -76,18 +75,12 @@ export function useFormatDateRange() {
 }
 
 /**
- * The departments that are the caller's own: their roster departments. A super
- * admin acts for every department, so the pipeline's own list would be all of
- * them; the roster says which one they actually sit in. Falls back to every
- * acting department for someone on no roster (a super admin from outside).
+ * Whether the caller can pick this day to book: an open one, or for a super
+ * admin also a closed or held one (booking over a request bumps it). Never
+ * inside the lockout, and never a published event's day.
  */
-export function useOwnDepartmentIds(me: PipelineMe | undefined) {
-  const { access } = useAccess();
-  return React.useMemo(() => {
-    const roster = new Set((access?.departments ?? []).map((d) => d.id));
-    const acting = (me?.departments ?? []).map((d) => d.id).filter((id) => roster.has(id));
-    return new Set(acting.length ? acting : (me?.departments ?? []).map((d) => d.id));
-  }, [access, me]);
+export function isBookable(day: CalendarDay, me: PipelineMe) {
+  return day.status === "open" || (me.is_super_admin && day.status !== "locked" && day.status !== "published");
 }
 
 /** Whether the caller works on at least one pipeline team (or is a super admin). */

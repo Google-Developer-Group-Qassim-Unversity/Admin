@@ -82,3 +82,12 @@ export function useTimeAgo() {
 export function isolate(text: string): string {
   return `⁨${text}⁩`;
 }
+
+/** "Design and Logistics" / "التصميم واللوجستيات": a list joined the way the reader's language joins one. */
+export function useListFormat() {
+  const locale = useLocale();
+  return useMemo(() => {
+    const list = new Intl.ListFormat(intlLocale(locale), { style: "long", type: "conjunction" });
+    return (items: string[]) => list.format(items);
+  }, [locale]);
+}

@@ -6,7 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { ChevronLeft, ChevronRight, Info } from "lucide-react";
 
 import { Mortar } from "@/components/najdi";
-import { useDepartmentName } from "@/components/pipeline/shared";
+import { useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
 import { PIPELINE_DAY_STYLES, type PipelineDayStatus } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -27,26 +27,33 @@ const LEGEND: PipelineDayStatus[] = ["open", "locked", "held", "booked", "publis
  *
  * What a tap means (picking days to close, a range to book, opening the
  * request on a day) is the parent's business: `onDayClick`, `isSelectable`.
- * `range` marks the two ends of a picked range; `toolbar` sits at the trailing
+ * `flash` briefly paints those days madder, to refuse a tap (each new `n`
+ * flashes again). `range` marks the two ends of a picked range; `toolbar` sits at the trailing
  * end of the month header. On wide screens bricks are tall enough to name the
  * department or the closing reason.
  */
 export function BookingCalendar({
   selected,
   range,
+  flash,
   onDayClick,
   isSelectable,
   toolbar,
   showNotes = true,
+  blockActions,
   className,
 }: {
   selected?: Set<string>;
   range?: { start: string | null; end: string | null };
-  onDayClick?: (day: CalendarDay) => void;
+  flash?: { days: string[]; n: number } | null;
+  /** `days` is every day loaded for this month's grid, by date. */
+  onDayClick?: (day: CalendarDay, days: ReadonlyMap<string, CalendarDay>) => void;
   isSelectable?: (day: CalendarDay) => boolean;
   toolbar?: React.ReactNode;
   /** The first-bookable line and the list of closed days under the legend. */
   showNotes?: boolean;
+  /** Buttons at the end of each closed block's line (Logistics edits or reopens it). */
+  blockActions?: (block: ClosedBlock) => React.ReactNode;
   className?: string;
 }) {
   const t = useTranslations("pipeline.calendar");
@@ -59,6 +66,26 @@ export function BookingCalendar({
   const { data, isPending, error } = usePipelineCalendar(format(gridStart, ISO), format(gridEnd, ISO));
 
   const byDate = React.useMemo(() => new Map((data?.days ?? []).map((d) => [d.date, d])), [data]);
+
+  const grid = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    if (!flash || !grid.current) return;
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // A painted layer, not background-color: picked days hold their ochre with !important.
+    const red = { backgroundImage: "linear-gradient(var(--door-madder), var(--door-madder))", color: "#fff" };
+    const frames = still
+      ? [red, red, {}]
+      : [
+          { ...red, transform: "translateX(0)" },
+          { transform: "translateX(-3px)", offset: 0.15 },
+          { transform: "translateX(3px)", offset: 0.3 },
+          { ...red, transform: "translateX(0)", offset: 0.5 },
+          {},
+        ];
+    for (const date of flash.days) {
+      grid.current.querySelector<HTMLElement>(`[data-date="${date}"]`)?.animate(frames, { duration: 700, easing: "ease-out" });
+    }
+  }, [flash]);
   const weekdays = React.useMemo(() => {
     const short = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short" });
     const narrow = new Intl.DateTimeFormat(intlLocale(locale), { weekday: "narrow" });
@@ -74,7 +101,7 @@ export function BookingCalendar({
   const cells: Date[] = [];
   for (let day = gridStart; day <= gridEnd; day = addDays(day, 1)) cells.push(day);
 
-  const closed = (data?.days ?? []).filter((d) => d.status === "banned" && isSameMonth(parseISO(d.date), month));
+  const closed = groupBlocks((data?.days ?? []).filter((d) => d.status === "banned" && isSameMonth(parseISO(d.date), month)));
 
   return (
     <div className={cn("flex flex-col gap-3", className)}>
@@ -95,7 +122,7 @@ export function BookingCalendar({
 
       {error ? <p className="text-door-madder-ink text-sm">{error.message}</p> : null}
 
-      <div>
+      <div ref={grid}>
         <div className="grid grid-cols-7 gap-1 px-1 pb-1" aria-hidden="true">
           {weekdays.map((w) => (
             <span key={w.short} className="text-ink-2 text-center text-xs font-bold">
@@ -126,6 +153,7 @@ export function BookingCalendar({
               longDay.format(new Date(`${iso}T00:00:00Z`)),
               t(`status.${day.status}`),
               day.reason,
+              day.blocked_by ? t("closedBy", { name: day.blocked_by.name }) : null,
               first ? departmentName(first.department) : null,
             ]
               .filter(Boolean)
@@ -134,11 +162,12 @@ export function BookingCalendar({
               <button
                 key={iso}
                 type="button"
+                data-date={iso}
                 disabled={!clickable}
                 aria-pressed={onDayClick ? isSelected : undefined}
                 aria-label={words}
                 title={words}
-                onClick={() => onDayClick?.(day)}
+                onClick={() => onDayClick?.(day, byDate)}
                 className={cn(
                   "relative flex h-12 flex-col items-center justify-center rounded-[2px] text-[15px] transition-[background-color,filter,transform] duration-150 outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring sm:h-[76px] sm:items-start sm:justify-between sm:px-2 sm:pt-1.5 sm:pb-1.5",
                   "shadow-[inset_0_-2px_0_rgb(58_42_31/0.08)]",
@@ -194,22 +223,69 @@ export function BookingCalendar({
             })}
           </p>
           {closed.length ? (
-            <ul className="flex flex-col gap-0.5 ps-6">
-              {closed.map((d) => (
-                <li key={d.date}>
-                  <span className="text-door-madder-ink font-bold">
-                    {new Intl.DateTimeFormat(intlLocale(locale), { weekday: "short", day: "numeric", month: "short", timeZone: "UTC" }).format(
-                      new Date(`${d.date}T00:00:00Z`),
-                    )}
-                  </span>
-                  {" · "}
-                  {d.reason ? <bdi>{d.reason}</bdi> : t("status.banned")}
-                </li>
+            <ul className="flex flex-col gap-1.5 ps-6">
+              {closed.map((block) => (
+                <ClosedBlockLine key={block.id} block={block} actions={blockActions?.(block)} />
               ))}
             </ul>
           ) : null}
         </div>
       ) : null}
     </div>
+  );
+}
+
+/** Days Logistics closed together: the block's days (this month's), why, and who closed them. */
+export interface ClosedBlock {
+  id: string;
+  days: string[];
+  reason: string | null;
+  blockedBy: string | null;
+}
+
+function groupBlocks(days: CalendarDay[]): ClosedBlock[] {
+  const blocks = new Map<string, ClosedBlock>();
+  for (const day of days) {
+    const id = day.block_id ?? day.date;
+    const block = blocks.get(id) ?? { id, days: [], reason: day.reason, blockedBy: day.blocked_by?.name ?? null };
+    block.days.push(day.date);
+    blocks.set(id, block);
+  }
+  return [...blocks.values()];
+}
+
+/** Consecutive days as one range: ["2026-03-01", "2026-03-02", "2026-03-05"] -> [[01, 02], [05, 05]]. */
+function runs(days: string[]): [string, string][] {
+  const out: [string, string][] = [];
+  for (const day of [...days].sort()) {
+    const last = out.at(-1);
+    if (last && format(addDays(parseISO(last[1]), 1), ISO) === day) last[1] = day;
+    else out.push([day, day]);
+  }
+  return out;
+}
+
+function ClosedBlockLine({ block, actions }: { block: ClosedBlock; actions?: React.ReactNode }) {
+  const t = useTranslations("pipeline.calendar");
+  const locale = useLocale();
+  const formatRange = useFormatDateRange();
+  return (
+    <li className="flex flex-wrap items-center gap-x-2 gap-y-1">
+      <span className="text-door-madder-ink tabular font-bold">
+        {runs(block.days)
+          .map(([start, end]) => formatRange(start, end))
+          .join(locale === "ar" ? "، " : ", ")}
+      </span>
+      <span>
+        · {block.reason ? <bdi>{block.reason}</bdi> : t("status.banned")}
+        {block.blockedBy ? (
+          <>
+            {" · "}
+            {t("closedBy", { name: block.blockedBy })}
+          </>
+        ) : null}
+      </span>
+      {actions ? <span className="ms-auto flex gap-1">{actions}</span> : null}
+    </li>
   );
 }

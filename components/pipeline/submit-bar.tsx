@@ -4,12 +4,15 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslations } from "next-intl";
-import { CircleCheck, Clock, ListTodo, Send } from "lucide-react";
+import { ArrowRight, CircleCheck, Clock, Crown, ListTodo, Send } from "lucide-react";
 import { toast } from "sonner";
 
 import { DraftSaveStatus, useDraftSave } from "@/components/pipeline/draft-autosave";
+import { useBehalfOf } from "@/components/pipeline/roles";
+import { useDepartmentName } from "@/components/pipeline/shared";
 import { Button } from "@/components/ui/button";
 import { pipelineKeys, useResubmit, useSubmitRequest } from "@/hooks/use-pipeline";
+import { isolate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import type { EventRequestDetail } from "@/lib/pipeline-types";
 
@@ -98,13 +101,20 @@ export function MissingList({
  * The bar that follows a draft (or a returned request) down the page: whether
  * everything is saved, "Finish later", and Submit. Submit stays pressable when
  * something is missing - pressing it shows what, instead of a dead button.
+ *
+ * A draft is filled in one station at a time, so until the last form the bar
+ * walks forward ("Next: Design") instead; once nothing is missing it offers
+ * Submit from anywhere.
  */
 export function DraftBar({
   request,
   onIncomplete,
+  next,
 }: {
   request: EventRequestDetail;
   onIncomplete: (missing: string[]) => void;
+  /** The next form to fill in, when there is one after this. */
+  next?: { label: string; onGo: () => void } | null;
 }) {
   const t = useTranslations("pipeline.submit");
   const tr = useTranslations("pipeline.review");
@@ -115,6 +125,8 @@ export function DraftBar({
   const { flushAll, state } = useDraftSave();
   const isReturned = request.stage === "returned";
   const busy = state === "saving" || submit.isPending || resubmit.isPending;
+  const behalf = useBehalfOf({ kind: "department", department: request.department });
+  const departmentName = useDepartmentName();
 
   const onSubmit = async () => {
     // Anything still waiting to autosave goes in first, so submit checks what is on screen.
@@ -157,6 +169,12 @@ export function DraftBar({
   return (
     <div className="bg-card border-foreground z-30 flex items-center gap-2 border-t px-3 py-2.5 max-md:fixed max-md:inset-x-0 max-md:bottom-[calc(4rem+env(safe-area-inset-bottom))] md:sticky md:bottom-4 md:gap-4 md:rounded-xl md:border-0 md:px-5 md:py-3 md:shadow-[0_10px_24px_-14px_rgb(58_42_31/0.55)] md:ring-1 md:ring-rule">
       <div className="flex min-w-0 flex-1 flex-wrap items-center justify-between gap-x-3 gap-y-1">
+        {behalf ? (
+          <p className="text-door-madder-ink flex w-full min-w-0 items-center gap-1.5 text-[12.5px] font-bold">
+            <Crown className="size-3.5 shrink-0" aria-hidden="true" />
+            <span className="truncate">{t("forDepartment", { name: isolate(departmentName(request.department)) })}</span>
+          </p>
+        ) : null}
         {left ? (
           <p className="text-door-ochre-ink flex min-w-0 items-center gap-1.5 text-[13px] font-bold md:gap-2 md:text-sm">
             <ListTodo className="size-[18px] shrink-0" />
@@ -181,10 +199,18 @@ export function DraftBar({
             {t("finishLater")}
           </Button>
         ) : null}
-        <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
-          <Send className="rtl:-scale-x-100" />
-          {isReturned ? tr("resubmit") : t("button")}
-        </Button>
+        {next && !isReturned && left ? (
+          <Button size="lg" className="max-md:h-11 max-md:px-4" onClick={next.onGo}>
+            <span className="md:hidden">{t("nextShort")}</span>
+            <span className="max-md:hidden">{t("next", { station: next.label })}</span>
+            <ArrowRight className="rtl:-scale-x-100" />
+          </Button>
+        ) : (
+          <Button variant="green" size="lg" className="max-md:h-11 max-md:px-4" onClick={onSubmit} disabled={busy}>
+            <Send className="rtl:-scale-x-100" />
+            {isReturned ? tr("resubmit") : t("button")}
+          </Button>
+        )}
       </div>
     </div>
   );

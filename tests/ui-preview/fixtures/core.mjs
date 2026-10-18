@@ -22,7 +22,7 @@ export const DEPARTMENTS = {
   media: { id: 23, name: "Media", ar_name: "الإعلام", color: "#12B5CB", icon: "megaphone" },
 };
 
-const ALL_PERMS = [
+export const ALL_PERMS = [
   "admin.access", "events.view", "members.view", "club_structure.view", "events.create", "events.edit", "events.delete",
   "attendance.take", "attendance.backfill", "attendance.copy", "forms.manage", "submissions.review", "emails.event",
   "emails.direct", "emails.blast", "emails.logs", "certificates.manual", "points.catalogue", "points.custom",
@@ -80,16 +80,24 @@ export const REQUESTS = [
   summary("r2", "cyber", "in_review", "ورشة أمن الشبكات اللاسلكية", iso(12), iso(12)),
   summary("r4", "web", "media", "لقاء مطوري الويب", iso(13), iso(13)),
   summary("r5", "ai", "ready", "معسكر تحليل البيانات", iso(23), iso(27)),
+  summary("r8", "web", "in_review", "أساسيات React للمبتدئين", iso(21), iso(21), { requested_at: at(-2 * DAY) }),
+  summary("r9", "cyber", "published", "تحدي التقاط العلم CTF", iso(-9), iso(-8), { published_at: at(-14 * DAY) }),
+  summary("r10", "ai", "cancelled", "لقاء مجتمع البيانات", iso(15), iso(15)),
 ];
-const byId = Object.fromEntries(REQUESTS.map((r) => [r.id, r]));
+// Cancelled requests hold no dates and stay out of the list until deleted.
+const CANCELLED = [summary("r8", "web", "cancelled", "ورشة React Native", null, null)];
+export const byId = Object.fromEntries([...REQUESTS, ...CANCELLED].map((r) => [r.id, r]));
 
-const TASKS = {
+// Design's card on the team's Notion board, once the request reached Design.
+const NOTION_URL = "https://www.notion.so/Flutter-workshop-266b70e9ca448103bfb3dd7eab68f43e";
+
+export const TASKS = {
   r1: [
     { team: "design", status: "brief" },
     { team: "logistics", status: "brief" },
   ],
   r7: [
-    { team: "design", status: "done", done_by: { member_id: 5, name: "Reem Alharbi" } },
+    { team: "design", status: "done", done_by: { member_id: 5, name: "Reem Alharbi" }, notion_url: NOTION_URL },
     { team: "logistics", status: "open" },
   ],
   r6: [
@@ -98,24 +106,49 @@ const TASKS = {
     { team: "media", status: "done" },
   ],
   r3: [
-    { team: "design", status: "returned" },
+    { team: "design", status: "returned", notion_url: NOTION_URL },
     { team: "logistics", status: "done" },
   ],
   r2: [
-    { team: "design", status: "open" },
+    { team: "design", status: "open", notion_url: NOTION_URL },
     { team: "logistics", status: "done" },
   ],
   r4: [
     { team: "design", status: "done" },
     { team: "logistics", status: "done" },
-    { team: "media", status: "open" },
+    { team: "media", status: "open", deliverable: { platforms: ["x", "instagram", "other"], other_platform: "", links: { x: "https://x.com/gdgqassim/status/1846" } }, deliverable_missing: ["share.other_platform"] },
   ],
   r5: [
     { team: "design", status: "done" },
     { team: "logistics", status: "done" },
+    { team: "media", status: "done", deliverable: { platforms: ["x", "instagram", "tiktok", "other"], other_platform: "لينكدإن", links: { x: "https://x.com/gdgqassim/status/1846", instagram: "https://www.instagram.com/p/DAx7kQ2" } } },
+  ],
+  r8: [
+    { team: "design", status: "open" },
+    { team: "logistics", status: "open" },
+  ],
+  r9: [
+    { team: "design", status: "done" },
+    { team: "logistics", status: "done" },
     { team: "media", status: "done" },
   ],
+  r10: [
+    { team: "design", status: "brief" },
+    { team: "logistics", status: "brief" },
+  ],
 };
+
+// How long each team has had its part, so rows can say "arrived 5 hours ago".
+const OPENED = { r2: 26 * H, r7: 5 * H, r4: 2 * H, r3: 30 * H, r8: 50 * H };
+for (const r of REQUESTS) {
+  r.published_at ??= r.stage === "published" ? at(-DAY) : null;
+  r.task_states = (TASKS[r.id] ?? []).map((t, i) => ({
+    team: t.team,
+    status: t.status,
+    opened_at: t.status === "brief" ? null : at(-(OPENED[r.id] ?? DAY) - i * 60_000),
+    done_at: t.status === "done" ? at(-(5 + i * 20) * H) : null,
+  }));
+}
 
 // A stand-in poster: a mud-coloured square with the title area, as a data URI.
 const POSTER =
@@ -132,8 +165,10 @@ function confirmation(s) {
     venue: "التيك فالي (60)",
     room: "قاعة 2",
     meet_link: s.end_date && s.end_date !== s.start_date ? "https://meet.google.com/abc-defg-hij" : null,
+    meet_event_id: null,
     event_type: "workshop",
     description: "وصف الفعالية.",
+    change_reason: null,
   };
 }
 
@@ -148,7 +183,7 @@ const HISTORY = (s) => [
   { action: "hold_expired", at: at(-10 * H), actor: null, details: null },
 ];
 
-function detail(id) {
+export function detail(id) {
   const s = byId[id] ?? REQUESTS[0];
   const draft = s.stage === "draft";
   return {
@@ -158,6 +193,8 @@ function detail(id) {
     returned_by: s.stage === "returned" ? { member_id: 5, name: "Reem Alharbi" } : null,
     published_at: s.stage === "published" ? at(-DAY) : null,
     published_by: s.stage === "published" ? { member_id: 9, name: "Abdullah" } : null,
+    cancelled_at: s.stage === "cancelled" ? at(-3 * H) : null,
+    cancelled_by: s.stage === "cancelled" ? { member_id: 1, name: "Ibrahim" } : null,
     history: draft ? [{ action: "booked", at: at(-3 * DAY), actor: { member_id: 1, name: "Ibrahim" }, details: { start_date: s.start_date, end_date: s.end_date } }] : HISTORY(s),
     details: {
       title: s.title,
@@ -189,6 +226,7 @@ function detail(id) {
       done_by: t.done_by ?? (t.status === "done" ? { member_id: 7, name: "Sara" } : null),
       deliverable: t.status === "brief" ? null : t.team === "design" ? (t.status === "done" ? { poster_url: POSTER } : null) : t.team === "logistics" ? confirmation(s) : null,
       deliverable_missing: t.team === "design" && t.status !== "done" ? ["poster.poster_url"] : [],
+      confirmation_changes: [],
       ...t,
     })),
     missing: draft ? ["details.presenter_email", "design.content", "logistics.venue"] : [],
@@ -205,6 +243,9 @@ function detail(id) {
       complete: id === "r2" ? ["design"] : id === "r7" ? ["logistics"] : id === "r4" ? ["media"] : [],
       can_publish: s.stage === "ready",
       can_upload_poster: id === "r2",
+      can_generate_meet: false,
+      can_cancel: !["published", "cancelled"].includes(s.stage),
+      can_delete: s.stage === "cancelled",
     },
     now: new Date().toISOString(),
   };
@@ -221,7 +262,10 @@ function calendar({ from, to }) {
       bookings[d.toISOString().slice(0, 10)] = r;
     }
   }
-  const banned = { [iso(9)]: "اختبارات منتصف الفصل", [iso(16)]: "إجازة رسمية" };
+  // Days Logistics closed in blocks: one reason and one closer per block.
+  const midterms = { block_id: "b1", reason: "اختبارات منتصف الفصل", blocked_by: { member_id: 12, name: "Lama Alotaibi" } };
+  const holiday = { block_id: "b2", reason: "إجازة رسمية", blocked_by: { member_id: 13, name: "Saad Alqahtani" } };
+  const banned = { [iso(8)]: midterms, [iso(9)]: midterms, [iso(15)]: midterms, [iso(16)]: holiday };
   for (let d = start; d <= end; d = new Date(d.getTime() + DAY)) {
     const date = d.toISOString().slice(0, 10);
     const r = bookings[date];
@@ -231,14 +275,17 @@ function calendar({ from, to }) {
     days.push({
       date,
       status,
-      reason: banned[date] ?? null,
+      reason: banned[date]?.reason ?? null,
+      block_id: banned[date]?.block_id ?? null,
+      blocked_by: banned[date]?.blocked_by ?? null,
+      blocked_at: banned[date] ? at(-2 * DAY) : null,
       requests: r ? [{ id: r.id, department: r.department, title: r.title, stage: r.stage }] : [],
     });
   }
   return { today: iso(0), first_bookable_date: iso(4), days };
 }
 
-const inbox = [
+export const inbox = [
   { request: byId.r2, team: "design", status: "open", opened_at: at(-DAY) },
   { request: byId.r7, team: "logistics", status: "open", opened_at: at(-5 * H) },
   { request: byId.r4, team: "media", status: "open", opened_at: at(-2 * H) },
@@ -253,7 +300,7 @@ const notification = (id, kind, req, ago, read) => ({
   created_at: at(-ago),
   read,
 });
-const notifications = [
+export const notifications = [
   notification("n1", "request_received", "r2", DAY, false),
   notification("n2", "task_done", "r7", 3 * H, false),
   notification("n3", "returned", "r3", 6 * H, false),
@@ -277,7 +324,14 @@ export default [
   { path: /^\/pipeline\/me$/, body: pipelineMe },
   { path: /^\/pipeline\/calendar$/, body: ({ query }) => calendar(query) },
   // A super admin sees every department's requests.
-  { path: /^\/pipeline\/requests$/, body: { items: REQUESTS, total: REQUESTS.length, page: 1, page_size: 20, total_pages: 1 } },
+  { path: /^\/pipeline\/requests$/, body: ({ query }) => {
+    // "past" is what was published or cancelled; cancelled requests show nowhere else.
+    const items =
+      query.stage === "cancelled" ? CANCELLED
+      : query.state === "past" ? [...REQUESTS.filter((r) => r.stage === "published"), ...CANCELLED]
+      : REQUESTS;
+    return { items, total: items.length, page: 1, page_size: 20, total_pages: 1 };
+  } },
   { path: /^\/pipeline\/requests\/[\w-]+$/, body: ({ pathname }) => detail(pathname.split("/").pop()) },
   { path: /^\/pipeline\/inbox$/, body: inbox },
   { path: /^\/pipeline\/notifications$/, body: { items: notifications, total: 5, unread: 3, page: 1, page_size: 20, total_pages: 1 } },

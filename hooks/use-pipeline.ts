@@ -1,7 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
-import type { EventRequestDetail, PipelineTeam, UpdateDetailsInput } from "@/lib/pipeline-types";
+import type {
+  BumpOutcome,
+  EventRequestDetail,
+  NotificationScope,
+  PipelineTeam,
+  RequestListParams,
+  UpdateDetailsInput,
+} from "@/lib/pipeline-types";
 
 export const pipelineKeys = {
   all: ["pipeline"] as const,
@@ -22,12 +29,24 @@ export function usePipelineCalendar(from: string, to: string) {
   return useQuery({ queryKey: pipelineKeys.calendar(from, to), queryFn: () => api.pipeline.calendar(from, to) });
 }
 
+/** Close days as one block (with its reason), or reopen single days. */
 export function useBanDays() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ dates, reason, unban }: { dates: string[]; reason?: string | null; unban?: boolean }) =>
-      unban ? api.pipeline.unban(dates) : api.pipeline.ban(dates, reason ?? null),
+    mutationFn: ({ dates, reason, unban }: { dates: string[]; reason?: string; unban?: boolean }) =>
+      unban ? api.pipeline.unban(dates) : api.pipeline.ban(dates, reason ?? ""),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
+  });
+}
+
+/** Change a block's reason, or reopen every day of it (``reason`` left out). */
+export function useBlockMutation() {
+  const api = useApi();
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ blockId, reason }: { blockId: string; reason?: string }) =>
+      reason === undefined ? api.pipeline.removeBlock(blockId) : api.pipeline.editBlock(blockId, reason),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }
@@ -37,6 +56,21 @@ export function usePipelineRequests(page = 1) {
   return useQuery({
     queryKey: [...pipelineKeys.requests(), "list", page],
     queryFn: () => api.pipelineRequests.list({ page, pageSize: 20 }),
+  });
+}
+
+/**
+ * One slice of the requests: a department's active or past ones, a team's
+ * desk, the whole club. Keyed by its params, so each slice caches on its own
+ * and every write refetches them all (they share the `list` prefix).
+ */
+export function useRequestSlice(params: RequestListParams, { enabled = true }: { enabled?: boolean } = {}) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...pipelineKeys.requests(), "list", "slice", params],
+    queryFn: () => api.pipelineRequests.list(params),
+    enabled,
+    placeholderData: (previous) => previous,
   });
 }
 
@@ -82,8 +116,8 @@ export function useUpdateDetails(id: string) {
 
 export function useRedate(id: string) {
   const api = useApi();
-  return useRequestMutation(id, ({ start, end }: { start: string; end: string }) =>
-    api.pipelineRequests.redate(id, start, end),
+  return useRequestMutation(id, ({ start, end, bumps }: { start: string; end: string; bumps?: Record<string, BumpOutcome> }) =>
+    api.pipelineRequests.redate(id, start, end, bumps),
   );
 }
 
@@ -91,18 +125,37 @@ export function useBookRequest() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ departmentId, start, end }: { departmentId: number; start: string; end: string }) =>
-      api.pipelineRequests.book(departmentId, start, end),
+    mutationFn: ({
+      departmentId,
+      start,
+      end,
+      bumps,
+    }: {
+      departmentId: number;
+      start: string;
+      end: string;
+      bumps?: Record<string, BumpOutcome>;
+    }) => api.pipelineRequests.book(departmentId, start, end, bumps),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
   });
 }
 
-export function useCancelRequest() {
+/** Drop a request at any stage before publish. It stays readable, cancelled, until it is deleted. */
+export function useCancelRequest(id: string) {
+  const api = useApi();
+  return useRequestMutation<void>(id, () => api.pipelineRequests.cancel(id));
+}
+
+/** Delete a cancelled request for good. */
+export function useDeleteRequest() {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => api.pipelineRequests.cancel(id),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: pipelineKeys.all }),
+    mutationFn: (id: string) => api.pipelineRequests.remove(id),
+    onSuccess: (_data, id) => {
+      queryClient.removeQueries({ queryKey: pipelineKeys.request(id) });
+      queryClient.invalidateQueries({ queryKey: pipelineKeys.all });
+    },
   });
 }
 
@@ -118,6 +171,11 @@ export function useSaveDeliverable(id: string, team: PipelineTeam) {
   );
 }
 
+export function useGenerateMeet(id: string) {
+  const api = useApi();
+  return useRequestMutation<void>(id, () => api.pipelineRequests.generateMeet(id));
+}
+
 export function useUploadPoster(id: string) {
   const api = useApi();
   return useRequestMutation(id, (file: File) => api.pipelineRequests.uploadPoster(id, file));
@@ -128,22 +186,31 @@ export function useSubmitRequest(id: string) {
   return useRequestMutation<void>(id, () => api.pipelineRequests.submit(id));
 }
 
-/** `enabled` lets the top bar's bell skip the call for someone without pipeline access. */
-export function usePipelineNotifications({ enabled = true }: { enabled?: boolean } = {}) {
+/**
+ * The caller's notifications. `mine` (the default, and the bell's count) is
+ * their own departments and teams; `club` is everything they can see, which is
+ * only wider for a super admin. `enabled` lets the bell skip the call for
+ * someone without pipeline access; only `mine` polls.
+ */
+export function usePipelineNotifications({
+  enabled = true,
+  scope = "mine",
+}: { enabled?: boolean; scope?: NotificationScope } = {}) {
   const api = useApi();
   return useQuery({
-    queryKey: [...pipelineKeys.all, "notifications"],
-    queryFn: () => api.pipeline.notifications(),
-    refetchInterval: 60_000,
+    queryKey: [...pipelineKeys.all, "notifications", scope],
+    queryFn: () => api.pipeline.notifications({ scope }),
+    refetchInterval: scope === "mine" ? 60_000 : false,
     enabled,
   });
 }
 
-export function useReadNotifications() {
+export function useReadNotifications(scope: NotificationScope = "mine") {
   const api = useApi();
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (id: string | "all") => (id === "all" ? api.pipeline.readAllNotifications() : api.pipeline.readNotification(id)),
+    mutationFn: (id: string | "all") =>
+      id === "all" ? api.pipeline.readAllNotifications(scope) : api.pipeline.readNotification(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: [...pipelineKeys.all, "notifications"] }),
   });
 }

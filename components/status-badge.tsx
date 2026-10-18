@@ -28,6 +28,12 @@ export const URGENCY_TONE: Record<Urgency, DoorTone> = {
 };
 
 
+/** A content link on the event page: live for members (green) or hidden (umber). */
+export const CONTENT_LINK_TONE: Record<"published" | "unpublished", DoorTone> = {
+  published: "green",
+  unpublished: "umber",
+};
+
 const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
 const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";
 
@@ -88,6 +94,28 @@ export const STAGE_TONE: Record<RequestStage, DoorTone> = {
   published: "green",
   cancelled: "umber",
 };
+
+/**
+ * A stage's tone for a reader it may not be waiting on. Ochre means "your
+ * move", so on a request that is someone else's move (a super admin looking at
+ * another department's draft) it goes quiet, and the row's "with ..." line says
+ * whose move it is instead.
+ */
+export function stageToneFor(stage: RequestStage, mine: boolean): Tone {
+  const tone = STAGE_TONE[stage];
+  return tone === "ochre" && !mine ? "neutral" : tone;
+}
+
+/**
+ * Who someone is in the console. A super admin wears madder: not a rank but a
+ * caution, since those powers skip every rule. Staff have no state of their
+ * own (neutral), and someone outside this semester's roster is inactive.
+ */
+export const ROLE_TONE = {
+  superAdmin: "madder",
+  staff: "neutral",
+  regular: "umber",
+} as const satisfies Record<string, Tone>;
 
 /** The step a stage sits on in the five-step path; -1 for a cancelled request. */
 export const STAGE_STEP: Record<RequestStage, number> = {

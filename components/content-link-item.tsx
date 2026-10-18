@@ -17,14 +17,9 @@ import {
 } from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemMedia,
-} from '@/components/ui/item';
 import { Switch } from '@/components/ui/switch';
-import { StatePill } from '@/components/status-badge';
+import { Plate } from '@/components/najdi';
+import { CONTENT_LINK_TONE, StatePill } from '@/components/status-badge';
 import { useDeleteContentLink, useUpdateContentLink } from '@/hooks/use-event';
 import { looksLikeUrl } from '@/lib/content-links';
 import type { ContentLinkKind, EventContentLink } from '@/lib/api-types';
@@ -40,6 +35,11 @@ interface ContentLinkItemProps {
   link: EventContentLink;
 }
 
+/**
+ * One content link as a row on the wall: a plate in its publish state, the
+ * label and URL editable in place, and under them the state pill, the publish
+ * switch and the copy / delete actions.
+ */
 export function ContentLinkItem({ eventId, link }: ContentLinkItemProps) {
   const t = useTranslations('eventContent');
   const common = useTranslations('common');
@@ -68,6 +68,8 @@ export function ContentLinkItem({ eventId, link }: ContentLinkItemProps) {
   const canSave = isDirty && label.trim() !== '' && looksLikeUrl(url.trim());
   const pending = updateLink.isPending || deleteLink.isPending;
   const Icon = KIND_ICON[link.kind];
+  const tone = CONTENT_LINK_TONE[link.published ? 'published' : 'unpublished'];
+  const switchId = `content-link-published-${link.id}`;
 
   const save = () => {
     if (!canSave) return;
@@ -119,113 +121,102 @@ export function ContentLinkItem({ eventId, link }: ContentLinkItemProps) {
   };
 
   return (
-    <Item variant="outline" className="bg-card flex-col flex-nowrap gap-2 sm:gap-2">
-      <div className="flex w-full flex-nowrap items-start gap-3">
-        <ItemMedia>
-          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
-            <Icon className="h-5 w-5" />
-          </div>
-        </ItemMedia>
-        <ItemContent className="min-w-0 flex-1 gap-1.5">
-          <Input
-            type="text"
-            dir="auto"
-            value={label}
-            onChange={(e) => setLabel(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') save();
-            }}
-            disabled={pending}
-            aria-label={t('labelAria')}
-            className="w-full min-w-0"
-          />
-          <Input
-            type="text"
-            inputMode="url"
-            autoComplete="url"
-            autoCapitalize="none"
-            spellCheck={false}
-            dir="ltr"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') save();
-            }}
-            disabled={pending}
-            aria-label={t('urlAria')}
-            className="w-full min-w-0 text-sm text-muted-foreground"
-          />
-          {isDirty && !canSave && !pending && (
-            <p className="text-xs text-destructive" dir="auto">
-              {label.trim() === '' ? t('labelInvalid') : t('rowInvalid')}
-            </p>
-          )}
-        </ItemContent>
-        <ItemActions className="shrink-0 flex-col sm:flex-row">
-          {updateLink.isPending && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
-          <Switch
-            checked={link.published}
-            onCheckedChange={togglePublished}
-            disabled={pending}
-            aria-label={t('publishAria')}
-          />
-          <Button variant="outline" size="icon" onClick={copyUrl} title={t('copyLink')} aria-label={t('copyLink')}>
-            <Copy className="h-4 w-4" />
-          </Button>
-          <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-            <Button
-              variant="outline"
-              size="icon"
-              className="text-destructive hover:text-destructive"
-              onClick={() => setConfirmDelete(true)}
-              disabled={pending}
-              title={t('deleteLink')}
-              aria-label={t('deleteLink')}
-            >
-              {deleteLink.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+    <li className="border-rule flex items-start gap-3 border-b px-1 py-3">
+      <Plate tone={tone} icon={Icon} className="mt-0.5" />
+
+      <div className="flex min-w-0 flex-1 flex-col gap-2">
+        <Input
+          type="text"
+          dir="auto"
+          value={label}
+          onChange={(e) => setLabel(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') save();
+          }}
+          disabled={pending}
+          aria-label={t('labelAria')}
+          enterKeyHint="done"
+          className="font-bold"
+        />
+        <Input
+          type="text"
+          inputMode="url"
+          autoComplete="url"
+          autoCapitalize="none"
+          spellCheck={false}
+          dir="ltr"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') save();
+          }}
+          disabled={pending}
+          aria-label={t('urlAria')}
+          enterKeyHint="done"
+          className="text-ink-2 text-[13px] md:text-[13px]"
+        />
+        {isDirty && !canSave && !pending && (
+          <p className="text-door-madder-ink text-[13px]" dir="auto">
+            {label.trim() === '' ? t('labelInvalid') : t('rowInvalid')}
+          </p>
+        )}
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          <StatePill tone={tone}>{link.published ? t('publishedBadge') : t('unpublishedBadge')}</StatePill>
+          {canSave && (
+            <Button size="sm" onClick={save} disabled={pending}>
+              {updateLink.isPending ? <Loader2 className="animate-spin" /> : <Save />}
+              {t('save')}
             </Button>
-            <AlertDialogContent
-              closeLabel={common('actions.close')}
-              closeDisabled={deleteLink.isPending}
-            >
-              <AlertDialogHeader>
-                <AlertDialogTitle dir="auto">{t('deleteTitle')}</AlertDialogTitle>
-                <AlertDialogDescription dir="auto">{t('deleteDescription')}</AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={deleteLink.isPending}>{t('deleteCancel')}</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={(e) => {
-                    e.preventDefault();
-                    remove();
-                  }}
-                  disabled={deleteLink.isPending}
-                  className="bg-destructive hover:bg-destructive/90"
-                >
-                  {deleteLink.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : t('deleteLink')}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </ItemActions>
+          )}
+
+          <div className="ms-auto flex items-center gap-1">
+            {updateLink.isPending && !canSave && <Loader2 className="text-ink-2 size-4 animate-spin" aria-hidden="true" />}
+            <label htmlFor={switchId} className="flex min-h-11 cursor-pointer items-center px-2">
+              <span className="sr-only">{t('publishAria')}</span>
+              <Switch id={switchId} checked={link.published} onCheckedChange={togglePublished} disabled={pending} />
+            </label>
+            <Button variant="ghost" size="icon" onClick={copyUrl} title={t('copyLink')} aria-label={t('copyLink')}>
+              <Copy />
+            </Button>
+            <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-door-madder-ink hover:text-door-madder-ink"
+                onClick={() => setConfirmDelete(true)}
+                disabled={pending}
+                title={t('deleteLink')}
+                aria-label={t('deleteLink')}
+              >
+                {deleteLink.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
+              </Button>
+              <AlertDialogContent
+                closeLabel={common('actions.close')}
+                closeDisabled={deleteLink.isPending}
+              >
+                <AlertDialogHeader>
+                  <AlertDialogTitle dir="auto">{t('deleteTitle')}</AlertDialogTitle>
+                  <AlertDialogDescription dir="auto">{t('deleteDescription')}</AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel disabled={deleteLink.isPending}>{t('deleteCancel')}</AlertDialogCancel>
+                  <AlertDialogAction
+                    variant="madder"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      remove();
+                    }}
+                    disabled={deleteLink.isPending}
+                  >
+                    {deleteLink.isPending ? <Loader2 className="animate-spin" /> : t('deleteLink')}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
+        </div>
       </div>
-      <div className="flex items-center gap-2 ps-13">
-        {canSave && (
-          <Button size="sm" variant="outline" onClick={save} disabled={pending}>
-            {updateLink.isPending ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {t('save')}
-          </Button>
-        )}
-        {link.published ? (
-          <StatePill tone="green">{t('publishedBadge')}</StatePill>
-        ) : (
-          <StatePill tone="neutral">{t('unpublishedBadge')}</StatePill>
-        )}
-      </div>
-    </Item>
+    </li>
   );
 }

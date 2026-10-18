@@ -65,6 +65,7 @@ export function Field({
   name,
   hint,
   optional,
+  invalidText,
   className,
   children,
 }: {
@@ -73,6 +74,8 @@ export function Field({
   name?: string;
   hint?: string;
   optional?: boolean;
+  /** What to say when submit reports it, instead of "Required" (a link that is not one). */
+  invalidText?: string;
   className?: string;
   children: React.ReactNode;
 }) {
@@ -88,7 +91,7 @@ export function Field({
       {invalid ? (
         <p className="text-door-madder-ink flex items-center gap-1 text-xs font-bold">
           <AlertCircle className="size-3.5 shrink-0" />
-          {t("required")}
+          {invalidText ?? t("required")}
         </p>
       ) : hint ? (
         <p className="text-ink-2 text-xs">{hint}</p>

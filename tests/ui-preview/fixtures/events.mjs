@@ -76,6 +76,11 @@ const details = (eventId) => {
       is_official: e.is_official ? 1 : 0,
       created_at: e.created_at,
     },
+    content_links: [
+      { id: "cl1", label: "شرائح اليوم الأول", url: "https://docs.google.com/presentation/d/1AbCdEfGhIjKlMnOpQrStUvWxYz/edit", kind: "slides", published: true, created_at: "2026-10-08T10:00:00" },
+      { id: "cl2", label: "ملف التمارين", url: "https://drive.google.com/file/d/1ZyXwVuTsRqPoNmLkJiHgFeDcBa/view", kind: "slides", published: false, created_at: "2026-10-09T12:30:00" },
+      { id: "cl3", label: "تسجيل اليوم الأول", url: "https://youtu.be/dQw4w9WgXcQ", kind: "recording", published: true, created_at: "2026-10-10T09:15:00" },
+    ],
     actions: [
       { action_id: 1, ar_action_name: "إقامة ورشة عمل", department_id: e.department_id ?? 14, department_ar_name: e.department_ar_name ?? "تطوير الويب" },
       { action_id: 5, ar_action_name: "حضور ورشة عمل", department_id: e.department_id ?? 14, department_ar_name: e.department_ar_name ?? "تطوير الويب" },

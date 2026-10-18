@@ -90,7 +90,7 @@ export function ContentLinkAddDialog({
     >
       <DialogTrigger asChild>
         <Button variant="outline" size={size} className={triggerClassName ?? 'shrink-0'}>
-          <Plus className="h-4 w-4" />
+          <Plus />
           {buttonLabel ?? t('addLink')}
         </Button>
       </DialogTrigger>
@@ -102,13 +102,13 @@ export function ContentLinkAddDialog({
 
         {/* The fixed guidance from the issue discussion: members hear the
             sharing rules here, so the manual-add dialog carries them. */}
-        <ul className="space-y-2 rounded-lg border bg-muted/50 p-3 text-sm text-muted-foreground">
+        <ul className="bg-sunk text-ink-2 flex flex-col gap-2 rounded-lg p-3 text-sm">
           <li className="flex items-start gap-2">
-            <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />
+            <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span dir="auto">{t.rich('hints.setting', { em: (chunks) => <em>{chunks}</em> })}</span>
           </li>
           <li className="flex items-start gap-2">
-            <FolderUp className="mt-0.5 h-4 w-4 shrink-0" />
+            <FolderUp className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
             <span dir="auto">{t('hints.personal')}</span>
           </li>
         </ul>
@@ -153,7 +153,7 @@ export function ContentLinkAddDialog({
                 if (e.key === 'Enter') create();
               }}
             />
-            {!isUrlValid && <p className="text-sm text-destructive">{t('urlInvalid')}</p>}
+            {!isUrlValid && <p className="text-door-madder-ink text-[13px]">{t('urlInvalid')}</p>}
           </div>
           <div className="grid gap-1.5">
             <Label htmlFor="content-link-kind">{t('kindField')}</Label>
@@ -169,9 +169,9 @@ export function ContentLinkAddDialog({
                   <SelectItem key={option} value={option}>
                     <span className="inline-flex items-center gap-2">
                       {option === 'recording' ? (
-                        <MonitorPlay className="h-4 w-4" />
+                        <MonitorPlay className="size-4" />
                       ) : (
-                        <Presentation className="h-4 w-4" />
+                        <Presentation className="size-4" />
                       )}
                       {t(`kind${option.charAt(0).toUpperCase()}${option.slice(1)}` as Parameters<typeof t>[0])}
                     </span>

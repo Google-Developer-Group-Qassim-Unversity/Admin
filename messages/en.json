@@ -262,7 +262,7 @@
     "permissions": "Permissions",
     "brand": "GDG Qassim",
     "pipelineShort": "Pipeline",
-    "waitingCount": "{count, plural, one {# waiting on your team} other {# waiting on your teams}}"
+    "waitingCount": "{count, plural, one {# waiting on you} other {# waiting on you}}"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -1979,6 +1979,17 @@
         "detail": "closed {days, plural, one {# day} other {# days}} ago",
         "action": "Send"
       }
+    },
+    "noOwnDepartment": "You are not on a department's roster this semester, so no requests are yours.",
+    "attentionClub": "Needs attention across the club",
+    "club": {
+      "title": "Who has what",
+      "hint": "Each of these is waiting on that team or department, not on you.",
+      "departments": "departments",
+      "waitingOn": "Waiting on {name}",
+      "oldest": "Oldest arrived {ago}",
+      "count": "{count, plural, one {# request} other {# requests}}",
+      "clear": "Nothing waiting"
     }
   },
   "pipeline": {
@@ -2014,19 +2025,25 @@
         "held": "Held (draft)",
         "booked": "Booked",
         "published": "Published event"
-      }
+      },
+      "closedBy": "Closed by {name}"
     },
     "bans": {
       "edit": "Close or reopen days",
-      "hint": "Tap the days to close or reopen. Requests on a closed day lose their dates.",
+      "hint": "Tap the days to close, give the reason, and close them together as one block. Requests on a closed day lose their dates.",
       "selected": "{count, plural, =0 {No days selected} one {# day selected} other {# days selected}}",
-      "reasonPlaceholder": "Reason, e.g. midterms",
+      "reasonPlaceholder": "Why? e.g. midterms, the spring break",
       "ban": "Close days",
       "unban": "Reopen days",
       "done": "Done",
       "banned": "{count, plural, one {# day closed} other {# days closed}}",
       "unbanned": "{count, plural, one {# day reopened} other {# days reopened}}",
-      "failed": "Could not update the days"
+      "failed": "Could not update the days",
+      "reasonRequired": "Say why these days are closed",
+      "editReason": "Change the reason",
+      "saveReason": "Save",
+      "reopenBlock": "Reopen these days",
+      "reasonSaved": "Reason updated"
     },
     "stage": {
       "draft": "Draft",
@@ -2044,9 +2061,10 @@
     },
     "book": {
       "start": "Book dates",
-      "hint": "Tap the first day, then the last (up to {max} days). We hold them for 24 hours while you fill in the request.",
-      "hintSuperAdmin": "Tap the first day, then the last. As a super admin you can book any day.",
+      "hint": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. We hold them for 24 hours while you fill in the request.",
+      "hintSuperAdmin": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. As a super admin you can also book a closed day, or a held one: you'll decide what happens to the request holding it.",
       "pickDays": "Pick the days on the calendar",
+      "limit": "That's the limit: a booking is at most {max} days in a row",
       "range": "{start} → {end}",
       "pickDepartment": "Which department?",
       "book": "Book",
@@ -2054,7 +2072,10 @@
       "booked": "Dates held for 24 hours",
       "failed": "Could not book these days",
       "days": "{count, plural, one {# day} other {# days}}",
-      "heldFor": "held for 24 hours"
+      "heldFor": "held for 24 hours",
+      "yourDepartments": "Yours",
+      "otherDepartments": "Other departments",
+      "onBehalf": "You are booking for {name} as a super admin. The request will be theirs: their leaders and VPs will see it and fill it in."
     },
     "requests": {
       "mine": "Your department's requests",
@@ -2073,10 +2094,9 @@
       "cancelConfirm": "Its dates become free for other departments. This can't be undone.",
       "cancelled": "Request cancelled",
       "failed": "Something went wrong",
-      "holdTitle": "Dates held",
-      "holdBody": "Fill in the event and both briefs, then submit before the hold runs out.",
       "lostDatesExpired": "The 24-hour hold ran out, so these dates were released",
       "lostDatesBanned": "Logistics closed one of your days, so the request lost its dates",
+      "lostDatesOverridden": "A super admin booked these dates for another event, so the request lost them",
       "lostDatesBody": "Everything you filled in is kept. Pick new dates to carry on.",
       "redate": "Pick new dates",
       "redateSave": "Book these days",
@@ -2090,9 +2110,20 @@
       "cancelTitle": "Cancel this request?",
       "moreActions": "More actions",
       "keep": "Keep it",
-      "whatsLeft": "What is left",
-      "sectionDone": "All filled in",
-      "requestedBy": "Requested by {name}"
+      "requestedBy": "Requested by {name}",
+      "nowWith": "Now:",
+      "lostDatesBodyFor": "Everything they filled in is kept. They need to pick new dates, and they have been notified.",
+      "redateFor": "Pick new dates for them",
+      "cancelConfirmSubmitted": "Every team stops working on it and is told, its dates become free, and Design's Notion card is marked cancelled. This can't be undone.",
+      "cancelledTitle": "This request was cancelled",
+      "cancelledBy": "{name} cancelled it on {when}.",
+      "cancelledBody": "It holds no dates and no team works on it. Delete it for good once you no longer need it.",
+      "delete": "Delete permanently",
+      "deleteTitle": "Delete this request for good?",
+      "deleteConfirm": "The request, its briefs and its files on the pipeline go away, and its Notion card moves to the trash. Its history is kept. This can't be undone.",
+      "deleted": "Request deleted",
+      "holdLine": "Your days are held. Send before the hold runs out:",
+      "holdLineFor": "{department}'s days are held. The hold ends in"
     },
     "details": {
       "title": "Event title",
@@ -2177,7 +2208,10 @@
       "leftShort": "{count} left",
       "readyShort": "Ready",
       "incomplete": "{count, plural, one {# field still needs filling in} other {# fields still need filling in}}",
-      "more": "+{count} more"
+      "more": "+{count} more",
+      "forDepartment": "Submitting for {name}, as a super admin",
+      "next": "Next: {station}",
+      "nextShort": "Next"
     },
     "fields": {
       "dates": "Dates",
@@ -2307,7 +2341,32 @@
         "task_done": "A team finished its part of {title}",
         "media_received": "{title} is ready for Media",
         "ready_to_publish": "{title} is ready to publish",
-        "dates_changed": "Logistics moved {title} to other dates"
+        "dates_changed": "Logistics moved {title} to other dates",
+        "overridden": "A super admin took the dates of {title}",
+        "cancelled": "{title} was cancelled; nothing left to do on it",
+        "confirmation_changed": "Logistics confirmed {title} with changes; see why"
+      },
+      "scope": {
+        "label": "Which notifications",
+        "mine": "Yours",
+        "club": "Whole club",
+        "mineHint": "Your own departments and teams. Only these ring the bell.",
+        "clubHint": "Every department's news, for when you want the whole picture. These never ring the bell."
+      },
+      "failed": "Could not load notifications.",
+      "noneMine": "Nothing new for your own departments or teams. The rest of the club's news is under Whole club.",
+      "forDepartment": "For {name}",
+      "kindsClub": {
+        "request_received": "New request reached the team: {title}",
+        "dates_banned": "Logistics closed a day of {title}",
+        "hold_expired": "The hold on {title} ran out",
+        "returned": "Design returned {title} with notes",
+        "task_done": "A team finished its part of {title}",
+        "media_received": "{title} reached Media",
+        "ready_to_publish": "{title} is ready to publish",
+        "dates_changed": "Logistics moved {title} to other dates",
+        "cancelled": "{title} was cancelled",
+        "confirmation_changed": "Logistics confirmed {title} with changes"
       }
     },
     "inbox": {
@@ -2339,11 +2398,14 @@
       "resubmit": "Resubmit to Design",
       "resubmitted": "Sent back to Design",
       "penalty": "Late fix: {points, plural, one {# point} other {# points}} off for {days, plural, one {# late day} other {# late days}}, taken when the event is published.",
-      "yourTurn": "Your team's turn",
-      "yourTurnHint": "Read the request below, then mark your part done when it's finished.",
       "markTeamDone": "Mark {team} done",
       "returnConfirm": "Send back",
-      "returnedHint": "Fix what the notes ask for in the forms below, then resubmit."
+      "returnedHint": "Fix what the notes ask for in the forms below, then resubmit.",
+      "teamTurn": "{team}'s turn",
+      "teamTurnFor": "It is on {team}'s desk and they have been notified.",
+      "returnedTitleFor": "Design sent it back with notes",
+      "fixWithinFor": "They have to fix it and resubmit within",
+      "returnFor": "You are returning it on Design's behalf, as a super admin. It still counts as Design's one return."
     },
     "publish": {
       "title": "Publish the event",
@@ -2360,7 +2422,14 @@
       "confirmFinal": "You cannot undo this from the pipeline. Check the date, time, place and poster before you continue.",
       "confirmCheck": "I checked everything and the event is ready to go public.",
       "confirmCancel": "Not yet",
-      "confirmButton": "Yes, publish it now"
+      "confirmButton": "Yes, publish it now",
+      "titleEarly": "Publish before the teams are done",
+      "hintEarly": "Only a super admin can do this: the event goes live with what has been confirmed so far.",
+      "titleFor": "Ready for the department to publish",
+      "hintFor": "Every team is done. Publishing is the department's step; they have been notified.",
+      "buttonFor": "Publish for them",
+      "confirmEarly": "You are publishing {name}'s event before every team is done.",
+      "confirmFor": "You are publishing {name}'s event for them."
     },
     "autosave": {
       "saving": "Saving…",
@@ -2373,9 +2442,7 @@
       "required": "Fill this in to submit"
     },
     "progress": {
-      "label": "Progress",
-      "step": "Step {current} of {total}",
-      "cancelled": "This request was cancelled."
+      "step": "Step {current} of {total}"
     },
     "confirm": {
       "title": "Confirm the event",
@@ -2404,9 +2471,44 @@
         "mode": "Mode",
         "place": "Place",
         "meet": "Google Meet",
-        "type": "Event type"
+        "type": "Event type",
+        "reason": "Why it differs"
       },
-      "pickDates": "Set the start and end dates first."
+      "pickDates": "Set the start and end dates first.",
+      "titleFor": "Logistics' turn: confirm the event",
+      "hintFor": "Logistics confirms what was actually booked. The form below is theirs; you can fill it in and confirm for them.",
+      "asSuperAdmin": "Confirming for Logistics, as a super admin",
+      "buttonFor": "Confirm for Logistics",
+      "reasonTitle": "Why it differs",
+      "reasonHint": "What you confirmed differs from what the department asked for. Tell them why; it goes in their email.",
+      "changed": "Changed: {fields}",
+      "reason": "Reason for the change",
+      "reasonPlaceholder": "The hall was taken that day, so the university offered…",
+      "fields": {
+        "start_date": "first day",
+        "end_date": "last day",
+        "day_modes": "each day's mode",
+        "daily_start_time": "start time",
+        "daily_end_time": "end time",
+        "venue": "venue",
+        "room": "room",
+        "event_type": "event type",
+        "description": "description"
+      },
+      "generateMeet": "Generate a link",
+      "regenerateMeet": "Generate a new link",
+      "generateMeetHint": "Made on the club's Google Calendar with the dates and times above; anyone with the link can join.",
+      "generateMeetNeeds": "Set the dates and times first.",
+      "meetGenerated": "Meet link generated.",
+      "meetGenerateFailed": "Could not generate the link",
+      "meetOnCalendar": "On the club's calendar"
+    },
+    "notion": {
+      "open": "Open in Notion",
+      "openHint": "This request's card on the design team's board",
+      "pending": "Notion card pending",
+      "pendingHint": "The card is written in the background and retried every few minutes.",
+      "error": "The Notion card could not be written: {error}"
     },
     "poster": {
       "title": "The poster",
@@ -2424,7 +2526,9 @@
       "uploaded": "Poster uploaded",
       "wrongType": "The poster must be a PNG, JPEG or WebP image.",
       "tooLarge": "The poster must be 10 MB or smaller.",
-      "failed": "Something went wrong"
+      "failed": "Something went wrong",
+      "titleFor": "Design's turn: the poster",
+      "finishFor": "Finish Design for them"
     },
     "history": {
       "title": "Who did what",
@@ -2452,8 +2556,523 @@
         "datesBanned": "closed a day of {dates}, so the request lost its dates",
         "penaltyGrown": "grew the late penalty to {points, plural, one {# point} other {# points}} ({days, plural, one {# day} other {# days}} late)",
         "eventDeleted": "deleted the published event (#{id})",
-        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted"
+        "briefEditedAfterSubmit": "edited the {team} brief after the request was submitted",
+        "overriddenRescheduled": "booked {dates} for another event; the request is back to a draft with no dates",
+        "overriddenCancelled": "booked {dates} for another event and cancelled the request",
+        "cancelledAt": "cancelled the request while it was {stage}"
       }
+    },
+    "views": {
+      "label": "Whose requests",
+      "tabs": {
+        "department": "My department",
+        "club": "Whole club"
+      },
+      "showMore": "{count, plural, one {Show # more} other {Show # more}}",
+      "past": "Past",
+      "arrived": "Arrived {ago}",
+      "doneAgo": "Done {ago}",
+      "why": {
+        "returned": "Returned: fix it",
+        "lost": "Lost its dates",
+        "ready": "Ready: publish it",
+        "hold": "Being filled in"
+      },
+      "department": {
+        "title": "Your department's requests",
+        "description": "What waits on you comes first: drafts to finish, returned requests to fix, lost dates and events ready to publish. Then what is with the teams, and what is over.",
+        "noneSuperAdmin": "You are not on a department's roster this semester, so no requests are yours. The whole club is under Whole club.",
+        "waiting": "Waiting on you",
+        "waitingNone": "Nothing is waiting on you.",
+        "book": "Book dates",
+        "withTeams": "With the teams",
+        "withTeamsNone": "None of your requests is with Design, Logistics or Media right now.",
+        "pastNone": "Nothing published or cancelled yet."
+      },
+      "desk": {
+        "title": "{team} desk",
+        "about": {
+          "design": "Design makes the poster for every request, and may send a request back once, within two days of getting it.",
+          "logistics": "Logistics confirms the venue, days and times of every request, and closes calendar days.",
+          "media": "Media takes a request once Design is done, and announces the event."
+        },
+        "yours": "Your team",
+        "overseen": "You are looking at {team}'s desk as a super admin. These requests are waiting on {team}, not on you, and {team} has been notified of each one. Step in only when they need you to.",
+        "waitingYours": "Waiting on your team",
+        "waiting": "Waiting on {team}",
+        "waitingNoneYours": "Nothing is waiting on your team.",
+        "waitingNone": "Nothing is waiting on {team}.",
+        "returned": "Sent back to departments",
+        "returnedHint": "Design returned these with notes. They come back here when the department resubmits.",
+        "doneYours": "Done by your team",
+        "done": "Done by {team}",
+        "doneNone": "Nothing finished yet."
+      },
+      "club": {
+        "title": "The whole club",
+        "description": "Every department's requests, by who has them. Each one waits on the team or department named on it, and they have been notified; you only oversee.",
+        "departments": "Departments",
+        "waitingOn": "Waiting on {name}",
+        "yoursToo": "{count, plural, one {# of these is yours: it is in My department or your team's desk.} other {# of these are yours: they are in My department or your team's desk.}}",
+        "teamQueue": "Waiting on {team}",
+        "openDesk": "{team} desk",
+        "teamClear": "Nothing is waiting on {team}.",
+        "departmentQueue": "Waiting on departments",
+        "departmentsClear": "No department has a draft, a returned request or an event to publish.",
+        "pastNone": "Nothing published or cancelled yet."
+      }
+    },
+    "override": {
+      "title": "Book over {count, plural, one {another request} other {# other requests}}?",
+      "warning": "These days are already held. Booking them takes them away from the requests below, right now, and their departments are told. Decide what happens to each one.",
+      "untitled": "Untitled request",
+      "choose": "What happens to this request",
+      "chooseHint": "Choose: reschedule or delete.",
+      "reschedule": "Reschedule",
+      "rescheduleBody": "It goes back to a draft with no dates. Everything in it is kept, but the teams' work on it stops; the department books new dates and submits it again.",
+      "delete": "Delete",
+      "deleteBody": "It is cancelled for good. This can't be undone.",
+      "email": "{count, plural, =0 {No email: {department} has no members with an email.} one {An email goes to # member of {department}.} other {An email goes to # members of {department}.}}",
+      "showMore": "Show names",
+      "showLess": "Hide names",
+      "confirm": "Book over them",
+      "keep": "Pick other days",
+      "publishedTitle": "A published event is on these days",
+      "publishedBody": "A published event can't be booked over. Pick other days."
+    },
+    "stations": {
+      "label": "The request's stations",
+      "names": {
+        "event": "Event",
+        "design": "Design",
+        "logistics": "Logistics",
+        "media": "Media",
+        "publish": "Publish"
+      },
+      "status": {
+        "filling": "Filling in",
+        "yourTurn": "Your turn",
+        "fixIt": "Fix it",
+        "sent": "Sent",
+        "notSent": "Not sent",
+        "working": "Working",
+        "sentBack": "Sent back",
+        "done": "Done",
+        "later": "Later",
+        "waiting": "Waiting",
+        "published": "Live",
+        "cancelled": "Cancelled",
+        "left": "{count} left"
+      },
+      "you": "You are here",
+      "parallel": "Design and Logistics work at the same time.",
+      "owner": {
+        "yours": "Your part",
+        "yourTeam": "Your team's part",
+        "theirs": "For {name}"
+      },
+      "head": {
+        "event": {
+          "filling": "What the event is, when, and who it is for. It saves as you type.",
+          "fillingFor": "{department} is filling this in. It saves as you type.",
+          "returned": "Change whatever Design's notes ask for, then resend.",
+          "returnedFor": "{department} is fixing what Design's notes ask for.",
+          "sent": "Sent by {name} {ago}. It is frozen now: the teams work from it as it is.",
+          "cancelled": "This request was cancelled. Nothing here moves any more."
+        },
+        "design": {
+          "brief": "What Design needs to make the poster. Design gets it the moment the request is sent.",
+          "briefFor": "{department} writes this brief. Design gets it the moment the request is sent.",
+          "notSent": "Design gets this brief once {department} sends the request.",
+          "yours": "Make the poster from the brief, upload it, and finish Design.",
+          "working": "On Design's desk; it reached them {ago}. They upload the poster, then finish.",
+          "sentBack": "Design sent the request back with notes. It comes back here once it is resent.",
+          "done": "Finished by {name} {ago}."
+        },
+        "logistics": {
+          "brief": "Where and how the event runs. Logistics books it and confirms what the university gave.",
+          "briefFor": "{department} writes this brief. Logistics books the event from it.",
+          "notSent": "Logistics gets this brief once {department} sends the request.",
+          "yours": "Confirm the event as it was actually booked. The form starts from what was asked.",
+          "working": "On Logistics' desk; it reached them {ago}. They confirm the day, time and place.",
+          "done": "Confirmed by {name} {ago}."
+        },
+        "media": {
+          "later": "Media takes over once Design and Logistics are done, and works from what they hand over.",
+          "yours": "Announce the event from the poster and the confirmed details, then finish Media.",
+          "working": "On Media's desk; it reached them {ago}.",
+          "done": "Finished by {name} {ago}."
+        },
+        "publish": {
+          "later": "Once Media is done, {department} publishes it. The event goes live with exactly what the teams confirmed.",
+          "laterYours": "Once Media is done, you publish it. The event goes live with exactly what the teams confirmed.",
+          "ready": "Every team is done. Publishing is {department}'s step.",
+          "readyYours": "Every team is done. Publishing is your step.",
+          "published": "Published by {name} {ago}.",
+          "cancelled": "A cancelled request is never published."
+        }
+      },
+      "receives": {
+        "title": "What Media works from",
+        "poster": "The poster",
+        "posterFrom": "From Design",
+        "confirmed": "The confirmed event",
+        "confirmedFrom": "From Logistics",
+        "arrived": "Arrived",
+        "notYet": "Not yet",
+        "open": "Open"
+      },
+      "media": {
+        "title": "Media's part",
+        "doneLine": "Media finished {ago}.",
+        "door": "The poster and the confirmed event are below. Once the event is announced, tick where it was shared and finish Media: the department can then publish it."
+      },
+      "context": {
+        "asked": "What {department} asked for",
+        "event": "The event",
+        "brief": "The brief",
+        "show": "Show what they asked for"
+      },
+      "handoff": {
+        "sent": "Sent to Design and Logistics",
+        "sentBody": "Both teams have it now and work on it at the same time. You are notified as each one finishes.",
+        "sentFor": "Sent for {department}",
+        "sentForBody": "Design and Logistics both have it now. {department} is notified as each one finishes.",
+        "resent": "Sent back to Design",
+        "resentBody": "Design picks it up again from here.",
+        "returned": "Returned with notes",
+        "returnedBody": "{department} has 12 hours to fix it and resend.",
+        "designDone": "Design is done",
+        "designDoneBody": "Logistics is still confirming the event.",
+        "logisticsDone": "Logistics confirmed the event",
+        "logisticsDoneBody": "Design is still on the poster.",
+        "toMedia": "Design and Logistics are done",
+        "toMediaBody": "It went to Media, with the poster and the confirmed event.",
+        "mediaDone": "Media is done",
+        "mediaDoneBody": "It is ready for {department} to publish.",
+        "mediaDoneBodyYours": "It is ready for you to publish.",
+        "dismiss": "Dismiss"
+      },
+      "next": {
+        "title": "Your part is done",
+        "body": "Next on your desk, the one that has waited longest:",
+        "open": "Open it",
+        "clear": "Your desk is clear: nothing else is waiting on {team}.",
+        "desk": "Back to the desk"
+      },
+      "nav": {
+        "prev": "Back: {station}",
+        "next": "Next: {station}"
+      },
+      "copy": "Copy",
+      "copied": "Copied",
+      "notAnswered": "Not answered",
+      "none": "None",
+      "partnersNone": "No partners",
+      "links": "{count, plural, one {# link} other {# links}}",
+      "perDay": "Days",
+      "missingHere": "Still to fill in here:",
+      "checklist": {
+        "title": "What gets published",
+        "poster": "The poster, from Design",
+        "confirmed": "The event as Logistics confirmed it",
+        "media": "Media's part",
+        "ready": "Ready",
+        "waiting": "Waiting"
+      }
+    },
+    "guide": {
+      "open": "How it works",
+      "title": "How the pipeline works",
+      "subtitle": "What staff need to take an event from booked dates to published, and what each team does along the way.",
+      "back": "Pipeline",
+      "toc": "On this page",
+      "path": {
+        "title": "The path of a request",
+        "intro": "Every event goes through the same five steps. The triangles on each request in the lists show where it is: green ones are done, the outlined one is the step it is on now.",
+        "steps": {
+          "draft": {
+            "who": "Your department",
+            "body": "Book the dates, then fill in the event details, the Design brief and the Logistics brief. The dates are held for you for 24 hours.",
+            "next": "<b>Submit</b> sends it to Design and Logistics at the same time."
+          },
+          "in_review": {
+            "who": "Design and Logistics, side by side",
+            "body": "Design makes the poster. Logistics confirms the dates, times and venue as they were actually booked. Your details are frozen from here on.",
+            "next": "When Design is done, the request also goes to Media."
+          },
+          "media": {
+            "who": "Media, and Logistics if it is not done yet",
+            "body": "Media prepares the announcement, using Design's poster.",
+            "next": "When Design, Logistics and Media are all done, the request is ready."
+          },
+          "ready": {
+            "who": "Your department",
+            "body": "Every team is done. Check the date, time, place and poster one last time.",
+            "next": "<b>Publish</b> puts the event live."
+          },
+          "published": {
+            "who": "Events",
+            "body": "The event is created in Events with exactly what the teams confirmed, and is live: members see it and can register. From here it is run from its page in Events: responses, attendance, closing it and awarding points."
+          }
+        },
+        "offPath": "Off the path",
+        "returned": {
+          "title": "Returned",
+          "body": "Design can send a request back once, with notes, within two days of receiving it. Your department then has 12 hours to fix it and press <b>Resubmit to Design</b>. Each day late costs a point."
+        },
+        "cancelled": {
+          "title": "Cancelled",
+          "body": "The department can cancel a request at any step before it is published. Its dates go back to the calendar and every team it reached is told. A cancelled request can then be deleted for good."
+        }
+      },
+      "rules": {
+        "title": "The rules in numbers",
+        "intro": "The system enforces these, so a button that refuses usually means one of them.",
+        "items": {
+          "lead": {
+            "value": "4 days",
+            "text": "Lead time. Today and the next three days can't be booked; the first day you can book is four days away."
+          },
+          "length": {
+            "value": "Up to 4 days",
+            "text": "The longest one request can book, as days in a row."
+          },
+          "hold": {
+            "value": "24 hours",
+            "text": "How long booked dates are held while the request is a draft. Submit before the hold runs out, or the dates are released (what you filled in is kept)."
+          },
+          "oneHold": {
+            "value": "1 draft",
+            "text": "A department holds dates for one draft at a time. Submit or cancel it before booking the next one."
+          },
+          "returnWindow": {
+            "value": "2 days",
+            "text": "Design can return a request once, within two days of receiving it."
+          },
+          "fix": {
+            "value": "12 hours",
+            "text": "To fix a returned request and resubmit it."
+          },
+          "penalty": {
+            "value": "1 point",
+            "text": "Taken off the department for every started day a fix is late, when the event is published."
+          },
+          "hours": {
+            "value": "Sun–Thu, 8:00–15:00",
+            "text": "Official working hours. The details form tells you whether your event falls inside them."
+          }
+        }
+      },
+      "page": {
+        "title": "Finding your way",
+        "intro": "Everything starts on the Pipeline page.",
+        "items": {
+          "department": {
+            "title": "My department",
+            "body": "Your department's requests. What waits on you comes first (drafts to finish, returned requests, lost dates, events to publish), then what is with the teams, then what is over."
+          },
+          "desk": {
+            "title": "Team desks",
+            "body": "For Design, Logistics and Media: what waits on your team, what Design sent back, and what your team finished. The number on the tab is what waits on you. When you finish a request, the page offers the next one, oldest first."
+          },
+          "club": {
+            "title": "Whole club",
+            "body": "Super admins only: every department's requests, grouped by who has them."
+          },
+          "calendar": {
+            "title": "Booking calendar",
+            "body": "Which days are free. Tap a taken day to open the request on it."
+          },
+          "book": {
+            "title": "Book dates",
+            "body": "Starts a new request. It is also in the side bar, and in the middle of the bottom bar on a phone."
+          },
+          "bell": {
+            "title": "The bell",
+            "body": "Notifications for your department and teams: a request reached your team, Design returned yours, a team finished, it is ready to publish, Logistics changed something. Each one opens its request."
+          }
+        }
+      },
+      "roles": {
+        "title": "Who does what",
+        "intro": "Your part is open. The others are here so you know what to expect from them.",
+        "yours": "Your part",
+        "department": {
+          "name": "Departments",
+          "who": "Leaders and VPs of any department",
+          "steps": {
+            "0": {
+              "title": "Book dates",
+              "body": "Press <b>Book dates</b>, tap the first day and then the last, and pick the department if you lead more than one. The days are now held for 24 hours."
+            },
+            "1": {
+              "title": "Fill in the request",
+              "body": "A request is five stations along the top: <b>Event</b>, <b>Design</b>, <b>Logistics</b>, <b>Media</b> and <b>Publish</b>. You fill in the first three: the event itself, Design's brief and Logistics' brief, and <b>Next</b> walks you through them. Everything saves as you type, so you can leave and come back. Each station counts what it is still missing."
+            },
+            "2": {
+              "title": "Submit",
+              "body": "<b>Submit</b> sends it to Design and Logistics together. The dates stay yours without a timer now, and the details can no longer be edited."
+            },
+            "3": {
+              "title": "If Design returns it",
+              "body": "Read the notes, fix the forms, and press <b>Resubmit to Design</b> within 12 hours. Late costs a point a day."
+            },
+            "4": {
+              "title": "Publish",
+              "body": "When it says <b>Ready to publish</b>, check everything and press <b>Publish</b>. The event goes live in Events, and you run it from there."
+            }
+          },
+          "cancel": "Changed your plans? <b>Cancel request</b> at the top of the request, at any step before publishing. Its dates go back to the calendar."
+        },
+        "design": {
+          "name": "Design",
+          "who": "Design's leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "The moment a department submits, the request is on the Design desk and you are notified."
+            },
+            "1": {
+              "title": "Return it if it needs fixing",
+              "body": "Once, within two days of receiving it: <b>Return with notes</b>, saying exactly what to fix. The department gets 12 hours, and it comes back to you."
+            },
+            "2": {
+              "title": "Upload the poster",
+              "body": "PNG, JPEG or WebP, up to 10 MB. It becomes the event's image. You can replace it until the event is published."
+            },
+            "3": {
+              "title": "Finish Design",
+              "body": "<b>Finish Design</b> needs the poster. The request then also goes to Media."
+            }
+          }
+        },
+        "logistics": {
+          "name": "Logistics",
+          "who": "Logistics' leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "At the same moment as Design; the two teams work at once."
+            },
+            "1": {
+              "title": "Confirm the event",
+              "body": "The confirmation opens filled in from the request: dates, each day's mode, times, venue and room, event type and description. Change whatever the booking turned out differently, then press <b>Confirm</b>. The event is published with exactly this."
+            },
+            "2": {
+              "title": "Say why anything changed",
+              "body": "If what you confirm differs from what was asked, give the reason; the department sees it. New dates follow the same booking rules, and the department is told."
+            },
+            "3": {
+              "title": "Online days",
+              "body": "Paste the Google Meet link, or press <b>Generate a link</b> to make one on the club's calendar."
+            },
+            "4": {
+              "title": "Close days",
+              "body": "<b>Close or reopen days</b>: pick the days, give the reason, and close them as one block. A request holding a closed day loses its dates, and its department is told."
+            }
+          }
+        },
+        "media": {
+          "name": "Media",
+          "who": "Media's leaders and VPs",
+          "steps": {
+            "0": {
+              "title": "It reaches your desk",
+              "body": "Once Design is done, so the poster is ready."
+            },
+            "1": {
+              "title": "Announce the event",
+              "body": "Prepare the announcement from the request and its poster."
+            },
+            "2": {
+              "title": "Mark Media done",
+              "body": "When all three teams are done, the department can publish."
+            }
+          }
+        },
+        "superAdmin": {
+          "name": "Super admins",
+          "who": "Can act for every department and team",
+          "steps": {
+            "0": {
+              "title": "Step in only when needed",
+              "body": "You can do any department's or team's step, and the screen says when you are acting on someone's behalf. They were already notified of their own work."
+            },
+            "1": {
+              "title": "Closed and taken days",
+              "body": "You can book a day Logistics closed, or over another request (never a published event). For each request you bump, you choose: back to a draft without dates, or cancelled. Its department is told."
+            },
+            "2": {
+              "title": "The rest binds you too",
+              "body": "The four-day lead time, four days per request, one hold per department, details frozen after submit, Design's one return, and publishing only once every team is done."
+            }
+          }
+        }
+      },
+      "calendar": {
+        "title": "The calendar's colours",
+        "intro": "Each day on the booking calendar is one of these.",
+        "days": {
+          "open": "Free to book.",
+          "locked": "In the next four days. Nobody can book it.",
+          "banned": "Logistics closed it. The reason is listed under the calendar.",
+          "held": "A draft holds it for 24 hours. It frees up if the draft isn't submitted.",
+          "booked": "A submitted request has it.",
+          "published": "A published event is on it."
+        }
+      },
+      "trouble": {
+        "title": "When something goes wrong",
+        "items": {
+          "lost": {
+            "q": "My request lost its dates",
+            "a": "The hold ran out, Logistics closed one of the days, or a super admin needed them. Everything you filled in is kept: open the request and press <b>Pick new dates</b>."
+          },
+          "day": {
+            "q": "I can't pick a day",
+            "a": "It is in the next four days, Logistics closed it, or another request has it. Your range can't cross any of those."
+          },
+          "hold": {
+            "q": "It says my department already holds dates",
+            "a": "Only one draft holds dates at a time. Submit that draft, or cancel it, first."
+          },
+          "submit": {
+            "q": "Submit won't go",
+            "a": "The stations along the top count what is still missing, and each station lists its own. If it says a team is not set up, tell a super admin."
+          },
+          "change": {
+            "q": "Something must change after submitting",
+            "a": "The details are frozen once submitted. Logistics confirms the final dates, times and venue, so tell them; if it is bigger than that, cancel the request and start again."
+          },
+          "changed": {
+            "q": "Logistics changed my event",
+            "a": "They have to say why. The reason is in the notification and on the request's Logistics station, under <b>Confirmed by Logistics</b>."
+          }
+        }
+      }
+    },
+    "share": {
+      "title": "Where it was shared",
+      "hint": "Tick everywhere the event was posted. All of it is optional.",
+      "platforms": {
+        "x": "X (formerly Twitter)",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "other": "Somewhere else"
+      },
+      "otherName": "Where",
+      "otherPlaceholder": "e.g. LinkedIn",
+      "link": "Link to the post",
+      "notALink": "Paste the full link, starting with https://",
+      "incomplete": "{count, plural, one {# thing needs fixing} other {# things need fixing}} before Media is done.",
+      "button": "Mark Media done",
+      "buttonFor": "Mark done for Media",
+      "asSuperAdmin": "Finishing for Media, as a super admin",
+      "summaryTitle": "Shared on",
+      "by": "By {name}",
+      "nowhere": "Media didn't say where it was shared.",
+      "noLink": "No link"
     }
   },
   "permissions": {
@@ -2646,6 +3265,49 @@
       "form_updated": "changed the registration form",
       "formAttached": "attached a Google Form",
       "form_detached": "detached the Google Form"
+    }
+  },
+  "roles": {
+    "superAdmin": "Super admin",
+    "badge": {
+      "open": "Your access: {who}",
+      "more": "{count, plural, one {+# department} other {+# departments}}"
+    },
+    "behalf": {
+      "forTeam": "For {name}",
+      "forDepartment": "{name}'s request",
+      "teamKnows": "It is on {name}'s desk and they have been notified.",
+      "departmentKnows": "It is {name}'s to move, and they have been notified.",
+      "actFor": "Act on {name}'s behalf.",
+      "recorded": "Only if they need you to: it is recorded under your name, and the request stays theirs."
+    },
+    "turn": {
+      "you": "Waiting on you",
+      "yourTeam": "Waiting on your team",
+      "withDepartment": "With {name}",
+      "withYourDepartment": "With your department"
+    },
+    "oversight": {
+      "whose": "This is {department}'s request.",
+      "waitsOnTeams": "It is waiting on {teams}, who have been notified.",
+      "waitsOnDepartment": "It is waiting on {department}, who have been notified.",
+      "over": "It is finished.",
+      "canAct": "As a super admin you can edit it and act for them, but nothing here is waiting on you."
+    },
+    "access": {
+      "title": "Your access",
+      "semester": "This semester: {semester}",
+      "superAdminTitle": "You are a super admin",
+      "superAdminBody": "You can do anything, in any department, and skip every time rule. The work still belongs to its teams and departments: they get the notifications and the \"your turn\" doors. When you step in for them, it is recorded under your name.",
+      "departments": "Your departments",
+      "noDepartments": "You are not on any department's roster this semester.",
+      "permissions": "What you can do",
+      "ownPermissions": "What your roster gives you",
+      "ownPermissionsHint": "What you would have without super admin. Everything else you do as a super admin.",
+      "failed": "Could not load your permissions.",
+      "manage": "Manage permissions",
+      "none": "Nothing beyond opening the console.",
+      "basics": "Everyone on staff"
     }
   }
 }

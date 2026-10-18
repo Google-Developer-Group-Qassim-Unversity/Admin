@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { HistoryList, type HistoryEntry } from "@/components/history-list";
 import type { Tone } from "@/components/najdi";
 import { useFormatDateRange } from "@/components/pipeline/shared";
-import type { EventRequestDetail, HistoryItem, PipelineTeam } from "@/lib/pipeline-types";
+import type { EventRequestDetail, EventRequestStage, HistoryItem, PipelineTeam } from "@/lib/pipeline-types";
 
 /**
  * Who did what to the request, newest first: every step, edit and automatic
@@ -42,6 +42,8 @@ const TONE: Partial<Record<HistoryItem["action"], Tone>> = {
   hold_expired: "madder",
   penalty_grown: "madder",
   event_deleted: "madder",
+  overridden: "madder",
+  cancelled: "madder",
   task_done: "green",
   published: "green",
 };
@@ -50,6 +52,7 @@ const TONE: Partial<Record<HistoryItem["action"], Tone>> = {
 function useDescribe() {
   const t = useTranslations("pipeline.history.actions");
   const tt = useTranslations("pipeline.teams");
+  const ts = useTranslations("pipeline.stage");
   const formatRange = useFormatDateRange();
   const range = (pair: unknown) => {
     const [start, end] = (Array.isArray(pair) ? pair : []) as (string | null)[];
@@ -76,11 +79,15 @@ function useDescribe() {
           note: d.late_days ? t("late", { days: Number(d.late_days), points: Number(d.points) }) : undefined,
         };
       case "dates_moved":
-        return { text: t("datesMoved", { from: range(d.from), to: range(d.to) }) };
+        return {
+          text: t("datesMoved", { from: range(d.from), to: range(d.to) }),
+          note: typeof d.reason === "string" ? d.reason : undefined,
+        };
       case "poster_uploaded":
         return { text: t(d.replaced ? "posterReplaced" : "posterUploaded") };
       case "task_done":
-        return { text: t("taskDone", { team }) };
+        // Logistics' finishing carries what it confirmed differently, and why.
+        return { text: t("taskDone", { team }), note: typeof d.reason === "string" ? d.reason : undefined };
       case "published":
         return { text: t("published", { id: Number(d.event_id) }) };
       case "hold_expired":
@@ -92,8 +99,19 @@ function useDescribe() {
         };
       case "penalty_grown":
         return { text: t("penaltyGrown", { days: Number(d.late_days), points: Number(d.points) }) };
+      case "cancelled":
+        return {
+          text: typeof d.stage === "string" ? t("cancelledAt", { stage: ts(d.stage as EventRequestStage) }) : t("cancelled"),
+          note: Array.isArray(d.dates) && d.dates[0] ? range(d.dates) : undefined,
+        };
       case "event_deleted":
         return { text: t("eventDeleted", { id: Number(d.event_id) }) };
+      case "overridden":
+        return {
+          text: t(d.outcome === "cancel" ? "overriddenCancelled" : "overriddenRescheduled", {
+            dates: range([d.start_date, d.end_date]),
+          }),
+        };
       default:
         return { text: t(item.action) };
     }

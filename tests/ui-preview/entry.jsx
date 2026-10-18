@@ -13,6 +13,7 @@ import ar from "@/messages/ar.json";
 
 import DashboardPage from "@/app/page";
 import PipelinePage from "@/app/pipeline/page";
+import PipelineGuidePage from "@/app/pipeline/guide/page";
 import PipelineRequestPage from "@/app/pipeline/requests/[id]/page";
 import { EventsContent } from "@/app/events/events-content";
 import CreateEventPage from "@/app/events/create/page";
@@ -22,6 +23,7 @@ import EventManagePage from "@/app/events/[id]/manage/page";
 import EventResponsesPage from "@/app/events/[id]/responses/page";
 import EventAttendancePage from "@/app/events/[id]/attendance/page";
 import EventEditPage from "@/app/events/[id]/edit/page";
+import EventContentPage from "@/app/events/[id]/content/page";
 import { ManageMembersContent } from "@/app/manage-members/manage-members-content";
 import { ClubStructureContent } from "@/app/club-structure/club-structure-content";
 import CreateDepartmentPage from "@/app/club-structure/create/page";
@@ -60,6 +62,7 @@ function points(Page) {
 const ROUTES = [
   ["/", DashboardPage],
   ["/pipeline", PipelinePage],
+  ["/pipeline/guide", PipelineGuidePage],
   ["/pipeline/requests/:id", PipelineRequestPage],
   ["/events", EventsContent],
   ["/events/create", CreateEventPage],
@@ -68,6 +71,7 @@ const ROUTES = [
   ["/events/:id/responses", event(EventResponsesPage)],
   ["/events/:id/attendance", event(EventAttendancePage)],
   ["/events/:id/edit", event(EventEditPage)],
+  ["/events/:id/content", event(EventContentPage)],
   ["/manage-members", ManageMembersContent],
   ["/club-structure", ClubStructureContent],
   ["/club-structure/create", CreateDepartmentPage],

@@ -6,6 +6,7 @@ import { CircleCheck, CornerUpLeft, ExternalLink, Loader2, Upload } from "lucide
 import { toast } from "sonner";
 
 import { Door, DoorPanel, Mark, SectionHead } from "@/components/najdi";
+import { BehalfFrame, useBehalfOf } from "@/components/pipeline/roles";
 import { TeamActionButtons } from "@/components/pipeline/team-actions";
 import { Button } from "@/components/ui/button";
 import { useCompleteTask, useUploadPoster } from "@/hooks/use-pipeline";
@@ -32,6 +33,7 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
   const posterUrl = (task?.deliverable?.poster_url as string | undefined) ?? null;
   const canUpload = request.actions.can_upload_poster;
   const canFinish = request.actions.complete.includes("design");
+  const behalf = useBehalfOf(canFinish ? { kind: "team", team: "design" } : null);
 
   if (!task || task.status === "brief" || (!canUpload && !posterUrl)) return null;
 
@@ -109,6 +111,39 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
     />
   ) : null;
 
+  // Design's turn, seen by a super admin who is not on Design: Design's poster, with the controls set apart.
+  if (canFinish && behalf) {
+    return (
+      <BehalfFrame
+        party={behalf}
+        aria-labelledby="poster-title"
+        title={<span id="poster-title">{t("titleFor")}</span>}
+        actions={
+          <>
+            <div className="grid gap-2 sm:flex sm:flex-wrap sm:items-center">
+              <Button variant="green" size="lg" onClick={onFinish} disabled={!posterUrl || complete.isPending || upload.isPending}>
+                <CircleCheck />
+                {t("finishFor")}
+              </Button>
+              {posterUrl ? (
+                <Button variant="outline" size="lg" onClick={() => input.current?.click()} disabled={upload.isPending}>
+                  {upload.isPending ? <Loader2 className="animate-spin" /> : <Upload />}
+                  {t("replace")}
+                </Button>
+              ) : (
+                <span className="text-ink-2 text-[13px] font-bold">{t("needsPoster")}</span>
+              )}
+              {request.actions.can_return ? <TeamActionButtons request={request} onWall /> : null}
+            </div>
+          </>
+        }
+      >
+        {image}
+        {fileInput}
+      </BehalfFrame>
+    );
+  }
+
   // Design's turn: the poster is the thing waiting on them, so it gets the door.
   if (canFinish) {
     return (
@@ -140,7 +175,7 @@ export function DesignPoster({ request }: { request: EventRequestDetail }) {
           )}
         </div>
         {/* Design may still send the request back early on; the button lives here
-            so Design's turn is one door (TeamActions steps aside). */}
+            so Design's turn is one door. */}
         {request.actions.can_return ? (
           <div className="flex flex-col gap-2 border-t border-current/20 pt-3">
             {request.return_deadline ? (
