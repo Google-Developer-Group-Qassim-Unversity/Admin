@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient, keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { useApi } from '@/lib/api/client';
+import { ApiRequestError } from '@/lib/api';
 import type {
   CreateContentLinkPayload,
   Event,
@@ -28,6 +29,7 @@ export const eventKeys = {
   departmentsRoot: [...eventKeysAll, 'departments'] as const,
   departments: (endDate?: string) => [...eventKeys.departmentsRoot, endDate ?? 'all'] as const,
   attendance: (id: number | string, day: string, type?: string) => [...eventKeysAll, 'attendance', id, day, type] as const,
+  recordingCandidates: (id: number | string) => [...eventKeysAll, 'recordingCandidates', String(id)] as const,
 };
 
 /**
@@ -169,6 +171,18 @@ export function useCreateContentLink(id: number) {
   });
 }
 
+/** Upload slides directly to Google Drive via streamed multipart upload. */
+export function useUploadDriveSlides(id: number) {
+  const api = useApi();
+  const onLinkChanged = useContentLinkCacheInvalidation(id);
+
+  return useMutation({
+    mutationFn: ({ file, onProgress }: { file: File; onProgress?: (progress: number) => void }) =>
+      api.events.uploadDriveSlides(id, file, onProgress),
+    onSuccess: onLinkChanged,
+  });
+}
+
 /** Edit a content link's label, URL, kind or publish state. */
 export function useUpdateContentLink(id: number) {
   const api = useApi();
@@ -189,6 +203,43 @@ export function useDeleteContentLink(id: number) {
   return useMutation({
     mutationFn: (linkId: string) => api.events.removeContentLink(id, linkId),
     onSuccess: onLinkChanged,
+  });
+}
+
+/** Fetch Google Meet recording candidates for an event from Drive. */
+export function useRecordingCandidates(id: number, enabled: boolean = true) {
+  const api = useApi();
+  return useQuery({
+    queryKey: eventKeys.recordingCandidates(id),
+    queryFn: () => api.events.getRecordingCandidates(id),
+    enabled: enabled && id !== 0,
+    staleTime: 10_000,
+    retry: (failureCount, error) =>
+      !(error instanceof ApiRequestError && error.status === 503) && failureCount < 3,
+  });
+}
+
+/** Grant public access to a recording candidate file in Drive. */
+export function useMakeRecordingPublic(id: number) {
+  const api = useApi();
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (fileId: string) => api.events.makeRecordingCandidatePublic(id, fileId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.recordingCandidates(id) });
+    },
+  });
+}
+
+/** Fetch Google Drive storage quota telemetry (fail-soft). */
+export function useDriveStorageQuota() {
+  const api = useApi();
+  return useQuery({
+    queryKey: ['drive', 'storage-quota'],
+    queryFn: () => api.events.getDriveStorageQuota(),
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
 }
 

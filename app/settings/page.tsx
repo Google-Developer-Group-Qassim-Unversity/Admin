@@ -1,17 +1,30 @@
 "use client";
 
-import * as React from "react";
-import { CalendarRange, ChevronRight, ExternalLink, FileText, Loader2, RotateCcw, Settings, type LucideIcon } from "lucide-react";
+import {
+  AlertTriangle,
+  CalendarRange,
+  ChevronRight,
+  ExternalLink,
+  FileText,
+  HardDrive,
+  Loader2,
+  RotateCcw,
+  Settings,
+  type LucideIcon,
+} from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
 import { useQuery } from "@tanstack/react-query";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/page-header";
 import { Plate } from "@/components/najdi";
+import { useDriveStorageQuota } from "@/hooks/use-event";
 import { useResetLeaderboardCache } from "@/hooks/use-cache";
 import { useAccess } from "@/hooks/use-access";
+import { formatBytes } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
 /** One setting as a row on the wall: its plate, what it does, and the action. */
@@ -80,6 +93,62 @@ function TemplateFormRow() {
   );
 }
 
+function DriveStorageRow() {
+  const t = useTranslations("settingsPage");
+  const { data, isLoading, error } = useDriveStorageQuota();
+
+  const isConfigured = Boolean(data?.configured);
+  const usage = data?.usage;
+  const limit = data?.limit;
+  const percentage = data?.usage_percentage;
+  const isWarning = Boolean(percentage && percentage >= 80);
+
+  const formattedUsage = formatBytes(usage ?? 0);
+  const formattedLimit = limit != null ? formatBytes(limit) : null;
+
+  return (
+    <SettingRow
+      icon={HardDrive}
+      title={t("driveStorageTitle")}
+      hint={
+        <>
+          {t("driveStorageDescription")}{" "}
+          <span className="text-muted-foreground">{t("driveStorageHint")}</span>
+        </>
+      }
+    >
+      {isLoading ? (
+        <Badge variant="outline" className="gap-1.5 py-1 px-3">
+          <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          <span>...</span>
+        </Badge>
+      ) : !isConfigured || error || usage == null ? (
+        <Badge variant="outline" className="text-muted-foreground py-1 px-3">
+          {t("driveStorageUnconfigured")}
+        </Badge>
+      ) : (
+        <Badge
+          variant={isWarning ? "ochre" : "secondary"}
+          className={`gap-1.5 py-1 px-3 tabular text-xs ${
+            isWarning ? "border-door-ochre-ink/30 font-semibold" : "font-normal"
+          }`}
+        >
+          {isWarning ? <AlertTriangle className="h-3.5 w-3.5" /> : <HardDrive className="h-3.5 w-3.5" />}
+          <span>
+            {formattedLimit
+              ? t("driveStorageUsage", {
+                  used: formattedUsage,
+                  limit: formattedLimit,
+                  percentage: Math.round(percentage ?? 0),
+                })
+              : t("driveStorageUnlimited", { used: formattedUsage })}
+          </span>
+        </Badge>
+      )}
+    </SettingRow>
+  );
+}
+
 export default function SettingsPage() {
   const t = useTranslations("settingsPage");
   const { getToken } = useAuth();
@@ -116,6 +185,8 @@ export default function SettingsPage() {
         ) : null}
 
         {can("settings.template_form") ? <TemplateFormRow /> : null}
+
+        <DriveStorageRow />
 
         {can("cache.reset") ? (
           <SettingRow icon={RotateCcw} title={t("cacheTitle")} hint={`${t("cacheDescription")} ${t("resetCacheHint")}`}>
