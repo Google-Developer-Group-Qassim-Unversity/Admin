@@ -71,7 +71,8 @@ export type Registration = "acceptance" | "open" | "none";
 export type LocationScope = "inside" | "outside";
 
 export const EVENT_TYPES: EventType[] = ["course", "bootcamp", "meetup", "workshop", "competition"];
-export const AUDIENCES: Audience[] = ["male", "female", "mixed", "none"];
+// "none" stays in the type so older requests still render, but is no longer offered.
+export const AUDIENCES: Audience[] = ["male", "female", "mixed"];
 export const REGISTRATIONS: Registration[] = ["acceptance", "open", "none"];
 export const LOCATION_SCOPES: LocationScope[] = ["inside", "outside"];
 
@@ -223,6 +224,18 @@ export interface LogisticsConfirmation {
   description: string | null;
   /** Why the confirmed event differs from the requested one; required once anything does. */
   change_reason: string | null;
+}
+
+/** Mirrors `MediaPlatform` in Backend/app/services/event_deliverables.py; `other` is named in `other_platform`. */
+export type MediaPlatform = "x" | "instagram" | "tiktok" | "other";
+export const MEDIA_PLATFORMS: MediaPlatform[] = ["x", "instagram", "tiktok", "other"];
+
+/** Mirrors `MediaDeliverableV1`: where Media shared the event. All of it is optional. */
+export interface MediaShares {
+  platforms: MediaPlatform[];
+  other_platform: string | null;
+  /** The post's link on each ticked platform that has one. */
+  links: Partial<Record<MediaPlatform, string>>;
 }
 
 /** The confirmation's fields Logistics can confirm differently (`CONFIRMED_FIELDS` in the backend). */
