@@ -2677,7 +2677,7 @@
       "media": {
         "title": "Media's part",
         "doneLine": "Media finished {ago}.",
-        "door": "The poster and the confirmed event are below. Once the event is announced, finish Media: the department can then publish it."
+        "door": "The poster and the confirmed event are below. Once the event is announced, tick where it was shared and finish Media: the department can then publish it."
       },
       "context": {
         "asked": "What {department} asked for",
@@ -3003,6 +3003,28 @@
           }
         }
       }
+    },
+    "share": {
+      "title": "Where it was shared",
+      "hint": "Tick everywhere the event was posted. All of it is optional.",
+      "platforms": {
+        "x": "X (formerly Twitter)",
+        "instagram": "Instagram",
+        "tiktok": "TikTok",
+        "other": "Somewhere else"
+      },
+      "otherName": "Where",
+      "otherPlaceholder": "e.g. LinkedIn",
+      "link": "Link to the post",
+      "notALink": "Paste the full link, starting with https://",
+      "incomplete": "{count, plural, one {# thing needs fixing} other {# things need fixing}} before Media is done.",
+      "button": "Mark Media done",
+      "buttonFor": "Mark done for Media",
+      "asSuperAdmin": "Finishing for Media, as a super admin",
+      "summaryTitle": "Shared on",
+      "by": "By {name}",
+      "nowhere": "Media didn't say where it was shared.",
+      "noLink": "No link"
     }
   },
   "permissions": {

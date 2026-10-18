@@ -29,7 +29,7 @@ import { DetailsForm } from "@/components/pipeline/details-form";
 import { DraftSaveProvider } from "@/components/pipeline/draft-autosave";
 import { MissingProvider, focusField } from "@/components/pipeline/form-kit";
 import { LogisticsConfirmation } from "@/components/pipeline/logistics-confirmation";
-import { MediaJob, MediaReceives } from "@/components/pipeline/media-desk";
+import { MediaJob, MediaReceives, MediaShared } from "@/components/pipeline/media-desk";
 import { NotionLink } from "@/components/pipeline/notion-link";
 import { PublishPanel } from "@/components/pipeline/publish-panel";
 import { RequestHistory } from "@/components/pipeline/request-history";
@@ -501,6 +501,7 @@ function MediaStation({ request, role, station, ownsDepartment }: StationContext
         main={
           <>
             <MediaJob request={request} />
+            <MediaShared request={request} />
             <MediaReceives request={request} />
             {status === "done" && role.ownsTeam("media") ? <NextOnDesk team="media" currentId={request.id} role={role} /> : null}
           </>
@@ -533,6 +534,7 @@ function PublishStation({ request, station, ownsDepartment }: StationContext) {
       <StationHead station="publish" request={request} line={line} tone={headTone(station)} mine={station.mine} />
       <PublishPanel request={request} />
       {request.stage !== "published" && request.stage !== "cancelled" ? <PublishChecklist request={request} /> : null}
+      <MediaShared request={request} />
     </>
   );
 }

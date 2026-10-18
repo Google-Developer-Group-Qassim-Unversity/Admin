@@ -116,12 +116,12 @@ export const TASKS = {
   r4: [
     { team: "design", status: "done" },
     { team: "logistics", status: "done" },
-    { team: "media", status: "open" },
+    { team: "media", status: "open", deliverable: { platforms: ["x", "instagram", "other"], other_platform: "", links: { x: "https://x.com/gdgqassim/status/1846" } }, deliverable_missing: ["share.other_platform"] },
   ],
   r5: [
     { team: "design", status: "done" },
     { team: "logistics", status: "done" },
-    { team: "media", status: "done" },
+    { team: "media", status: "done", deliverable: { platforms: ["x", "instagram", "tiktok", "other"], other_platform: "لينكدإن", links: { x: "https://x.com/gdgqassim/status/1846", instagram: "https://www.instagram.com/p/DAx7kQ2" } } },
   ],
   r8: [
     { team: "design", status: "open" },
