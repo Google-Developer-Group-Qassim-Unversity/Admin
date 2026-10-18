@@ -91,7 +91,6 @@ function OverrideDialog({ overlaps, run, onClose }: { overlaps: PipelineOverlaps
             ))}
           </ul>
         )}
-        {published || overlaps.emails_live ? null : <p className="text-ink-2 text-[13px]">{t("trial")}</p>}
 
         <AlertDialogFooter>
           <AlertDialogCancel disabled={busy}>{t("keep")}</AlertDialogCancel>
