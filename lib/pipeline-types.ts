@@ -354,8 +354,6 @@ export type BumpOutcome = "reschedule" | "cancel";
 /** `GET /pipeline/overlaps`: the requests a booking would bump, and who each email goes to. */
 export interface PipelineOverlaps {
   requests: { request: EventRequestSummary; recipients: PersonRef[] }[];
-  /** Off: the emails go only to the super admin, as trial copies. */
-  emails_live: boolean;
 }
 
 export interface PipelineNotification {

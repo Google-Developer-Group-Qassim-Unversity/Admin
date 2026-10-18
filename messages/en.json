@@ -2585,7 +2585,6 @@
       "delete": "Delete",
       "deleteBody": "It is cancelled for good. This can't be undone.",
       "email": "{count, plural, =0 {No email: {department} has no members with an email.} one {An email goes to # member of {department}.} other {An email goes to # members of {department}.}}",
-      "trial": "Emails are in trial mode: instead of reaching these members, a copy of each email goes to you.",
       "showMore": "Show names",
       "showLess": "Hide names",
       "confirm": "Book over them",
