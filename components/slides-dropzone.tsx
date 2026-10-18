@@ -2,110 +2,397 @@
 
 import * as React from 'react';
 import { useTranslations } from 'next-intl';
-import { Upload, X } from 'lucide-react';
+import { FileText, Loader2, Plus, Upload, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
 import {
-  FileUpload,
-  FileUploadDropzone,
-  FileUploadItem,
-  FileUploadItemDelete,
-  FileUploadItemMetadata,
-  FileUploadItemPreview,
-  FileUploadItemProgress,
-  FileUploadList,
-} from '@/components/ui/file-upload';
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useUploadDriveSlides } from '@/hooks/use-event';
 import { ApiRequestError } from '@/lib/api';
+import { cn } from '@/lib/utils';
 
 interface SlidesDropzoneProps {
   eventId: number;
   onDriveUnconfigured?: () => void;
 }
 
+const ALLOWED_EXTENSIONS = ['.pdf', '.pptx', '.ppt', '.key', '.odp'];
+const MAX_FILE_SIZE = 100 * 1024 * 1024; // 100 MB
+
+function formatFileSize(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${sizes[i]}`;
+}
+
+function isValidPresentation(file: File): { valid: boolean; reason?: string } {
+  const name = file.name.toLowerCase();
+  const hasValidExt = ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext));
+  if (!hasValidExt) {
+    return { valid: false, reason: 'unsupported' };
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return { valid: false, reason: 'too_large' };
+  }
+  return { valid: true };
+}
+
 export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneProps) {
   const t = useTranslations('eventContent');
   const uploadSlides = useUploadDriveSlides(eventId);
-  const [files, setFiles] = React.useState<File[]>([]);
 
-  const handleUpload = async (
-    filesToUpload: File[],
-    options: {
-      onProgress: (file: File, progress: number) => void;
-      onSuccess: (file: File) => void;
-      onError: (file: File, error: Error) => void;
-    }
-  ) => {
-    for (const file of filesToUpload) {
-      try {
-        await uploadSlides.mutateAsync({
-          file,
-          onProgress: (progress) => options.onProgress(file, progress),
+  const [stagedFiles, setStagedFiles] = React.useState<File[]>([]);
+  const [confirmOpen, setConfirmOpen] = React.useState(false);
+  const [isUploading, setIsUploading] = React.useState(false);
+
+  // Drag states
+  const [isDropzoneDragging, setIsDropzoneDragging] = React.useState(false);
+  const [isModalDragging, setIsModalDragging] = React.useState(false);
+
+  const dropzoneDragCounter = React.useRef(0);
+  const modalDragCounter = React.useRef(0);
+
+  const mainFileInputRef = React.useRef<HTMLInputElement>(null);
+  const addMoreInputRef = React.useRef<HTMLInputElement>(null);
+
+  const processIncomingFiles = (incoming: File[], openModalAfter = true) => {
+    const validFiles: File[] = [];
+    for (const f of incoming) {
+      const check = isValidPresentation(f);
+      if (check.valid) {
+        validFiles.push(f);
+      } else if (check.reason === 'too_large') {
+        toast.error(t('uploadFailed', { name: f.name }), {
+          description: 'File exceeds 100MB limit',
         });
-        options.onSuccess(file);
-        toast.success(t('uploadSuccess', { name: file.name }));
-      } catch (err: unknown) {
-        const error = err instanceof Error ? err : new Error(String(err));
-        options.onError(file, error);
-
-        if (err instanceof ApiRequestError) {
-          if (err.status === 503 || err.message.toLowerCase().includes('not configured')) {
-            onDriveUnconfigured?.();
-            toast.error(t('driveUnconfigured'));
-            continue;
-          }
-        }
-        toast.error(t('uploadFailed', { name: file.name }), {
-          description: error.message,
+      } else {
+        toast.error(t('uploadFailed', { name: f.name }), {
+          description: 'Only PDF, PPTX, PPT, Keynote, or ODP files are supported',
         });
       }
+    }
+
+    if (validFiles.length === 0) return;
+
+    setStagedFiles((prev) => {
+      const existingSignatures = new Set(prev.map((f) => `${f.name}-${f.size}-${f.lastModified}`));
+      const unique = validFiles.filter(
+        (f) => !existingSignatures.has(`${f.name}-${f.size}-${f.lastModified}`)
+      );
+      return [...prev, ...unique];
+    });
+
+    if (openModalAfter) {
+      setConfirmOpen(true);
+    }
+  };
+
+  // --- Main Dropzone Drag & Drop Handlers ---
+  const handleDropzoneDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragCounter.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsDropzoneDragging(true);
+    }
+  };
+
+  const handleDropzoneDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragCounter.current -= 1;
+    if (dropzoneDragCounter.current <= 0) {
+      dropzoneDragCounter.current = 0;
+      setIsDropzoneDragging(false);
+    }
+  };
+
+  const handleDropzoneDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleDropzoneDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dropzoneDragCounter.current = 0;
+    setIsDropzoneDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processIncomingFiles(Array.from(e.dataTransfer.files), true);
+    }
+  };
+
+  const handleMainFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processIncomingFiles(Array.from(e.target.files), true);
+    }
+    if (e.target) e.target.value = '';
+  };
+
+  // --- Modal Drag & Drop Handlers ---
+  const handleModalDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalDragCounter.current += 1;
+    if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+      setIsModalDragging(true);
+    }
+  };
+
+  const handleModalDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalDragCounter.current -= 1;
+    if (modalDragCounter.current <= 0) {
+      modalDragCounter.current = 0;
+      setIsModalDragging(false);
+    }
+  };
+
+  const handleModalDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    e.dataTransfer.dropEffect = 'copy';
+  };
+
+  const handleModalDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    modalDragCounter.current = 0;
+    setIsModalDragging(false);
+    if (isUploading) return;
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      processIncomingFiles(Array.from(e.dataTransfer.files), false);
+    }
+  };
+
+  const handleAddMoreChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      processIncomingFiles(Array.from(e.target.files), false);
+    }
+    if (e.target) e.target.value = '';
+  };
+
+  const handleRemoveStaged = (index: number) => {
+    const updated = stagedFiles.filter((_, idx) => idx !== index);
+    setStagedFiles(updated);
+    if (updated.length === 0) {
+      setConfirmOpen(false);
+    }
+  };
+
+  const handleDialogChange = (open: boolean) => {
+    if (!open && !isUploading) {
+      setConfirmOpen(false);
+      setStagedFiles([]);
+      modalDragCounter.current = 0;
+      setIsModalDragging(false);
+    }
+  };
+
+  const handleConfirmUpload = async () => {
+    if (stagedFiles.length === 0 || isUploading) return;
+    setIsUploading(true);
+
+    try {
+      for (const file of stagedFiles) {
+        try {
+          await uploadSlides.mutateAsync({ file });
+          toast.success(t('uploadSuccess', { name: file.name }));
+        } catch (err: unknown) {
+          const error = err instanceof Error ? err : new Error(String(err));
+          if (err instanceof ApiRequestError) {
+            if (err.status === 503 || err.message.toLowerCase().includes('not configured')) {
+              onDriveUnconfigured?.();
+              toast.error(t('driveUnconfigured'));
+              continue;
+            }
+          }
+          toast.error(t('uploadFailed', { name: file.name }), {
+            description: error.message,
+          });
+        }
+      }
+    } finally {
+      setIsUploading(false);
+      setConfirmOpen(false);
+      setStagedFiles([]);
+      modalDragCounter.current = 0;
+      setIsModalDragging(false);
     }
   };
 
   return (
     <div className="space-y-3">
-      <FileUpload
+      {/* Hidden file input for main dropzone */}
+      <input
+        ref={mainFileInputRef}
+        type="file"
         multiple
-        maxSize={100 * 1024 * 1024}
         accept=".pdf,.pptx,.ppt,.key,.odp,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
-        value={files}
-        onValueChange={setFiles}
-        onUpload={handleUpload}
-      >
-        <FileUploadDropzone className="flex-col min-h-28 py-6 cursor-pointer border-dashed hover:border-primary/50 transition-colors">
-          <Upload className="h-7 w-7 text-muted-foreground mb-1" />
-          <p className="text-sm font-medium text-foreground text-center">
-            {t('dropzoneTitle')}
-          </p>
-          <p className="text-xs text-muted-foreground text-center mt-0.5">
-            {t('dropzoneHint')}
-          </p>
-        </FileUploadDropzone>
+        className="hidden"
+        onChange={handleMainFileChange}
+      />
 
-        <FileUploadList className="mt-3">
-          {files.map((file) => (
-            <FileUploadItem key={`${file.name}-${file.lastModified}`} value={file} className="bg-background">
-              <FileUploadItemPreview />
-              <FileUploadItemMetadata />
-              <div className="flex items-center gap-2">
-                <FileUploadItemProgress variant="circular" size={28} />
-                <FileUploadItemDelete asChild>
+      {/* Main Dropzone */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => mainFileInputRef.current?.click()}
+        onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && mainFileInputRef.current?.click()}
+        onDragEnter={handleDropzoneDragEnter}
+        onDragLeave={handleDropzoneDragLeave}
+        onDragOver={handleDropzoneDragOver}
+        onDrop={handleDropzoneDrop}
+        className={cn(
+          'flex flex-col items-center justify-center min-h-28 py-6 px-4 rounded-xl cursor-pointer border-2 border-dashed transition-all select-none text-center outline-none focus-visible:ring-2 focus-visible:ring-primary',
+          isDropzoneDragging
+            ? 'border-primary bg-primary/10 ring-2 ring-primary/30'
+            : 'border-border hover:border-primary/50 hover:bg-muted/30'
+        )}
+      >
+        <Upload
+          className={cn(
+            'h-7 w-7 mb-2 transition-transform',
+            isDropzoneDragging ? 'text-primary scale-110' : 'text-muted-foreground'
+          )}
+        />
+        <p className="text-sm font-medium text-foreground">
+          {isDropzoneDragging ? t('dropFilesToAdd') : t('dropzoneTitle')}
+        </p>
+        <p className="text-xs text-muted-foreground mt-0.5">{t('dropzoneHint')}</p>
+      </div>
+
+      {/* Confirmation Modal */}
+      <Dialog open={confirmOpen} onOpenChange={handleDialogChange}>
+        <DialogContent
+          className={cn(
+            'sm:max-w-md gap-4 overflow-hidden transition-all',
+            isModalDragging && 'ring-2 ring-primary border-primary'
+          )}
+          onDragEnter={handleModalDragEnter}
+          onDragLeave={handleModalDragLeave}
+          onDragOver={handleModalDragOver}
+          onDrop={handleModalDrop}
+        >
+          {isModalDragging && (
+            <div className="absolute inset-0 z-50 flex flex-col items-center justify-center gap-2 rounded-xl bg-background/95 backdrop-blur-xs border-2 border-dashed border-primary text-primary animate-in fade-in-0 duration-150 pointer-events-none">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+                <Upload className="h-6 w-6 animate-bounce" />
+              </div>
+              <p className="text-sm font-semibold">{t('dropFilesToAdd')}</p>
+            </div>
+          )}
+
+          <DialogHeader>
+            <DialogTitle>{t('uploadModalTitle')}</DialogTitle>
+            <DialogDescription>{t('uploadModalDescription')}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-2 py-1 max-h-60 overflow-y-auto pe-1">
+            <div className="flex items-center justify-between pb-1">
+              <p className="text-xs font-medium text-muted-foreground">
+                {t('filesSelectedCount', { count: stagedFiles.length })}
+              </p>
+            </div>
+
+            {stagedFiles.map((file, idx) => (
+              <div
+                key={`${file.name}-${idx}`}
+                className="flex items-center justify-between gap-3 rounded-lg border bg-muted/40 p-2.5 text-xs"
+              >
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-background border text-muted-foreground">
+                    <FileText className="h-4 w-4" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate font-medium text-foreground" title={file.name}>
+                      {file.name}
+                    </p>
+                    <p className="text-muted-foreground mt-0.5">{formatFileSize(file.size)}</p>
+                  </div>
+                </div>
+
+                {!isUploading && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 text-muted-foreground hover:text-foreground"
+                    className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+                    onClick={() => handleRemoveStaged(idx)}
                     aria-label={t('remove')}
                   >
-                    <X className="h-4 w-4" />
+                    <X className="h-3.5 w-3.5" />
                   </Button>
-                </FileUploadItemDelete>
+                )}
               </div>
-            </FileUploadItem>
-          ))}
-        </FileUploadList>
-      </FileUpload>
+            ))}
+
+            {!isUploading && (
+              <div className="pt-1">
+                <input
+                  ref={addMoreInputRef}
+                  type="file"
+                  multiple
+                  accept=".pdf,.pptx,.ppt,.key,.odp,application/pdf,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation"
+                  className="hidden"
+                  onChange={handleAddMoreChange}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => addMoreInputRef.current?.click()}
+                  className="w-full border-dashed gap-1.5 text-xs h-8 text-muted-foreground hover:text-foreground"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {t('addMoreFiles')}
+                </Button>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => handleDialogChange(false)}
+              disabled={isUploading}
+            >
+              {t('uploadCancel')}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmUpload}
+              disabled={isUploading || stagedFiles.length === 0}
+            >
+              {isUploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin me-2" />
+                  {t('uploadingAction')}
+                </>
+              ) : (
+                <>
+                  <Upload className="h-4 w-4 me-2" />
+                  {t('uploadConfirmAction')}
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
