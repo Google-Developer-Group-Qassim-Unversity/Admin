@@ -13,7 +13,8 @@ import { RecordingPickerDialog } from '@/components/recording-picker-dialog';
 import { SlidesDropzone } from '@/components/slides-dropzone';
 import { EmptyLine, RowsSkeleton, SectionHead } from '@/components/najdi';
 import { useEventContext } from '@/contexts/event-context';
-import { useEventDetails } from '@/hooks/use-event';
+import { useDriveStorageQuota, useEventDetails } from '@/hooks/use-event';
+import { ApiRequestError } from '@/lib/api';
 import type { EventContentLink } from '@/lib/api-types';
 
 /**
@@ -26,11 +27,19 @@ export default function EventContentPage() {
   const { event } = useEventContext();
   const eventId = event?.id ?? 0;
   const { data: details, isLoading, error, refetch } = useEventDetails(eventId, eventId !== 0);
-  const [driveConfigured, setDriveConfigured] = React.useState(true);
+  const { data: quota, error: quotaError } = useDriveStorageQuota();
+  const [driveUnconfiguredOverride, setDriveUnconfiguredOverride] = React.useState(false);
 
   React.useEffect(() => {
-    setDriveConfigured(true);
+    setDriveUnconfiguredOverride(false);
   }, [event?.id]);
+
+  const isQuotaUnconfigured =
+    Boolean(quotaError?.message?.toLowerCase().includes('not configured')) ||
+    (quotaError instanceof ApiRequestError && quotaError.status === 503) ||
+    (quota != null && !quota.configured);
+
+  const driveConfigured = !isQuotaUnconfigured && !driveUnconfiguredOverride;
 
   // The details endpoint is the admin's own view: every link, published or not.
   const links: EventContentLink[] = details?.content_links ?? [];
@@ -102,7 +111,7 @@ export default function EventContentPage() {
 
             <SlidesDropzone
               eventId={event.id}
-              onDriveUnconfigured={() => setDriveConfigured(false)}
+              onDriveUnconfigured={() => setDriveUnconfiguredOverride(true)}
             />
 
             {slides.length === 0 ? (

@@ -297,6 +297,13 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
       {/* Confirmation Modal */}
       <Dialog open={confirmOpen} onOpenChange={handleDialogChange}>
         <DialogContent
+          showCloseButton={!isUploading}
+          onEscapeKeyDown={(e) => {
+            if (isUploading) e.preventDefault();
+          }}
+          onPointerDownOutside={(e) => {
+            if (isUploading) e.preventDefault();
+          }}
           className={cn(
             'sm:max-w-md gap-4 overflow-hidden transition-all',
             isModalDragging && 'ring-2 ring-primary border-primary'

@@ -100,7 +100,7 @@ function CandidateRow({ eventId, candidate, onApproved }: CandidateRowProps) {
     <div className="rounded-lg border bg-card p-4 space-y-3 transition-colors">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="text-xs text-muted-foreground truncate" title={candidate.name}>
+          <p className="text-xs text-muted-foreground truncate" dir="auto" title={candidate.name}>
             {candidate.name}
           </p>
           {candidate.created_time && (
@@ -161,6 +161,7 @@ function CandidateRow({ eventId, candidate, onApproved }: CandidateRowProps) {
         <div className="flex-1 space-y-1">
           <Label className="text-xs text-muted-foreground">{t('labelField')}</Label>
           <Input
+            dir="auto"
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             placeholder={t('labelPlaceholderRecording')}
