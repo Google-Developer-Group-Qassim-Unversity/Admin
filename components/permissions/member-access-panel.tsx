@@ -21,17 +21,23 @@ import { ClubMemberPicker } from "@/components/club-structure/member-picker";
 import { MemberDetailsTrigger, memberInitials } from "@/components/member-details";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Switch } from "@/components/ui/switch";
 import { useMemberAccess, usePermissionCatalogue, usePermissionLabel } from "@/hooks/use-permissions";
 import { PERM_GROUPS, type Perm, type PermGroup } from "@/lib/access";
 import { DEPARTMENT_ICON_COMPONENTS } from "@/lib/department-icons";
-import type { HeldPermission, MemberAccess, MemberDepartmentAccess, PermissionSource } from "@/lib/permissions-types";
+import type { CataloguePermission, HeldPermission, MemberAccess, MemberDepartmentAccess, PermissionSource } from "@/lib/permissions-types";
+import { useFuzzySearch } from "@/lib/search-utils";
 import { cn } from "@/lib/utils";
 
 /** One reason a permission is held: a department and why, or `null` for the staff basics. */
 type Reason = { department: MemberDepartmentAccess; held: HeldPermission } | null;
+
+/** A permission matches on its English or Arabic label, or its key. */
+const SEARCH_KEYS: (keyof CataloguePermission)[] = ["label", "ar_label", "key"];
+const NO_PERMISSIONS: CataloguePermission[] = [];
 
 /** Each "why" has one icon, used in the legend and on every chip. */
 const SOURCE_ICONS: Record<PermissionSource | "staff", LucideIcon> = {
@@ -235,6 +241,10 @@ function PermissionList({ data }: { data: MemberAccess }) {
   const label = usePermissionLabel();
   const catalogue = usePermissionCatalogue();
   const [showMissing, setShowMissing] = React.useState(false);
+  const [search, setSearch] = React.useState("");
+  const searching = search.trim() !== "";
+  const matches = useFuzzySearch(catalogue.data ?? NO_PERMISSIONS, search, SEARCH_KEYS);
+  const matched = React.useMemo(() => new Set(matches.map((p) => p.key)), [matches]);
 
   // Every permission -> the reasons it is held. Missing means not held.
   const reasons = React.useMemo(() => {
@@ -254,7 +264,9 @@ function PermissionList({ data }: { data: MemberAccess }) {
     .map(([group, keys]) => {
       const all = group === "system" ? [...keys, ...ungrouped] : keys;
       const held = all.filter(isHeld);
-      return { group, total: all.length, held: held.length, rows: showMissing ? all : held };
+      // A search looks through every permission, held or not: "can they do X?" has two answers.
+      const rows = searching ? all.filter((perm) => matched.has(perm)) : showMissing ? all : held;
+      return { group, total: all.length, held: held.length, rows };
     })
     .filter((g) => g.rows.length > 0);
   const sources = new Set(data.departments.flatMap((d) => d.permissions.flatMap((p) => p.sources)));
@@ -289,12 +301,25 @@ function PermissionList({ data }: { data: MemberAccess }) {
               })}
           </ul>
         ) : null}
+        <div className="relative w-full sm:w-80">
+          <Search className="text-ink-2 pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" aria-hidden="true" />
+          <Input
+            type="search"
+            inputMode="search"
+            enterKeyHint="search"
+            placeholder={t("searchPlaceholder")}
+            aria-label={t("searchPlaceholder")}
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="ps-9"
+          />
+        </div>
       </div>
 
       {groups.length === 0 ? (
         <div className="text-ink-2 flex flex-col items-center gap-2 py-6 text-center text-sm">
-          <Ban className="h-5 w-5" />
-          {t("nothing")}
+          {searching ? <Search className="h-5 w-5" /> : <Ban className="h-5 w-5" />}
+          <p>{searching ? t.rich("noMatch", { query: search.trim(), bdi: (chunks) => <bdi>{chunks}</bdi> }) : t("nothing")}</p>
         </div>
       ) : (
         groups.map(({ group, rows, held, total }) => (

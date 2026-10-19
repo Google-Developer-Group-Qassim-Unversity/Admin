@@ -9,6 +9,7 @@
 //   node tests/ui-preview/shoot.mjs [--routes /,/pipeline] [--out dir]
 //        [--viewports phone,desktop] [--locales ar,en] [--themes light,dark]
 //        [--full] [--scroll 600] [--as super,design,logistics,dept]
+//        [--click "<selector>"] [--fill "<selector>=<text>"]
 //
 // `--as` signs in as a sample person (see fixtures/a-roles.mjs): a super admin
 // (the default), a Design or Logistics leader, or a department leader. Each
@@ -47,6 +48,8 @@ const scroll = Number(args.scroll || 0);
 const personas = list(args.as, ["super"]);
 // `--click "<selector>"` presses something before the screenshot, e.g. a popover's trigger.
 const click = args.click && args.click !== "1" ? args.click : null;
+// `--fill "<selector>=<text>"` types into a field before the screenshot, e.g. a search box.
+const [fillSelector, fillText] = args.fill && args.fill !== "1" ? [args.fill.slice(0, args.fill.lastIndexOf("=")), args.fill.slice(args.fill.lastIndexOf("=") + 1)] : [null, null];
 let persona = personas[0];
 const SIZES = { phone: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
 
@@ -189,7 +192,11 @@ try {
             await page.locator(click).first().click().catch((e) => errors.push(`click ${click}: ${e.message}`));
             await page.waitForTimeout(500);
           }
-          const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}.png`;
+          if (fillSelector) {
+            await page.locator(fillSelector).first().fill(fillText).catch((e) => errors.push(`fill ${fillSelector}: ${e.message}`));
+            await page.waitForTimeout(300);
+          }
+          const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}${fillSelector ? "-fill" : ""}.png`;
           await page.screenshot({ path: path.join(out, name), fullPage: full });
           console.log(`${errors.length ? "✗" : "✓"} ${path.join(out, name)}`);
           for (const e of errors) console.log(`    ${e.split("\n")[0]}`);
