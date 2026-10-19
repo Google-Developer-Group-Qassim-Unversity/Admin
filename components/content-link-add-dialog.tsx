@@ -24,19 +24,29 @@ import type { ContentLinkKind } from '@/lib/api-types';
 
 interface ContentLinkAddDialogProps {
   eventId: number;
+  initialKind?: ContentLinkKind;
+  buttonLabel?: string;
+  triggerClassName?: string;
+  size?: 'default' | 'sm' | 'lg' | 'icon';
 }
 
 // `other` stays valid in the schema (Phase 2 resurfaces it); the dialog here
 // only offers the two choices admins always know.
 const KIND_OPTIONS: ContentLinkKind[] = ['slides', 'recording'];
 
-export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
+export function ContentLinkAddDialog({
+  eventId,
+  initialKind,
+  buttonLabel,
+  triggerClassName,
+  size,
+}: ContentLinkAddDialogProps) {
   const t = useTranslations('eventContent');
   const createLink = useCreateContentLink(eventId);
   const [open, setOpen] = useState(false);
   const [label, setLabel] = useState('');
   const [url, setUrl] = useState('');
-  const [kind, setKind] = useState<ContentLinkKind | ''>('');
+  const [kind, setKind] = useState<ContentLinkKind | ''>(initialKind ?? '');
 
   const isUrlValid = url.trim() === '' || looksLikeUrl(url);
   const canCreate = useMemo(
@@ -64,7 +74,7 @@ export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
   const reset = () => {
     setLabel('');
     setUrl('');
-    setKind('');
+    setKind(initialKind ?? '');
   };
 
   return (
@@ -79,9 +89,9 @@ export function ContentLinkAddDialog({ eventId }: ContentLinkAddDialogProps) {
       }}
     >
       <DialogTrigger asChild>
-        <Button variant="outline" className="shrink-0">
+        <Button variant="outline" size={size} className={triggerClassName ?? 'shrink-0'}>
           <Plus />
-          {t('addLink')}
+          {buttonLabel ?? t('addLink')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-lg">

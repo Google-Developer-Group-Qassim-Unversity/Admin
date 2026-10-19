@@ -42,6 +42,7 @@ interface ContentLinkItemProps {
  */
 export function ContentLinkItem({ eventId, link }: ContentLinkItemProps) {
   const t = useTranslations('eventContent');
+  const common = useTranslations('common');
   const updateLink = useUpdateContentLink(eventId);
   const deleteLink = useDeleteContentLink(eventId);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -190,7 +191,10 @@ export function ContentLinkItem({ eventId, link }: ContentLinkItemProps) {
               >
                 {deleteLink.isPending ? <Loader2 className="animate-spin" /> : <Trash2 />}
               </Button>
-              <AlertDialogContent>
+              <AlertDialogContent
+                closeLabel={common('actions.close')}
+                closeDisabled={deleteLink.isPending}
+              >
                 <AlertDialogHeader>
                   <AlertDialogTitle dir="auto">{t('deleteTitle')}</AlertDialogTitle>
                   <AlertDialogDescription dir="auto">{t('deleteDescription')}</AlertDialogDescription>

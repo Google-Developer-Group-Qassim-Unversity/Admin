@@ -87,3 +87,11 @@ export function getEffectiveDate(dt: Date, threshold: number = ATTENDANCE_EARLY_
   }
   return dt;
 }
+
+export function formatBytes(bytes: number, decimals: number = 1): string {
+  if (bytes <= 0) return '0 B';
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  const idx = Math.min(i, sizes.length - 1);
+  return `${(bytes / 1024 ** idx).toFixed(idx === 0 ? 0 : decimals)} ${sizes[idx]}`;
+}
