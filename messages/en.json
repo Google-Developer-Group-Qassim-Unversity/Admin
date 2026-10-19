@@ -3103,6 +3103,8 @@
       "listHint": "Each permission shows the department it comes from, in that department's colour. Event and roster permissions only apply to those departments; the rest work club-wide.",
       "showMissing": "Show the ones they don't have",
       "nothing": "They don't hold any permissions.",
+      "searchPlaceholder": "Search permissions",
+      "noMatch": "No permission matches “<bdi>{query}</bdi>”.",
       "notHeld": "Doesn't have this",
       "why": {
         "superAdmin": "Super admin",
