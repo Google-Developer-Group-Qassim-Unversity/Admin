@@ -1046,7 +1046,9 @@
       "day": "Day {number}",
       "markedLabel": "Checked in",
       "alreadyMarkedLabel": "Already checked in",
-      "invalidLabel": "Invalid QR"
+      "invalidLabel": "Invalid QR",
+      "cardSignatureInvalid": "This card's QR isn't valid",
+      "cardSignatureRequired": "Old card: ask the member to open their card in the app or on the website"
     },
     "backfill": {
       "pasteTokenFirst": "Please paste an export token",

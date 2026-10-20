@@ -12,6 +12,8 @@ import type { ApiError } from "@/lib/api-types";
  */
 export class ApiRequestError extends Error {
   readonly status: number;
+  /** The backend's `code`, e.g. `card_signature_invalid`. Switch on this, not on the message. */
+  readonly code?: string;
   readonly isValidationError: boolean;
   readonly isServerError: boolean;
   readonly isNotFound: boolean;
@@ -20,6 +22,7 @@ export class ApiRequestError extends Error {
     super(error.message);
     this.name = "ApiRequestError";
     this.status = error.status;
+    this.code = error.code;
     this.isValidationError = error.isValidationError ?? false;
     this.isServerError = error.isServerError ?? false;
     this.isNotFound = error.isNotFound ?? false;

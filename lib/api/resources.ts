@@ -224,10 +224,11 @@ export function createApi(request: Requester) {
         body: { members, day },
       }),
 
-    scan: (eventId: number, uuid: string, day?: number) =>
+    /** `sig` is the card QR's signature; an older backend ignores it. */
+    scan: (eventId: number, uuid: string, day?: number, sig?: string) =>
       request.json<ScanAttendanceResponse>(`/attendance/${eventId}/scan`, {
         method: "POST",
-        body: { uuid, day },
+        body: { uuid, day, sig },
       }),
   };
 
