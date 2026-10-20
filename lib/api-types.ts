@@ -196,6 +196,8 @@ export interface ApiValidationError {
 export interface ApiError {
   message: string;
   status: number;
+  /** The backend's machine-readable `code` (its KnownHttpException), when the body carried one. */
+  code?: string;
   isValidationError?: boolean;
   isServerError?: boolean;
   isNotFound?: boolean;

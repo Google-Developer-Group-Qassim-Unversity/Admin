@@ -58,6 +58,11 @@ export function SignInView({ staging }: { staging: boolean }) {
                     card: "w-full! rounded-none! border-0! bg-transparent! shadow-none!",
                     // Staff never sign up here.
                     footerAction: "hidden",
+                    // Sign in with Apple is for the member app only (no web credentials are set up), so
+                    // hide the button Clerk adds once Apple is on for the instance. The element key is
+                    // not documented: verify after the production toggle; a wrong key is a no-op.
+                    socialButtonsBlockButton__apple: "hidden!",
+                    socialButtonsIconButton__apple: "hidden!",
                   },
                 }}
               />

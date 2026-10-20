@@ -24,6 +24,7 @@ export const PERMS = [
   "emails.direct",
   "emails.blast",
   "emails.logs",
+  "notifications.broadcast",
   "certificates.manual",
   "points.catalogue",
   "points.custom",
@@ -82,7 +83,7 @@ export const PERM_GROUPS = {
     "forms.manage",
     "submissions.review",
   ],
-  emails: ["emails.event", "emails.direct", "emails.blast", "emails.logs", "certificates.manual"],
+  emails: ["emails.event", "emails.direct", "emails.blast", "emails.logs", "notifications.broadcast", "certificates.manual"],
   points: ["points.catalogue", "points.custom"],
   people: [
     "members.create",

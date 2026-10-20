@@ -423,8 +423,8 @@ export function useScanAttendance() {
   const onAttendanceChanged = useAttendanceInvalidation();
 
   return useMutation({
-    mutationFn: ({ eventId, uuid, day }: { eventId: number; uuid: string; day?: number }) =>
-      api.attendance.scan(eventId, uuid, day),
+    mutationFn: ({ eventId, uuid, day, sig }: { eventId: number; uuid: string; day?: number; sig?: string }) =>
+      api.attendance.scan(eventId, uuid, day, sig),
     onSuccess: (_, { eventId }) => onAttendanceChanged(eventId),
   });
 }
