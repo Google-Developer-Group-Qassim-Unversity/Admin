@@ -1046,7 +1046,9 @@
       "day": "اليوم {number}",
       "markedLabel": "تم التسجيل",
       "alreadyMarkedLabel": "مسجل من قبل",
-      "invalidLabel": "رمز غير صالح"
+      "invalidLabel": "رمز غير صالح",
+      "cardSignatureInvalid": "رمز البطاقة غير صالح",
+      "cardSignatureRequired": "بطاقة قديمة: خلّ العضو يفتح بطاقته من التطبيق أو الموقع"
     },
     "backfill": {
       "pasteTokenFirst": "يرجى لصق رمز التصدير",

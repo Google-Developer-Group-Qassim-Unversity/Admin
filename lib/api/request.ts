@@ -55,34 +55,40 @@ function buildQuery(query: Record<string, QueryValue | readonly QueryValue[]> | 
 }
 
 /**
- * Pull a human-readable message out of whatever the failing service returned.
+ * Pull a human-readable message out of whatever the failing service returned,
+ * and the backend's machine-readable `code` when there is one.
  *
  * A superset of the three rules this replaces: FastAPI's `detail` (a string,
  * or the list of `{msg}` objects it sends for a 422), the upload service's
  * `message`, and the Next routes' `error`.
  */
-async function failureMessage(response: Response): Promise<string> {
+async function failureDetails(response: Response): Promise<{ message: string; code?: string }> {
+  const fallback = response.statusText || "An unexpected error occurred";
   try {
     const body = await response.json();
+    const code = typeof body?.code === "string" && body.code ? body.code : undefined;
     const detail = body?.detail;
     if (Array.isArray(detail)) {
       const joined = detail.map((item: { msg?: string }) => item?.msg).filter(Boolean).join(", ");
-      if (joined) return joined;
+      if (joined) return { message: joined, code };
     } else if (typeof detail === "string" && detail) {
-      return detail;
+      return { message: detail, code };
     }
-    if (typeof body?.message === "string" && body.message) return body.message;
-    if (typeof body?.error === "string" && body.error) return body.error;
+    if (typeof body?.message === "string" && body.message) return { message: body.message, code };
+    if (typeof body?.error === "string" && body.error) return { message: body.error, code };
+    return { message: fallback, code };
   } catch {
     // Not JSON, or an empty body. Fall through to the status line.
   }
-  return response.statusText || "An unexpected error occurred";
+  return { message: fallback };
 }
 
 async function toResult<T>(response: Response): Promise<T> {
   if (!response.ok) {
+    const { message, code } = await failureDetails(response);
     throw new ApiRequestError({
-      message: await failureMessage(response),
+      message,
+      code,
       status: response.status,
       isValidationError: response.status === 422,
       isServerError: response.status >= 500,

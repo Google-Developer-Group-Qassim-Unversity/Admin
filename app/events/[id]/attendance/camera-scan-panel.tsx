@@ -17,6 +17,7 @@ import { useTranslations } from "next-intl";
 
 import { useScanAttendance } from "@/hooks/use-event";
 import { ApiRequestError } from "@/lib/api/errors";
+import { isOversizedSig, parseCardQr } from "@/lib/card-qr";
 import { cn } from "@/lib/utils";
 
 /**
@@ -47,12 +48,6 @@ interface ScanEntry {
 }
 
 type Flash = { status: ScanStatus; label: string } | null;
-
-/** Wallet QR codes encode `https://.../p/{32-char hex uuid}`; pull the uuid out of whatever got decoded. */
-function extractWalletUuid(raw: string): string | null {
-  const match = raw.match(/[0-9a-f]{32}/i);
-  return match ? match[0].toLowerCase() : null;
-}
 
 function playBeep(kind: "success" | "warning" | "error") {
   try {
@@ -110,8 +105,10 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
 
   const handleDecoded = React.useCallback(
     async (decodedText: string) => {
-      const uuid = extractWalletUuid(decodedText);
-      if (!uuid) return;
+      // Cards encode `https://gdg-q.com/p/{uuid}?s={sig}`; older ones have no `s` (lib/card-qr.ts).
+      const card = parseCardQr(decodedText);
+      if (!card) return;
+      const { uuid } = card;
 
       const now = Date.now();
       if (lastScanRef.current?.code === uuid && now - lastScanRef.current.at < RESCAN_COOLDOWN_MS) {
@@ -123,8 +120,11 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
       lastScanRef.current = { code: uuid, at: now };
 
       try {
+        if (isOversizedSig(card)) {
+          throw new ApiRequestError({ message: t("cardSignatureInvalid"), status: 0, code: "card_signature_invalid" });
+        }
         const day = isMultiDay ? parseInt(selectedDay, 10) : undefined;
-        const result = await scanMutation.mutateAsync({ eventId, uuid, day });
+        const result = await scanMutation.mutateAsync({ eventId, uuid, day, sig: card.sig });
         const status: ScanStatus = result.status === "marked" ? "marked" : "already_marked";
         if (!mutedRef.current) playBeep(status === "marked" ? "success" : "warning");
         showFlash({ status, label: result.member_name });
@@ -132,11 +132,15 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
       } catch (error) {
         if (!mutedRef.current) playBeep("error");
         const label =
-          error instanceof ApiRequestError && error.isNotFound
-            ? t("notFound")
-            : error instanceof Error
-              ? error.message
-              : t("notFound");
+          error instanceof ApiRequestError && error.code === "card_signature_invalid"
+            ? t("cardSignatureInvalid")
+            : error instanceof ApiRequestError && error.code === "card_signature_required"
+              ? t("cardSignatureRequired")
+              : error instanceof ApiRequestError && error.isNotFound
+                ? t("notFound")
+                : error instanceof Error
+                  ? error.message
+                  : t("notFound");
         showFlash({ status: "error", label });
         addEntry({ status: "error", label });
       } finally {
