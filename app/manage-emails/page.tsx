@@ -47,7 +47,7 @@ export default function ManageEmailsPage() {
             {/* Five tabs do not fit a phone: the strip scrolls sideways and
                 sticks under the top bar so switching never needs a scroll
                 back up. */}
-            <div className="bg-background border-rule sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-20 -mx-4 -mt-2 border-b px-2 sm:static sm:mx-0 sm:mt-0 sm:bg-transparent sm:px-0">
+            <div className="bg-card border-rule rounded-t-xl sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-20 -mx-4 -mt-2 border-b px-2 sm:static sm:mx-0 sm:mt-0 sm:px-2">
               <TabsList
                 variant="line"
                 className="no-scrollbar h-auto! w-full justify-start gap-1 overflow-x-auto overscroll-x-contain p-0"

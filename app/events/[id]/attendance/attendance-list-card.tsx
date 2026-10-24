@@ -82,7 +82,7 @@ export function AttendanceListCard({
   const showDaySelect = isMultiDay || dayOptions.length > 1;
 
   return (
-    <section aria-labelledby="attendance-list" className="bg-card ring-rule flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 sm:p-6">
+    <section aria-labelledby="attendance-list" className="panel flex min-w-0 flex-col gap-4">
       <SectionHead
         id="attendance-list"
         title={t('title')}

@@ -274,7 +274,7 @@ export function CustomEventForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-8">
-      <section className="flex flex-col gap-4">
+      <section className="panel flex min-w-0 flex-col gap-4">
         <SectionHead title={t("eventInformation")} />
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
@@ -343,7 +343,7 @@ export function CustomEventForm({
             <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
             <label
               htmlFor="is_visible"
-              className="bg-card ring-rule has-[:focus-visible]:ring-ring flex min-h-14 cursor-pointer items-center gap-3 rounded-lg p-3 ring-1 transition-colors hover:ring-adobe"
+              className="bg-sunk ring-rule has-[:focus-visible]:ring-ring flex min-h-14 cursor-pointer items-center gap-3 rounded-lg p-3 ring-1 transition-colors hover:ring-adobe"
             >
               <Switch
                 id="is_visible"
@@ -367,7 +367,7 @@ export function CustomEventForm({
         </div>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section className="flex min-w-0 flex-col gap-4">
         <SectionHead title={t("pointDetails")} count={rows.length} />
 
         {errors.rows && (

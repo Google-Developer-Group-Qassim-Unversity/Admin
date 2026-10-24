@@ -402,3 +402,11 @@
     animation: handoff-in 260ms cubic-bezier(0.16, 1, 0.3, 1) 120ms both;
   }
 }
+
+/* Raised regions share spacing so forms, settings and lists read consistently. */
+@utility panel {
+  @apply bg-card ring-rule rounded-xl p-4 ring-1;
+  @media (width >= 40rem) {
+    padding: 1.5rem;
+  }
+}

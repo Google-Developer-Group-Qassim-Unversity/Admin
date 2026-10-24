@@ -39,7 +39,7 @@ export function LeadersPanel() {
 
   return (
     <section className="flex flex-col gap-5">
-      <div className="border-foreground flex flex-col gap-1 border-b pb-3">
+      <div className="panel flex flex-col gap-2">
         <h2 className="text-base font-bold">{t("title")}</h2>
         <p className="text-ink-2 max-w-[70ch] text-[13px]">{t("hint")}</p>
       </div>
@@ -103,7 +103,7 @@ function TargetChip({
       aria-checked={active}
       onClick={onClick}
       className={cn(
-        "flex min-h-10 items-center gap-2 rounded-sm px-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
+        "flex min-h-11 items-center gap-2 rounded-sm px-3 text-sm font-bold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring",
         active ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground",
       )}
     >

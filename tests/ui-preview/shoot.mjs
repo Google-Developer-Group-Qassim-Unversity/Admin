@@ -51,7 +51,7 @@ const click = args.click && args.click !== "1" ? args.click : null;
 // `--fill "<selector>=<text>"` types into a field before the screenshot, e.g. a search box.
 const [fillSelector, fillText] = args.fill && args.fill !== "1" ? [args.fill.slice(0, args.fill.lastIndexOf("=")), args.fill.slice(args.fill.lastIndexOf("=") + 1)] : [null, null];
 let persona = personas[0];
-const SIZES = { phone: { width: 390, height: 844 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
+const SIZES = { phone: { width: 390, height: 844 }, "phone-small": { width: 360, height: 800 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
 
 await mkdir(out, { recursive: true });
 
@@ -160,9 +160,9 @@ try {
   for (const viewport of viewports) {
     const context = await browser.newContext({
       viewport: SIZES[viewport] || SIZES.desktop,
-      deviceScaleFactor: viewport === "phone" ? 2 : 1,
-      hasTouch: viewport === "phone",
-      isMobile: viewport === "phone",
+      deviceScaleFactor: viewport.startsWith("phone") ? 2 : 1,
+      hasTouch: viewport.startsWith("phone"),
+      isMobile: viewport.startsWith("phone"),
       reducedMotion: "reduce",
     });
     await context.route(`${API}/**`, answer);
@@ -196,6 +196,8 @@ try {
             await page.locator(fillSelector).first().fill(fillText).catch((e) => errors.push(`fill ${fillSelector}: ${e.message}`));
             await page.waitForTimeout(300);
           }
+          const overflow = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }));
+          if (overflow.content > overflow.viewport) errors.push(`Horizontal page overflow: ${overflow.content}px exceeds ${overflow.viewport}px`);
           const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}${fillSelector ? "-fill" : ""}.png`;
           await page.screenshot({ path: path.join(out, name), fullPage: full });
           console.log(`${errors.length ? "✗" : "✓"} ${path.join(out, name)}`);

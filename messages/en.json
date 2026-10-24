@@ -409,6 +409,11 @@
     "subtitle": "Create, publish, and track every event."
   },
   "eventForm": {
+    "sections": {
+      "details": "Event details",
+      "attendance": "Attendance and points",
+      "poster": "Event poster"
+    },
     "validation": {
       "nameRequired": "Event name is required",
       "nameTooLong": "Name must be 100 characters or fewer",

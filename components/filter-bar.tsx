@@ -26,13 +26,14 @@ export function FilterBar({
   className?: string;
 }) {
   return (
-    <div className={cn("flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center", className)}>
-      <div className="relative w-full sm:w-72">
+    <div className={cn("panel flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center", className)}>
+      <div className="relative min-w-0 w-full sm:flex-1 sm:basis-72">
         <Search className="text-ink-2 pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2" aria-hidden="true" />
         <Input
           type="search"
           inputMode="search"
           enterKeyHint="search"
+          aria-label={searchPlaceholder}
           placeholder={searchPlaceholder}
           value={search}
           onChange={(e) => onSearchChange(e.target.value)}
@@ -40,12 +41,12 @@ export function FilterBar({
         />
       </div>
       {children ? (
-        <div className="grid auto-cols-fr grid-flow-col gap-2 *:w-full sm:flex sm:*:w-auto">
+        <div className="flex min-w-0 flex-wrap gap-2 *:min-w-0 *:flex-1 sm:*:flex-none">
           {children}
         </div>
       ) : null}
       {trailing ? (
-        <div className="text-ink-2 flex items-center justify-between gap-3 text-[13px] sm:ms-auto">
+        <div className="text-ink-2 flex items-center flex-wrap justify-between gap-3 text-[14px] sm:ms-auto">
           {trailing}
         </div>
       ) : null}

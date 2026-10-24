@@ -115,7 +115,7 @@ export default function EventInfoPage() {
       )}
 
       <div className="flex min-w-0 flex-col gap-8">
-        <section aria-labelledby="event-details" className="bg-card ring-rule flex flex-col gap-2 rounded-xl p-4 ring-1 sm:p-6">
+        <section aria-labelledby="event-details" className="panel flex flex-col gap-2">
           <SectionHead id="event-details" title={t("details")} />
           <dl>
             <Fact icon={Calendar} label={t("date")}>
@@ -175,7 +175,7 @@ export default function EventInfoPage() {
           </dl>
         </section>
 
-        <section aria-labelledby="event-description" className="bg-card ring-rule flex flex-col gap-4 rounded-xl p-4 ring-1 sm:p-6">
+        <section aria-labelledby="event-description" className="panel flex flex-col gap-4">
           <SectionHead id="event-description" title={t("description")} />
           {event.description ? (
             <p dir="auto" className="max-w-[70ch] text-[15px] leading-relaxed break-words whitespace-pre-wrap">

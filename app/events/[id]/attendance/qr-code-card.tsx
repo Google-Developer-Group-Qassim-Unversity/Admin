@@ -276,7 +276,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
   );
 
   return (
-    <section aria-labelledby="attendance-take" className="bg-card ring-rule flex min-w-0 flex-col gap-4 rounded-xl p-4 ring-1 sm:p-6">
+    <section aria-labelledby="attendance-take" className="panel flex min-w-0 flex-col gap-4">
       <SectionHead id="attendance-take" title={t('title')} action={<div className="hidden sm:block">{modeToggle}</div>} />
       <p className="text-ink-2 -mt-2 text-[13.5px]">{t('description')}</p>
       <div>
