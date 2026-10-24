@@ -125,7 +125,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
                 prefetch
                 onClick={onNavigate}
                 aria-current={active ? "page" : undefined}
-                className={`flex min-h-9 items-center gap-2.5 rounded-lg px-3 text-[14.5px] transition-colors ${
+                className={`flex min-h-11 items-center gap-2.5 rounded-lg px-3 text-[14.5px] transition-colors ${
                   active
                     ? "bg-foreground text-background font-bold"
                     : "text-ink-2 hover:bg-sunk hover:text-foreground font-medium"
@@ -177,7 +177,7 @@ function BrandBlock({ size = "md" }: { size?: "md" | "lg" }) {
     <div className="flex min-w-0 items-center gap-3">
       <GdgLogo height={size === "lg" ? 26 : 22} priority />
       <div className="flex min-w-0 flex-col">
-        <span className="font-display truncate text-[19px] leading-tight font-semibold">{t("brand")}</span>
+        <span className="font-display truncate text-[19px] leading-relaxed font-semibold">{t("brand")}</span>
         <span className="text-ink-2 truncate text-[12.5px] leading-tight">{t("consoleLabel")}</span>
       </div>
     </div>
@@ -397,7 +397,7 @@ function Topbar({ onOpenSearch }: { onOpenSearch: () => void }) {
           <GdgLogo height={22} priority />
         </Link>
 
-        <h2 className="font-display truncate text-[19px] leading-tight font-semibold">
+        <h2 className="font-display truncate text-[19px] leading-relaxed font-semibold">
           {current ? t(current.key) : t("brand")}
         </h2>
 

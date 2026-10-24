@@ -95,7 +95,7 @@ export default function EventInfoPage() {
 
   return (
     // Phone: poster, facts, description stacked. lg+: poster beside the rest.
-    <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-10">
+    <div className={imageUrl ? "grid grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,4fr)_minmax(0,7fr)]" : "flex flex-col gap-6"}>
       {imageUrl ? (
         <div className="bg-sunk ring-rule flex justify-center overflow-hidden rounded-xl ring-1">
           <Image
@@ -108,14 +108,14 @@ export default function EventInfoPage() {
           />
         </div>
       ) : (
-        <div className="border-adobe text-ink-2 flex items-center justify-center gap-2 rounded-xl border border-dashed py-6 lg:aspect-square lg:flex-col lg:py-0">
-          <ImageIcon className="size-5 lg:size-10" strokeWidth={1.5} aria-hidden="true" />
+        <div className="border-rule text-ink-2 flex items-center gap-2 rounded-xl border border-dashed px-4 py-3">
+          <ImageIcon className="size-5" strokeWidth={1.5} aria-hidden="true" />
           <span className="text-sm">{t("noImage")}</span>
         </div>
       )}
 
-      <div className="flex min-w-0 flex-col gap-8">
-        <section aria-labelledby="event-details" className="flex flex-col gap-1">
+      <div className={imageUrl ? "flex min-w-0 flex-col gap-6" : "grid w-full min-w-0 items-start gap-6 lg:grid-cols-2"}>
+        <section aria-labelledby="event-details" className="bg-card ring-rule flex flex-col gap-2 rounded-xl p-4 ring-1 sm:p-6">
           <SectionHead id="event-details" title={t("details")} />
           <dl>
             <Fact icon={Calendar} label={t("date")}>
@@ -175,10 +175,10 @@ export default function EventInfoPage() {
           </dl>
         </section>
 
-        <section aria-labelledby="event-description" className="flex flex-col gap-3">
+        <section aria-labelledby="event-description" className="bg-card ring-rule flex flex-col gap-4 rounded-xl p-4 ring-1 sm:p-6">
           <SectionHead id="event-description" title={t("description")} />
           {event.description ? (
-            <p dir="auto" className="max-w-[70ch] text-[15px] leading-relaxed break-words whitespace-pre-wrap">
+            <p dir="auto" className="max-w-[70ch] text-base leading-loose break-words whitespace-pre-wrap">
               {event.description}
             </p>
           ) : (
