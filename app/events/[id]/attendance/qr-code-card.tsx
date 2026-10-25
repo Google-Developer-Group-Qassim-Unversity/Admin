@@ -276,12 +276,12 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
   );
 
   return (
-    <section aria-labelledby="attendance-take" className="flex flex-col gap-4">
+    <section aria-labelledby="attendance-take" className="panel flex min-w-0 flex-col gap-4">
       <SectionHead id="attendance-take" title={t('title')} action={<div className="hidden sm:block">{modeToggle}</div>} />
       <p className="text-ink-2 -mt-2 text-[13.5px]">{t('description')}</p>
       <div>
         <div className="mb-5 sm:hidden">{modeToggle}</div>
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {mode === 'camera' ? (
             <CameraScanPanel
               eventId={eventId}
@@ -311,7 +311,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
                 />
               </div>
             ) : (
-              <div className="flex aspect-square w-full max-w-[20rem] flex-col items-center justify-center rounded-xl border border-dashed border-adobe text-ink-2 md:max-w-64">
+              <div className="flex aspect-square w-full max-w-[20rem] flex-col items-center justify-center rounded-xl border border-dashed border-adobe bg-sunk/50 text-ink-2 md:max-w-56">
                 <QrCode className="mb-3 size-14" strokeWidth={1.25} />
                 <p className="text-sm text-center px-4">
                   {isExpired
@@ -339,9 +339,9 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
 
           <div className="flex flex-col gap-5 md:gap-6">
             <div className="space-y-2">
-              <label className="text-sm font-bold">{t('expirationTime')}</label>
+              <Label htmlFor="qr-expiration" className="text-sm font-bold">{t('expirationTime')}</Label>
               <Select value={expirationMinutes} onValueChange={setExpirationMinutes}>
-                <SelectTrigger className="w-full">
+                <SelectTrigger id="qr-expiration" className="w-full">
                   <SelectValue placeholder={t('selectExpirationTime')} />
                 </SelectTrigger>
                 <SelectContent>
