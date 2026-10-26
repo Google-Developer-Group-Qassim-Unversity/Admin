@@ -437,6 +437,7 @@
       "contactRest": " with the event details so this can be resolved."
     },
     "fields": {
+      "level": "Level",
       "name": "Event Name *",
       "namePlaceholder": "Enter event name",
       "descriptionPlaceholder": "Enter event description (optional)",
@@ -1136,6 +1137,7 @@
     "sendFailed": "Failed to send custom email"
   },
   "eventInfo": {
+    "level": "Level",
     "noImage": "No event image",
     "official": "Official Event",
     "unofficial": "Unofficial Event",
@@ -3318,5 +3320,10 @@
       "none": "Nothing beyond opening the console.",
       "basics": "Everyone on staff"
     }
+  },
+  "eventLevels": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
   }
 }

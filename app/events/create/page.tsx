@@ -46,6 +46,7 @@ export default function CreateEventPage() {
           start_datetime: formatLocalDateTime(data.startDate),
           end_datetime: formatLocalDateTime(data.endDate),
           status: "draft" as const,
+          level: data.level,
           image_url: data.image_url || null,
           is_official: data.is_official ? 1 : 0,
         },
