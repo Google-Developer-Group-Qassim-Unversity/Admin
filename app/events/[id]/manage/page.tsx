@@ -169,7 +169,7 @@ export default function EventManagePage() {
             >
               {step.done ? <Check className="size-4" aria-label={t('stepDone')} /> : index + 1}
             </span>
-            <div className="border-rule min-w-0 border-b pb-5 [li:last-child_&]:border-b-0">{step.content}</div>
+            <div className="panel min-w-0">{step.content}</div>
           </li>
         ))}
       </ol>

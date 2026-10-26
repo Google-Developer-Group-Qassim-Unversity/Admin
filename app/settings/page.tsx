@@ -40,7 +40,7 @@ function SettingRow({
   children: React.ReactNode;
 }) {
   return (
-    <li className="border-rule flex flex-col gap-3 border-b px-1 py-4 sm:flex-row sm:items-center">
+    <li className="border-rule flex flex-col gap-4 border-b px-1 py-5 last:border-b-0 sm:flex-row sm:items-center">
       <div className="flex min-w-0 flex-1 items-start gap-3">
         <Plate tone="neutral" icon={icon} />
         <div className="min-w-0 space-y-1">
@@ -168,7 +168,7 @@ export default function SettingsPage() {
     <div className="mx-auto flex w-full max-w-[1000px] flex-col gap-6">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Settings} />
 
-      <ul className="-mt-6 flex flex-col">
+      <ul className="panel flex flex-col">
         {can("semesters.manage") ? (
           <SettingRow
             icon={CalendarRange}

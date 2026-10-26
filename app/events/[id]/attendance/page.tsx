@@ -35,14 +35,16 @@ export default function EventAttendancePage() {
   const isMultiDay = dayCount > 1;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-4 sm:space-y-6">
+    <div className="grid w-full min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
       {/* Open/closed first: on a phone at the door it is the one control that
           must never be below the fold. */}
-      <EventStatusItem
-        event={event}
-        isEventClosed={isEventClosed}
-        onStatusChange={() => refetch?.()}
-      />
+      <div className="lg:col-span-2">
+        <EventStatusItem
+          event={event}
+          isEventClosed={isEventClosed}
+          onStatusChange={() => refetch?.()}
+        />
+      </div>
 
       <QRCodeCard eventId={event.id} isMultiDay={isMultiDay} dayCount={dayCount} />
 

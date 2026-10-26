@@ -41,7 +41,7 @@ export function GrantsPanel() {
   }
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="panel flex flex-col gap-4">
       <div className="border-foreground flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-bold">{t("title")}</h2>
@@ -107,7 +107,7 @@ function DepartmentGrantsView({ departmentId, history }: { departmentId: number;
       {data.members.length === 0 ? (
         <p className="text-ink-2 text-sm">{t("noMembers")}</p>
       ) : (
-        <div className="bg-card ring-rule flex flex-col gap-2 rounded-xl p-3 ring-1 sm:flex-row sm:items-center">
+        <div className="bg-sunk flex flex-col gap-3 rounded-lg p-4 sm:flex-row sm:items-center">
           <Select value={memberId} onValueChange={setMemberId}>
             <SelectTrigger className="w-full sm:flex-1">
               <SelectValue placeholder={t("pickMember")} />
@@ -160,13 +160,13 @@ function GrantRow({ row, onRevoke, pending }: { row: GrantEntry; onRevoke: () =>
   const revoked = row.revoked_at !== null;
 
   return (
-    <li className="border-rule flex min-h-14 items-center justify-between gap-3 border-b px-1 py-2.5">
+    <li className="border-rule flex min-h-18 items-center justify-between gap-4 border-b px-1 py-3">
       <div className="flex min-w-0 flex-col gap-0.5">
-        <span className={`truncate text-sm font-bold ${revoked ? "text-ink-2 font-medium line-through" : ""}`}>
+        <span className={`text-[15px] leading-relaxed font-bold ${revoked ? "text-ink-2 font-medium line-through" : ""}`}>
           <MemberDetailsTrigger member={{ id: row.member.member_id, name: row.member.name }} /> ·{" "}
           {label(row.permission)}
         </span>
-        <span className="text-ink-2 text-xs">
+        <span className="text-ink-2 text-[13px] leading-relaxed">
           {t("grantedBy", { name: isolate(row.granted_by.name), date: when(row.granted_at) })}
           {revoked && row.revoked_by
             ? ` · ${t("revokedBy", { name: isolate(row.revoked_by.name), date: when(row.revoked_at as string) })}`

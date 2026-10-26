@@ -130,8 +130,8 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
         </Button>
 
         <header className="flex flex-col gap-2">
-          <h1 className="font-display line-clamp-3 text-[26px] leading-tight font-semibold text-balance sm:text-[30px]" dir="auto">
-            {event.name}
+          <h1 className="font-display line-clamp-3 text-[26px] leading-relaxed font-semibold text-balance sm:text-[30px]">
+            <bdi>{event.name}</bdi>
           </h1>
           <div className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px]">
             <StatusBadge status={event.status} />
@@ -159,7 +159,7 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
             tab in view. */}
         <nav
           aria-label={t("tabsLabel")}
-          className="bg-background border-foreground sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 sm:-mx-6 sm:px-4 md:static md:mx-0 md:bg-transparent md:px-0"
+          className="bg-card border-rule rounded-t-xl sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 sm:-mx-6 sm:px-4 md:static md:mx-0 md:px-2"
         >
           <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
             {TAB_ITEMS.map((tab) => {

@@ -12,6 +12,9 @@ node tests/ui-preview/shoot.mjs --routes /,/pipeline,/events/209 \
   --viewports phone,desktop --locales ar,en --themes light,dark
 ```
 
+Every capture checks for horizontal page overflow and exits non-zero on failure.
+Use `--viewports phone-small` to check 360px screens as well.
+
 Options: `--out dir` (default `.preview-shots/`, git-ignored), `--full` for a
 full-page capture, `--scroll 600` to capture lower down. It uses
 `CHROMIUM_PATH`, or `/usr/bin/chromium` when present

@@ -51,7 +51,7 @@ export function SuperAdminsPanel() {
   };
 
   return (
-    <section className="flex flex-col gap-4">
+    <section className="panel flex flex-col gap-4">
       <div className="border-foreground flex flex-col gap-3 border-b pb-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="flex flex-col gap-1">
           <h2 className="text-base font-bold">{t("title")}</h2>

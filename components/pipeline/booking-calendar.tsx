@@ -72,7 +72,7 @@ export function BookingCalendar({
     if (!flash || !grid.current) return;
     const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     // A painted layer, not background-color: picked days hold their ochre with !important.
-    const red = { backgroundImage: "linear-gradient(var(--door-madder), var(--door-madder))", color: "#fff" };
+    const red = { backgroundImage: "linear-gradient(var(--door-madder), var(--door-madder))", color: "var(--on-door)" };
     const frames = still
       ? [red, red, {}]
       : [
@@ -92,7 +92,7 @@ export function BookingCalendar({
     return Array.from({ length: 7 }, (_, i) => ({ short: short.format(addDays(gridStart, i)), narrow: narrow.format(addDays(gridStart, i)) }));
   }, [locale, gridStart]);
   const monthLabel = new Intl.DateTimeFormat(intlLocale(locale), { month: "long", year: "numeric" }).format(month);
-  const dayNumber = React.useMemo(() => new Intl.NumberFormat(locale), [locale]);
+  const dayNumber = React.useMemo(() => new Intl.NumberFormat(intlLocale(locale)), [locale]);
   const longDay = React.useMemo(
     () => new Intl.DateTimeFormat(intlLocale(locale), { weekday: "long", day: "numeric", month: "long", timeZone: "UTC" }),
     [locale],
@@ -110,7 +110,7 @@ export function BookingCalendar({
           <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, -1))} aria-label={t("previous")}>
             <ChevronLeft className="size-5 rtl:-scale-x-100" />
           </Button>
-          <h3 className="font-display min-w-36 text-center text-[19px] leading-tight font-semibold" aria-live="polite">
+          <h3 className="min-w-36 text-center text-[19px] leading-relaxed font-semibold" aria-live="polite">
             {monthLabel}
           </h3>
           <Button variant="ghost" size="icon" onClick={() => setMonth((m) => addMonths(m, 1))} aria-label={t("next")}>
@@ -131,12 +131,12 @@ export function BookingCalendar({
             </span>
           ))}
         </div>
-        <Mortar className="grid-cols-7">
+        <Mortar className="grid-cols-7 gap-px bg-rule p-px">
           {cells.map((cell) => {
             const iso = format(cell, ISO);
             const day = byDate.get(iso);
-            if (!isSameMonth(cell, month)) return <span key={iso} aria-hidden="true" className="h-12 sm:h-[76px]" />;
-            if (isPending || !day) return <Skeleton key={iso} className="h-12 rounded-[2px] sm:h-[76px]" />;
+            if (!isSameMonth(cell, month)) return <span key={iso} aria-hidden="true" className="bg-background h-12 sm:h-[88px]" />;
+            if (isPending || !day) return <Skeleton key={iso} className="h-12 rounded-[2px] sm:h-[88px]" />;
             const clickable = !!onDayClick && (isSelectable ? isSelectable(day) : true);
             const isSelected = selected?.has(iso) ?? false;
             const isEnd = isSelected && !!range && (range.start === iso || range.end === iso);
@@ -149,6 +149,11 @@ export function BookingCalendar({
                   : isSelected
                     ? t("yourPick")
                     : null;
+            const previous = byDate.get(format(addDays(cell, -1), ISO));
+            // Name a closure once per week or when a new block starts.
+            // Every day keeps the full reason in its accessible label.
+            const showLabel = day.status !== "banned" || cell.getDay() === 0 || cell.getDate() === 1
+              || previous?.status !== "banned" || previous.block_id !== day.block_id || previous.reason !== day.reason;
             const words = [
               longDay.format(new Date(`${iso}T00:00:00Z`)),
               t(`status.${day.status}`),
@@ -169,7 +174,7 @@ export function BookingCalendar({
                 title={words}
                 onClick={() => onDayClick?.(day, byDate)}
                 className={cn(
-                  "relative flex h-12 flex-col items-center justify-center rounded-[2px] text-[15px] transition-[background-color,filter,transform] duration-150 outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring sm:h-[76px] sm:items-start sm:justify-between sm:px-2 sm:pt-1.5 sm:pb-1.5",
+                  "relative flex h-12 flex-col items-center justify-center rounded-[2px] text-[15px] transition-[background-color,filter,transform] duration-150 outline-none focus-visible:z-10 focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-ring sm:h-[88px] sm:items-start sm:justify-between sm:px-2 sm:pt-1.5 sm:pb-1.5",
                   "shadow-[inset_0_-2px_0_rgb(58_42_31/0.08)]",
                   PIPELINE_DAY_STYLES[day.status].cell,
                   clickable ? "cursor-pointer active:translate-y-px" : "cursor-default",
@@ -179,11 +184,11 @@ export function BookingCalendar({
                   day.date === data?.today && !isSelected && "shadow-[inset_0_0_0_2px_var(--foreground)]",
                 )}
               >
-                <b className={cn("tabular leading-none", day.status === "locked" ? "font-normal" : "font-bold", day.status === "banned" && "line-through decoration-1")}>
+                <b className={cn("tabular leading-none", day.status === "locked" ? "font-normal" : "font-bold")}>
                   {dayNumber.format(cell.getDate())}
                 </b>
-                {label ? (
-                  <small className="max-w-full truncate text-[11px] leading-tight font-medium max-sm:hidden"><bdi>{label}</bdi></small>
+                {label && showLabel ? (
+                  <small className="max-w-full line-clamp-2 text-start text-[12.5px] leading-snug font-medium max-sm:hidden"><bdi>{label}</bdi></small>
                 ) : null}
                 {day.status === "banned" ? (
                   <i aria-hidden="true" className="bg-door-madder absolute top-1 end-1 size-1.5 rounded-[1px] sm:hidden" />

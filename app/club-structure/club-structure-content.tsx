@@ -275,7 +275,7 @@ function ClubStructureOverview() {
           {canEdit && overview.data.total_members === 0 && semesters.data && (
             <CopyStructure key={semester.id} overview={overview.data} semesters={semesters.data} />
           )}
-          <section aria-label={t("departments")} className="flex flex-col gap-2">
+          <section aria-label={t("departments")} className="panel flex min-w-0 flex-col gap-4">
             <div className="border-foreground flex flex-wrap items-center justify-between gap-3 border-b pb-3">
               {canEdit ? <AddDepartmentToSemester key={semester.id} overview={overview.data} /> : <span />}
               <div className="relative w-full sm:w-64">
