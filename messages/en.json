@@ -538,7 +538,7 @@
     "feed": {
       "today": "Today",
       "yesterday": "Yesterday",
-      "recipients": "{count, plural, one {# recipient} other {# recipients}}",
+      "recipients": "{count, plural, =0 {No recipients} one {# recipient} other {# recipients}}",
       "showMore": "Show more",
       "loadFailed": "Couldn't load sent mail.",
       "retry": "Try again",
@@ -598,9 +598,8 @@
       "always": "Always include",
       "alwaysHint": "They get it on top of the number above.",
       "people": "Recipients",
-      "capacity": "{remaining} emails left today on the Gmail limit, across both addresses.",
-      "capped": "The send is capped at {total} recipients.",
-      "overCapacity": "The always-include list exceeds today’s capacity. Remove recipients to send.",
+      "capacity": "Remaining today across both sending addresses: {remaining}.",
+      "capped": "Up to {total} selected members, plus your guaranteed recipients.",
       "message": "Message",
       "subject": "Subject",
       "previewText": "Preview text",
@@ -641,7 +640,9 @@
       "htmlPlaceholder": "<html>...</html>",
       "uploadFailed": "Couldn't upload {filename}. Remove the file and try again.",
       "fileRejected": "Use images or PDFs, up to {max} files, {size} each.",
-      "attachmentFailed": "Upload failed"
+      "attachmentFailed": "Upload failed",
+      "guaranteedCapacity": "Guaranteed recipients are added on top. Overflow is sent through Kerneltics.",
+      "confirmMembersTitle": "Send to up to {count} people?"
     },
     "recipients": {
       "pastePlaceholder": "Paste email addresses",

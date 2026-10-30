@@ -13,7 +13,7 @@ import { errorMessage } from "@/lib/api/errors";
 import type { Send, SendsFilters } from "@/lib/api-types";
 import { useFormatters } from "@/lib/format";
 
-import { KIND_ICON, SendProgress, SendStatusPill, useSendTitle } from "./send-bits";
+import { KIND_ICON, recipientCount, SendProgress, SendStatusPill, useSendTitle } from "./send-bits";
 
 const DAY_MS = 86_400_000;
 
@@ -114,7 +114,7 @@ function SendRow({ send, onOpen }: { send: Send; onOpen: (id: number) => void })
   const title = useSendTitle()(send);
 
   return (
-    <li className="border-rule hover:bg-card relative flex min-h-16 items-center gap-3 border-b px-1 py-3 transition-colors">
+    <li data-send-id={send.id} className="border-rule hover:bg-card relative flex min-h-16 items-center gap-3 border-b px-1 py-3 transition-colors">
       <Plate tone="neutral" icon={KIND_ICON[send.kind]} />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
         {/* The button stretches over the whole row; the event link sits above it. */}
@@ -145,12 +145,12 @@ function SendRow({ send, onOpen }: { send: Send; onOpen: (id: number) => void })
         {/* Phone: the state goes under the title so the title keeps the width. */}
         <div className="mt-1 flex items-center gap-2 sm:hidden">
           <SendStatusPill send={send} />
-          <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: send.total })}</span>
+          <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: recipientCount(send) })}</span>
         </div>
       </div>
       <div className="flex shrink-0 flex-col items-end gap-1 max-sm:hidden">
         <SendStatusPill send={send} />
-        <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: send.total })}</span>
+        <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: recipientCount(send) })}</span>
       </div>
     </li>
   );

@@ -1,19 +1,11 @@
-/**
- * Strips scripts and inline event handlers from composed email HTML before it
- * is sent. The preview iframe never runs scripts either (no allow-scripts).
- */
+import DOMPurify from "dompurify";
+
+/** Sanitize both composed and logged HTML before rendering or sending it. */
 export function sanitizeHtml(html: string): string {
-  const doc = new DOMParser().parseFromString(html, "text/html");
-  doc.querySelectorAll("script").forEach((el) => el.remove());
-  doc
-    .querySelectorAll("[onclick], [onerror], [onload], [onmouseover]")
-    .forEach((el) => {
-      el.removeAttribute("onclick");
-      el.removeAttribute("onerror");
-      el.removeAttribute("onload");
-      el.removeAttribute("onmouseover");
-    });
-  return doc.documentElement.outerHTML;
+  return DOMPurify.sanitize(html, {
+    WHOLE_DOCUMENT: true,
+    FORBID_TAGS: ["iframe", "object", "embed", "form", "input", "button", "textarea", "select", "base", "meta", "link"],
+  });
 }
 
 /** A whole address, however it was typed or pasted. */

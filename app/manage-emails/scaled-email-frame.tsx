@@ -2,6 +2,8 @@
 
 import * as React from "react";
 
+import { sanitizeHtml } from "./email-composer-utils";
+
 /**
  * Renders email HTML at a fixed phone viewport (375 x 667 by default) and
  * scales it down to the container's width when that is narrower - so the
@@ -21,6 +23,7 @@ export function ScaledEmailFrame({
   height?: number;
   className?: string;
 }) {
+  const safeHtml = React.useMemo(() => typeof window === "undefined" ? "" : sanitizeHtml(srcDoc), [srcDoc]);
   const boxRef = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(1);
 
@@ -38,9 +41,9 @@ export function ScaledEmailFrame({
     <div ref={boxRef} dir="ltr" className={className} style={{ width: "100%", maxWidth: width }}>
       <div style={{ height: height * scale, overflow: "hidden" }}>
         <iframe
-          srcDoc={srcDoc}
+          srcDoc={safeHtml}
           title={title}
-          sandbox="allow-same-origin"
+          sandbox=""
           className="block border-0 bg-white"
           style={{ width, height, transform: `scale(${scale})`, transformOrigin: "top left" }}
         />

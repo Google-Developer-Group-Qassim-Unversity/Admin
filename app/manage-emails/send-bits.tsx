@@ -3,6 +3,7 @@
 import { Award, AtSign, BadgeCheck, CalendarDays, FileBadge, Megaphone, Route, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { isSending } from "@/hooks/use-email-sends";
 import { FILL } from "@/components/najdi";
 import { SEND_TONE, StatePill } from "@/components/status-badge";
 import type { Send, SendKind, SendKindFilter } from "@/lib/api-types";
@@ -43,6 +44,16 @@ export const KIND_FILTERS: SendKindFilter[] = [
 export const isCertificate = (send: Pick<Send, "kind">) =>
   send.kind === "event-certificate" || send.kind === "manual-certificate";
 
+/** Finished jobs can include attendees skipped as already sent in their total. */
+export const recipientCount = (send: Send) => isSending(send) ? send.total : send.succeeded + send.failed;
+
+/** Display template subjects without a recipient name; keep stored templates intact for reuse. */
+export function displaySubject(subject: string | null | undefined, event: Send["event"]) {
+  return subject?.replaceAll("[Event Name]", event?.name ?? "")
+    .replace(/\s*\[Name\]\s*[,،:;!?؟.\-–|·]*\s*/g, " ")
+    .replace(/\s+/g, " ").trim().replace(/^[,،:;!?؟.\-–|·]\s*|\s*[,،:;\-–|·]$/g, "").trim() ?? "";
+}
+
 /** A campaign or direct email can be opened in the composer as the start of a new one. */
 export const canReuse = (send: Send) => send.kind === "campaign" || send.kind === "direct";
 
@@ -63,7 +74,7 @@ export function useSendTitle() {
     if (isCertificate(send)) {
       return send.event ? t("withEvent", { kind: kindLabel(send.kind), event: isolate(send.event.name) }) : kindLabel(send.kind);
     }
-    return send.subject?.trim() || kindLabel(send.kind);
+    return displaySubject(send.subject, send.event) || kindLabel(send.kind);
   };
 }
 

@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Plate } from "@/components/najdi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useAccess } from "@/hooks/use-access";
 import { useMembersPaginated } from "@/hooks/use-members";
 import { isolate } from "@/lib/format";
 import { useDebouncedValue } from "@/lib/search-utils";
@@ -26,14 +27,17 @@ export interface Person {
  */
 export function PersonLookup({ person, onPersonChange }: { person: Person | null; onPersonChange: (p: Person | null) => void }) {
   const t = useTranslations("manageEmails.lookup");
+  const fields = useTranslations("common.fields");
+  const { can } = useAccess();
+  const canFindMembers = can("members.view");
   const [text, setText] = React.useState("");
   const [active, setActive] = React.useState(-1);
   const [dismissed, setDismissed] = React.useState(false);
   const search = useDebouncedValue(text.trim(), 250);
   const listId = React.useId();
 
-  const members = useMembersPaginated({ page: 1, pageSize: 6, search, sortBy: "name", order: "asc" }, search.length >= 2);
-  const results = search.length >= 2 && search === text.trim() && !members.isPlaceholderData ? (members.data?.items ?? []) : [];
+  const members = useMembersPaginated({ page: 1, pageSize: 6, search, sortBy: "name", order: "asc" }, canFindMembers && search.length >= 2);
+  const results = canFindMembers && search.length >= 2 && search === text.trim() && !members.isPlaceholderData ? (members.data?.items ?? []) : [];
   const typedEmail = EMAIL.test(text.trim()) ? text.trim() : null;
   // A typed address that belongs to a member shows as that member, not twice.
   const showRawEmail = typedEmail && !results.some((m) => m.email.toLowerCase() === typedEmail.toLowerCase());
@@ -79,8 +83,8 @@ export function PersonLookup({ person, onPersonChange }: { person: Person | null
           aria-controls={listId}
           aria-autocomplete="list"
           aria-activedescendant={open && active >= 0 ? `${listId}-${active}` : undefined}
-          aria-label={t("label")}
-          placeholder={t("placeholder")}
+          aria-label={canFindMembers ? t("label") : fields("email")}
+          placeholder={canFindMembers ? t("placeholder") : fields("email")}
           value={text}
           onChange={(e) => { setText(e.target.value); setActive(-1); setDismissed(false); }}
           onFocus={() => setDismissed(false)}
@@ -139,7 +143,7 @@ export function PersonLookup({ person, onPersonChange }: { person: Person | null
             </li>
           )}
           {!members.isError && !showRawEmail && results.length === 0 && (
-            <li className="text-ink-2 px-3 py-3 text-sm">{members.isFetching || search !== text.trim() ? t("searching") : t("noMatch")}</li>
+            <li className="text-ink-2 px-3 py-3 text-sm">{canFindMembers && (members.isFetching || search !== text.trim()) ? t("searching") : canFindMembers ? t("noMatch") : fields("email")}</li>
           )}
         </ul>
       )}

@@ -137,21 +137,20 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   const eligible = eligibleQuery.data?.eligible_count ?? 0;
   const remaining = eligibleQuery.data?.remaining_capacity ?? null;
   // Guaranteed members are excluded by the backend before it selects the pool.
-  // Reserve capacity for them so the confirmation counts each recipient once.
+  // The member pool is capped separately; guaranteed recipients are added on top.
   const poolSize = Math.max(0, eligible - always.filter((r) => r.member_id != null).length);
-  const cap = Math.max(0, Math.min(poolSize, remaining === null ? poolSize : remaining - always.length));
+  const cap = Math.max(0, Math.min(poolSize, remaining === null ? poolSize : remaining));
   const requestedCount = count ?? cap;
   const memberCount = Math.min(requestedCount, cap);
   const total = toMembers ? memberCount + always.length : people.length;
   const overCapacity = toMembers && requestedCount > cap;
-  const guaranteesOverCapacity = toMembers && remaining !== null && always.length > remaining;
 
   const attachments = [...carried, ...uploads.readyAttachments];
   const busy = blast.isPending || direct.isPending;
   const attachmentsBlocked = uploads.isUploadingAttachments || uploads.attachmentSizeExceeded || uploads.hasFailedAttachments;
   const hasMessage = subject.trim() !== "" && html.trim() !== "";
   const canSend = hasMessage && total > 0 && !attachmentsBlocked && !busy && !test.isPending &&
-    !guaranteesOverCapacity && (!toMembers || eligibleQuery.isSuccess);
+    (toMembers ? canBlast && eligibleQuery.isSuccess : canDirect);
 
   const dirty =
     subject !== (start?.subject ?? "") ||
@@ -310,20 +309,20 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
             ) : (
               <RecipientsField id="composer-people" label={t("people")} value={people} onChange={setPeople} disabled={busy} />
             )}
-            {canBlast && eligibleQuery.isPending && <p className="text-ink-2 text-sm">{t("capacityLoading")}</p>}
-            {canBlast && eligibleQuery.isError && (
+            {toMembers && eligibleQuery.isPending && <p className="text-ink-2 text-sm">{t("capacityLoading")}</p>}
+            {toMembers && eligibleQuery.isError && (
               <div role="alert" className="flex flex-wrap items-center gap-2 text-sm">
                 <span className="text-door-madder-ink">{t("capacityFailed")}</span>
                 <Button variant="outline" onClick={() => void eligibleQuery.refetch()}>{tc("retry")}</Button>
               </div>
             )}
-            {remaining !== null && (
+            {toMembers && remaining !== null && (
               <p className="bg-sunk text-ink-2 flex items-start gap-2 rounded-lg px-3 py-2.5 text-[13.5px]">
                 <SendIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
                 <span>
                   {t("capacity", { remaining: fmt.number(remaining) })}
-                  {overCapacity && <> {t("capped", { total: fmt.number(total) })}</>}
-                  {guaranteesOverCapacity && <> {t("overCapacity")}</>}
+                  {overCapacity && <> {t("capped", { total: fmt.number(memberCount) })}</>}
+                  {always.length > 0 && <> {t("guaranteedCapacity")}</>}
                 </span>
               </p>
             )}
@@ -443,7 +442,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                   ))}
                 </ul>
               )}
-              <FileUpload
+              {can("uploads") && <FileUpload
                 multiple
                 maxFiles={Math.max(0, MAX_ATTACHMENT_FILES - carried.length)}
                 maxSize={MAX_ATTACHMENT_FILE_SIZE}
@@ -483,7 +482,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                     </FileUploadItem>
                   ))}
                 </FileUploadList>
-              </FileUpload>
+              </FileUpload>}
               {uploads.attachmentSizeExceeded && (
                 <p className="text-door-madder-ink text-[13px] font-bold">
                   {t("tooLarge", {
@@ -524,10 +523,10 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
         <AlertDialog open={confirmingSend} onOpenChange={setConfirmingSend}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>{t("confirmTitle", { count: total })}</AlertDialogTitle>
+              <AlertDialogTitle>{t(toMembers ? "confirmMembersTitle" : "confirmTitle", { count: total })}</AlertDialogTitle>
               <AlertDialogDescription>
                 {t("confirmDescription", { subject: isolate(subject.trim()) })}
-                {overCapacity && <> {t("capped", { total: fmt.number(total) })}</>}
+                {overCapacity && <> {t("capped", { total: fmt.number(memberCount) })}</>}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>

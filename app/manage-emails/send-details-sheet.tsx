@@ -30,7 +30,7 @@ import { isolate, useFormatters } from "@/lib/format";
 import { normalizeArabic } from "@/lib/search-utils";
 
 import { ScaledEmailFrame } from "./scaled-email-frame";
-import { KIND_ICON, SendProgress, SendStatusPill, canReuse, isCertificate, useKindLabel, useSendTitle } from "./send-bits";
+import { KIND_ICON, displaySubject, recipientCount, SendProgress, SendStatusPill, canReuse, isCertificate, useKindLabel, useSendTitle } from "./send-bits";
 
 /** Recipients shown before "show all": enough for a check, light enough for a 2,000-person campaign. */
 const FIRST_RECIPIENTS = 100;
@@ -118,6 +118,8 @@ export function SendDetailsSheet({
 function Summary({ send }: { send: SendDetail }) {
   const t = useTranslations("manageEmails.details");
   const fmt = useFormatters();
+  const tf = useTranslations("manageEmails.feed");
+  const count = recipientCount(send);
   return (
     <dl className="grid grid-cols-[max-content_minmax(0,1fr)] [&_dd]:wrap-anywhere">
       <Fact term={t("status")}>
@@ -127,7 +129,7 @@ function Summary({ send }: { send: SendDetail }) {
         </span>
       </Fact>
       <Fact term={t("recipientsCount")}>
-        <span className="tabular">{fmt.number(send.total)}</span>
+        <span className="tabular">{count === 0 ? tf("recipients", { count }) : fmt.number(count)}</span>
       </Fact>
       {send.event && (
         <Fact term={t("event")}>
@@ -313,7 +315,7 @@ function Recipients({ send }: { send: SendDetail }) {
 function Message({ send }: { send: SendDetail }) {
   const t = useTranslations("manageEmails.details");
   const { content } = send;
-  const subject = content?.subject ?? send.subject;
+  const subject = displaySubject(content?.subject ?? send.subject, send.event);
 
   return (
     <section aria-labelledby="send-message" className="flex flex-col gap-3">

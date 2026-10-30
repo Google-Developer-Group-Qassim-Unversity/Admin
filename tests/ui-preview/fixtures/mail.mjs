@@ -64,16 +64,17 @@ const send = (kind, status, total, ago, extra = {}) => {
 const SENDS = [
   send("event-certificate", "running", 17, 0.3 * H, { succeeded: 11, failed: 0, event: EVENTS.girls, sender: SENDERS[1], from_addresses: [{ address: GMAIL, count: 11 }] }),
   send("team-notification", "succeeded", 25, 0.9 * H, { subject: "طلب فعالية رجع لك: ورشة Flutter" }),
-  send("event-message", "succeeded", 21, 1 * DAY + 2 * H, { subject: "تذكير: Upgrade Your GPA بكرة الساعة 7", event: EVENTS.gpa, sender: SENDERS[2] }),
+  send("event-message", "succeeded", 21, 1 * DAY + 2 * H, { subject: "[Name]، تذكير: [Event Name] بكرة الساعة 7", event: EVENTS.gpa, sender: SENDERS[2] }),
   send("acceptance", "succeeded", 32, 1 * DAY + 5 * H, { subject: "تم قبولك في بطولة الألعاب الإلكترونية", event: EVENTS.esports, sender: SENDERS[1] }),
   send("event-certificate", "partial", 67, 3 * DAY, { succeeded: 65, failed: 2, event: EVENTS.security, sender: SENDERS[3] }),
   send("acceptance", "succeeded", 74, 3 * DAY + 6 * H, { subject: "تم قبولك في التهديدات الأمنية للذكاء الاصطناعي", event: EVENTS.security, sender: SENDERS[3] }),
   send("direct", "failed", 1, 4 * DAY, { subject: "بخصوص شهادة التطوع", sender: SENDERS[0] }),
   send("campaign", "failed", 7, 5 * DAY, { failed: 0, from_addresses: [] }),
   send("event-message", "partial", 300, 6 * DAY, { succeeded: 150, failed: 150, subject: "تغيير موعد ورشة micro:bit", event: EVENTS.microbit, sender: SENDERS[2] }),
-  send("event-certificate", "succeeded", 37, 9 * DAY, { event: EVENTS.microbit, sender: SENDERS[1] }),
+  send("event-certificate", "succeeded", 80, 9 * DAY, { succeeded: 1, event: EVENTS.microbit, sender: SENDERS[1] }),
+  send("event-certificate", "succeeded", 43, 10 * DAY, { succeeded: 0, event: EVENTS.gpa, from_addresses: [] }),
   send("campaign", "succeeded", 2457, 11 * DAY, {
-    subject: "دعوة لزيارة بوث GDG Qassim | معرض مشارق",
+    subject: "[Name]، دعوة لزيارة بوث GDG Qassim | [Event Name] معرض مشارق",
     sender: SENDERS[2],
     from_addresses: [{ address: GMAIL, count: 500 }, { address: KERNELTICS, count: 1957 }],
   }),
@@ -81,7 +82,8 @@ const SENDS = [
   send("team-notification", "succeeded", 4, 12 * DAY + 3 * H, { subject: "طلب جديد بانتظار التصميم" }),
   // Older history, so "show more" has a second page.
   ...Array.from({ length: 26 }, (_, i) =>
-    send(i % 3 ? "event-certificate" : "acceptance", "succeeded", 20 + ((i * 7) % 40), (14 + i * 2) * DAY, {
+    send(i % 3 ? "event-certificate" : "acceptance", i === 22 ? "running" : "succeeded", 20 + ((i * 7) % 40), (14 + i * 2) * DAY, {
+      ...(i === 22 ? { succeeded: 3, failed: 0 } : {}),
       event: Object.values(EVENTS)[i % 5],
       subject: i % 3 ? null : `تم قبولك في ${Object.values(EVENTS)[i % 5].name}`,
       sender: SENDERS[i % 4],
@@ -100,7 +102,7 @@ const KIND_FILTER = {
 
 /** Who each send went to: a slice of the sample members, the same people every time. */
 const recipientsOf = (s) =>
-  s.kind === "campaign" && !s.subject ? [] : Array.from({ length: Math.min(s.total, 140) }, (_, i) => {
+  s.kind === "campaign" && !s.subject ? [] : Array.from({ length: Math.min(s.succeeded + s.failed, 140) }, (_, i) => {
     const m = MEMBERS[(s.id + i) % MEMBERS.length];
     return { name: m.name, email: i < MEMBERS.length ? m.email : `student${s.id}${i}@qu.edu.sa`, member_id: i < MEMBERS.length ? m.id : null };
   });
@@ -119,7 +121,8 @@ const contentOf = (s) => {
   return {
     subject: s.kind === "event-message" ? null : s.subject,
     preview_text: s.kind === "campaign" ? "بوث النادي يوم الأحد في مركز المؤتمرات" : null,
-    html_content: s.kind === "direct" ? null : HTML(s.subject, "يسعدنا نشوفك معنا. التفاصيل كاملة في الرابط تحت."),
+    html_content: s.kind === "direct" ? null : HTML(s.subject, "يسعدنا نشوفك معنا. التفاصيل كاملة في الرابط تحت.") +
+      '<script>window.mailXss = true</script><img onerror="window.mailXss = true" src="x"><svg onload="alert(1)"></svg><a href="javascript:alert(1)">unsafe</a><iframe srcdoc="unsafe"></iframe><meta http-equiv="refresh" content="0;url=https://example.com"><form action="https://example.com"><input autofocus onfocus="alert(1)"></form>',
     attachments: s.kind === "campaign" ? [{ filename: "خريطة-المعرض.pdf", url: "https://example.com/map.pdf" }] : [],
   };
 };
@@ -146,11 +149,18 @@ export function reset() {
   SENDS.splice(0, SENDS.length, ...initialSends);
   queuedId = 1000;
 }
-function queue(kind, body) {
+export function queue(kind, body) {
   const total = kind === "campaign" ? body.count + body.guaranteed_recipients.length : body.recipients.length;
   const item = send(kind, "queued", total, 0, { id: queuedId++, subject: body.subject, succeeded: 0, failed: 0, from_addresses: [] });
   SENDS.unshift(item);
   return { message: "Queued", recipient_count: total, guaranteed_count: body.guaranteed_recipients?.length ?? 0, algorithmic_count: body.count ?? 0, job_id: item.id };
+}
+
+/** Finish a fixture job without mutating the reset snapshot. */
+export function finish(id) {
+  const index = SENDS.findIndex((s) => s.id === id);
+  const s = SENDS[index];
+  SENDS[index] = { ...s, status: "succeeded", succeeded: s.total, failed: 0, finished_at: at(0) };
 }
 
 export default [

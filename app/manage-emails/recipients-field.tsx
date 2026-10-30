@@ -5,6 +5,7 @@ import { Plus, UserPlus, X } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
+import { useAccess } from "@/hooks/use-access";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -43,6 +44,7 @@ export function RecipientsField({
   disabled?: boolean;
 }) {
   const t = useTranslations("manageEmails.recipients");
+  const { can } = useAccess();
   const tc = useTranslations("common.actions");
   const [pasted, setPasted] = React.useState("");
   const [pickerOpen, setPickerOpen] = React.useState(false);
@@ -110,10 +112,10 @@ export function RecipientsField({
             <Plus />
           </Button>
         </div>
-        <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} disabled={disabled}>
+        {can("members.view") && <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} disabled={disabled}>
           <UserPlus />
           {t("pickMembers")}
-        </Button>
+        </Button>}
       </div>
       {value.length > 0 && (
         <ul className="ring-rule divide-rule max-h-56 divide-y overflow-y-auto overscroll-contain rounded-lg ring-1">
@@ -143,7 +145,7 @@ export function RecipientsField({
           ))}
         </ul>
       )}
-      <MemberSearchDialog open={pickerOpen} onOpenChange={setPickerOpen} onConfirm={addMembers} />
+      <MemberSearchDialog open={pickerOpen && can("members.view")} onOpenChange={setPickerOpen} onConfirm={addMembers} />
     </div>
   );
 }
