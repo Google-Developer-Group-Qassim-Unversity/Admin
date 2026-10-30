@@ -45,13 +45,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 import { getCertificateEvents, sendManualCertificate } from "@/lib/api";
-import type { Event, Member, CertificateLanguage, EmailProvider } from "@/lib/api-types";
+import type { Event, Member, CertificateLanguage } from "@/lib/api-types";
 
 import type { RecipientRow, EventFormData } from "./types";
 import { MemberSearchDialog } from "./member-search-dialog";
 import { CsvBatchPanel } from "./csv-batch-panel";
-import { ProviderSelect } from "./provider-select";
-import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
 import { useTranslations } from "next-intl";
 import { useFormatters } from "@/lib/format";
@@ -65,7 +63,13 @@ function toDateString(datetime: string): string {
   return new Date(datetime).toISOString().split("T")[0];
 }
 
-export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) {
+/**
+ * Issue certificates by hand: to people picked or typed one by one, or to a
+ * CSV batch. Opened from the Mail page's header, in a sheet. `onSent` runs once
+ * a send is queued; `close` is false when part of a batch failed to queue, so
+ * the sheet stays open on what failed.
+ */
+export function SendCertificatesTab({ onSent }: { onSent: (result: { close: boolean }) => void }) {
   const t = useTranslations("manageEmails.sendCertificates");
   const fmt = useFormatters();
   const tf = useTranslations("common.fields");
@@ -89,12 +93,8 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
   ]);
 
   const [language, setLanguage] = React.useState<CertificateLanguage>("ar");
-  const [provider, setProvider] = React.useState<EmailProvider>("google");
   const [memberDialogOpen, setMemberDialogOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
-  const [sentResult, setSentResult] = React.useState<{ jobId: number | null | undefined; total: number } | null>(
-    null
-  );
 
   const selectedEvent = eventForm.event_id
     ? events.find((e) => e.id === eventForm.event_id)
@@ -188,7 +188,6 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
 
     const payload: Parameters<typeof sendManualCertificate>[0] = {
       language,
-      provider,
       members: validRecipients.map((r) =>
         r.member_id
           ? { member_id: r.member_id }
@@ -209,8 +208,8 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
     const response = await sendManualCertificate(payload, getToken);
     if (response.success) {
       toast.success(response.data.message);
-      setSentResult({ jobId: response.data.job_id, total: response.data.recipient_count });
       setRecipients([{ name: "", email: "", gender: "Male" }]);
+      onSent({ close: true });
     } else {
       toast.error(response.error.message);
     }
@@ -389,7 +388,6 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
                       </SelectContent>
                     </Select>
                   </div>
-                  <ProviderSelect value={provider} onChange={setProvider} disabled={isSubmitting} />
                 </div>
               </CardContent>
             </Card>
@@ -502,23 +500,13 @@ export function SendCertificatesTab({ onGoToLogs }: { onGoToLogs: () => void }) 
             </Card>
           </div>
 
-          {/* Phone: the send button sticks above the tab bar instead of
+          {/* Phone: the send button sticks to the foot of the sheet instead of
               sitting at the foot of the recipients card. */}
-          <FormActions className="md:hidden">{sendButton}</FormActions>
-
-          {sentResult && !isSubmitting && (
-            <EmailJobStatusCard
-              jobId={sentResult.jobId}
-              getToken={getToken}
-              itemKey="certificate"
-              totalHint={sentResult.total}
-              onGoToLogs={onGoToLogs}
-            />
-          )}
+          <FormActions className="bottom-0 md:hidden">{sendButton}</FormActions>
         </TabsContent>
 
         <TabsContent value="batch" className="mt-4">
-          <CsvBatchPanel events={events} onGoToLogs={onGoToLogs} provider={provider} />
+          <CsvBatchPanel events={events} onSent={onSent} />
         </TabsContent>
       </Tabs>
 

@@ -39,11 +39,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 
 import { sendManualCertificate, getSubmissions } from "@/lib/api";
-import type { Event, Submission, EmailProvider } from "@/lib/api-types";
+import type { Event, Submission } from "@/lib/api-types";
 
 import type { CsvRow } from "./types";
 import { AttendanceVerifyDialog } from "./attendance-verify-dialog";
-import { EmailJobStatusCard } from "@/components/email-job-status-card";
 import { FormActions } from "@/components/form-actions";
 import { SOFT } from "@/components/najdi";
 import { useTranslations } from "next-intl";
@@ -51,8 +50,8 @@ import { isolate, useFormatters } from "@/lib/format";
 
 interface CsvBatchPanelProps {
   events: Event[];
-  onGoToLogs?: () => void;
-  provider: EmailProvider;
+  /** A batch was queued. `close` is false when some groups failed to queue, so the panel stays on what failed. */
+  onSent: (result: { close: boolean }) => void;
 }
 
 /** "9 Oct 2026", or a range written the way the reader's language writes ranges. */
@@ -60,7 +59,7 @@ function formatEventDate(event: Event, fmt: ReturnType<typeof useFormatters>): s
   return fmt.range(event.start_datetime, event.end_datetime);
 }
 
-export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelProps) {
+export function CsvBatchPanel({ events, onSent }: CsvBatchPanelProps) {
   const t = useTranslations("manageEmails.csvBatch");
   const fmt = useFormatters();
   const tSend = useTranslations("manageEmails.sendCertificates");
@@ -81,7 +80,6 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isCheckingAttendance, setIsCheckingAttendance] = React.useState(false);
-  const [jobResults, setJobResults] = React.useState<{ jobId: number | null | undefined; total: number }[]>([]);
   const [failedCount, setFailedCount] = React.useState(0);
 
   const [unverifiedRows, setUnverifiedRows] = React.useState<CsvRow[]>([]);
@@ -322,7 +320,6 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
 
   const clearCsv = () => {
     clearCsvRows();
-    setJobResults([]);
     setFailedCount(0);
   };
 
@@ -347,11 +344,10 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
     }
 
     setIsSubmitting(true);
-    setJobResults([]);
     setFailedCount(0);
     let ok = 0;
     let fail = 0;
-    const results: { jobId: number | null | undefined; total: number }[] = [];
+    const queued = new Set<CsvRow>();
 
     const groups = new Map<number, typeof includedRows>();
     for (const row of includedRows) {
@@ -364,28 +360,30 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
       const payload: Parameters<typeof sendManualCertificate>[0] = {
         language: "en",
         event_id: eventId,
-        provider,
         members: rows.map((r) => ({ member: { name: r.name, email: r.email, gender: r.gender } })),
       };
 
       const response = await sendManualCertificate(payload, getToken);
       if (response.success) {
         ok += rows.length;
-        results.push({ jobId: response.data.job_id, total: response.data.recipient_count });
+        rows.forEach((row) => queued.add(row));
       } else {
         fail += rows.length;
         toast.error(response.error.message);
       }
     }
 
-    setJobResults(results);
     setFailedCount(fail);
 
     if (ok > 0 && fail === 0) {
       toast.success(t("sentAll", { count: ok }));
       clearCsvRows();
+      onSent({ close: true });
     } else if (ok > 0) {
+      // Keep only unsent rows selected, so retrying cannot duplicate queued certificates.
+      setCsvRows((previous) => previous.filter((row) => !queued.has(row)));
       toast.warning(t("sentPartial", { ok, fail }));
+      onSent({ close: false });
     }
     setIsSubmitting(false);
   };
@@ -849,31 +847,17 @@ export function CsvBatchPanel({ events, onGoToLogs, provider }: CsvBatchPanelPro
           </CardContent>
         </Card>
 
-        {fileName && <FormActions className="md:hidden">{dispatchButton}</FormActions>}
+        {fileName && <FormActions className="bottom-0 md:hidden">{dispatchButton}</FormActions>}
 
-        {(jobResults.length > 0 || failedCount > 0) && !isSubmitting && (
-          <div className="grid gap-4 sm:grid-cols-2">
-            {jobResults.map((result, index) => (
-              <EmailJobStatusCard
-                key={result.jobId ?? index}
-                jobId={result.jobId}
-                getToken={getToken}
-                itemKey="certificate"
-                totalHint={result.total}
-                onGoToLogs={onGoToLogs}
-              />
-            ))}
-            {failedCount > 0 && (
-              <Card className="gap-0 py-0 sm:gap-0 sm:py-0 ring-door-madder/30">
-                <CardHeader className="p-4 sm:p-4">
-                  <CardTitle className="text-sm font-semibold flex items-center gap-2 text-door-madder-ink">
-                    <AlertCircle className="h-4 w-4" />
-                    {t("failedToQueue", { count: failedCount })}
-                  </CardTitle>
-                </CardHeader>
-              </Card>
-            )}
-          </div>
+        {failedCount > 0 && !isSubmitting && (
+          <Card className="gap-0 py-0 sm:gap-0 sm:py-0 ring-door-madder/30">
+            <CardHeader className="p-4 sm:p-4">
+              <CardTitle className="text-sm font-semibold flex items-center gap-2 text-door-madder-ink">
+                <AlertCircle className="h-4 w-4" />
+                {t("failedToQueue", { count: failedCount })}
+              </CardTitle>
+            </CardHeader>
+          </Card>
         )}
       </div>
 
