@@ -1,4 +1,4 @@
-// Points and email preview fixtures. Sample data only.
+// Points and event-email preview fixtures (the Mail page's are in mail.mjs). Sample data only.
 //
 // Named a-engage so it sorts before core.mjs: GET /events here answers with the
 // core events plus the custom (points-only) events the points pages list,
@@ -120,31 +120,6 @@ const eventDetails = (id) => {
   };
 };
 
-const log = (id, email_type, minutesAgo, extra) => ({
-  id,
-  email_type,
-  from_address: email_type === "blast" ? "gdg.qu1@gmail.com" : "info@kerneltics.com",
-  sent_at: at(-minutesAgo * 60_000),
-  sent_by: 1,
-  recipient_count: 1,
-  data: null,
-  member_id: 100,
-  event_id: 209,
-  member_name: "نورة العتيبي",
-  member_email: "member1@qu.edu.sa",
-  event_name: "ورشة Git و GitHub",
-  event_is_official: 1,
-  sender_name: "Ibrahim",
-  ...extra,
-});
-const LOGS = [
-  log(5012, "acceptance", 4, { data: { subject: "تم قبولك في ورشة Git و GitHub" } }),
-  log(5011, "event-certificate", 18, { member_name: "عبدالله الحربي", member_email: "member2@qu.edu.sa", event_name: "دورة بايثون", event_id: 198 }),
-  log(5010, "blast", 42, { recipient_count: 1284, member_id: null, member_name: null, member_email: null, event_id: null, event_name: null, data: { subject: "انطلاق فعاليات الفصل الأول" } }),
-  log(5009, "manual-certificate", 95, { member_name: "ريم السبيعي", member_email: "member3@qu.edu.sa", event_name: "ملتقى المبتدئين", event_id: 201 }),
-  log(5008, "event_announcement", 180, { recipient_count: 142, member_id: null, member_name: null, member_email: null, event_name: "مقدمة في الحوسبة السحابية", event_id: 211 }),
-];
-
 const job = (id, job_type, status, total, succeeded, failed, minutesAgo, extra = {}) => ({
   id,
   job_type,
@@ -168,11 +143,6 @@ const JOBS = [
   job(73, "custom-email", "succeeded", 86, 86, 0, 2880, { event_id: 209 }),
 ];
 
-const TEMPLATES = [
-  { id: 1, name: "إعلان فعالية", subject: "فعالية جديدة من GDG القصيم", html_content: "<h1>فعالية جديدة</h1><p>سجّل الآن.</p>", preview_text: "سجّل الآن", created_by: 1, created_at: at(-30 * DAY), updated_at: at(-2 * DAY) },
-  { id: 2, name: "تذكير قبل الفعالية", subject: "فعاليتك بكرة!", html_content: "<p>نشوفك بكرة.</p>", preview_text: null, created_by: 1, created_at: at(-20 * DAY), updated_at: at(-20 * DAY) },
-];
-
 export default [
   { path: /^\/events$/, body: [...EVENTS, ...CUSTOM_EVENTS] },
   { path: /^\/events\/\d+\/details$/, body: ({ pathname }) => eventDetails(pathname.split("/")[2]) },
@@ -190,15 +160,7 @@ export default [
     },
   },
   { path: /^\/actions\/all$/, body: ACTIONS },
-  { path: /^\/emails\/logs\/enriched$/, body: LOGS },
-  // The live stream: refusing it leaves the tab in its "disconnected" state, so
-  // the preview shows the static list instead (see email-logs-tab).
-  { path: /^\/emails\/logs\/enriched\/stream$/, status: 503, body: { detail: "preview" } },
-  { path: /^\/emails\/jobs$/, body: JOBS },
-  { path: /^\/emails\/jobs\/unfinished$/, body: JOBS.filter((j) => j.status === "running" || j.status === "queued") },
   { path: /^\/emails\/jobs\/\d+$/, body: ({ pathname }) => JOBS.find((j) => String(j.id) === pathname.split("/").pop()) ?? JOBS[0] },
-  { path: /^\/emails\/blast\/templates$/, body: TEMPLATES },
-  { path: /^\/emails\/blast\/eligible-count$/, body: { eligible_count: 1102, remaining_capacity: 398 } },
   { path: /^\/emails\/certificate-event\/eligible-count\/\d+$/, body: { eligible_count: 48, eligible_members: [], sent_count: 0 } },
   { path: /^\/emails\/stats\/dashboard$/, body: { addresses: { "info@kerneltics.com": { usage: 412 }, "gdg.qu1@gmail.com": { usage: 1290 } }, by_type: { acceptance: 210, "event-certificate": 132, blast: 1284, "manual-certificate": 4 }, total_24h: 342 } },
 ];

@@ -12,8 +12,10 @@
  * nothing in a caller should mention a token at all.
  *
  * Migrated so far: events, their status transitions, attendance, certificates,
- * actions, departments, forms, semesters. Still here: points, emails, members,
- * submissions, uploads.
+ * actions, departments, forms, semesters, and the Mail page's emails (the
+ * outbox, blast, direct). Still here: points, the event pages' emails (custom,
+ * acceptance, manual certificates, job polling, the dashboard's email stats),
+ * members, submissions, uploads.
  *
  * To move the next one:
  *
@@ -73,21 +75,8 @@ import type {
   CustomEmailTestRequest,
   CustomEmailResponse,
   CustomEmailTestResponse,
-  BlastSendRequest,
-  BlastSendResponse,
-  BlastTestRequest,
-  BlastTestResponse,
-  BlastEligibleCountResponse,
-  EmailProvider,
-  DirectEmailRequest,
-  DirectEmailResponse,
-  EmailTemplate,
-  EmailTemplateInput,
-  EnrichedEmailLog,
   EmailDashboardStats,
-  EmailLogFilters,
   EmailJobModel,
-  EmailJobStatus,
 } from "./api-types";
 
 // Re-exported, not redefined. Two classes would mean two identities, and
@@ -502,85 +491,6 @@ export async function sendAcceptanceTestBlasts(
 }
 
 // =============================================================================
-// Blast Emails
-// =============================================================================
-
-export async function sendBlastEmail(
-  payload: BlastSendRequest,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<BlastSendResponse>> {
-  return apiFetch<BlastSendResponse>(`/emails/blast`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function sendBlastEmailTest(
-  payload: BlastTestRequest,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<BlastTestResponse>> {
-  return apiFetch<BlastTestResponse>(`/emails/blast/test`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function getBlastEligibleCount(
-  provider: EmailProvider,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<BlastEligibleCountResponse>> {
-  return apiFetch<BlastEligibleCountResponse>(`/emails/blast/eligible-count?provider=${provider}`, {}, getToken);
-}
-
-// =============================================================================
-// Direct Email
-// =============================================================================
-
-export async function sendDirectEmail(
-  payload: DirectEmailRequest,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<DirectEmailResponse>> {
-  return apiFetch<DirectEmailResponse>(`/emails/direct`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function getEmailTemplates(getToken?: GetTokenFn): Promise<ApiResponse<EmailTemplate[]>> {
-  return apiFetch<EmailTemplate[]>(`/emails/blast/templates`, {}, getToken);
-}
-
-export async function createEmailTemplate(
-  payload: EmailTemplateInput,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<EmailTemplate>> {
-  return apiFetch<EmailTemplate>(`/emails/blast/templates`, {
-    method: "POST",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function updateEmailTemplate(
-  templateId: number,
-  payload: EmailTemplateInput,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<EmailTemplate>> {
-  return apiFetch<EmailTemplate>(`/emails/blast/templates/${templateId}`, {
-    method: "PUT",
-    body: JSON.stringify(payload),
-  }, getToken);
-}
-
-export async function deleteEmailTemplate(
-  templateId: number,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<void>> {
-  return apiFetch<void>(`/emails/blast/templates/${templateId}`, {
-    method: "DELETE",
-  }, getToken);
-}
-
-// =============================================================================
 // Email Jobs
 // =============================================================================
 
@@ -589,24 +499,6 @@ export async function getEmailJob(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<EmailJobModel>> {
   return apiFetch<EmailJobModel>(`/emails/jobs/${jobId}`, {}, getToken);
-}
-
-export async function listEmailJobs(
-  params?: { limit?: number; offset?: number; status?: EmailJobStatus },
-  getToken?: GetTokenFn
-): Promise<ApiResponse<EmailJobModel[]>> {
-  const query = new URLSearchParams();
-  if (params?.limit) query.set("limit", String(params.limit));
-  if (params?.offset) query.set("offset", String(params.offset));
-  if (params?.status) query.set("status", params.status);
-  const qs = query.toString();
-  return apiFetch<EmailJobModel[]>(`/emails/jobs${qs ? `?${qs}` : ""}`, {}, getToken);
-}
-
-export async function listUnfinishedEmailJobs(
-  getToken?: GetTokenFn
-): Promise<ApiResponse<EmailJobModel[]>> {
-  return apiFetch<EmailJobModel[]>(`/emails/jobs/unfinished`, {}, getToken);
 }
 
 // =============================================================================
@@ -849,37 +741,8 @@ export async function deleteCustomMemberPointDetail(
 }
 
 // =============================================================================
-// Email Logs & Dashboard API
+// Email Dashboard API
 // =============================================================================
-
-export async function getEmailLogsEnriched(
-  filters: EmailLogFilters,
-  offset: number = 0,
-  limit: number = 100,
-  getToken?: GetTokenFn
-): Promise<ApiResponse<EnrichedEmailLog[]>> {
-  const params = new URLSearchParams();
-  if (filters.email_type) params.append("email_type", filters.email_type);
-  if (filters.event_id) params.append("event_id", String(filters.event_id));
-  if (filters.member_id) params.append("member_id", String(filters.member_id));
-  if (filters.start_date) params.append("start_date", filters.start_date);
-  if (filters.end_date) params.append("end_date", filters.end_date);
-  params.append("offset", String(offset));
-  params.append("limit", String(limit));
-  const query = params.toString() ? `?${params.toString()}` : "";
-  return apiFetch<EnrichedEmailLog[]>(`/emails/logs/enriched${query}`, {}, getToken);
-}
-
-export function buildEnrichedStreamUrl(filters: EmailLogFilters): string {
-  const params = new URLSearchParams();
-  if (filters.email_type) params.append("email_type", filters.email_type);
-  if (filters.event_id) params.append("event_id", String(filters.event_id));
-  if (filters.member_id) params.append("member_id", String(filters.member_id));
-  if (filters.start_date) params.append("start_date", filters.start_date);
-  if (filters.end_date) params.append("end_date", filters.end_date);
-  const query = params.toString() ? `?${params.toString()}` : "";
-  return `${API_BASE_URL}/emails/logs/enriched/stream${query}`;
-}
 
 export async function getEmailDashboardStats(
   period: number = 1,

@@ -9,7 +9,7 @@
 //   node tests/ui-preview/shoot.mjs [--routes /,/pipeline] [--out dir]
 //        [--viewports phone,desktop] [--locales ar,en] [--themes light,dark]
 //        [--full] [--scroll 600] [--as super,design,logistics,dept]
-//        [--click "<selector>"] [--fill "<selector>=<text>"]
+//        [--click "<selector>"] [--fill "<selector>=<text>"] [--exercise path/to/flow.mjs]
 //
 // `--as` signs in as a sample person (see fixtures/a-roles.mjs): a super admin
 // (the default), a Design or Logistics leader, or a department leader. Each
@@ -50,6 +50,7 @@ const personas = list(args.as, ["super"]);
 const click = args.click && args.click !== "1" ? args.click : null;
 // `--fill "<selector>=<text>"` types into a field before the screenshot, e.g. a search box.
 const [fillSelector, fillText] = args.fill && args.fill !== "1" ? [args.fill.slice(0, args.fill.lastIndexOf("=")), args.fill.slice(args.fill.lastIndexOf("=") + 1)] : [null, null];
+const exercise = args.exercise ? (await import(pathToFileURL(path.resolve(args.exercise)).href)).default : null;
 let persona = personas[0];
 const SIZES = { phone: { width: 390, height: 844 }, "phone-small": { width: 360, height: 800 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
 
@@ -57,9 +58,11 @@ await mkdir(out, { recursive: true });
 
 // --- fixtures: every fixtures/*.mjs default-exports [{ method?, path: RegExp, status?, body | (ctx) => body }]
 const fixtures = [];
+const resetFixtures = [];
 for (const file of (await readdir(path.join(here, "fixtures"))).filter((f) => f.endsWith(".mjs")).sort()) {
   const mod = await import(pathToFileURL(path.join(here, "fixtures", file)).href);
   fixtures.push(...(mod.default || []));
+  if (mod.reset) resetFixtures.push(mod.reset);
 }
 
 // --- CSS and bundle
@@ -170,6 +173,7 @@ try {
     for (const locale of locales) {
       for (const theme of themes) {
         for (const route of routes) {
+          for (const reset of resetFixtures) reset();
           const page = await context.newPage();
           const errors = [];
           page.on("pageerror", (e) => errors.push(e.message));
@@ -196,12 +200,16 @@ try {
             await page.locator(fillSelector).first().fill(fillText).catch((e) => errors.push(`fill ${fillSelector}: ${e.message}`));
             await page.waitForTimeout(300);
           }
+          if (exercise) {
+            try { await exercise({ page, locale, theme, viewport, out }); }
+            catch (error) { errors.push(`exercise: ${error.stack || error.message}`); }
+          }
           const overflow = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }));
           if (overflow.content > overflow.viewport) errors.push(`Horizontal page overflow: ${overflow.content}px exceeds ${overflow.viewport}px`);
           const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}${fillSelector ? "-fill" : ""}.png`;
           await page.screenshot({ path: path.join(out, name), fullPage: full });
           console.log(`${errors.length ? "✗" : "✓"} ${path.join(out, name)}`);
-          for (const e of errors) console.log(`    ${e.split("\n")[0]}`);
+          for (const e of errors) console.log(`    ${e}`);
           failures += errors.length ? 1 : 0;
           await page.close();
         }
