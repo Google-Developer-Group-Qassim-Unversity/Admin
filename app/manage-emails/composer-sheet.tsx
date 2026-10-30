@@ -399,7 +399,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                   id="composer-html"
                   dir="ltr"
                   spellCheck={false}
-                  placeholder={t("htmlPlaceholder")}
+                  placeholder={t.raw("htmlPlaceholder")}
                   value={html}
                   onChange={(e) => setHtml(e.target.value)}
                   disabled={busy}
