@@ -38,3 +38,15 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 
 This is a visual check with sample data, not an integration test: the real
 browser test for Club Structure lives in `tests/club-structure/`.
+
+The Mail flow check drives lookup, filters, pagination, polling, details, retry,
+copy, historical null content, reuse, test mail, capacity capping, confirmation,
+discard, queued mail, and the empty and error states. It uses the same API
+fixtures, checks 44px targets on phones, and captures the open composer and drawers:
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/mail-flow.mjs --out .preview-shots/mail/flow
+```
+
+`--exercise <module>` runs that module's default export with
+`{ page, locale, theme, viewport, out }` before the final screenshot.
