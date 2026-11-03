@@ -82,7 +82,7 @@ export default function EventContentPage() {
         </Alert>
       ) : (
         <>
-          <section aria-labelledby="content-slides" className="flex flex-col gap-3">
+          <section aria-labelledby="content-slides" className="panel flex min-w-0 flex-col gap-4">
             <SectionHead
               as="h3"
               id="content-slides"
@@ -101,8 +101,8 @@ export default function EventContentPage() {
             />
 
             {!driveConfigured && (
-              <Alert className="border-amber-500/30 bg-amber-500/10 text-amber-900 dark:text-amber-200">
-                <AlertCircle className="size-4 text-amber-600 dark:text-amber-400" />
+              <Alert className="border-door-ochre/30 bg-door-ochre-soft text-door-ochre-ink">
+                <AlertCircle className="size-4 text-door-ochre-ink" />
                 <AlertDescription className="text-xs">
                   {t('driveUnconfiguredNotice')}
                 </AlertDescription>
@@ -125,7 +125,7 @@ export default function EventContentPage() {
             )}
           </section>
 
-          <section aria-labelledby="content-recordings" className="flex flex-col gap-3">
+          <section aria-labelledby="content-recordings" className="panel flex min-w-0 flex-col gap-4">
             <SectionHead
               as="h3"
               id="content-recordings"

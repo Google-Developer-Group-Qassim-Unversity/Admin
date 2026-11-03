@@ -409,6 +409,11 @@
     "subtitle": "أنشئ الفعاليات وانشرها وتابعها."
   },
   "eventForm": {
+    "sections": {
+      "details": "معلومات الفعالية",
+      "attendance": "الحضور والنقاط",
+      "poster": "صورة الفعالية"
+    },
     "validation": {
       "nameRequired": "اسم الفعالية مطلوب",
       "nameTooLong": "الاسم لازم يكون 100 حرف أو أقل",

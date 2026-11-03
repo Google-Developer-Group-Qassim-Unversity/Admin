@@ -20,7 +20,8 @@ import {
 import type { AttendanceRecord } from '@/lib/api-types';
 import { getDayNumberFromEffectiveDate } from './utils';
 import { useFuzzySearch } from '@/lib/search-utils';
-import { useFormatter, useTranslations } from 'next-intl';
+import { useTranslations } from 'next-intl';
+import { useFormatters } from '@/lib/format';
 import { parseLocalDateTime } from '@/lib/utils';
 
 const emptyAttendance: AttendanceRecord[] = [];
@@ -57,7 +58,7 @@ export function AttendanceListCard({
   onSearchQueryChange,
 }: AttendanceListCardProps) {
   const t = useTranslations('attendance.listCard');
-  const format = useFormatter();
+  const format = useFormatters();
   const dayOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     if (isMultiDay) {
@@ -81,7 +82,7 @@ export function AttendanceListCard({
   const showDaySelect = isMultiDay || dayOptions.length > 1;
 
   return (
-    <section aria-labelledby="attendance-list" className="flex flex-col gap-3">
+    <section aria-labelledby="attendance-list" className="panel flex min-w-0 flex-col gap-4">
       <SectionHead
         id="attendance-list"
         title={t('title')}
@@ -91,15 +92,16 @@ export function AttendanceListCard({
       <div>
         {/* Phone: search + refresh, then day filter + manage. sm+: one row
             (the wrappers dissolve with `contents`). */}
-        <div className="mb-4 flex flex-col gap-2 sm:mb-6 sm:flex-row sm:items-center sm:gap-3">
-          <div className="flex gap-2 sm:contents">
-            <div className="relative min-w-0 flex-1">
+        <div className="mb-4 flex flex-col gap-2 sm:mb-6">
+          <div className="flex gap-2">
+            <div className="relative min-w-0 flex-1 sm:min-w-48">
               <Search className="pointer-events-none absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-ink-2" />
               <Input
                 type="search"
                 inputMode="search"
                 enterKeyHint="search"
                 autoComplete="off"
+                aria-label={t('searchByName')}
                 placeholder={t('searchByName')}
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
@@ -119,10 +121,10 @@ export function AttendanceListCard({
             </Button>
           </div>
 
-          <div className={`grid gap-2 sm:contents ${showDaySelect ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`grid gap-2 ${showDaySelect ? 'grid-cols-2' : 'grid-cols-1'}`}>
             {showDaySelect && (
               <Select value={selectedDay} onValueChange={onSelectedDayChange}>
-                <SelectTrigger className="w-full sm:order-first sm:w-[180px]">
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={t('selectDay')} />
                 </SelectTrigger>
                 <SelectContent>
@@ -134,7 +136,7 @@ export function AttendanceListCard({
                 </SelectContent>
               </Select>
             )}
-            <Button variant="outline" onClick={onManageClick} className="w-full sm:w-auto">
+            <Button variant="outline" onClick={onManageClick} className="w-full">
               <UserPlus />
               {t('manage')}
             </Button>
@@ -144,7 +146,7 @@ export function AttendanceListCard({
         {isLoading ? (
           <ul className="flex flex-col" aria-busy="true" aria-label={t('loading')}>
             {[0, 1, 2, 3].map((i) => (
-              <li key={i} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2.5">
+              <li key={i} className="border-rule flex min-h-18 items-center gap-3 border-b px-1 py-3">
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Skeleton className="h-4 w-2/5" />
                   <Skeleton className="h-3 w-1/4" />
@@ -183,7 +185,7 @@ export function AttendanceListCard({
                   : null;
 
                 return (
-                  <li key={member.id} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2.5">
+                  <li key={member.id} className="border-rule flex min-h-18 items-center gap-3 border-b px-1 py-3">
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-[15px] font-bold"><bdi><MemberDetailsTrigger member={member} /></bdi></p>
                       <p className="truncate text-[13px] text-ink-2">
@@ -198,7 +200,7 @@ export function AttendanceListCard({
                           dateTime={latest.toISOString()}
                           className="tabular text-[13px] text-ink-2"
                         >
-                          {format.dateTime(latest, { hour: 'numeric', minute: '2-digit' })}
+                          {format.time(latest)}
                         </time>
                       )}
                       {isMultiDay && dayNumbers.length > 0 && (

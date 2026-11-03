@@ -66,7 +66,7 @@ export function SegmentedControl({
             onClick={() => onValueChange(option.value)}
             onKeyDown={(e) => onKeyDown(e, index)}
             className={cn(
-              "focus-visible:outline-ring flex min-h-10 flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-sm font-bold transition-[background-color,color] outline-none focus-visible:outline-2 focus-visible:outline-offset-2",
+              "focus-visible:outline-ring flex min-h-11 min-w-0 flex-1 items-center justify-center gap-1.5 rounded-sm px-3 text-sm font-bold transition-[background-color,color] outline-none focus-visible:outline-2 focus-visible:outline-offset-2",
               selected ? "bg-foreground text-background" : "bg-card text-ink-2 hover:text-foreground",
             )}
           >

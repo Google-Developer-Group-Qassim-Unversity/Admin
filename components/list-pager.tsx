@@ -78,7 +78,7 @@ export function ListPager({
         </Button>
         <Button
           variant="outline"
-          className="flex-1 sm:size-10 sm:flex-none sm:px-0"
+          className="flex-1 sm:size-11 sm:flex-none sm:px-0"
           onClick={() => onPageChange(Math.max(1, page - 1))}
           disabled={atStart}
         >
@@ -90,7 +90,7 @@ export function ListPager({
         </span>
         <Button
           variant="outline"
-          className="flex-1 sm:size-10 sm:flex-none sm:px-0"
+          className="flex-1 sm:size-11 sm:flex-none sm:px-0"
           onClick={() => onPageChange(Math.min(pageCount, page + 1))}
           disabled={atEnd}
         >

@@ -107,7 +107,7 @@ export default function DashboardPage() {
 
   const greeting = (
     <header className="flex flex-col gap-1">
-      <h1 className="font-display text-[26px] leading-tight font-semibold sm:text-[30px]">
+      <h1 className="font-display text-[26px] leading-relaxed font-semibold sm:text-[30px]">
         {user?.firstName ? t("greeting", { name: user.firstName }) : t("title")}
       </h1>
       <p className="text-ink-2 max-w-[70ch] text-[15px] text-pretty">
@@ -167,7 +167,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Wide: the door and what waits beside the booking calendar, then the board. */}
-      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(340px,392px)_minmax(0,1fr)]">
+      <div className="hidden gap-6 lg:grid lg:grid-cols-[minmax(280px,320px)_minmax(0,1fr)]">
         <div className="flex flex-col gap-6">
           <YourTurn waiting={waiting} teamTasks={teamTasks} isPending={overview.isPending || (withTeam && inbox.isPending)} big />
           {withTeam ? <TeamInbox items={ownInbox} isPending={inbox.isPending} panel /> : null}

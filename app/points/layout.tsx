@@ -48,7 +48,7 @@ export default function PointsLayout({
           and scroll sideways instead of squashing. */}
       <nav
         aria-label={t("sectionsLabel")}
-        className="bg-background border-rule sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 -mt-2 border-b px-2 sm:static sm:mx-0 sm:bg-transparent sm:px-0"
+        className="bg-card border-rule rounded-t-xl sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 -mt-2 border-b px-2 sm:static sm:mx-0 sm:px-2"
       >
         <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
           {TABS.map((tab) => {
