@@ -9,7 +9,7 @@
 //   node tests/ui-preview/shoot.mjs [--routes /,/pipeline] [--out dir]
 //        [--viewports phone,desktop] [--locales ar,en] [--themes light,dark]
 //        [--full] [--scroll 600] [--as super,design,logistics,dept]
-//        [--click "<selector>"] [--fill "<selector>=<text>"]
+//        [--click "<selector>"] [--fill "<selector>=<text>"] [--exercise path/to/flow.mjs]
 //
 // `--as` signs in as a sample person (see fixtures/a-roles.mjs): a super admin
 // (the default), a Design or Logistics leader, or a department leader. Each
@@ -50,6 +50,7 @@ const personas = list(args.as, ["super"]);
 const click = args.click && args.click !== "1" ? args.click : null;
 // `--fill "<selector>=<text>"` types into a field before the screenshot, e.g. a search box.
 const [fillSelector, fillText] = args.fill && args.fill !== "1" ? [args.fill.slice(0, args.fill.lastIndexOf("=")), args.fill.slice(args.fill.lastIndexOf("=") + 1)] : [null, null];
+const exercise = args.exercise ? (await import(pathToFileURL(path.resolve(args.exercise)).href)).default : null;
 let persona = personas[0];
 const SIZES = { phone: { width: 390, height: 844 }, "phone-small": { width: 360, height: 800 }, desktop: { width: 1440, height: 900 }, tablet: { width: 820, height: 1180 } };
 
@@ -195,6 +196,10 @@ try {
           if (fillSelector) {
             await page.locator(fillSelector).first().fill(fillText).catch((e) => errors.push(`fill ${fillSelector}: ${e.message}`));
             await page.waitForTimeout(300);
+          }
+          if (exercise) {
+            try { await exercise({ page, locale, theme, viewport, out }); }
+            catch (error) { errors.push(`exercise: ${error.stack || error.message}`); }
           }
           const overflow = await page.evaluate(() => ({ viewport: innerWidth, content: document.documentElement.scrollWidth }));
           if (overflow.content > overflow.viewport) errors.push(`Horizontal page overflow: ${overflow.content}px exceeds ${overflow.viewport}px`);
