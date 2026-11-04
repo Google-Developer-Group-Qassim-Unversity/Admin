@@ -2,16 +2,17 @@
 
 import * as React from "react";
 import { Plus, UserPlus, X } from "lucide-react";
-import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
 import { useAccess } from "@/hooks/use-access";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { FieldHelp } from "@/components/field-help";
+import { parseEmailText } from "@/lib/parse-emails";
+import { useFormatters } from "@/lib/format";
 import { Label } from "@/components/ui/label";
 import type { BlastGuaranteedRecipientInput, Member } from "@/lib/api-types";
 
-import { EMAIL } from "./email-composer-utils";
 import { MemberSearchDialog } from "./member-search-dialog";
 
 export interface RecipientEntry {
@@ -32,21 +33,30 @@ export function RecipientsField({
   id,
   label,
   hint,
+  help,
   value,
   onChange,
+  onDraftChange,
   disabled,
 }: {
   id: string;
   label: string;
   hint?: string;
+  help?: { label: string; content: string };
   value: RecipientEntry[];
   onChange: (next: RecipientEntry[]) => void;
+  onDraftChange?: (hasDraft: boolean) => void;
   disabled?: boolean;
 }) {
   const t = useTranslations("manageEmails.recipients");
   const { can } = useAccess();
   const tc = useTranslations("common.actions");
   const [pasted, setPasted] = React.useState("");
+  const fmt = useFormatters();
+  const parsed = React.useMemo(() => parseEmailText(pasted), [pasted]);
+  const alreadyAdded = new Set(value.map((r) => r.email.toLowerCase()));
+  const repeated = parsed.duplicates + parsed.emails.filter((r) => alreadyAdded.has(r.email)).length;
+  const freshCount = parsed.emails.filter((r) => !alreadyAdded.has(r.email)).length;
   const [pickerOpen, setPickerOpen] = React.useState(false);
 
   const add = (entries: RecipientEntry[]) => {
@@ -61,13 +71,14 @@ export function RecipientsField({
     return fresh.length;
   };
 
+  const changePasted = (text: string) => {
+    setPasted(text);
+    onDraftChange?.(text.trim().length > 0);
+  };
+
   const addPasted = () => {
-    const tokens = pasted.split(/[\s,;]+/).map((s) => s.replace(/^<|>$/g, "")).filter(Boolean);
-    const emails = tokens.filter((s) => EMAIL.test(s));
-    add(emails.map((email) => ({ name: email, email })));
-    const skipped = tokens.length - emails.length;
-    if (skipped > 0) toast.warning(t("skipped", { count: skipped }));
-    setPasted("");
+    add(parsed.emails.map(({ email, name }) => ({ name: name || email, email })));
+    changePasted(parsed.invalid.join("\n"));
   };
 
   const addMembers = (members: Member[]) => {
@@ -76,30 +87,35 @@ export function RecipientsField({
 
   return (
     <div className="flex flex-col gap-2">
-      <Label htmlFor={id}>
-        {label}
-        {value.length > 0 && <span className="text-ink-2 tabular">({value.length})</span>}
-      </Label>
+      <div className="flex min-h-11 items-center gap-1">
+        <Label htmlFor={id}>
+          {label}
+          {value.length > 0 && <span className="text-ink-2 tabular">({fmt.number(value.length)})</span>}
+        </Label>
+        {help && <FieldHelp label={help.label}>{help.content}</FieldHelp>}
+      </div>
       {hint && <p className="text-ink-2 -mt-1 text-[13px]">{hint}</p>}
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="flex min-w-0 flex-1 gap-2">
-          <Input
+          <Textarea
             id={id}
             dir="ltr"
+            rows={3}
             inputMode="email"
             autoComplete="off"
             enterKeyHint="done"
             placeholder={t("pastePlaceholder")}
             value={pasted}
-            onChange={(e) => setPasted(e.target.value)}
+            onChange={(e) => changePasted(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === "Enter") {
+              if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
                 e.preventDefault();
                 addPasted();
               }
             }}
             disabled={disabled}
-            className="min-w-0 flex-1"
+            aria-describedby={`${id}-summary ${id}-invalid`}
+            className="min-h-24 min-w-0 flex-1 resize-y"
           />
           <Button
             type="button"
@@ -107,7 +123,7 @@ export function RecipientsField({
             size="icon"
             aria-label={tc("add")}
             onClick={addPasted}
-            disabled={disabled || !pasted.trim()}
+            disabled={disabled || freshCount === 0}
           >
             <Plus />
           </Button>
@@ -116,6 +132,18 @@ export function RecipientsField({
           <UserPlus />
           {t("pickMembers")}
         </Button>}
+      </div>
+      <p id={`${id}-summary`} role="status" className="text-ink-2 text-[13px] tabular">
+        {pasted.trim() && t("summary", {
+          addresses: t("parsedAddresses", { count: freshCount, total: fmt.number(freshCount) }),
+          duplicates: t("parsedDuplicates", { count: repeated, total: fmt.number(repeated) }),
+          invalid: t("parsedInvalid", { count: parsed.invalid.length, total: fmt.number(parsed.invalid.length) }),
+        })}
+      </p>
+      <div id={`${id}-invalid`}>
+        {parsed.invalid.length > 0 && <p className="text-door-madder-ink text-[13px]">
+          {t("invalidHint")} {parsed.invalid.map((token, i) => <React.Fragment key={i}><bdi className="break-all">{token}</bdi>{i < parsed.invalid.length - 1 ? ", " : ""}</React.Fragment>)}
+        </p>}
       </div>
       {value.length > 0 && (
         <ul className="ring-rule divide-rule max-h-56 divide-y overflow-y-auto overscroll-contain rounded-lg ring-1">

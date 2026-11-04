@@ -43,6 +43,8 @@ import {
   FileUploadItemPreview,
   FileUploadList,
 } from "@/components/ui/file-upload";
+import { FieldHelp } from "@/components/field-help";
+import { Slider } from "@/components/ui/slider";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { SegmentedControl } from "@/components/ui/segmented-control";
@@ -96,8 +98,8 @@ function carriedAttachment(a: { filename: string; url: string }): EmailAttachmen
 
 /**
  * Writing a new email: to club members (`POST /emails/blast`) or to specific
- * people (`POST /emails/direct`). Mounted only while open, so every open
- * starts fresh; closing with unsaved work asks first.
+ * people (`POST /emails/direct`). Stay mounted through the exit animation,
+ * then release the draft; closing with unsaved work asks first.
  */
 export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart | null; onClose: () => void; onSent: () => void }) {
   const t = useTranslations("manageEmails.composer");
@@ -118,6 +120,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   const [count, setCount] = React.useState<number | null>(null); // null: everyone it can reach today
   const [orderBy, setOrderBy] = React.useState<BlastOrderBy>("activity");
   const [always, setAlways] = React.useState<RecipientEntry[]>([]);
+  const [recipientDrafts, setRecipientDrafts] = React.useState({ always: false, people: false });
   const [people, setPeople] = React.useState<RecipientEntry[]>([]);
   const [subject, setSubject] = React.useState(start?.subject ?? "");
   const [previewText, setPreviewText] = React.useState(start?.previewText ?? "");
@@ -125,6 +128,19 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   const [carried, setCarried] = React.useState<EmailAttachmentInfo[]>(() => (start?.attachments ?? []).map(carriedAttachment));
   const [view, setView] = React.useState<"write" | "preview">("write");
   const previewHtml = React.useMemo(() => typeof DOMParser === "undefined" ? "" : sanitizeHtml(html), [html]);
+  const [open, setOpen] = React.useState(true);
+  const closeDone = React.useRef(false);
+  const finishClose = React.useCallback(() => {
+    if (closeDone.current) return;
+    closeDone.current = true;
+    onClose();
+  }, [onClose]);
+  React.useEffect(() => {
+    if (open) return;
+    // Reduced motion has no animationend. Also cover interrupted animations.
+    const timer = window.setTimeout(finishClose, window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 220);
+    return () => window.clearTimeout(timer);
+  }, [open, finishClose]);
   const [confirmingSend, setConfirmingSend] = React.useState(false);
   const [confirmingClose, setConfirmingClose] = React.useState(false);
 
@@ -140,7 +156,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   // The member pool is capped separately; guaranteed recipients are added on top.
   const poolSize = Math.max(0, eligible - always.filter((r) => r.member_id != null).length);
   const cap = Math.max(0, Math.min(poolSize, remaining === null ? poolSize : remaining));
-  const requestedCount = count ?? cap;
+  const requestedCount = count === null ? cap : Math.min(count, poolSize);
   const memberCount = Math.min(requestedCount, cap);
   const total = toMembers ? memberCount + always.length : people.length;
   const overCapacity = toMembers && requestedCount > cap;
@@ -156,6 +172,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
     subject !== (start?.subject ?? "") ||
     previewText !== (start?.previewText ?? "") ||
     html !== (start?.html ?? "") ||
+    recipientDrafts.always || recipientDrafts.people ||
     always.length > 0 ||
     people.length > 0 ||
     count !== null ||
@@ -173,7 +190,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
 
   const requestClose = () => {
     if (dirty && !busy) setConfirmingClose(true);
-    else if (!busy) onClose();
+    else if (!busy) setOpen(false);
   };
 
   const loadTemplate = async () => {
@@ -224,8 +241,9 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
         await direct.mutateAsync({ subject: subject.trim(), html_content, recipients: people.map(toRecipientInput), attachments });
       }
       toast.success(t("started"));
+      setConfirmingSend(false);
       onSent();
-      onClose();
+      setOpen(false);
     } catch (err) {
       setConfirmingSend(false);
       toast.error(errorMessage(err, t("sendFailed")));
@@ -237,12 +255,19 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
     canDirect && { value: "people", label: t("audience.people"), icon: AtSign },
   ].filter((o) => o !== false);
 
+  const help = (field: "audience" | "count" | "order" | "always" | "capacity" | "previewText" | "attachments" | "test", label: string) => (
+    <FieldHelp label={t("helpLabel", { field: label })}>{t(`help.${field}`)}</FieldHelp>
+  );
+
   return (
-    <Sheet open onOpenChange={(open) => !open && requestClose()}>
+    <Sheet open={open} onOpenChange={(open) => !open && requestClose()}>
       <SheetContent
         side={locale === "ar" ? "left" : "right"}
         className="w-full! gap-0 sm:max-w-[min(1040px,100vw)]!"
         closeLabel={tc("close")}
+        onAnimationEnd={(event) => {
+          if (event.target === event.currentTarget && event.currentTarget.dataset.state === "closed") finishClose();
+        }}
       >
         <SheetHeader className="border-rule border-b p-4 pe-14 pt-[max(1rem,env(safe-area-inset-top))] sm:px-6">
           <SheetTitle className="text-xl">{t("title")}</SheetTitle>
@@ -252,7 +277,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
         <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto overscroll-contain p-4 sm:p-6">
           {/* Who it goes to */}
           <section className="flex flex-col gap-3" aria-label={t("to")}>
-            <span className="text-sm font-bold">{t("to")}</span>
+            <div className="flex items-center gap-1"><span className="text-sm font-bold">{t("to")}</span>{help("audience", t("to"))}</div>
             {audiences.length > 1 && (
               <SegmentedControl
                 label={t("to")}
@@ -262,53 +287,72 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                 disabled={busy}
               />
             )}
-            {toMembers ? (
+            {canBlast && <AudiencePanel active={toMembers}>
               <div className="flex flex-col gap-4">
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="composer-count">{t("count")}</Label>
-                    <Input
-                      id="composer-count"
-                      type="number"
-                      inputMode="numeric"
-                      enterKeyHint="done"
-                      min={0}
-                      max={cap}
-                      value={requestedCount}
-                      onChange={(e) => setCount(Math.max(0, Math.floor(Number(e.target.value) || 0)))}
-                      disabled={busy || eligibleQuery.isPending}
-                      className="tabular"
-                    />
-                    {eligibleQuery.data && (
-                      <p className="text-ink-2 text-[13px]">{t("countHint", { eligible: fmt.number(eligible) })}</p>
-                    )}
+                  <div className="flex flex-col gap-1">
+                    <div className="flex min-h-11 flex-wrap items-center gap-1">
+                      <Label htmlFor="composer-count">{t("count")}</Label>
+                      {help("count", t("count"))}
+                      <Button type="button" variant="ghost" size="sm" className="ms-auto min-h-11" onClick={() => setCount(null)} disabled={busy || !poolSize}>
+                        {t("everyone")}
+                      </Button>
+                    </div>
+                    <div className="flex flex-wrap items-baseline gap-x-2 tabular">
+                      <output htmlFor="composer-count" className="text-xl font-bold">{fmt.number(requestedCount)}</output>
+                      <span className="text-ink-2 text-sm">{t("outOf", { total: fmt.number(poolSize) })}</span>
+                      <Input
+                        id="composer-count"
+                        aria-label={t("exactCount")}
+                        type="number"
+                        inputMode="numeric"
+                        min={poolSize ? 1 : 0}
+                        max={poolSize}
+                        value={requestedCount}
+                        onChange={(e) => setCount(Math.min(poolSize, Math.max(poolSize ? 1 : 0, Math.floor(Number(e.target.value) || 0))))}
+                        disabled={busy || !poolSize || eligibleQuery.isPending}
+                        className="ms-auto w-20 text-sm md:text-sm"
+                      />
+                    </div>
+                    <div className="relative">
+                      <Slider
+                        dir={locale === "ar" ? "rtl" : "ltr"}
+                        aria-label={t("count")}
+                        aria-describedby="composer-capacity"
+                        min={1}
+                        max={Math.max(2, poolSize)}
+                        step={1}
+                        value={[Math.max(1, requestedCount)]}
+                        onValueChange={([value]) => setCount(Math.min(poolSize, value))}
+                        onKeyDown={(event) => {
+                          if (event.key !== "PageUp" && event.key !== "PageDown") return;
+                          event.preventDefault();
+                          setCount(Math.max(1, Math.min(poolSize, requestedCount + (event.key === "PageUp" ? 1 : -1) * Math.max(1, Math.round(poolSize / 10)))));
+                        }}
+                        disabled={busy || poolSize < 2 || eligibleQuery.isPending}
+                      />
+                      {remaining !== null && cap < poolSize && poolSize > 1 && (
+                        <span data-capacity-mark aria-hidden="true" className="bg-door-ochre pointer-events-none absolute top-3 h-5 w-0.5" style={{ insetInlineStart: `${Math.max(0, (cap - 1) / (poolSize - 1)) * 100}%` }} />
+                      )}
+                    </div>
+                    {eligibleQuery.data && <p className="text-ink-2 text-[13px]">{t("countHint", { eligible: fmt.number(eligible) })}</p>}
                   </div>
                   <div className="flex flex-col gap-2">
-                    <span className="text-sm font-bold">{t("order")}</span>
-                    <SegmentedControl
-                      label={t("order")}
-                      value={orderBy}
-                      onValueChange={(v) => setOrderBy(v as BlastOrderBy)}
-                      options={[
-                        { value: "activity", label: t("orderActivity") },
-                        { value: "alphabetical", label: t("orderName") },
-                      ]}
-                      disabled={busy}
-                    />
+                    <div className="flex min-h-11 items-center gap-1"><span className="text-sm font-bold">{t("order")}</span>{help("order", t("order"))}</div>
+                    <SegmentedControl label={t("order")} value={orderBy} onValueChange={(v) => setOrderBy(v as BlastOrderBy)} options={[
+                      { value: "activity", label: t("orderActivity") },
+                      { value: "alphabetical", label: t("orderName") },
+                    ]} disabled={busy} />
                   </div>
                 </div>
-                <RecipientsField
-                  id="composer-always"
-                  label={t("always")}
-                  hint={t("alwaysHint")}
-                  value={always}
-                  onChange={setAlways}
-                  disabled={busy}
-                />
+                <RecipientsField id="composer-always" label={t("always")} hint={t("alwaysHint")}
+                  help={{ label: t("helpLabel", { field: t("always") }), content: t("help.always") }}
+                  value={always} onChange={setAlways} onDraftChange={(always) => setRecipientDrafts((drafts) => ({ ...drafts, always }))} disabled={busy} />
               </div>
-            ) : (
-              <RecipientsField id="composer-people" label={t("people")} value={people} onChange={setPeople} disabled={busy} />
-            )}
+            </AudiencePanel>}
+            {canDirect && <AudiencePanel active={!toMembers}>
+              <RecipientsField id="composer-people" label={t("people")} value={people} onChange={setPeople} onDraftChange={(people) => setRecipientDrafts((drafts) => ({ ...drafts, people }))} disabled={busy} />
+            </AudiencePanel>}
             {toMembers && eligibleQuery.isPending && <p className="text-ink-2 text-sm">{t("capacityLoading")}</p>}
             {toMembers && eligibleQuery.isError && (
               <div role="alert" className="flex flex-wrap items-center gap-2 text-sm">
@@ -317,14 +361,15 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
               </div>
             )}
             {toMembers && remaining !== null && (
-              <p className="bg-sunk text-ink-2 flex items-start gap-2 rounded-lg px-3 py-2.5 text-[13.5px]">
+              <div id="composer-capacity" className="bg-sunk text-ink-2 flex items-center gap-2 rounded-lg ps-3 pe-1 py-1 text-[13px]">
                 <SendIcon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                <span>
+                <span className="flex-1">
                   {t("capacity", { remaining: fmt.number(remaining) })}
                   {overCapacity && <> {t("capped", { total: fmt.number(memberCount) })}</>}
                   {always.length > 0 && <> {t("guaranteedCapacity")}</>}
                 </span>
-              </p>
+                {help("capacity", t("capacityLabel"))}
+              </div>
             )}
           </section>
 
@@ -343,7 +388,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
             </div>
             {toMembers && (
               <div className="flex flex-col gap-2">
-                <Label htmlFor="composer-preview">{t("previewText")}</Label>
+                <div className="flex items-center gap-1"><Label htmlFor="composer-preview">{t("previewText")}</Label>{help("previewText", t("previewText"))}</div>
                 <Input
                   id="composer-preview"
                   dir="auto"
@@ -394,7 +439,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                 ]}
                 className="lg:hidden"
               />
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_375px]">
+              <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] lg:gap-4 lg:grid-cols-[minmax(0,1fr)_375px]">
                 <Textarea
                   id="composer-html"
                   dir="ltr"
@@ -405,10 +450,11 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                   disabled={busy}
                   className={cn(
                     "h-[60dvh] min-h-80 resize-none font-mono text-[13px] md:text-[13px] lg:h-[667px]",
-                    view === "preview" && "max-lg:hidden",
+                    "transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none max-lg:[grid-area:1/1]",
+                    view === "preview" && "max-lg:invisible max-lg:pointer-events-none max-lg:opacity-0",
                   )}
                 />
-                <div className={cn("flex justify-center", view === "write" && "max-lg:hidden")}>
+                <div id="composer-preview-pane" className={cn("flex min-w-0 justify-center transition-[opacity,visibility] duration-150 ease-out motion-reduce:transition-none max-lg:[grid-area:1/1]", view === "write" && "max-lg:invisible max-lg:pointer-events-none max-lg:opacity-0")}>
                   {html.trim() ? (
                     <ScaledEmailFrame srcDoc={previewHtml} title={t("preview")} className="ring-rule overflow-hidden rounded-lg ring-1" />
                   ) : (
@@ -421,7 +467,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
             </div>
 
             <div className="flex flex-col gap-2">
-              <span className="text-sm font-bold">{t("attachments")}</span>
+              <div className="flex items-center gap-1"><span className="text-sm font-bold">{t("attachments")}</span>{help("attachments", t("attachments"))}</div>
               {carried.length > 0 && (
                 <ul className="flex flex-wrap gap-2">
                   {carried.map((a) => (
@@ -497,7 +543,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
 
         <div className="bg-card border-foreground shrink-0 flex flex-wrap items-center gap-2 border-t p-4 pb-[max(1rem,env(safe-area-inset-bottom))] sm:px-6">
           {canBlast && myEmail && (
-            <Button
+            <div className="flex items-center max-sm:flex-1"><Button
               type="button"
               variant="outline"
               onClick={() => void sendTest()}
@@ -506,7 +552,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
             >
               {test.isPending ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <FlaskConical />}
               {t("test")}
-            </Button>
+            </Button>{help("test", t("test"))}</div>
           )}
           <Button
             type="button"
@@ -546,7 +592,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>{t("keepWriting")}</AlertDialogCancel>
-              <AlertDialogAction variant="madder" onClick={onClose}>
+              <AlertDialogAction variant="madder" onClick={() => { setConfirmingClose(false); setOpen(false); }}>
                 {t("discard")}
               </AlertDialogAction>
             </AlertDialogFooter>
@@ -555,4 +601,12 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
       </SheetContent>
     </Sheet>
   );
+}
+
+/** Both panels stay mounted so changing audience preserves its recipients and animates height. */
+function AudiencePanel({ active, children }: { active: boolean; children: React.ReactNode }) {
+  return <div inert={!active} aria-hidden={!active} className={cn(
+    "grid transition-[grid-template-rows,opacity] duration-200 ease-out motion-reduce:transition-none",
+    active ? "grid-rows-[1fr] opacity-100" : "grid-rows-[0fr] opacity-0",
+  )}><div className="min-h-0 overflow-hidden">{children}</div></div>;
 }

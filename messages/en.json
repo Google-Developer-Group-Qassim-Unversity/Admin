@@ -593,7 +593,7 @@
       "count": "How many",
       "countHint": "Out of {eligible} members who can be emailed.",
       "order": "Order",
-      "orderActivity": "Most active",
+      "orderActivity": "Latest activity",
       "orderName": "Alphabetical",
       "always": "Always include",
       "alwaysHint": "They get it on top of the number above.",
@@ -642,12 +642,32 @@
       "fileRejected": "Use images or PDFs, up to {max} files, {size} each.",
       "attachmentFailed": "Upload failed",
       "guaranteedCapacity": "Guaranteed recipients are added on top. Overflow is sent through Kerneltics.",
-      "confirmMembersTitle": "Send to up to {count} people?"
+      "confirmMembersTitle": "Send to up to {count} people?",
+      "helpLabel": "About {field}",
+      "everyone": "Everyone",
+      "outOf": "of {total}",
+      "exactCount": "Exact member count",
+      "capacityLabel": "Sending capacity",
+      "help": {
+        "audience": "Club members are selected from members with an email address. Specific people sends only to the list you add.",
+        "count": "Members are selected in your chosen order, up to this number. Gmail caps the member pool at the remaining capacity across both addresses. Everyone uses the smaller of the pool and that capacity.",
+        "order": "Latest activity sorts by the most recent member activity log, not total points. Alphabetical sorts by the saved member name.",
+        "always": "These people are added on top of the member count, including addresses outside the club. Members picked here are excluded from the pool; repeated addresses receive one copy. This list is not capped by the remaining capacity.",
+        "capacity": "This is the combined Gmail allowance left across both sending addresses. Usage is counted over the last 24 hours, so capacity returns gradually as older sends leave that window. The ochre tick marks this limit on the slider.",
+        "previewText": "This is the grey line inbox apps can show after the subject. It goes with club member messages and test emails.",
+        "attachments": "Files upload before you send and are included with the message and test. Wait for every upload to finish; remove or re-add any failed file.",
+        "test": "Sends the current subject, message and ready attachments to your signed-in email address. It does not send to the selected recipients."
+      }
     },
     "recipients": {
-      "pastePlaceholder": "Paste email addresses",
+      "pastePlaceholder": "Paste addresses, names or spreadsheet rows",
       "pickMembers": "Pick members",
-      "skipped": "{count, plural, one {# entry isn't an email address and was skipped} other {# entries aren't email addresses and were skipped}}"
+      "skipped": "{count, plural, one {# entry isn't an email address and was skipped} other {# entries aren't email addresses and were skipped}}",
+      "summary": "{addresses}, {duplicates}, {invalid}",
+      "invalidHint": "Please check these addresses. They stay here when you add the valid ones.",
+      "parsedAddresses": "{count, plural, one {{total} new address} other {{total} new addresses}}",
+      "parsedDuplicates": "{count, plural, one {{total} duplicate} other {{total} duplicates}}",
+      "parsedInvalid": "{total} invalid"
     },
     "sendCertificates": {
       "individual": "Individual",

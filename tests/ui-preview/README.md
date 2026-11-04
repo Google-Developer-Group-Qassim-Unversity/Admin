@@ -50,3 +50,15 @@ node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-
 
 `--exercise <module>` runs that module's default export with
 `{ page, locale, theme, viewport, out }` before the final screenshot.
+
+The composer check covers help popovers, slider direction and keyboard steps,
+capacity markers, live address parsing, retained invalid addresses, audience
+state, the phone preview, the discard guard, and reduced motion. It captures
+mid-close PNGs and JSON evidence that the closed content remains mounted with
+its exit animation running. One desktop case also checks Dialog, AlertDialog
+and Popover exit attributes. All mail requests stay inside the fixture harness.
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/composer-flow.mjs --out .preview-shots/mail-v2-composer
+pnpm test # Pure email-parser cases using Node's strip-types runner.
+```
