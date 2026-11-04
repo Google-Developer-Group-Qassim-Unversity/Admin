@@ -64,3 +64,15 @@ and Popover exit attributes. All mail requests stay inside the fixture harness.
 node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/composer-flow.mjs --out .preview-shots/mail-v2-composer
 pnpm test # Pure email-parser cases using Node's strip-types runner.
 ```
+
+Review checks cover certificate sample HTTP/network failures, a delayed sample
+response after changing sends, and resetting recipient/preview state. Shared
+motion checks exercise Members, Semesters, and event dialogs, including a
+calendar popover inside a dialog, hover/keyboard tooltip states, and filled forms
+that retain their values and titles throughout the exit. These only
+read fixture data and open/close controls; they do not submit forms.
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/mail-review.mjs --out .preview-shots/mail-v2-review/edge
+node tests/ui-preview/shoot.mjs --routes /manage-members,/settings/semesters,/events/209/manage,/events/209/responses,/events/209/attendance,/events/209/content --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/motion-review.mjs --out .preview-shots/mail-v2-review/shared
+```

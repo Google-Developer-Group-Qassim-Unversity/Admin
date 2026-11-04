@@ -67,14 +67,12 @@ export function CreatableCombobox({
   const handleSelect = (selectedValue: string) => {
     onChange(selectedValue === value ? "" : selectedValue);
     setOpen(false);
-    setSearchValue("");
   };
 
   const handleCreate = () => {
     if (!normalizedSearch) return;
     onChange(searchValue.trim());
     setOpen(false);
-    setSearchValue("");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -99,7 +97,7 @@ export function CreatableCombobox({
           <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+      <PopoverContent onCloseAutoFocus={() => { if (!open) setSearchValue(""); }} className="w-[--radix-popover-trigger-width] p-0">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}

@@ -79,6 +79,7 @@ export function BatchImportDialog({
   const [metadata, setMetadata] = React.useState<ExportTokenPayload["metadata"] | null>(null);
   const [signature, setSignature] = React.useState<string | null>(null);
   const [summaryDialog, setSummaryDialog] = React.useState<BatchSummary | null>(null);
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
 
   const isValidData = metadata?.valid === true;
   const isVerified = metadata !== null;
@@ -142,6 +143,7 @@ export function BatchImportDialog({
 
     batchMutation.mutate(members, {
       onSuccess: (result) => {
+        setSummaryOpen(true);
         setSummaryDialog({
           created_count: result.created_count,
           existing_count: result.existing_count,
@@ -163,18 +165,16 @@ export function BatchImportDialog({
   };
 
   const handleCloseSummary = () => {
-    setSummaryDialog(null);
-    handleReset();
+    setSummaryOpen(false);
     onSuccess();
   };
 
   return (
     <>
       <Dialog open={open && !summaryDialog} onOpenChange={(newOpen) => {
-        if (!newOpen) handleReset();
         onOpenChange(newOpen);
       }}>
-        <DialogContent className="flex flex-col sm:max-h-[90vh] sm:max-w-3xl">
+        <DialogContent className="flex flex-col sm:max-h-[90vh] sm:max-w-3xl" onCloseAutoFocus={() => { if (!open) handleReset(); }}>
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>
@@ -379,10 +379,14 @@ export function BatchImportDialog({
       </Dialog>
 
       <Dialog
-        open={!!summaryDialog}
+        open={summaryOpen}
         onOpenChange={() => summaryDialog && handleCloseSummary()}
       >
-        <DialogContent>
+        <DialogContent onCloseAutoFocus={() => {
+          if (summaryOpen) return;
+          setSummaryDialog(null);
+          handleReset();
+        }}>
           <DialogHeader>
             <DialogTitle>{t("completeTitle")}</DialogTitle>
             <DialogDescription>

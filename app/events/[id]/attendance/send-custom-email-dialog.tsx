@@ -320,16 +320,7 @@ export function SendCustomEmailDialog({
 
   const handleOpenChange = (newOpen: boolean) => {
     if (isBusy && !newOpen) return;
-    if (!newOpen) {
-      setSubject("");
-      setTestRecipients([{ ...BLANK_ROW }]);
-      setAttachmentEntries([]);
-      setTestSectionOpen(false);
-      setTemplateLoaded(false);
-      setTemplateBody("");
-      setTemplateStyles("");
-      setDialogKey((k) => k + 1);
-    }
+
     onOpenChange(newOpen);
   };
 
@@ -433,7 +424,18 @@ export function SendCustomEmailDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent key={dialogKey} className="flex flex-col sm:max-w-5xl lg:max-h-[90vh] lg:overflow-hidden">
+      <DialogContent key={dialogKey} className="flex flex-col sm:max-w-5xl lg:max-h-[90vh] lg:overflow-hidden"
+        onCloseAutoFocus={() => {
+          if (open) return;
+          setSubject("");
+          setTestRecipients([{ ...BLANK_ROW }]);
+          setAttachmentEntries([]);
+          setTestSectionOpen(false);
+          setTemplateLoaded(false);
+          setTemplateBody("");
+          setTemplateStyles("");
+          setDialogKey((k) => k + 1);
+        }}>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>

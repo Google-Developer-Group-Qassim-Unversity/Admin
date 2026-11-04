@@ -199,9 +199,6 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
   const handleDialogChange = (open: boolean) => {
     if (!open && !isUploading) {
       setConfirmOpen(false);
-      setStagedFiles([]);
-      modalDragCounter.current = 0;
-      setIsModalDragging(false);
     }
   };
 
@@ -240,7 +237,6 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
 
       if (successfulIndices.size === stagedFiles.length) {
         setConfirmOpen(false);
-        setStagedFiles([]);
       } else {
         // Retain failed AND unattempted files so user can review and retry
         setStagedFiles((prev) => prev.filter((_, idx) => !successfulIndices.has(idx)));
@@ -297,6 +293,12 @@ export function SlidesDropzone({ eventId, onDriveUnconfigured }: SlidesDropzoneP
       {/* Confirmation Modal */}
       <Dialog open={confirmOpen} onOpenChange={handleDialogChange}>
         <DialogContent
+          onCloseAutoFocus={() => {
+            if (confirmOpen) return;
+            setStagedFiles([]);
+            modalDragCounter.current = 0;
+            setIsModalDragging(false);
+          }}
           showCloseButton={!isUploading}
           onEscapeKeyDown={(e) => {
             if (isUploading) e.preventDefault();

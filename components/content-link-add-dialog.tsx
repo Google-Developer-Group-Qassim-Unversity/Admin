@@ -63,7 +63,6 @@ export function ContentLinkAddDialog({
       {
         onSuccess: () => {
           toast.success(t('createdToast'));
-          reset();
           setOpen(false);
         },
         onError: (error) => toast.error(t('createFailed'), { description: error.message }),
@@ -82,10 +81,6 @@ export function ContentLinkAddDialog({
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) {
-          createLink.reset();
-          reset();
-        }
       }}
     >
       <DialogTrigger asChild>
@@ -94,7 +89,11 @@ export function ContentLinkAddDialog({
           {buttonLabel ?? t('addLink')}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-lg" onCloseAutoFocus={() => {
+        if (open) return;
+        createLink.reset();
+        reset();
+      }}>
         <DialogHeader>
           <DialogTitle>{t('dialogTitle')}</DialogTitle>
           <DialogDescription>{t('dialogDescription')}</DialogDescription>

@@ -62,7 +62,6 @@ export function DepartmentCombobox({
   const handleSelect = (selectedId: number) => {
     onChange(selectedId === value ? null : selectedId);
     setOpen(false);
-    setSearchValue("");
   };
 
   return (
@@ -79,7 +78,7 @@ export function DepartmentCombobox({
           <ChevronsUpDown className="ms-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+      <PopoverContent onCloseAutoFocus={() => { if (!open) setSearchValue(""); }} className="w-[--radix-popover-trigger-width] p-0">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={searchPlaceholder}
