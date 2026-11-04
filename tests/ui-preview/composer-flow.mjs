@@ -29,6 +29,18 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
   assert.equal(await count.inputValue(), "2580", "PageUp steps by ten percent");
   await slider.press("PageDown");
   assert.equal(await count.inputValue(), "2185");
+  if (viewport !== "desktop") {
+    // Synthesize an actual Chromium touch drag, beyond a narrow viewport check.
+    const bounds = await sheet.locator('[data-slot="slider"]').boundingBox();
+    const cdp = await page.context().newCDPSession(page);
+    const y = bounds.y + bounds.height / 2;
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [{ x: bounds.x + bounds.width * 0.25, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [{ x: bounds.x + bounds.width * 0.75, y }] });
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    assert.ok(Number(await count.inputValue()) > 1 && Number(await count.inputValue()) < 3951);
+    assert.ok(locale === "ar" ? Number(await count.inputValue()) < 2185 : Number(await count.inputValue()) > 2185, "touch drag follows RTL/LTR direction");
+    await cdp.detach();
+  }
   await sheet.getByRole("button", { name: m.composer.everyone, exact: true }).click();
   assert.equal(await count.inputValue(), "2184", "Everyone restores capacity default");
   await count.fill("3000");
@@ -44,7 +56,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
   await page.locator('[data-slot="popover-content"]').waitFor();
   await shot("help-count");
   await page.keyboard.press("Escape");
-  await paste.locator("..").getByRole("button", { name: action.add, exact: true }).click();
+  await paste.locator("..").getByRole("button", { name: m.recipients.add, exact: true }).click();
   assert.equal(await paste.inputValue(), "broken@", "invalid input is retained");
   await sheet.getByText("نورة العلي", { exact: true }).waitFor();
   await sheet.getByText("Ali Ahmad", { exact: true }).waitFor();
@@ -106,10 +118,12 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
         state: n.dataset.state, name: getComputedStyle(n).animationName,
         duration: getComputedStyle(n).animationDuration,
         easing: getComputedStyle(n).animationTimingFunction,
+        search: n.querySelector('input[type="search"]')?.value,
       }));
       assert.equal(shared[key].state, "closed");
       assert.equal(shared[key].name, "exit");
       assert.equal(shared[key].duration, "0.2s");
+      if (key === "dialog") assert.equal(shared[key].search, "نورة", "picker preserves its search during exit");
       await locator.waitFor({ state: "hidden" });
     };
     await page.getByRole("button", { name: m.newEmail, exact: true }).click();
@@ -124,6 +138,8 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     const dialog = page.locator('[data-slot="dialog-content"]');
     await dialog.waitFor();
     await page.waitForTimeout(220);
+    await dialog.getByRole("searchbox").fill("نورة");
+    await page.waitForTimeout(350);
     await dialog.getByRole("button", { name: action.cancel, exact: true }).evaluate((n) => n.click());
     await inspectExit(dialog, "dialog");
     await sheet.locator("#composer-subject").fill("Unsaved draft");
@@ -144,10 +160,29 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
   assert.equal(await sheet.evaluate((n) => getComputedStyle(n).animationName), "none");
   await sheet.getByRole("button", { name: action.close, exact: true }).click();
   await sheet.waitFor({ state: "hidden" });
+  await page.waitForTimeout(50);
+  assert.equal(await page.getByRole("button", { name: m.newEmail, exact: true }).evaluate((node) => node === document.activeElement), true, "composer restores focus");
   await page.getByRole("button", { name: m.newEmail, exact: true }).click();
   await sheet.locator("#composer-always").fill("still-fixing@");
   await sheet.getByRole("button", { name: action.close, exact: true }).click();
   await page.getByRole("alertdialog").waitFor();
   await page.getByRole("alertdialog").getByRole("button", { name: m.composer.discard, exact: true }).click();
   await sheet.waitFor({ state: "hidden" });
+  if (viewport === "desktop" && locale === "en" && theme === "light") {
+    for (const [eligible, remaining] of [[0, 0], [1, 1], [3951, 0]]) {
+      await page.route("**/emails/blast/eligible-count*", (route) => route.fulfill({ json: { eligible_count: eligible, remaining_capacity: remaining } }));
+      await page.reload({ waitUntil: "networkidle" });
+      await page.getByRole("button", { name: m.newEmail, exact: true }).click();
+      await sheet.locator("#composer-count").waitFor();
+      const control = sheet.getByRole("slider");
+      assert.equal(await control.getAttribute("aria-valuenow"), String(Math.min(eligible, remaining)));
+      assert.equal(await control.getAttribute("aria-valuemax"), String(Math.max(1, eligible)));
+      assert.equal(await sheet.locator("#composer-count").inputValue(), String(Math.min(eligible, remaining)));
+      if (eligible < 2) assert.equal(await control.getAttribute("aria-disabled"), "true");
+      await shot(`capacity-${eligible}-${remaining}`);
+      await sheet.getByRole("button", { name: action.close, exact: true }).click();
+      await sheet.waitFor({ state: "hidden" });
+      await page.unroute("**/emails/blast/eligible-count*");
+    }
+  }
 }

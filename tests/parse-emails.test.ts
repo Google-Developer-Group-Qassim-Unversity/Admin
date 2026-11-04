@@ -27,6 +27,13 @@ const cases: [string, string, { email: string; name?: string }[], string[], numb
   ["mixed valid and invalid", "a@example.com; broken@; b@example.org", [{ email: "a@example.com" }, { email: "b@example.org" }], ["broken@"], 0],
   ["punctuation and Arabic surroundings", "البريد:a@example.com،", [{ email: "a@example.com" }], [], 0],
   ["duplicate gains name", 'a@example.com; "Noura" <A@example.com>', [{ email: "a@example.com", name: "Noura" }], [], 1],
+  ["leading dot stays invalid", ".ali@example.com", [], [".ali@example.com"], 0],
+  ["local punctuation stays intact", "!ali@example.com 'ali@example.com a{b}@example.com", [{ email: "!ali@example.com" }, { email: "'ali@example.com" }, { email: "a{b}@example.com" }], [], 0],
+  ["embedded brackets cannot create another address", "wrong(name)@example.com", [], ["wrong(name)@example.com"], 0],
+  ["display name is not an address", '"contact@old.example" <new@example.com>', [{ email: "new@example.com", name: "contact@old.example" }], [], 0],
+  ["Arabic local parts stay invalid", "نورةali@example.com", [], ["نورةali@example.com"], 0],
+  ["bare address before display name", "a@example.com Noura <b@example.com>", [{ email: "a@example.com" }, { email: "b@example.com" }], [], 0],
+  ["leading brace in local part", "{ali@example.com", [{ email: "{ali@example.com" }], [], 0],
 ];
 for (const [name, text, emails, invalid, duplicates] of cases) {
   test(name, () => assert.deepEqual(parseEmailText(text), { emails, invalid, duplicates }));

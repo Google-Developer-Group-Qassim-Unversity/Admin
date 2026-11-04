@@ -149,11 +149,11 @@ function SendRow({ send, showKind, onOpen }: { send: Send; showKind: boolean; on
           <bdi>{title}</bdi>
         </button>
         <div className="text-ink-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px]">
-          {/* Each dot travels with the part after it, so a wrapped line never ends on one. */}
+          {/* A separator stays at the end of its item, never at the start of a wrapped line. */}
           {meta.map((part, i) => (
-            <span key={i} className="flex min-w-0 items-center gap-2">
-              {i > 0 && <span aria-hidden="true">·</span>}
+            <span key={i} className="flex min-w-0 max-w-full items-center gap-2">
               {part}
+              {i < meta.length - 1 && <span className="shrink-0" aria-hidden="true">·</span>}
             </span>
           ))}
         </div>

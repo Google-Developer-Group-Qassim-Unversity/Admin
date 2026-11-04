@@ -51,6 +51,7 @@ function Slider({
           aria-label={props["aria-label"]}
           aria-labelledby={props["aria-labelledby"]}
           aria-describedby={props["aria-describedby"]}
+          aria-disabled={props.disabled || undefined}
           key={index}
           className="border-primary bg-background ring-ring/50 block size-5 shrink-0 rounded-lg border shadow-sm transition-[color,box-shadow,background-color] duration-150 ease-out motion-reduce:transition-none hover:ring-4 focus-visible:ring-4 focus-visible:outline-hidden disabled:pointer-events-none disabled:opacity-50"
         />

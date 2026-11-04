@@ -42,18 +42,22 @@ const FIRST_RECIPIENTS = 10;
  */
 export function SendDetailsSheet({
   sendId,
+  open,
   onClose,
+  onCloseAutoFocus,
   onReuse,
 }: {
   sendId: number;
+  open: boolean;
   onClose: () => void;
+  onCloseAutoFocus: React.ComponentProps<typeof SheetContent>["onCloseAutoFocus"];
   /** Open the composer with this send's content. Only offered for campaigns and direct emails. */
   onReuse: (send: SendDetail) => void;
 }) {
   const t = useTranslations("manageEmails.details");
   const tc = useTranslations("common.actions");
   const locale = useLocale();
-  const query = useSend(sendId);
+  const query = useSend(sendId, open);
   const send = query.data;
   const title = useSendTitle();
   const kindLabel = useKindLabel();
@@ -61,8 +65,9 @@ export function SendDetailsSheet({
   const canWrite = send?.kind === "campaign" ? can("emails.blast") : can("emails.direct");
 
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        onCloseAutoFocus={onCloseAutoFocus}
         side={locale === "ar" ? "left" : "right"}
         className="w-full! gap-0 sm:max-w-[560px]!"
         closeLabel={tc("close")}
@@ -82,7 +87,7 @@ export function SendDetailsSheet({
         </SheetHeader>
 
         <div className="flex min-h-0 flex-1 flex-col gap-8 overflow-y-auto overscroll-contain p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-6">
-          {query.isPending && <RowsSkeleton rows={4} />}
+          {open && query.isPending && <RowsSkeleton rows={4} />}
           {query.isError && (
             <Alert variant="destructive">
               <AlertCircle />
@@ -386,15 +391,14 @@ function CertificateSample({ send }: { send: SendDetail }) {
     () =>
       sample.data && template.data
         ? template.data
-            .replaceAll("[Name]", escapeHtml(sample.data.recipient.name))
-            .replaceAll("[Event Name]", escapeHtml(sample.data.event_name))
+            .replace(/\[Name\]|\[Event Name\]/g, (token) => escapeHtml(token === "[Name]" ? sample.data.recipient.name : sample.data.event_name))
         : null,
     [sample.data, template.data],
   );
 
-  // A 4xx means there is nothing to sample (nobody got one), not a failure worth retrying.
+  // Only missing/unsampleable sends are empty. Auth and rate-limit errors are failures.
   const nothingSent =
-    !sent || (sample.error instanceof ApiRequestError && sample.error.status >= 400 && sample.error.status < 500);
+    !sent || (sample.error instanceof ApiRequestError && [404, 422].includes(sample.error.status));
   if (nothingSent) return <p className="text-ink-2 text-sm">{t("noSample")}</p>;
 
   if (sample.isError || template.isError) {
@@ -418,7 +422,7 @@ function CertificateSample({ send }: { send: SendDetail }) {
 
   const data = sample.data;
   const another = (
-    <Button variant="outline" size="sm" onClick={() => void sample.refetch()} disabled={sample.isFetching}>
+    <Button variant="outline" size="sm" onClick={() => void sample.refetch({ cancelRefetch: false })} disabled={sample.isFetching}>
       {sample.isFetching ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <Shuffle />}
       {t("anotherName")}
     </Button>
@@ -438,7 +442,7 @@ function CertificateSample({ send }: { send: SendDetail }) {
   const name = data.recipient.name;
   return (
     <div
-      className="flex flex-col gap-3 transition-opacity duration-200 ease-out aria-busy:opacity-60"
+      className="flex flex-col gap-3 transition-opacity duration-200 ease-out motion-reduce:transition-none aria-busy:opacity-60"
       aria-busy={sample.isFetching}
     >
       <div className="flex flex-wrap items-center justify-between gap-2">

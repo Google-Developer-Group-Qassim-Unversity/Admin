@@ -101,7 +101,7 @@ function carriedAttachment(a: { filename: string; url: string }): EmailAttachmen
  * people (`POST /emails/direct`). Stay mounted through the exit animation,
  * then release the draft; closing with unsaved work asks first.
  */
-export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart | null; onClose: () => void; onSent: () => void }) {
+export function ComposerSheet({ start, onClose, onSent, onCloseAutoFocus }: { start: ComposerStart | null; onClose: () => void; onSent: () => void; onCloseAutoFocus: React.ComponentProps<typeof SheetContent>["onCloseAutoFocus"] }) {
   const t = useTranslations("manageEmails.composer");
   const tc = useTranslations("common.actions");
   const locale = useLocale();
@@ -156,7 +156,8 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   // The member pool is capped separately; guaranteed recipients are added on top.
   const poolSize = Math.max(0, eligible - always.filter((r) => r.member_id != null).length);
   const cap = Math.max(0, Math.min(poolSize, remaining === null ? poolSize : remaining));
-  const requestedCount = count === null ? cap : Math.min(count, poolSize);
+  const countMin = cap === 0 ? 0 : 1;
+  const requestedCount = count === null ? cap : Math.max(countMin, Math.min(count, poolSize));
   const memberCount = Math.min(requestedCount, cap);
   const total = toMembers ? memberCount + always.length : people.length;
   const overCapacity = toMembers && requestedCount > cap;
@@ -262,6 +263,7 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
   return (
     <Sheet open={open} onOpenChange={(open) => !open && requestClose()}>
       <SheetContent
+        onCloseAutoFocus={onCloseAutoFocus}
         side={locale === "ar" ? "left" : "right"}
         className="w-full! gap-0 sm:max-w-[min(1040px,100vw)]!"
         closeLabel={tc("close")}
@@ -306,10 +308,10 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                         aria-label={t("exactCount")}
                         type="number"
                         inputMode="numeric"
-                        min={poolSize ? 1 : 0}
+                        min={countMin}
                         max={poolSize}
                         value={requestedCount}
-                        onChange={(e) => setCount(Math.min(poolSize, Math.max(poolSize ? 1 : 0, Math.floor(Number(e.target.value) || 0))))}
+                        onChange={(e) => setCount(Math.min(poolSize, Math.max(countMin, Math.floor(Number(e.target.value) || 0))))}
                         disabled={busy || !poolSize || eligibleQuery.isPending}
                         className="ms-auto w-20 text-sm md:text-sm"
                       />
@@ -318,21 +320,21 @@ export function ComposerSheet({ start, onClose, onSent }: { start: ComposerStart
                       <Slider
                         dir={locale === "ar" ? "rtl" : "ltr"}
                         aria-label={t("count")}
-                        aria-describedby="composer-capacity"
-                        min={1}
-                        max={Math.max(2, poolSize)}
+                        aria-describedby={remaining !== null ? "composer-capacity" : undefined}
+                        min={poolSize < 2 ? 0 : countMin}
+                        max={Math.max(1, poolSize)}
                         step={1}
-                        value={[Math.max(1, requestedCount)]}
+                        value={[requestedCount]}
                         onValueChange={([value]) => setCount(Math.min(poolSize, value))}
                         onKeyDown={(event) => {
                           if (event.key !== "PageUp" && event.key !== "PageDown") return;
                           event.preventDefault();
-                          setCount(Math.max(1, Math.min(poolSize, requestedCount + (event.key === "PageUp" ? 1 : -1) * Math.max(1, Math.round(poolSize / 10)))));
+                          setCount(Math.max(countMin, Math.min(poolSize, requestedCount + (event.key === "PageUp" ? 1 : -1) * Math.max(1, Math.round(poolSize / 10)))));
                         }}
                         disabled={busy || poolSize < 2 || eligibleQuery.isPending}
                       />
                       {remaining !== null && cap < poolSize && poolSize > 1 && (
-                        <span data-capacity-mark aria-hidden="true" className="bg-door-ochre pointer-events-none absolute top-3 h-5 w-0.5" style={{ insetInlineStart: `${Math.max(0, (cap - 1) / (poolSize - 1)) * 100}%` }} />
+                        <span data-capacity-mark aria-hidden="true" className="bg-door-ochre pointer-events-none absolute top-3 h-5 w-0.5" style={{ insetInlineStart: `calc(10px + ${(cap - countMin) / (poolSize - countMin)} * (100% - 20px))` }} />
                       )}
                     </div>
                     {eligibleQuery.data && <p className="text-ink-2 text-[13px]">{t("countHint", { eligible: fmt.number(eligible) })}</p>}

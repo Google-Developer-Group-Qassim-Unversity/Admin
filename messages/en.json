@@ -587,7 +587,7 @@
       "anotherName": "Try another name",
       "sampleLoading": "Preparing a sample certificate. This takes a few seconds...",
       "sampleFailed": "Couldn't prepare a sample.",
-      "noSample": "No certificate went out in this send, so there's no sample to show.",
+      "noSample": "No sample is available for this send.",
       "to": "To",
       "attachment": "Attachment",
       "certificateAlt": "{name}'s certificate",
@@ -671,6 +671,7 @@
       }
     },
     "recipients": {
+      "add": "Add",
       "pastePlaceholder": "Paste addresses, names or spreadsheet rows",
       "pickMembers": "Pick members",
       "skipped": "{count, plural, one {# entry isn't an email address and was skipped} other {# entries aren't email addresses and were skipped}}",

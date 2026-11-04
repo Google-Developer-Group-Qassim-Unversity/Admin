@@ -1,6 +1,6 @@
 // Browser regression checks against the real Mail components and preview API fixtures.
 import assert from "node:assert/strict";
-import { readFile } from "node:fs/promises";
+import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 import mail, { queue, finish } from "./fixtures/mail.mjs";
@@ -98,7 +98,38 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     await main.locator("li button").first().click();
     await sheet().getByRole("progressbar").waitFor();
     await capture("sending");
-    await close();
+    // The detail id survives closing, so Radix can run its exit and return focus.
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await page.waitForTimeout(220);
+    await button(sheet(), actions.close).evaluate((node) => node.click());
+    await page.waitForTimeout(45);
+    const exit = await sheet().evaluate((node) => ({
+      state: node.dataset.state, animation: getComputedStyle(node).animationName,
+      duration: getComputedStyle(node).animationDuration, transform: getComputedStyle(node).transform,
+      running: node.getAnimations().some((animation) => animation.playState === "running"),
+    }));
+    assert.equal(exit.state, "closed");
+    assert.equal(exit.animation, "exit");
+    assert.equal(exit.running, true);
+    await writeFile(path.join(out, `details-exit-${viewport}-${locale}-${theme}.json`), JSON.stringify(exit, null, 2));
+    await page.screenshot({ path: path.join(out, `details-exit-${viewport}-${locale}-${theme}.png`) });
+    await sheet().waitFor({ state: "hidden" });
+    await page.waitForTimeout(50);
+    assert.equal(await main.locator("li button").first().evaluate((node) => node === document.activeElement), true, "details return focus to their row");
+    await page.emulateMedia({ reducedMotion: "reduce" });
+
+    // Manual certificate content also remains present through its close animation.
+    await button(main, m.issueCertificate).click();
+    await sheet().waitFor();
+    await page.emulateMedia({ reducedMotion: "no-preference" });
+    await button(sheet(), actions.close).evaluate((node) => node.click());
+    await page.waitForTimeout(45);
+    assert.equal(await sheet().getAttribute("data-state"), "closed");
+    assert.equal(await sheet().evaluate((node) => getComputedStyle(node).animationName), "exit");
+    await sheet().waitFor({ state: "hidden" });
+    await page.waitForTimeout(50);
+    assert.equal(await button(main, m.issueCertificate).evaluate((node) => node === document.activeElement), true);
+    await page.emulateMedia({ reducedMotion: "reduce" });
 
     await filter(m.filters.certificate);
     // Finished certificate jobs retain all attendees in total, including skipped ones.
@@ -122,7 +153,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     assert.equal(await main.locator("li[data-send-id]").filter({ hasText: m.kind.eventCertificate }).count(), 0, "a kind chip drops the kind from the meta line");
     // A certificate send shows one random person's email: a failed sample says so and retries.
     await page.route("**/certificate-sample", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
-    await main.locator("li").filter({ hasText: messages[locale].manageEmails.status.failedFor.replace("{count}", "2") }).locator("button").first().click();
+    await main.locator(`li[data-send-id="${certificates.find((send) => send.status === "partial").id}"] button`).click();
     await sheet().getByText(m.details.sampleFailed, { exact: true }).waitFor({ timeout: 10_000 });
     await sheet().locator("#send-message").scrollIntoViewIfNeeded();
     await capture("certificate-error");
@@ -136,6 +167,8 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     await page.waitForFunction((alt) => document.querySelector('[data-slot="sheet-content"] figure img')?.alt !== alt, firstAlt);
     await sheet().locator("#send-message").scrollIntoViewIfNeeded();
     await capture("certificate-sample");
+    await sheet().locator("iframe").scrollIntoViewIfNeeded();
+    await capture("certificate-preview");
     await certificate.scrollIntoViewIfNeeded();
     await capture("certificate-attachment");
     await button(sheet(), m.details.retry).waitFor();
@@ -187,6 +220,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     assert.ok(await sheet().locator("#send-message").evaluate((el) => !!(el.compareDocumentPosition(document.getElementById("send-recipients")) & Node.DOCUMENT_POSITION_FOLLOWING)), "message comes before recipients");
     assert.equal(await sheet().locator('section[aria-labelledby="send-recipients"] ul li').count(), 10, "ten recipients before show all");
     await button(sheet().locator('section[aria-labelledby="send-message"]'), m.details.useAsStart).waitFor();
+    await page.locator("[data-sonner-toast]").waitFor({ state: "hidden" });
     await capture("campaign-top");
     await sheet().getByRole("radio", { name: m.details.desktop, exact: true }).click();
     assert.equal(await sheet().locator("iframe").evaluate((f) => f.style.width), "1024px", "desktop renders at 1024px");

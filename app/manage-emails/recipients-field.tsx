@@ -120,12 +120,12 @@ export function RecipientsField({
           <Button
             type="button"
             variant="outline"
-            size="icon"
-            aria-label={tc("add")}
+            aria-label={t("add")}
             onClick={addPasted}
             disabled={disabled || freshCount === 0}
           >
             <Plus />
+            {t("add")}{freshCount > 0 && <span className="tabular">{fmt.number(freshCount)}</span>}
           </Button>
         </div>
         {can("members.view") && <Button type="button" variant="outline" onClick={() => setPickerOpen(true)} disabled={disabled}>

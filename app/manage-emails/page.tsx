@@ -43,6 +43,10 @@ export default function ManageEmailsPage() {
   const [kind, setKind] = React.useState<SendKindFilter | undefined>();
   const [person, setPerson] = React.useState<Person | null>(null);
   const [openSendId, setOpenSendId] = React.useState<number | null>(null);
+  const [detailsOpen, setDetailsOpen] = React.useState(false);
+  const detailsTrigger = React.useRef<HTMLElement | null>(null);
+  const certificateTrigger = React.useRef<HTMLButtonElement | null>(null);
+  const composerTrigger = React.useRef<HTMLButtonElement | null>(null);
   // undefined: closed; null: a blank email; otherwise a past send used as the start.
   const [composer, setComposer] = React.useState<ComposerStart | null | undefined>();
   const [certificateOpen, setCertificateOpen] = React.useState(false);
@@ -62,7 +66,7 @@ export default function ManageEmailsPage() {
 
   const reuse = (send: SendDetail) => {
     if (!send.content) return;
-    setOpenSendId(null);
+    setDetailsOpen(false);
     setComposer({
       audience: send.kind === "campaign" ? "members" : "people",
       subject: send.content.subject ?? send.subject ?? "",
@@ -84,13 +88,13 @@ export default function ManageEmailsPage() {
     <div className="mx-auto flex w-full max-w-[960px] flex-col gap-5">
       <PageHeader title={t("title")} description={t("subtitle")} icon={Mail}>
         {canCertify && (
-          <Button variant="outline" onClick={() => setCertificateOpen(true)}>
+          <Button ref={certificateTrigger} variant="outline" onClick={() => setCertificateOpen(true)}>
             <Award />
             {t("issueCertificate")}
           </Button>
         )}
         {canWrite && (
-          <Button onClick={() => setComposer(null)}>
+          <Button ref={composerTrigger} onClick={() => setComposer(null)}>
             <SquarePen />
             {t("newEmail")}
           </Button>
@@ -103,17 +107,28 @@ export default function ManageEmailsPage() {
 
           <KindChips value={kind} onChange={setKind} />
 
-          <SendsFeed filters={filters} emptyText={emptyText} onOpen={setOpenSendId} />
+          <SendsFeed filters={filters} emptyText={emptyText} onOpen={(id) => {
+            detailsTrigger.current = document.activeElement as HTMLElement;
+            setOpenSendId(id);
+            setDetailsOpen(true);
+          }} />
         </>
       ) : (
         <EmptyLine>{t("noLogAccess")}</EmptyLine>
       )}
 
-      {openSendId !== null && (
-        <SendDetailsSheet sendId={openSendId} onClose={() => setOpenSendId(null)} onReuse={reuse} />
+      {canSeeLog && openSendId !== null && (
+        <SendDetailsSheet key={openSendId} sendId={openSendId} open={detailsOpen} onClose={() => setDetailsOpen(false)} onReuse={reuse}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            // Reuse opens the composer while this drawer finishes closing.
+            if (!document.querySelector('[data-slot="sheet-content"][data-state="open"]')) detailsTrigger.current?.focus();
+          }} />
       )}
-      {composer !== undefined && <ComposerSheet start={composer} onClose={() => setComposer(undefined)} onSent={showOutbox} />}
-      {certificateOpen && <CertificateSheet onClose={() => setCertificateOpen(false)} />}
+      {composer !== undefined && <ComposerSheet start={composer} onClose={() => setComposer(undefined)} onSent={showOutbox}
+        onCloseAutoFocus={(event) => { event.preventDefault(); composerTrigger.current?.focus(); }} />}
+      {canCertify && <CertificateSheet open={certificateOpen} onClose={() => setCertificateOpen(false)}
+        onCloseAutoFocus={(event) => { event.preventDefault(); certificateTrigger.current?.focus(); }} />}
     </div>
   );
 }
@@ -148,7 +163,7 @@ function KindChips({ value, onChange }: { value: SendKindFilter | undefined; onC
 }
 
 /** The manual-certificate form (individual or a CSV batch), in a sheet over the outbox. */
-function CertificateSheet({ onClose }: { onClose: () => void }) {
+function CertificateSheet({ open, onClose, onCloseAutoFocus }: { open: boolean; onClose: () => void; onCloseAutoFocus: React.ComponentProps<typeof SheetContent>["onCloseAutoFocus"] }) {
   const t = useTranslations("manageEmails");
   const tc = useTranslations("common.actions");
   const locale = useLocale();
@@ -158,8 +173,9 @@ function CertificateSheet({ onClose }: { onClose: () => void }) {
     if (close) onClose();
   };
   return (
-    <Sheet open onOpenChange={(open) => !open && onClose()}>
+    <Sheet open={open} onOpenChange={(open) => !open && onClose()}>
       <SheetContent
+        onCloseAutoFocus={onCloseAutoFocus}
         side={locale === "ar" ? "left" : "right"}
         className="w-full! gap-0 sm:max-w-[min(960px,100vw)]!"
         closeLabel={tc("close")}

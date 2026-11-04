@@ -14,17 +14,27 @@ export function parseEmailText(text: string): { emails: ParsedEmail[]; invalid: 
   for (const line of normalized.split(/\r?\n/)) {
     const names = new Map<string, string>();
     // Quoted display names can contain commas. Keep them before splitting tokens.
-    for (const match of line.matchAll(/(?:"([^"\n]+)"|([^,،;<>\t]+))\s*<\s*(?:mailto:)?([^<>\s]+)\s*>/gi)) {
-      names.set(match[3].toLowerCase(), cleanName(match[1] ?? match[2]));
-    }
+    const addresses = line.replace(/(?:"([^"\n]+)"|([^,،;<>\t]+))\s*<\s*(?:mailto:)?([^<>\s]+)\s*>/gi, (match, quoted: string, plain: string, address: string) => {
+      if (!quoted && plain.includes("@")) return match;
+      names.set(address.toLowerCase(), cleanName(quoted ?? plain));
+      // A display name may itself contain @. It is never another recipient.
+      return `<${address}>`;
+    });
     const cells = line.split("\t");
     const nameCell = cells.find((cell) => cell.trim() && !cell.includes("@") && !/^(name|email|e-mail|الاسم|البريد)$/i.test(cell.trim()) && !/^\d+$/.test(cell.trim()));
-    for (const raw of line.replace(/[\p{Ps}\p{Pe}\p{Pi}\p{Pf}]/gu, " ").match(/[^\s,،;<>()[\]{}"“”]+/g) ?? []) {
+    for (const raw of addresses.match(/[^\s,،;<>"“”]+/g) ?? []) {
       if (!raw.includes("@")) continue;
-      const address = /^mailto:/i.test(raw) ? raw.slice(7).split("?")[0] : raw;
+      // Remove paired prose wrappers, never punctuation inside a local part.
+      let address = raw.replace(/[.!?:،؟]+$/g, "");
+      const wrappers = [["(", ")"], ["[", "]"], ["{", "}"], ["（", "）"], ["‘", "’"], ["'", "'"]];
+      let pair;
+      while (address.length > 1 && (pair = wrappers.find(([start, end]) => address.startsWith(start) && address.endsWith(end)))) {
+        address = address.slice(pair[0].length, -pair[1].length);
+      }
+      address = address.replace(/^[\p{Script=Arabic}]+:/u, "");
+      address = /^mailto:/i.test(address) ? address.slice(7).split("?")[0] : address;
       const token = address
-        .replace(/^[\p{Script=Arabic}:]+|[\p{Script=Arabic}؟]+$/gu, "")
-        .replace(/^[.'!:]+|[.!?:'،]+$/g, "");
+        .replace(/[.!?:'،؟]+$/g, "");
       const email = token.toLowerCase();
       const parts = email.split("@");
       const [local, domain] = parts;

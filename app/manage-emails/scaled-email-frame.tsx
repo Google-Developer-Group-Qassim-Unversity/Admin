@@ -37,6 +37,8 @@ export function ScaledEmailFrame({
     const box = boxRef.current;
     if (!box) return;
     const update = () => {
+      // Hidden panels can measure zero while mounting or changing audience.
+      if (!box.clientWidth) return;
       setScale(Math.min(1, box.clientWidth / width));
       setBoxHeight(box.clientHeight);
     };

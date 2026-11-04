@@ -80,12 +80,12 @@ export function useSends(filters: SendsFilters) {
 }
 
 /** One send with its recipients, failures and content. Polls while it is still going out. */
-export function useSend(id: number | null) {
+export function useSend(id: number | null, enabled = true) {
   const api = useApi();
   return useQuery({
     queryKey: sendKeys.detail(id ?? -1),
     queryFn: () => api.emails.send(id as number),
-    enabled: id != null,
+    enabled: enabled && id != null,
     refetchInterval: (query) => (query.state.data && isSending(query.state.data) ? POLL_MS : false),
   });
 }
@@ -102,7 +102,7 @@ export function useCertificateSample(id: number, enabled: boolean) {
     queryFn: () => api.emails.certificateSample(id),
     enabled,
     staleTime: Infinity,
-    retry: (failureCount, error) => !(error instanceof ApiRequestError && error.status < 500) && failureCount < 1,
+    retry: (failureCount, error) => !(error instanceof ApiRequestError && error.status >= 400 && error.status < 500) && failureCount < 1,
   });
 }
 
