@@ -249,7 +249,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     assert.equal(await sheet().locator("#composer-count").inputValue(), "2184", "defaults to remaining capacity");
     await sheet().locator("#composer-count").fill("9999");
     await sheet().locator("#composer-always").fill("always@example.com");
-    await sheet().locator("#composer-always").press("Enter");
+    await sheet().locator("#composer-always").press("Control+Enter");
     await sheet().locator("#composer-subject").fill("Mail regression check");
     await sheet().locator("#composer-html").fill('<h1 onclick="alert(1)">Mail regression check</h1>');
     await button(sheet(), m.composer.test).click();
@@ -284,7 +284,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     await sheet().getByRole("radio", { name: m.composer.audience.people, exact: true }).click();
     assert.equal(await sheet().getByText(m.composer.capacity.split("{remaining}")[0], { exact: false }).count(), 0, "direct sends show no capacity cap");
     await sheet().locator("#composer-people").fill("one@example.com, ONE@example.com; two@example.com");
-    await sheet().locator("#composer-people").press("Enter");
+    await sheet().locator("#composer-people").press("Control+Enter");
     await sheet().locator("#composer-subject").fill("Direct regression check");
     await sheet().locator("#composer-html").fill("<p>Direct check</p>");
     await sheet().locator('button[data-variant="green"]').click();
@@ -344,7 +344,7 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
       await button(main, m.newEmail).click();
       await sheet().locator("#composer-count").waitFor();
       await sheet().locator("#composer-always").fill("first@example.com; second@example.com");
-      await sheet().locator("#composer-always").press("Enter");
+      await sheet().locator("#composer-always").press("Control+Enter");
       await sheet().locator("#composer-subject").fill("Guaranteed overflow");
       await sheet().locator("#composer-html").fill("<p>Guaranteed overflow</p>");
       const sendButton = sheet().locator('button[data-variant="green"]');

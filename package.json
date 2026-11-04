@@ -9,7 +9,8 @@
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
     "export-env": "infisical export --env=dev --path=/admin-frontend --format=dotenv --output-file=./.env.local",
-    "fonts": "node scripts/fetch-thmanyah.mjs"
+    "fonts": "node scripts/fetch-thmanyah.mjs",
+    "test": "node --experimental-strip-types --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test tests/*.test.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.0.0",
