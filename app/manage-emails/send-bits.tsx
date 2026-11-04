@@ -7,7 +7,6 @@ import { isSending } from "@/hooks/use-email-sends";
 import { FILL } from "@/components/najdi";
 import { SEND_TONE, StatePill } from "@/components/status-badge";
 import type { Send, SendKind, SendKindFilter } from "@/lib/api-types";
-import { isolate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /** Message keys under `manageEmails.kind` for each kind of send. */
@@ -63,19 +62,18 @@ export function useKindLabel() {
   return (kind: SendKind) => t(KIND_KEY[kind]);
 }
 
+/** Certificates and acceptance say the same thing to everyone, so the event is what tells two of them apart. */
+export const titleIsEvent = (send: Send): send is Send & { event: NonNullable<Send["event"]> } =>
+  (isCertificate(send) || send.kind === "acceptance") && send.event != null;
+
 /**
- * A send's title: its subject, or for certificates (which have none) the kind
- * and the event, "Attendance certificates · Intro to micro:bit".
+ * A send's title, the same shape for every kind: what it was about. The event
+ * for certificates and acceptance, otherwise the subject, else the kind.
  */
 export function useSendTitle() {
-  const t = useTranslations("manageEmails.kind");
   const kindLabel = useKindLabel();
-  return (send: Send) => {
-    if (isCertificate(send)) {
-      return send.event ? t("withEvent", { kind: kindLabel(send.kind), event: isolate(send.event.name) }) : kindLabel(send.kind);
-    }
-    return displaySubject(send.subject, send.event) || kindLabel(send.kind);
-  };
+  return (send: Send) =>
+    titleIsEvent(send) ? send.event.name : displaySubject(send.subject, send.event) || kindLabel(send.kind);
 }
 
 /** Sent (green), sending N of M (ochre), failed for K / failed (madder). Never "delivered": nobody can know that. */

@@ -13,7 +13,7 @@ import { errorMessage } from "@/lib/api/errors";
 import type { Send, SendsFilters } from "@/lib/api-types";
 import { useFormatters } from "@/lib/format";
 
-import { KIND_ICON, recipientCount, SendProgress, SendStatusPill, useSendTitle } from "./send-bits";
+import { KIND_ICON, recipientCount, SendProgress, SendStatusPill, titleIsEvent, useKindLabel, useSendTitle } from "./send-bits";
 
 const DAY_MS = 86_400_000;
 
@@ -37,7 +37,8 @@ function useDayLabel() {
 
 /**
  * The outbox: one row per send (not per email), newest first, grouped by day.
- * A row opens the send's details; the event name inside it links to the event.
+ * Every kind of send gets the same row, so a mixed list scans like a filtered
+ * one. A row opens the send's details; the event name inside it links to the event.
  */
 export function SendsFeed({
   filters,
@@ -87,7 +88,7 @@ export function SendsFeed({
           <h3 className="text-ink-3 border-rule border-b px-1 pt-5 pb-1.5 text-[12.5px] font-bold">{day.label}</h3>
           <ul className="flex flex-col">
             {day.sends.map((send) => (
-              <SendRow key={send.id} send={send} onOpen={onOpen} />
+              <SendRow key={send.id} send={send} showKind={!filters.kind} onOpen={onOpen} />
             ))}
           </ul>
         </section>
@@ -108,10 +109,32 @@ export function SendsFeed({
   );
 }
 
-function SendRow({ send, onOpen }: { send: Send; onOpen: (id: number) => void }) {
+/**
+ * Title: what it was about. Meta: the kind (unless a chip already says it),
+ * the event when the title isn't it, who sent it, when. A plain finished send
+ * shows only its count; a pill appears only when there is something to look at.
+ */
+function SendRow({ send, showKind, onOpen }: { send: Send; showKind: boolean; onOpen: (id: number) => void }) {
   const t = useTranslations("manageEmails.feed");
   const fmt = useFormatters();
   const title = useSendTitle()(send);
+  const kindLabel = useKindLabel();
+  const meta = [
+    showKind && <span className="text-foreground whitespace-nowrap">{kindLabel(send.kind)}</span>,
+    send.event && !titleIsEvent(send) && (
+      <Link href={`/events/${send.event.id}`} className="relative z-10 max-w-full truncate underline-offset-2 hover:underline">
+        <bdi>{send.event.name}</bdi>
+      </Link>
+    ),
+    <bdi key="sender" className="truncate">{send.sender.name}</bdi>,
+    <span key="time" className="tabular whitespace-nowrap">{fmt.time(send.created_at)}</span>,
+  ].filter(Boolean);
+  const state = (
+    <>
+      {send.status !== "succeeded" && <SendStatusPill send={send} />}
+      <span className="text-ink-3 tabular text-[12.5px] whitespace-nowrap">{t("recipients", { count: recipientCount(send) })}</span>
+    </>
+  );
 
   return (
     <li data-send-id={send.id} className="border-rule hover:bg-card relative flex min-h-16 items-center gap-3 border-b px-1 py-3 transition-colors">
@@ -126,32 +149,19 @@ function SendRow({ send, onOpen }: { send: Send; onOpen: (id: number) => void })
           <bdi>{title}</bdi>
         </button>
         <div className="text-ink-2 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px]">
-          {send.event && (
-            <>
-              <Link
-                href={`/events/${send.event.id}`}
-                className="relative z-10 max-w-full truncate underline-offset-2 hover:underline"
-              >
-                <bdi>{send.event.name}</bdi>
-              </Link>
-              <span aria-hidden="true">·</span>
-            </>
-          )}
-          <bdi className="truncate">{send.sender.name}</bdi>
-          <span aria-hidden="true">·</span>
-          <span className="tabular whitespace-nowrap">{fmt.time(send.created_at)}</span>
+          {/* Each dot travels with the part after it, so a wrapped line never ends on one. */}
+          {meta.map((part, i) => (
+            <span key={i} className="flex min-w-0 items-center gap-2">
+              {i > 0 && <span aria-hidden="true">·</span>}
+              {part}
+            </span>
+          ))}
         </div>
         {isSending(send) && <SendProgress send={send} className="mt-1" />}
-        {/* Phone: the state goes under the title so the title keeps the width. */}
-        <div className="mt-1 flex items-center gap-2 sm:hidden">
-          <SendStatusPill send={send} />
-          <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: recipientCount(send) })}</span>
-        </div>
+        {/* Phone: the state goes under the meta line so the title keeps the width. */}
+        <div className="mt-0.5 flex items-center gap-2 sm:hidden">{state}</div>
       </div>
-      <div className="flex shrink-0 flex-col items-end gap-1 max-sm:hidden">
-        <SendStatusPill send={send} />
-        <span className="text-ink-3 tabular text-[12.5px]">{t("recipients", { count: recipientCount(send) })}</span>
-      </div>
+      <div className="flex shrink-0 flex-col items-end gap-1 max-sm:hidden">{state}</div>
     </li>
   );
 }
