@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { AlertCircle, Copy, Loader2, Paperclip, RotateCw, Search, SquarePen } from "lucide-react";
+import { AlertCircle, Copy, ExternalLink, Loader2, Paperclip, RotateCw, Search, Shuffle, SquarePen } from "lucide-react";
 import { toast } from "sonner";
 import { useLocale, useTranslations } from "next-intl";
 
@@ -22,22 +22,23 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useAccess } from "@/hooks/use-access";
-import { isSending, useRetryCertificates, useSend } from "@/hooks/use-email-sends";
-import { errorMessage } from "@/lib/api/errors";
+import { isSending, useCertificateSample, useCertificateTemplate, useRetryCertificates, useSend } from "@/hooks/use-email-sends";
+import { ApiRequestError, errorMessage } from "@/lib/api/errors";
 import type { SendDetail } from "@/lib/api-types";
 import { isolate, useFormatters } from "@/lib/format";
 import { normalizeArabic } from "@/lib/search-utils";
 
-import { ScaledEmailFrame } from "./scaled-email-frame";
+import { EmailPreview } from "./email-preview";
 import { KIND_ICON, displaySubject, recipientCount, SendProgress, SendStatusPill, canReuse, isCertificate, useKindLabel, useSendTitle } from "./send-bits";
 
-/** Recipients shown before "show all": enough for a check, light enough for a 2,000-person campaign. */
-const FIRST_RECIPIENTS = 100;
+/** Recipients shown before "show all": a glance, so the list never buries the sections around it. */
+const FIRST_RECIPIENTS = 10;
 
 /**
- * One send, opened from the outbox: who it went to, who it failed for and why,
- * and the email itself. Full screen on a phone.
+ * One send, opened from the outbox: what happened, who it failed for and why,
+ * the email itself, then who it went to. Full screen on a phone.
  */
 export function SendDetailsSheet({
   sendId,
@@ -74,8 +75,7 @@ export function SendDetailsSheet({
                 {send ? kindLabel(send.kind) : t("loading")}
               </SheetDescription>
               <SheetTitle className="text-xl wrap-anywhere">
-                {/* The kind is already the line above; a certificate's title is then just its event. */}
-                <bdi>{send ? (isCertificate(send) ? (send.event?.name ?? kindLabel(send.kind)) : title(send)) : ""}</bdi>
+                <bdi>{send ? title(send) : ""}</bdi>
               </SheetTitle>
             </div>
           </div>
@@ -99,14 +99,8 @@ export function SendDetailsSheet({
             <>
               <Summary send={send} />
               {(send.failed > 0 || send.failures.length > 0 || send.status === "failed") && <Failures send={send} />}
+              <Message send={send} onReuse={canReuse(send) && send.content && canWrite ? () => onReuse(send) : undefined} />
               <Recipients send={send} />
-              <Message send={send} />
-              {canReuse(send) && send.content && canWrite && (
-                <Button variant="outline" className="self-start" onClick={() => onReuse(send)}>
-                  <SquarePen />
-                  {t("useAsStart")}
-                </Button>
-              )}
             </>
           )}
         </div>
@@ -312,16 +306,29 @@ function Recipients({ send }: { send: SendDetail }) {
   );
 }
 
-function Message({ send }: { send: SendDetail }) {
+function Message({ send, onReuse }: { send: SendDetail; onReuse?: () => void }) {
   const t = useTranslations("manageEmails.details");
   const { content } = send;
   const subject = displaySubject(content?.subject ?? send.subject, send.event);
 
   return (
     <section aria-labelledby="send-message" className="flex flex-col gap-3">
-      <SectionHead id="send-message" title={t("message")} />
-      {!content ? (
-        <p className="text-ink-2 text-sm">{isCertificate(send) ? t("certificateNoBody") : t("noContent")}</p>
+      <SectionHead
+        id="send-message"
+        title={t("message")}
+        action={
+          onReuse && (
+            <Button size="sm" variant="outline" onClick={onReuse}>
+              <SquarePen />
+              {t("useAsStart")}
+            </Button>
+          )
+        }
+      />
+      {isCertificate(send) ? (
+        <CertificateSample send={send} />
+      ) : !content ? (
+        <p className="text-ink-2 text-sm">{t("noContent")}</p>
       ) : (
         <>
           <dl className="grid grid-cols-[max-content_minmax(0,1fr)] [&_dd]:wrap-anywhere">
@@ -340,12 +347,7 @@ function Message({ send }: { send: SendDetail }) {
             <ul className="flex flex-wrap gap-2">
               {content.attachments.map((a) => (
                 <li key={a.url}>
-                  <a
-                    href={a.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="bg-sunk hover:bg-mortar inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-bold"
-                  >
+                  <a href={a.url} target="_blank" rel="noreferrer" className={ATTACHMENT}>
                     <Paperclip className="size-4" aria-hidden="true" />
                     <bdi className="max-w-60 truncate">{a.filename}</bdi>
                   </a>
@@ -354,16 +356,119 @@ function Message({ send }: { send: SendDetail }) {
             </ul>
           )}
           {content.html_content ? (
-            <ScaledEmailFrame
-              srcDoc={content.html_content}
-              title={t("message")}
-              className="ring-rule mx-auto overflow-hidden rounded-lg ring-1"
-            />
+            <EmailPreview html={content.html_content} title={subject || t("message")} />
           ) : (
             <p className="text-ink-2 text-sm">{t("noContent")}</p>
           )}
         </>
       )}
     </section>
+  );
+}
+
+const ATTACHMENT = "bg-sunk hover:bg-mortar inline-flex min-h-11 items-center gap-2 rounded-lg px-3 text-sm font-bold";
+
+const escapeHtml = (text: string) =>
+  text.replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]!);
+
+/**
+ * Certificate emails are built per person, so there is no one body to show.
+ * Instead: one random person's email, filled the way the sending service fills
+ * the template, and the certificate it carried. "Another name" picks again.
+ */
+function CertificateSample({ send }: { send: SendDetail }) {
+  const t = useTranslations("manageEmails.details");
+  const sent = send.succeeded > 0;
+  const sample = useCertificateSample(send.id, sent);
+  const template = useCertificateTemplate(sent);
+
+  const html = React.useMemo(
+    () =>
+      sample.data && template.data
+        ? template.data
+            .replaceAll("[Name]", escapeHtml(sample.data.recipient.name))
+            .replaceAll("[Event Name]", escapeHtml(sample.data.event_name))
+        : null,
+    [sample.data, template.data],
+  );
+
+  // A 4xx means there is nothing to sample (nobody got one), not a failure worth retrying.
+  const nothingSent =
+    !sent || (sample.error instanceof ApiRequestError && sample.error.status >= 400 && sample.error.status < 500);
+  if (nothingSent) return <p className="text-ink-2 text-sm">{t("noSample")}</p>;
+
+  if (sample.isError || template.isError) {
+    return (
+      <div className="flex flex-col items-start gap-2">
+        <p role="alert" className="text-ink-2 text-sm">{t("sampleFailed")}</p>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => {
+            if (sample.isError) void sample.refetch();
+            if (template.isError) void template.refetch();
+          }}
+        >
+          <RotateCw />
+          {t("tryAgain")}
+        </Button>
+      </div>
+    );
+  }
+
+  const data = sample.data;
+  const another = (
+    <Button variant="outline" size="sm" onClick={() => void sample.refetch()} disabled={sample.isFetching}>
+      {sample.isFetching ? <Loader2 className="animate-spin motion-reduce:animate-none" /> : <Shuffle />}
+      {t("anotherName")}
+    </Button>
+  );
+
+  if (!data || !html) {
+    return (
+      <div className="flex flex-col gap-3" aria-busy="true">
+        <p className="text-ink-2 text-sm">{t("sampleLoading")}</p>
+        <Skeleton className="h-4 w-2/3" />
+        <Skeleton className="mx-auto aspect-[390/720] w-full max-w-[390px]" />
+        <Skeleton className="aspect-[1.414] w-full" />
+      </div>
+    );
+  }
+
+  const name = data.recipient.name;
+  return (
+    <div
+      className="flex flex-col gap-3 transition-opacity duration-200 ease-out aria-busy:opacity-60"
+      aria-busy={sample.isFetching}
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-ink-2 min-w-0 text-sm">
+          {t("sampleOf", { name: isolate(name) })}
+        </p>
+        {another}
+      </div>
+      <dl className="grid grid-cols-[max-content_minmax(0,1fr)] [&_dd]:wrap-anywhere">
+        <Fact term={t("to")}>
+          <bdi className="break-all">{data.recipient.email}</bdi>
+        </Fact>
+        <Fact term={t("subject")}>
+          <bdi>{data.subject}</bdi>
+        </Fact>
+      </dl>
+      <EmailPreview html={html} title={data.subject} />
+      <figure className="flex flex-col gap-2">
+        <figcaption className="text-ink-2 text-[12.5px] font-bold">{t("attachment")}</figcaption>
+        {/* eslint-disable-next-line @next/next/no-img-element -- a generated file on the certificate service, not a static asset */}
+        <img
+          src={data.image_url}
+          alt={t("certificateAlt", { name })}
+          className="ring-rule bg-sunk w-full max-w-full rounded-lg ring-1"
+        />
+        <a href={data.image_url} target="_blank" rel="noreferrer" className={`${ATTACHMENT} self-start`}>
+          <ExternalLink className="size-4 rtl:-scale-x-100" aria-hidden="true" />
+          {t("openCertificate")}
+        </a>
+      </figure>
+    </div>
   );
 }

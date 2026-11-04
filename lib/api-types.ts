@@ -887,6 +887,17 @@ export interface SendDetail extends Send {
   content: SendContent | null;
 }
 
+/**
+ * One certificate email rebuilt for a random person the send reached: who,
+ * the subject they got, and their generated certificate. Each call picks again.
+ */
+export interface CertificateSample {
+  recipient: { name: string; email: string; member_id: number | null };
+  subject: string;
+  event_name: string;
+  image_url: string;
+}
+
 // =============================================================================
 // Email Dashboard (the home page's numbers)
 // =============================================================================

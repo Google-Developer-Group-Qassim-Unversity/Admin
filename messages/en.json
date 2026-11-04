@@ -523,11 +523,10 @@
       "campaign": "Campaign",
       "eventCertificate": "Attendance certificates",
       "manualCertificate": "Manual certificate",
-      "acceptance": "Acceptance",
+      "acceptance": "Acceptance emails",
       "eventMessage": "Event message",
       "direct": "Direct email",
-      "teamNotification": "Team notification",
-      "withEvent": "{kind} · {event}"
+      "teamNotification": "Team notification"
     },
     "status": {
       "sent": "Sent",
@@ -576,11 +575,23 @@
       "message": "Message",
       "subject": "Subject",
       "previewText": "Preview text",
-      "certificateNoBody": "Certificate emails are generated for each person by name, so there's no single body to show.",
       "noContent": "This email's content wasn't kept.",
       "useAsStart": "Use as a start",
       "noFailures": "Failure addresses and errors weren't kept for this send.",
-      "incompleteFailures": "{count, plural, one {Only # failure address was kept. The failed total includes the rest.} other {Only # failure addresses were kept. The failed total includes the rest.}}"
+      "incompleteFailures": "{count, plural, one {Only # failure address was kept. The failed total includes the rest.} other {Only # failure addresses were kept. The failed total includes the rest.}}",
+      "previewOn": "Screen size",
+      "phone": "Phone",
+      "desktop": "Desktop",
+      "fullSize": "Full size",
+      "sampleOf": "Sample: {name}'s email. Each person was sent one with their own name.",
+      "anotherName": "Try another name",
+      "sampleLoading": "Preparing a sample certificate. This takes a few seconds...",
+      "sampleFailed": "Couldn't prepare a sample.",
+      "noSample": "No certificate went out in this send, so there's no sample to show.",
+      "to": "To",
+      "attachment": "Attachment",
+      "certificateAlt": "{name}'s certificate",
+      "openCertificate": "Open certificate"
     },
     "composer": {
       "title": "New email",
@@ -1793,7 +1804,6 @@
     "urlAria": "Link URL",
     "urlInvalid": "This doesn't look like a link — something like https://drive.google.com/... or youtu.be/...",
     "loadFailed": "Failed to load the links",
-    "retry": "Try again",
     "labelInvalid": "Give the link a name members will see.",
     "rowInvalid": "This doesn't look like a link.",
     "deleteTitle": "Delete this link?",

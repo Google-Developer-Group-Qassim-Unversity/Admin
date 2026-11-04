@@ -14,6 +14,7 @@ import type {
   ActionsResponse,
   AttendanceResponse,
   BlastEligibleCountResponse,
+  CertificateSample,
   BlastSendRequest,
   BlastSendResponse,
   BlastTestRequest,
@@ -266,6 +267,9 @@ export function createApi(request: Requester) {
       }),
 
     send: (id: number) => request.json<SendDetail>(`/emails/sends/${id}`),
+
+    /** A certificate send's email for one random recipient it reached; generating the PNG takes a few seconds. */
+    certificateSample: (id: number) => request.json<CertificateSample>(`/emails/sends/${id}/certificate-sample`),
 
     /** Members the club can email, and what is left of today's Gmail sending capacity. */
     blastEligibleCount: () =>

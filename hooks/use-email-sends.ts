@@ -1,6 +1,7 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { useApi } from "@/lib/api/client";
+import { ApiRequestError } from "@/lib/api/errors";
 import type { BlastSendRequest, BlastTestRequest, DirectEmailRequest, Send, SendsFilters, SendsPage } from "@/lib/api-types";
 
 /** How often the outbox re-reads while a send is still going out. */
@@ -10,6 +11,7 @@ export const sendKeys = {
   all: ["email-sends"] as const,
   list: (filters: SendsFilters) => [...sendKeys.all, "list", filters] as const,
   detail: (id: number) => [...sendKeys.all, "detail", id] as const,
+  certificateSample: (id: number) => [...sendKeys.all, "certificate-sample", id] as const,
   eligible: () => [...sendKeys.all, "eligible-count"] as const,
 };
 
@@ -85,6 +87,36 @@ export function useSend(id: number | null) {
     queryFn: () => api.emails.send(id as number),
     enabled: id != null,
     refetchInterval: (query) => (query.state.data && isSending(query.state.data) ? POLL_MS : false),
+  });
+}
+
+/**
+ * One random recipient's certificate email, for a certificate send's drawer.
+ * Never stale: a new name only comes from `refetch()` ("another name").
+ * A 4xx (nothing was sent, not a certificate) is an answer, not a blip to retry.
+ */
+export function useCertificateSample(id: number, enabled: boolean) {
+  const api = useApi();
+  return useQuery({
+    queryKey: sendKeys.certificateSample(id),
+    queryFn: () => api.emails.certificateSample(id),
+    enabled,
+    staleTime: Infinity,
+    retry: (failureCount, error) => !(error instanceof ApiRequestError && error.status < 500) && failureCount < 1,
+  });
+}
+
+/** The certificate email's body as the sending service fills it: `[Name]` and `[Event Name]`. Fetched once. */
+export function useCertificateTemplate(enabled: boolean) {
+  return useQuery({
+    queryKey: ["certificate-email-template"],
+    queryFn: async () => {
+      const res = await fetch("/assets/emails/email_template.html");
+      if (!res.ok) throw new Error(`Template request failed: ${res.status}`);
+      return res.text();
+    },
+    enabled,
+    staleTime: Infinity,
   });
 }
 
