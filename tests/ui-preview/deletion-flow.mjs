@@ -5,14 +5,14 @@ export default async function ({ page, locale, theme, viewport, out }) {
   const ar = locale === "ar";
   await page
     .getByRole("button", {
-      name: ar ? "حذف الفعالية" : "Delete event",
+      name: ar ? "احذف الفعالية" : "Delete event",
       exact: true,
     })
     .click();
   const dialog = page.getByRole("alertdialog");
   await dialog
     .getByRole("button", {
-      name: ar ? "حذف نهائي" : "Delete permanently",
+      name: ar ? "احذفها نهائي" : "Delete permanently",
       exact: true,
     })
     .waitFor();
@@ -20,7 +20,7 @@ export default async function ({ page, locale, theme, viewport, out }) {
   assert.equal(
     await dialog
       .getByRole("button", {
-        name: ar ? "حذف نهائي" : "Delete permanently",
+        name: ar ? "احذفها نهائي" : "Delete permanently",
         exact: true,
       })
       .isEnabled(),
@@ -56,7 +56,7 @@ export default async function ({ page, locale, theme, viewport, out }) {
       : /Submissions, including cancellations/,
   });
   const link = dialog.getByRole("link", {
-    name: ar ? /فتح التسجيلات/ : /Open Submissions/,
+    name: ar ? /افتح التسجيلات/ : /Open Submissions/,
   });
   assert.match(await link.getAttribute("href"), /\/responses(?:\?|$)/);
   assert.equal(await link.getAttribute("target"), "_blank");
@@ -74,7 +74,7 @@ export default async function ({ page, locale, theme, viewport, out }) {
     .click();
   await dialog.getByText("#9000", { exact: true }).waitFor();
   const action = dialog.getByRole("button", {
-    name: ar ? "حذف نهائي" : "Delete permanently",
+    name: ar ? "احذفها نهائي" : "Delete permanently",
     exact: true,
   });
   const bounds = await action.boundingBox();
@@ -100,7 +100,7 @@ export default async function ({ page, locale, theme, viewport, out }) {
   await submissions.click();
   await dialog
     .getByRole("button", {
-      name: ar ? "إبقاء الفعالية" : "Keep event",
+      name: ar ? "احتفظ بالفعالية" : "Keep event",
       exact: true,
     })
     .click();
@@ -125,13 +125,13 @@ export default async function ({ page, locale, theme, viewport, out }) {
   );
   await page
     .getByRole("button", {
-      name: ar ? "حذف الفعالية" : "Delete event",
+      name: ar ? "احذف الفعالية" : "Delete event",
       exact: true,
     })
     .click();
   await dialog
     .getByText(
-      ar ? /لا توجد تسجيلات أو سجلات حضور/ : /No submissions or attendance/,
+      ar ? /ما فيه تسجيلات أو حضور/ : /No submissions or attendance/,
     )
     .waitFor();
   await page.waitForTimeout(200);
@@ -141,7 +141,7 @@ export default async function ({ page, locale, theme, viewport, out }) {
   });
   await dialog
     .getByRole("button", {
-      name: ar ? "إبقاء الفعالية" : "Keep event",
+      name: ar ? "احتفظ بالفعالية" : "Keep event",
       exact: true,
     })
     .click();

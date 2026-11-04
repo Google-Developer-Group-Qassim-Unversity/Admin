@@ -14,19 +14,19 @@ export default async function ({ page, locale }) {
   });
   await page
     .getByRole("button", {
-      name: ar ? "حذف الفعالية" : "Delete event",
+      name: ar ? "احذف الفعالية" : "Delete event",
       exact: true,
     })
     .click();
   const dialog = page.getByRole("alertdialog");
   const action = dialog.getByRole("button", {
-    name: ar ? "حذف نهائي" : "Delete permanently",
+    name: ar ? "احذفها نهائي" : "Delete permanently",
     exact: true,
   });
   assert.equal(await action.isDisabled(), true);
   await dialog
     .getByText(
-      ar ? "تعذّر تحميل تفاصيل الحذف" : "Could not load deletion details",
+      ar ? "تعذر تحميل تفاصيل الحذف" : "Could not load deletion details",
       { exact: true },
     )
     .waitFor({ timeout: 15000 });
@@ -34,7 +34,7 @@ export default async function ({ page, locale }) {
   recover = true;
   await dialog
     .getByRole("button", {
-      name: ar ? "إعادة المحاولة" : "Try again",
+      name: ar ? "حاول مرة ثانية" : "Try again",
       exact: true,
     })
     .click();
@@ -51,7 +51,7 @@ export default async function ({ page, locale }) {
   });
   await action.click();
   await dialog
-    .getByText(ar ? "تعذّر حذف الفعالية" : "Could not delete the event", {
+    .getByText(ar ? "تعذر حذف الفعالية" : "Could not delete the event", {
       exact: true,
     })
     .waitFor();
