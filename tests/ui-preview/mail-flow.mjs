@@ -42,11 +42,18 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
   };
   try {
     await main.locator("li button").first().waitFor();
+    await capture("all");
+
+    // One row shape for every kind: the kind leads the meta line in All, and a plain success has no pill.
+    const acceptanceRow = main.locator("li[data-send-id]").filter({ hasText: m.kind.acceptance }).first();
+    assert.ok((await acceptanceRow.innerText()).includes(m.kind.acceptance), "All names each row's kind");
+    assert.ok(!(await acceptanceRow.innerText()).includes(messages[locale].manageEmails.status.sent), "plain success shows no pill");
 
     // API times are naive Riyadh-local: the same wall clock and calendar day on any device.
     const newest = mail[0].body({ query: {} }).items[0];
     const [hours, minutes] = newest.created_at.slice(11, 16).split(":");
-    const time = `${Number(hours) % 12 || 12}:${minutes}`;
+    // Arabic shows a 12-hour clock, English a 24-hour one.
+    const time = locale === "ar" ? `${Number(hours) % 12 || 12}:${minutes}` : `${Number(hours)}:${minutes}`;
     assert.ok((await main.locator("section li").first().innerText()).includes(time), `newest row shows ${time}`);
     assert.equal(await main.locator("section h3").first().innerText(), m.feed.today, "day groups follow Riyadh's calendar");
 
@@ -112,8 +119,25 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
       assert.equal(await sheet().getByRole("progressbar").count(), 0, "finished sends have no unfinished progress");
       await close();
     }
+    assert.equal(await main.locator("li[data-send-id]").filter({ hasText: m.kind.eventCertificate }).count(), 0, "a kind chip drops the kind from the meta line");
+    // A certificate send shows one random person's email: a failed sample says so and retries.
+    await page.route("**/certificate-sample", (route) => route.fulfill({ status: 500, contentType: "application/json", body: "{}" }));
     await main.locator("li").filter({ hasText: messages[locale].manageEmails.status.failedFor.replace("{count}", "2") }).locator("button").first().click();
-    await sheet().getByText(m.details.certificateNoBody, { exact: true }).waitFor();
+    await sheet().getByText(m.details.sampleFailed, { exact: true }).waitFor({ timeout: 10_000 });
+    await sheet().locator("#send-message").scrollIntoViewIfNeeded();
+    await capture("certificate-error");
+    await page.unroute("**/certificate-sample");
+    await button(sheet().locator('section[aria-labelledby="send-message"]'), m.details.tryAgain).click();
+    const certificate = sheet().locator("figure img");
+    await certificate.waitFor();
+    assert.ok(await sheet().locator("iframe").getAttribute("srcdoc").then((html) => !html.includes("[Name]") && !html.includes("[Event Name]")), "sample fills the template");
+    const firstAlt = await certificate.getAttribute("alt");
+    await button(sheet(), m.details.anotherName).click();
+    await page.waitForFunction((alt) => document.querySelector('[data-slot="sheet-content"] figure img')?.alt !== alt, firstAlt);
+    await sheet().locator("#send-message").scrollIntoViewIfNeeded();
+    await capture("certificate-sample");
+    await certificate.scrollIntoViewIfNeeded();
+    await capture("certificate-attachment");
     await button(sheet(), m.details.retry).waitFor();
     await drawer("partial", "#send-failures");
     await button(sheet(), m.details.retry).click();
@@ -159,6 +183,26 @@ export default async function exercise({ page, locale, theme, viewport, out }) {
     await close();
     await main.locator("li button").last().click();
     await button(sheet(), m.details.showAll.replace("{count}", "140")).waitFor();
+    // Message before recipients, with the reuse action in its header.
+    assert.ok(await sheet().locator("#send-message").evaluate((el) => !!(el.compareDocumentPosition(document.getElementById("send-recipients")) & Node.DOCUMENT_POSITION_FOLLOWING)), "message comes before recipients");
+    assert.equal(await sheet().locator('section[aria-labelledby="send-recipients"] ul li').count(), 10, "ten recipients before show all");
+    await button(sheet().locator('section[aria-labelledby="send-message"]'), m.details.useAsStart).waitFor();
+    await capture("campaign-top");
+    await sheet().getByRole("radio", { name: m.details.desktop, exact: true }).click();
+    assert.equal(await sheet().locator("iframe").evaluate((f) => f.style.width), "1024px", "desktop renders at 1024px");
+    await sheet().locator("#send-message").scrollIntoViewIfNeeded();
+    await capture("campaign-desktop");
+    await button(sheet(), m.details.fullSize).click();
+    const full = page.locator('[data-slot="dialog-content"]');
+    await full.locator("iframe").waitFor();
+    await page.waitForTimeout(300);
+    assert.equal(await full.getByRole("radio", { name: m.details.desktop, exact: true }).getAttribute("aria-checked"), "true", "full size keeps the screen choice");
+    await page.screenshot({ path: path.join(out, `campaign-full-${viewport}-${locale}-${theme}.png`) });
+    await full.getByRole("radio", { name: m.details.phone, exact: true }).click();
+    await page.waitForTimeout(150);
+    await page.screenshot({ path: path.join(out, `campaign-full-phone-${viewport}-${locale}-${theme}.png`) });
+    await page.keyboard.press("Escape");
+    await full.waitFor({ state: "hidden" });
     await button(sheet(), m.details.showAll.replace("{count}", "140")).click();
     assert.equal(await sheet().locator("#send-recipients").count(), 1);
     assert.equal(await sheet().locator('section[aria-labelledby="send-recipients"] ul li').count(), 140, "show all expands the recipient list");

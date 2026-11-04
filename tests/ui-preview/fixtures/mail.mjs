@@ -129,6 +129,26 @@ const contentOf = (s) => {
 
 const detail = (s) => ({ ...s, recipients: recipientsOf(s), failures: failuresOf(s), content: contentOf(s) });
 
+/** A stand-in for the generated certificate PNG: a landscape card with the name on it. */
+const certificateImage = (name, event) =>
+  "data:image/svg+xml;charset=utf-8," +
+  encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="1414" height="1000" viewBox="0 0 1414 1000">
+<rect width="1414" height="1000" fill="#fffdf7"/><rect x="40" y="40" width="1334" height="920" fill="none" stroke="#1a73e8" stroke-width="6"/>
+<text x="707" y="300" font-family="Arial" font-size="64" text-anchor="middle" fill="#0f172a">شهادة حضور</text>
+<text x="707" y="470" font-family="Arial" font-size="84" font-weight="bold" text-anchor="middle" fill="#0f172a">${name}</text>
+<text x="707" y="600" font-family="Arial" font-size="44" text-anchor="middle" fill="#334155">${event}</text>
+<text x="707" y="860" font-family="Arial" font-size="32" text-anchor="middle" fill="#64748b">GDG Qassim</text></svg>`);
+
+/** "Random" recipient, but stepping through the list so each call (another name) differs and runs repeat. */
+let sampleTurn = 0;
+function certificateSample({ pathname }) {
+  const s = SENDS.find((x) => String(x.id) === pathname.split("/").at(-2)) ?? SENDS[0];
+  const people = recipientsOf(s).slice(s.failed);
+  const recipient = people[sampleTurn++ % people.length];
+  const event = s.event?.name ?? "";
+  return { recipient, subject: `شهادة حضور ${event}`, event_name: event, image_url: certificateImage(recipient.name, event) };
+}
+
 function list({ query }) {
   let items = query.kind ? SENDS.filter((s) => KIND_FILTER[query.kind]?.includes(s.kind)) : SENDS.filter((s) => s.kind !== "team-notification");
   if (query.member_id || query.email) {
@@ -148,6 +168,7 @@ let queuedId = 1000;
 export function reset() {
   SENDS.splice(0, SENDS.length, ...initialSends);
   queuedId = 1000;
+  sampleTurn = 0;
 }
 export function queue(kind, body) {
   const total = kind === "campaign" ? body.count + body.guaranteed_recipients.length : body.recipients.length;
@@ -165,6 +186,7 @@ export function finish(id) {
 
 export default [
   { path: /^\/emails\/sends$/, body: list },
+  { path: /^\/emails\/sends\/\d+\/certificate-sample$/, body: certificateSample },
   { path: /^\/emails\/sends\/\d+$/, body: ({ pathname }) => detail(SENDS.find((s) => String(s.id) === pathname.split("/").pop()) ?? SENDS[0]) },
   { path: /^\/emails\/blast\/eligible-count$/, body: { eligible_count: 3951, remaining_capacity: 2184 } },
   { method: "POST", path: /^\/emails\/blast$/, body: ({ body }) => queue("campaign", body) },

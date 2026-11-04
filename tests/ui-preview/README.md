@@ -39,8 +39,10 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 This is a visual check with sample data, not an integration test: the real
 browser test for Club Structure lives in `tests/club-structure/`.
 
-The Mail flow check drives lookup, filters, pagination, polling, details, retry,
-copy, historical null content, reuse, test mail, capacity capping, confirmation,
+The Mail flow check drives lookup, filters, pagination, polling, the row shape
+in All, details, retry, copy, the certificate sample (error, retry, another
+name), the phone/desktop preview and its full-size dialog, historical null
+content, reuse, test mail, capacity capping, confirmation,
 discard, queued mail, and the empty and error states. It uses the same API
 fixtures, checks 44px targets on phones, and captures the open composer and drawers:
 
