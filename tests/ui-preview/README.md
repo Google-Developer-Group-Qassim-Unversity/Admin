@@ -38,3 +38,14 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 
 This is a visual check with sample data, not an integration test: the real
 browser test for Club Structure lives in `tests/club-structure/`.
+
+`--exercise <module>` runs that module's default export with
+`{ page, locale, theme, viewport, out }` before the final screenshot.
+
+The event deletion check opens the super-admin modal, inspects submissions,
+checks pagination and resource links, and captures both active and quiet examples:
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /events/209/edit --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-flow.mjs --out .preview-shots/deletion
+node tests/ui-preview/shoot.mjs --routes /events/209/edit --as dept --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-permissions.mjs
+```
