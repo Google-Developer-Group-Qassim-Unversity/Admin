@@ -76,3 +76,11 @@ read fixture data and open/close controls; they do not submit forms.
 node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/mail-review.mjs --out .preview-shots/mail-v2-review/edge
 node tests/ui-preview/shoot.mjs --routes /manage-members,/settings/semesters,/events/209/manage,/events/209/responses,/events/209/attendance,/events/209/content --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/motion-review.mjs --out .preview-shots/mail-v2-review/shared
 ```
+
+The event deletion check opens the super-admin modal, inspects submissions,
+checks pagination and resource links, and captures both active and quiet examples:
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /events/209/edit --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-flow.mjs --out .preview-shots/deletion
+node tests/ui-preview/shoot.mjs --routes /events/209/edit --as dept --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-permissions.mjs
+```

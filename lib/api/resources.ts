@@ -35,6 +35,8 @@ import type {
   EventContentLink,
   EventDetails,
   EventHistory,
+  EventDeletionImpact,
+  DeletionResourcePage,
   EventStatus,
   EventsPageParams,
   Form,
@@ -160,6 +162,11 @@ export function createApi(request: Requester) {
 
     setStatus: (id: number, status: EventStatus) =>
       request.json<Event>(`/events/${id}/status`, { method: "PUT", body: { status } }),
+
+    deletionImpact: (id: number) => request.json<EventDeletionImpact>(`/events/${id}/deletion-impact`),
+
+    deletionResource: (id: number, resource: string, page: number) =>
+      request.json<DeletionResourcePage>(`/events/${id}/deletion-impact/${encodeURIComponent(resource)}`, { query: { page, page_size: 20 } }),
 
     remove: (id: number) => request.json<{ detail: string }>(`/events/${id}`, { method: "DELETE" }),
 

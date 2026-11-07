@@ -944,3 +944,18 @@ export interface SemesterInput {
   end_date: string;
   is_public: boolean;
 }
+
+export interface EventDeletionImpact {
+  event_id: number;
+  event_name: string;
+  resources: { key: string; count: number }[];
+  total: number;
+  retained_notifications: number;
+}
+
+export interface DeletionResourcePage {
+  items: { id: string; label: string; details: Record<string, string> }[];
+  total: number;
+  page: number;
+  page_size: number;
+}

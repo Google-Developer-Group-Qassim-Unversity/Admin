@@ -451,10 +451,7 @@ export function useBackfillAttendance() {
   });
 }
 
-/**
- * Hook for deleting a draft event.
- * Only events with status "draft" can be deleted.
- */
+/** Permanently delete an event. The backend requires a super admin. */
 export function useDeleteEvent() {
   const api = useApi();
   const queryClient = useQueryClient();
@@ -468,5 +465,25 @@ export function useDeleteEvent() {
       // A pipeline request it was published from goes too, and frees its days.
       queryClient.invalidateQueries({ queryKey: pipelineKeys.all });
     },
+  });
+}
+
+export function useEventDeletionImpact(id: number, enabled: boolean) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.detail(id), "deletionImpact"],
+    queryFn: () => api.events.deletionImpact(id),
+    enabled,
+    staleTime: 0,
+  });
+}
+
+export function useEventDeletionResource(id: number, resource: string, page: number, enabled: boolean) {
+  const api = useApi();
+  return useQuery({
+    queryKey: [...eventKeys.detail(id), "deletionResource", resource, page],
+    queryFn: () => api.events.deletionResource(id, resource, page),
+    enabled,
+    staleTime: 0,
   });
 }
