@@ -147,7 +147,7 @@ const ROUTE_PERMS: [prefix: string, needs: Perm[] | "super_admin"][] = [
   ["/manage-members", ["members.view"]],
   ["/permissions", ["permissions.grant", "permissions.manage"]],
   ["/manage-admins", "super_admin"],
-  ["/manage-emails", ["emails.event", "emails.direct", "emails.blast", "emails.logs"]],
+  ["/manage-emails", ["emails.event", "emails.direct", "emails.blast", "emails.logs", "certificates.manual"]],
   ["/certificates", ["certificates.manual"]],
   ["/points/manage", ["points.catalogue"]],
   ["/points", ["points.custom", "points.catalogue"]],

@@ -58,9 +58,11 @@ await mkdir(out, { recursive: true });
 
 // --- fixtures: every fixtures/*.mjs default-exports [{ method?, path: RegExp, status?, body | (ctx) => body }]
 const fixtures = [];
+const resetFixtures = [];
 for (const file of (await readdir(path.join(here, "fixtures"))).filter((f) => f.endsWith(".mjs")).sort()) {
   const mod = await import(pathToFileURL(path.join(here, "fixtures", file)).href);
   fixtures.push(...(mod.default || []));
+  if (mod.reset) resetFixtures.push(mod.reset);
 }
 
 // --- CSS and bundle
@@ -171,6 +173,7 @@ try {
     for (const locale of locales) {
       for (const theme of themes) {
         for (const route of routes) {
+          for (const reset of resetFixtures) reset();
           const page = await context.newPage();
           const errors = [];
           page.on("pageerror", (e) => errors.push(e.message));
@@ -206,7 +209,7 @@ try {
           const name = `${route.replace(/[^a-z0-9]+/gi, "-").replace(/^-|-$/g, "") || "home"}-${viewport}-${locale}-${theme}${scroll ? `-s${scroll}` : ""}${personas.length > 1 || persona !== "super" ? `-${persona}` : ""}${click ? "-click" : ""}${fillSelector ? "-fill" : ""}.png`;
           await page.screenshot({ path: path.join(out, name), fullPage: full });
           console.log(`${errors.length ? "✗" : "✓"} ${path.join(out, name)}`);
-          for (const e of errors) console.log(`    ${e.split("\n")[0]}`);
+          for (const e of errors) console.log(`    ${e}`);
           failures += errors.length ? 1 : 0;
           await page.close();
         }

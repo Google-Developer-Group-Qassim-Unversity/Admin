@@ -71,7 +71,6 @@ function NotificationPopover() {
       open={open}
       onOpenChange={(next) => {
         setOpen(next);
-        if (!next) setScope("mine");
       }}
     >
       <PopoverTrigger asChild>
@@ -89,6 +88,7 @@ function NotificationPopover() {
         </Button>
       </PopoverTrigger>
       <PopoverContent
+        onCloseAutoFocus={() => { if (!open) setScope("mine"); }}
         align="end"
         collisionPadding={8}
         className="w-[calc(100vw-1rem)] gap-0 overflow-hidden rounded-xl p-0 sm:w-[400px]"

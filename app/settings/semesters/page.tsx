@@ -46,6 +46,7 @@ export default function ManageSemestersPage() {
 
   const [dialogOpen, setDialogOpen] = React.useState(false);
   const [editing, setEditing] = React.useState<Semester | null>(null);
+  const [deleteOpen, setDeleteOpen] = React.useState(false);
   const [pendingDelete, setPendingDelete] = React.useState<Semester | null>(null);
 
   const rows = semesters ?? [];
@@ -68,7 +69,6 @@ export default function ManageSemestersPage() {
         : await createSemester.mutateAsync(payload);
       toast.success(t(editing ? "semesterUpdated" : "semesterAdded", { name: saved.name }));
       setDialogOpen(false);
-      setEditing(null);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("saveFailed"));
     }
@@ -79,7 +79,7 @@ export default function ManageSemestersPage() {
     try {
       await deleteSemester.mutateAsync(pendingDelete.id);
       toast.success(t("semesterDeleted", { name: isolate(pendingDelete.name) }));
-      setPendingDelete(null);
+      setDeleteOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("deleteFailed"));
     }
@@ -112,7 +112,7 @@ export default function ManageSemestersPage() {
         variant="ghost"
         size="icon-sm"
         className="text-door-madder-ink hover:bg-door-madder-soft"
-        onClick={() => setPendingDelete(semester)}
+        onClick={() => { setPendingDelete(semester); setDeleteOpen(true); }}
         title={t("delete")}
       >
         <Trash2 className="h-4 w-4" />
@@ -217,14 +217,13 @@ export default function ManageSemestersPage() {
         open={dialogOpen}
         onOpenChange={(open) => {
           setDialogOpen(open);
-          if (!open) setEditing(null);
         }}
         semester={editing}
         onSubmit={handleSubmit}
         isLoading={isSaving}
       />
 
-      <AlertDialog open={pendingDelete !== null} onOpenChange={(open) => !open && setPendingDelete(null)}>
+      <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t("deleteConfirmTitle", { name: isolate(pendingDelete?.name ?? "") })}</AlertDialogTitle>

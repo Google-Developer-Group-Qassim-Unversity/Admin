@@ -39,8 +39,43 @@ full-page capture, `--scroll 600` to capture lower down. It uses
 This is a visual check with sample data, not an integration test: the real
 browser test for Club Structure lives in `tests/club-structure/`.
 
+The Mail flow check drives lookup, filters, pagination, polling, the row shape
+in All, details, retry, copy, the certificate sample (error, retry, another
+name), the phone/desktop preview and its full-size dialog, historical null
+content, reuse, test mail, capacity capping, confirmation,
+discard, queued mail, and the empty and error states. It uses the same API
+fixtures, checks 44px targets on phones, and captures the open composer and drawers:
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/mail-flow.mjs --out .preview-shots/mail/flow
+```
+
 `--exercise <module>` runs that module's default export with
 `{ page, locale, theme, viewport, out }` before the final screenshot.
+
+The composer check covers help popovers, slider direction and keyboard steps,
+capacity markers, live address parsing, retained invalid addresses, audience
+state, the phone preview, the discard guard, and reduced motion. It captures
+mid-close PNGs and JSON evidence that the closed content remains mounted with
+its exit animation running. One desktop case also checks Dialog, AlertDialog
+and Popover exit attributes. All mail requests stay inside the fixture harness.
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/composer-flow.mjs --out .preview-shots/mail-v2-composer
+pnpm test # Pure email-parser cases using Node's strip-types runner.
+```
+
+Review checks cover certificate sample HTTP/network failures, a delayed sample
+response after changing sends, and resetting recipient/preview state. Shared
+motion checks exercise Members, Semesters, and event dialogs, including a
+calendar popover inside a dialog, hover/keyboard tooltip states, and filled forms
+that retain their values and titles throughout the exit. These only
+read fixture data and open/close controls; they do not submit forms.
+
+```bash
+node tests/ui-preview/shoot.mjs --routes /manage-emails --viewports phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/mail-review.mjs --out .preview-shots/mail-v2-review/edge
+node tests/ui-preview/shoot.mjs --routes /manage-members,/settings/semesters,/events/209/manage,/events/209/responses,/events/209/attendance,/events/209/content --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/motion-review.mjs --out .preview-shots/mail-v2-review/shared
+```
 
 The event deletion check opens the super-admin modal, inspects submissions,
 checks pagination and resource links, and captures both active and quiet examples:
