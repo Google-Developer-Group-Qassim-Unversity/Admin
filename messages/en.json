@@ -2069,7 +2069,7 @@
     "book": {
       "start": "Book dates",
       "hint": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. We hold them for 24 hours while you fill in the request.",
-      "hintSuperAdmin": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. As a super admin you can also book a closed day, or a held one: you'll decide what happens to the request holding it.",
+      "hintSuperAdmin": "Tap each day you want, up to {max} in a row; tap a picked day to drop it. As a super admin you can also book closed or occupied days, including alongside published events. Choose whether to keep existing bookings or move them.",
       "pickDays": "Pick the days on the calendar",
       "limit": "That's the limit: a booking is at most {max} days in a row",
       "range": "{start} → {end}",
@@ -2631,10 +2631,12 @@
     },
     "override": {
       "title": "Book over {count, plural, one {another request} other {# other requests}}?",
-      "warning": "These days are already held. Booking them takes them away from the requests below, right now, and their departments are told. Decide what happens to each one.",
+      "warning": "These days already have bookings. Keep them to book alongside them, or choose which requests to reschedule or delete.",
       "untitled": "Untitled request",
       "choose": "What happens to this request",
-      "chooseHint": "Choose: reschedule or delete.",
+      "keepBooking": "Keep booking",
+      "keepBookingBody": "Both bookings keep these dates. This request stays as it is, and no override email is sent.",
+      "chooseHint": "Choose: keep the booking, reschedule or delete.",
       "reschedule": "Reschedule",
       "rescheduleBody": "It goes back to a draft with no dates. Everything in it is kept, but the teams' work on it stops; the department books new dates and submits it again.",
       "delete": "Delete",
@@ -2642,10 +2644,10 @@
       "email": "{count, plural, =0 {No email: {department} has no members with an email.} one {An email goes to # member of {department}.} other {An email goes to # members of {department}.}}",
       "showMore": "Show names",
       "showLess": "Hide names",
-      "confirm": "Book over them",
+      "confirm": "Confirm booking",
       "keep": "Pick other days",
       "publishedTitle": "A published event is on these days",
-      "publishedBody": "A published event can't be booked over. Pick other days."
+      "publishedBody": "This event is published. You can keep it and book alongside it; it cannot be rescheduled or deleted here."
     },
     "stations": {
       "label": "The request's stations",
