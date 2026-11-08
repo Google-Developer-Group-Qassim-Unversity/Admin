@@ -109,7 +109,6 @@ export function ActionReasonSelect({
   const handleSelectAction = (action: Action) => {
     onChange(action.id, action.action_name, action.points);
     setOpen(false);
-    setSearchValue("");
   };
 
   const handleCreateCustom = () => {
@@ -117,7 +116,6 @@ export function ActionReasonSelect({
     // Custom action: action_id=null, action_name=typed text, points=null (user enters manually)
     onChange(null, searchValue.trim(), null);
     setOpen(false);
-    setSearchValue("");
   };
 
   const handleClear = (e: React.MouseEvent) => {
@@ -179,7 +177,7 @@ export function ActionReasonSelect({
           </div>
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+      <PopoverContent onCloseAutoFocus={() => { if (!open) setSearchValue(""); }} className="w-[--radix-popover-trigger-width] p-0" align="start">
         <Command shouldFilter={false}>
           <CommandInput
             placeholder={restricted ? t("searchActions") : t("searchOrCreate")}

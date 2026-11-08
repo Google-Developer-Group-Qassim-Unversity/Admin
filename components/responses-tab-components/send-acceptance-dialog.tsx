@@ -250,17 +250,7 @@ export function SendAcceptanceDialog({
   const handleOpenChange = useCallback(
     (newOpen: boolean) => {
       if (isLoading && !newOpen) return;
-      if (!newOpen) {
-        setSubject("");
-        setWhatsappUrl("");
-        setTemplateBody("");
-        setTemplateStyles("");
-        setTemplateLoaded(false);
-        setRecipientsOpen(false);
-        setTestSectionOpen(false);
-        setTestEmails("");
-        setDialogKey((prev) => prev + 1);
-      }
+
       onOpenChange(newOpen);
     },
     [isLoading, onOpenChange],
@@ -315,6 +305,18 @@ export function SendAcceptanceDialog({
 return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent
+        onCloseAutoFocus={() => {
+          if (open) return;
+          setSubject("");
+          setWhatsappUrl("");
+          setTemplateBody("");
+          setTemplateStyles("");
+          setTemplateLoaded(false);
+          setRecipientsOpen(false);
+          setTestSectionOpen(false);
+          setTestEmails("");
+          setDialogKey((prev) => prev + 1);
+        }}
         key={dialogKey}
         className="flex flex-col sm:max-w-5xl lg:max-h-[90vh] lg:overflow-hidden"
       >

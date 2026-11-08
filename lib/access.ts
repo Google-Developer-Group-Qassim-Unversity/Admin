@@ -51,7 +51,6 @@ export type Perm = (typeof PERMS)[number];
 export const DEPARTMENT_SCOPED: ReadonlySet<Perm> = new Set<Perm>([
   "events.create",
   "events.edit",
-  "events.delete",
   "attendance.take",
   "attendance.backfill",
   "forms.manage",
@@ -131,6 +130,7 @@ export interface AccessMe {
 export function can(access: AccessMe | null | undefined, perm: Perm, departmentId?: number | null): boolean {
   if (!access) return false;
   if (access.is_super_admin) return true;
+  if (perm === "events.delete") return false;
   if (!access.is_staff) return false;
   if (departmentId != null && DEPARTMENT_SCOPED.has(perm)) {
     return access.departments.some((d) => d.id === departmentId && d.permissions.includes(perm));
@@ -147,7 +147,7 @@ const ROUTE_PERMS: [prefix: string, needs: Perm[] | "super_admin"][] = [
   ["/manage-members", ["members.view"]],
   ["/permissions", ["permissions.grant", "permissions.manage"]],
   ["/manage-admins", "super_admin"],
-  ["/manage-emails", ["emails.event", "emails.direct", "emails.blast", "emails.logs"]],
+  ["/manage-emails", ["emails.event", "emails.direct", "emails.blast", "emails.logs", "certificates.manual"]],
   ["/certificates", ["certificates.manual"]],
   ["/points/manage", ["points.catalogue"]],
   ["/points", ["points.custom", "points.catalogue"]],

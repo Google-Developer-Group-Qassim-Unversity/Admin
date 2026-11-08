@@ -91,6 +91,7 @@ export function BackfillTab({
   const [signature, setSignature] = React.useState<string | null>(null);
   const [summaryDialog, setSummaryDialog] =
     React.useState<BackfillSummary | null>(null);
+  const [summaryOpen, setSummaryOpen] = React.useState(false);
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const isValidData = metadata?.valid === true;
@@ -178,6 +179,7 @@ export function BackfillTab({
       const members = verifiedRows.map(transformRowToMember);
       const summary = await api.attendance.backfill(eventId, members, day);
 
+      setSummaryOpen(true);
       setSummaryDialog({
         created_count: summary.created_count,
         existing_count: summary.existing_count,
@@ -201,9 +203,7 @@ export function BackfillTab({
   };
 
   const handleCloseSummary = () => {
-    setSummaryDialog(null);
-    handleReset();
-    onBackfillComplete();
+    setSummaryOpen(false);
   };
 
   const isVerified = metadata !== null;
@@ -437,10 +437,15 @@ export function BackfillTab({
       )}
 
       <Dialog
-        open={!!summaryDialog}
+        open={summaryOpen}
         onOpenChange={() => summaryDialog && handleCloseSummary()}
       >
-        <DialogContent>
+        <DialogContent onCloseAutoFocus={() => {
+          if (summaryOpen) return;
+          setSummaryDialog(null);
+          handleReset();
+          onBackfillComplete();
+        }}>
           <DialogHeader>
             <DialogTitle>{t("completeTitle")}</DialogTitle>
             <DialogDescription>

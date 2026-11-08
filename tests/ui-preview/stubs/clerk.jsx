@@ -9,7 +9,13 @@ export function useUser() {
   return {
     isLoaded: true,
     isSignedIn: true,
-    user: { fullName: "Ibrahim", firstName: "Ibrahim", imageUrl: null, publicMetadata: {} },
+    user: {
+      fullName: "Ibrahim",
+      firstName: "Ibrahim",
+      imageUrl: null,
+      publicMetadata: {},
+      primaryEmailAddress: { emailAddress: "ibrahim@gdg-q.com" },
+    },
   };
 }
 function Avatar() {

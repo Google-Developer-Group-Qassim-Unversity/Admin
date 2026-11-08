@@ -1,27 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Loader2, Trash2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { DeleteEventDialog } from "@/components/events/delete-event-dialog";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { EventForm, type EventFormData } from "@/components/event-form";
-import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDepartment, useDeleteEvent } from "@/hooks/use-event";
+import { useEventDetails, useActions, useUpdateEvent, useDepartments, useDepartment } from "@/hooks/use-event";
 import { shouldContactSupport } from "@/lib/api/errors";
 import { parseLocalDateTime, formatLocalDateTime } from "@/lib/utils";
 import { useEventContext } from "@/contexts/event-context";
@@ -30,12 +17,10 @@ import { useTranslations } from "next-intl";
 
 export default function EventEditPage() {
   const t = useTranslations("editEvent");
-  const tc = useTranslations("common.actions");
   const { event, refetch } = useEventContext();
   // Still needed by EventForm, which forwards it to the image upload - the
   // uploads resource has not migrated to the api module yet.
   const { getToken } = useAuth();
-  const router = useRouter();
 
   const { 
     data: eventDetails, 
@@ -56,7 +41,6 @@ export default function EventEditPage() {
   );
   
   const updateEventMutation = useUpdateEvent();
-  const deleteEventMutation = useDeleteEvent();
 
   const findCompositeAction = React.useCallback(
     (eventActions: [EventAction, EventAction]): Action[] | undefined => {
@@ -90,6 +74,7 @@ export default function EventEditPage() {
       startDate: parseLocalDateTime(eventDetails.event.start_datetime),
       endDate: parseLocalDateTime(eventDetails.event.end_datetime),
       is_official: eventDetails.event.is_official === 1,
+      level: eventDetails.event.level,
       image_url: eventDetails.event.image_url,
       department_id: departmentId,
       composite_action: compositeAction,
@@ -99,8 +84,6 @@ export default function EventEditPage() {
   if (!event) {
     return null;
   }
-  
-  const isDraft = event.status === "draft";
 
   const handleSubmit = async (data: EventFormData) => {
     try {
@@ -130,6 +113,7 @@ export default function EventEditPage() {
           start_datetime: formatLocalDateTime(data.startDate),
           end_datetime: formatLocalDateTime(data.endDate),
           status: event.status,
+          level: data.level,
           image_url: data.image_url || null,
           is_official: data.is_official ? 1 : 0,
         },
@@ -155,19 +139,6 @@ export default function EventEditPage() {
       } else {
         toast.error(errorMessage);
       }
-    }
-  };
-
-  const handleDelete = async () => {
-    try {
-      await deleteEventMutation.mutateAsync(event.id);
-      toast.success(t("deletedSuccess"));
-      router.push("/events");
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : t("unknownError");
-      toast.error(t("deleteFailed"), {
-        description: errorMessage,
-      });
     }
   };
 
@@ -208,43 +179,7 @@ export default function EventEditPage() {
             </h2>
             <p className="text-ink-2 mt-1 text-[13.5px]">{t("subtitle")}</p>
           </div>
-          {isDraft && (
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="shrink-0 self-start"
-                  disabled={deleteEventMutation.isPending}
-                >
-                  {deleteEventMutation.isPending ? (
-                    <Loader2 className="animate-spin" />
-                  ) : (
-                    <Trash2 />
-                  )}
-                  {t("deleteDraft")}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>{t("deleteTitle")}</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    {t.rich("confirmDelete", { strong: (chunks) => <strong>{chunks}</strong>, name: event.name })}
-                    {" "}{t("deleteDescription")}
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>{tc("cancel")}</AlertDialogCancel>
-                  <AlertDialogAction
-                    variant="destructive"
-                    onClick={handleDelete}
-                  >
-                    {tc("delete")}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-          )}
+          <DeleteEventDialog event={event} />
         </div>
         <EventForm
           mode="edit"

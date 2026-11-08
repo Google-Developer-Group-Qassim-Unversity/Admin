@@ -1,7 +1,9 @@
 import * as React from "react";
 import { toast } from "sonner";
 
-import { uploadEmailAttachment } from "@/lib/api";
+import { useTranslations } from "next-intl";
+import { useApi } from "@/lib/api/client";
+import { isolate } from "@/lib/format";
 import type { EmailAttachmentInfo } from "@/lib/api-types";
 
 export const MAX_ATTACHMENT_FILE_SIZE = 10 * 1024 * 1024;
@@ -14,32 +16,26 @@ interface AttachmentEntry {
   info?: EmailAttachmentInfo;
 }
 
-type GetTokenFn = () => Promise<string | null>;
-
 /**
- * Owns the upload-one-attachment-at-a-time flow shared by the direct-email
- * and blast composers: track each file's upload status, surface a toast on
- * failure, and derive the ready-to-send attachment list and total size.
+ * Owns the Mail composer's upload-one-attachment-at-a-time flow: track each
+ * file's upload status, surface a toast on failure, and derive the
+ * ready-to-send attachment list and total size.
  */
-export function useAttachmentUploads(getToken?: GetTokenFn, maxTotalSize: number = MAX_TOTAL_ATTACHMENT_SIZE) {
+export function useAttachmentUploads(maxTotalSize: number = MAX_TOTAL_ATTACHMENT_SIZE) {
+  const api = useApi();
+  const t = useTranslations("manageEmails.composer");
   const [attachmentEntries, setAttachmentEntries] = React.useState<AttachmentEntry[]>([]);
 
   const handleFilesAccepted = async (newFiles: File[]) => {
     setAttachmentEntries((prev) => [...prev, ...newFiles.map((file) => ({ file, status: "uploading" as const }))]);
 
     for (const file of newFiles) {
-      const result = await uploadEmailAttachment(file, getToken);
-      setAttachmentEntries((prev) =>
-        prev.map((entry) =>
-          entry.file === file
-            ? result.success
-              ? { ...entry, status: "done" as const, info: result.data }
-              : { ...entry, status: "error" as const }
-            : entry
-        )
-      );
-      if (!result.success) {
-        toast.error(`Failed to upload ${file.name}: ${result.error.message}`);
+      try {
+        const info = await api.emails.uploadAttachment(file);
+        setAttachmentEntries((prev) => prev.map((entry) => entry.file === file ? { file, status: "done", info } : entry));
+      } catch {
+        setAttachmentEntries((prev) => prev.map((entry) => entry.file === file ? { file, status: "error" } : entry));
+        toast.error(t("uploadFailed", { filename: isolate(file.name) }));
       }
     }
   };
@@ -61,6 +57,7 @@ export function useAttachmentUploads(getToken?: GetTokenFn, maxTotalSize: number
     files,
     readyAttachments,
     isUploadingAttachments,
+    hasFailedAttachments: attachmentEntries.some((entry) => entry.status === "error"),
     totalAttachmentSize,
     attachmentSizeExceeded,
     handleFilesAccepted,

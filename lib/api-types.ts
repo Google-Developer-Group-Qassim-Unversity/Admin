@@ -9,6 +9,10 @@ export type LocationType = "online" | "on-site" | "none" | "hidden";
 //  'active' means registeration is closed but the event is ongoing and taking attendance
 export type EventStatus = "draft" | "open" | "active" | "closed";
 
+/** How much prior knowledge an event assumes. Shown on the member app's event cards. */
+export const EVENT_LEVELS = ["beginner", "intermediate", "advanced"] as const;
+export type EventLevel = (typeof EVENT_LEVELS)[number];
+
 export interface Event {
   id: number;
   name: string;
@@ -18,6 +22,7 @@ export interface Event {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
+  level: EventLevel;
   image_url: string | null;
   /** Join link for remote events. Set from the "Google Form & Publish" tab. */
   meeting_url: string | null;
@@ -121,6 +126,8 @@ export interface EventApiPayload {
   start_datetime: string;
   end_datetime: string;
   status: EventStatus;
+  /** Beginner when left out on create; an update without it keeps the event's level. */
+  level?: EventLevel;
   image_url: string | null;
   is_official: number;
   created_at?: string;
@@ -592,9 +599,6 @@ export interface ScanAttendanceResponse {
 
 export type CertificateLanguage = "ar" | "en";
 
-/** "google" sends via the default Gmail threshold-switching system; "ses" is the optional AWS SES path. */
-export type EmailProvider = "google" | "ses";
-
 export interface CertificateMember {
   name: string;
   email: string;
@@ -617,7 +621,6 @@ export interface ManualCertificateRequest {
   event?: CertificateSimpleEvent;
   members: ManualCertificateMember[];
   language: CertificateLanguage;
-  provider?: EmailProvider;
 }
 
 export interface ManualCertificateResponse {
@@ -737,7 +740,6 @@ export interface BlastSendRequest {
   order_by: BlastOrderBy;
   guaranteed_recipients: BlastGuaranteedRecipientInput[];
   attachments: EmailAttachmentInfo[];
-  provider?: EmailProvider;
 }
 
 export interface BlastSendResponse {
@@ -754,7 +756,6 @@ export interface BlastTestRequest {
   preview_text?: string;
   test_emails: string[];
   attachments: EmailAttachmentInfo[];
-  provider?: EmailProvider;
 }
 
 export interface BlastTestResponse {
@@ -776,7 +777,6 @@ export interface DirectEmailRequest {
   html_content: string;
   recipients: BlastGuaranteedRecipientInput[];
   attachments: EmailAttachmentInfo[];
-  provider?: EmailProvider;
 }
 
 export interface DirectEmailResponse {
@@ -814,52 +814,100 @@ export interface EmailJobModel {
   finished_at: string | null;
 }
 
-export interface EmailTemplate {
-  id: number;
-  name: string;
-  subject: string;
-  html_content: string;
-  preview_text: string | null;
-  created_by: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface EmailTemplateInput {
-  name: string;
-  subject: string;
-  html_content: string;
-  preview_text?: string;
-}
-
 // =============================================================================
-// Email Logs & Dashboard
+// Sends: the Mail page's outbox (GET /emails/sends)
 // =============================================================================
 
-export type EmailType =
+/**
+ * Public outbox kinds, distinct from the job types used by event-page polling.
+ * A send is one `email_jobs` row, however many emails it went out as.
+ */
+export type SendKind =
+  | "campaign"
   | "event-certificate"
   | "manual-certificate"
-  | "event_announcement"
   | "acceptance"
-  | "blast";
-export type EmailFromAddress = "info@kerneltics.com" | "gdg.qu1@gmail.com";
+  | "event-message"
+  | "direct"
+  | "team-notification";
 
-export interface EnrichedEmailLog {
+/** What the outbox can filter by. `certificate` covers event and manual certificates. */
+export type SendKindFilter =
+  | "campaign"
+  | "certificate"
+  | "acceptance"
+  | "event-message"
+  | "direct"
+  | "team-notification";
+
+export interface Send {
   id: number;
-  email_type: EmailType;
-  from_address: EmailFromAddress;
-  sent_at: string;
-  sent_by: number;
-  recipient_count: number;
-  data: Record<string, unknown> | null;
-  member_id: number | null;
-  event_id: number | null;
-  member_name: string | null;
-  member_email: string | null;
-  event_name: string | null;
-  event_is_official: number | null;
-  sender_name: string | null;
+  kind: SendKind;
+  status: EmailJobStatus;
+  subject: string | null;
+  event: { id: number; name: string } | null;
+  sender: { id: number; name: string };
+  total: number;
+  succeeded: number;
+  failed: number;
+  created_at: string;
+  finished_at: string | null;
+  /** How the send split across the Gmail addresses, e.g. 500 from one and 1,957 from the other. */
+  from_addresses: { address: string; count: number }[];
 }
+
+export interface SendsPage {
+  items: Send[];
+  /** Pass as `before` for the next (older) page; null on the last one. */
+  next_before: number | null;
+}
+
+/** Omitted `kind` means everything except team notifications. `member_id` / `email`: sends that included that person. */
+export interface SendsFilters {
+  kind?: SendKindFilter;
+  member_id?: number;
+  email?: string;
+}
+
+export interface SendRecipient {
+  name: string | null;
+  email: string;
+  member_id: number | null;
+}
+
+export interface SendFailure {
+  recipient: string;
+  error: string;
+}
+
+/** Historical fields may be null when they were never logged. Certificates have no content. */
+export interface SendContent {
+  subject: string | null;
+  preview_text: string | null;
+  html_content: string | null;
+  attachments: { filename: string; url: string }[];
+}
+
+export interface SendDetail extends Send {
+  recipients: SendRecipient[];
+  failures: SendFailure[];
+  content: SendContent | null;
+}
+
+/**
+ * One certificate email rebuilt for a random person the send reached: who,
+ * the subject they got, and their generated certificate. Each call picks again.
+ */
+export interface CertificateSample {
+  recipient: { name: string; email: string; member_id: number | null };
+  subject: string;
+  event_name: string;
+  image_url: string;
+}
+
+// =============================================================================
+// Email Dashboard (the home page's numbers)
+// =============================================================================
 
 export interface EmailDashboardStats {
   addresses: Record<string, { usage: number }>;
@@ -867,13 +915,6 @@ export interface EmailDashboardStats {
   total_24h: number;
 }
 
-export interface EmailLogFilters {
-  email_type?: EmailType;
-  event_id?: number;
-  member_id?: number;
-  start_date?: string;
-  end_date?: string;
-}
 // =============================================================================
 // Semesters
 // =============================================================================
@@ -909,4 +950,19 @@ export interface SemesterInput {
   start_date: string;
   end_date: string;
   is_public: boolean;
+}
+
+export interface EventDeletionImpact {
+  event_id: number;
+  event_name: string;
+  resources: { key: string; count: number }[];
+  total: number;
+  retained_notifications: number;
+}
+
+export interface DeletionResourcePage {
+  items: { id: string; label: string; details: Record<string, string> }[];
+  total: number;
+  page: number;
+  page_size: number;
 }
