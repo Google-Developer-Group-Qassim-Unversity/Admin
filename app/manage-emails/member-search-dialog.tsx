@@ -48,14 +48,6 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
 
   const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
 
-  React.useEffect(() => {
-    if (!open) {
-      setStaged(new Map());
-      setSearchQuery("");
-      setPage(1);
-    }
-  }, [open]);
-
   // A new search is a new result set - back to page one.
   React.useEffect(() => {
     setPage(1);
@@ -93,7 +85,12 @@ export function MemberSearchDialog({ open, onOpenChange, onConfirm }: MemberSear
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[92dvh] flex-col sm:h-auto sm:max-h-[80vh] sm:max-w-2xl">
+      <DialogContent className="flex h-[92dvh] flex-col sm:h-auto sm:max-h-[80vh] sm:max-w-2xl" onCloseAutoFocus={() => {
+        if (open) return;
+        setStaged(new Map());
+        setSearchQuery("");
+        setPage(1);
+      }}>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>{t("description")}</DialogDescription>

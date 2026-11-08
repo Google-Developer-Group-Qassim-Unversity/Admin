@@ -2,47 +2,68 @@
 
 import * as React from "react";
 
+import { sanitizeHtml } from "./email-composer-utils";
+
 /**
- * Renders email HTML at a fixed phone viewport (375 x 667 by default) and
- * scales it down to the container's width when that is narrower - so the
- * preview inside a 360px bottom sheet shows the whole email the way a phone
+ * Renders email HTML at a fixed viewport width (a 375px phone by default, or
+ * a 1024px desktop) and scales it down to the container's width when that is
+ * narrower - so a 360px bottom sheet shows the whole email the way that screen
  * would, instead of overflowing sideways. Never scales up.
+ *
+ * `height` is the viewport's height before scaling; `fillHeight` instead makes
+ * the frame as tall as its container (give the container a height).
  */
 export function ScaledEmailFrame({
   srcDoc,
   title,
   width = 375,
   height = 667,
+  fillHeight = false,
   className,
 }: {
   srcDoc: string;
   title: string;
   width?: number;
   height?: number;
+  fillHeight?: boolean;
   className?: string;
 }) {
+  const safeHtml = React.useMemo(() => typeof window === "undefined" ? "" : sanitizeHtml(srcDoc), [srcDoc]);
   const boxRef = React.useRef<HTMLDivElement>(null);
   const [scale, setScale] = React.useState(1);
+  const [boxHeight, setBoxHeight] = React.useState(0);
 
   React.useLayoutEffect(() => {
     const box = boxRef.current;
     if (!box) return;
-    const update = () => setScale(Math.min(1, box.clientWidth / width));
+    const update = () => {
+      // Hidden panels can measure zero while mounting or changing audience.
+      if (!box.clientWidth) return;
+      setScale(Math.min(1, box.clientWidth / width));
+      setBoxHeight(box.clientHeight);
+    };
     update();
     const ro = new ResizeObserver(update);
     ro.observe(box);
     return () => ro.disconnect();
   }, [width]);
 
+  const frameHeight = fillHeight ? boxHeight / scale : height;
+
   return (
-    <div ref={boxRef} dir="ltr" className={className} style={{ width: "100%", maxWidth: width }}>
-      <div style={{ height: height * scale, overflow: "hidden" }}>
+    <div
+      ref={boxRef}
+      dir="ltr"
+      className={className}
+      style={{ width: "100%", maxWidth: width, height: fillHeight ? "100%" : undefined }}
+    >
+      <div style={{ height: fillHeight ? "100%" : height * scale, overflow: "hidden" }}>
         <iframe
-          srcDoc={srcDoc}
+          srcDoc={safeHtml}
           title={title}
-          sandbox="allow-same-origin"
+          sandbox=""
           className="block border-0 bg-white"
-          style={{ width, height, transform: `scale(${scale})`, transformOrigin: "top left" }}
+          style={{ width, height: frameHeight, transform: `scale(${scale})`, transformOrigin: "top left" }}
         />
       </div>
     </div>

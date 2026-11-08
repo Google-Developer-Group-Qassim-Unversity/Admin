@@ -101,7 +101,6 @@ export function CreateMemberDialog({
           } else {
             toast.success(t("createdSuccess", { name }));
           }
-          resetForm();
           onOpenChange(false);
           onCreatedMember?.(result.member);
           onSuccess?.();
@@ -120,7 +119,6 @@ export function CreateMemberDialog({
       uniId,
       gender,
       createMutation,
-      resetForm,
       onOpenChange,
       onSuccess,
       onCreatedMember,
@@ -133,11 +131,10 @@ export function CreateMemberDialog({
     <Dialog
       open={open}
       onOpenChange={(newOpen) => {
-        if (!newOpen) resetForm();
         onOpenChange(newOpen);
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md" onCloseAutoFocus={() => { if (!open) resetForm(); }}>
         <DialogHeader>
           <DialogTitle>{t("title")}</DialogTitle>
           <DialogDescription>
@@ -237,7 +234,6 @@ export function CreateMemberDialog({
               type="button"
               variant="outline"
               onClick={() => {
-                resetForm();
                 onOpenChange(false);
               }}
               disabled={createMutation.isPending}

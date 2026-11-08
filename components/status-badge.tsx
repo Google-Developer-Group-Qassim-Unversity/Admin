@@ -3,7 +3,7 @@
 import { useTranslations } from "next-intl";
 
 import { FILL, SOFT, type DoorTone, type Tone } from "@/components/najdi";
-import type { EventStatus } from "@/lib/api-types";
+import type { EmailJobStatus, EventStatus } from "@/lib/api-types";
 
 /**
  * The one status vocabulary. Colour is bound to state everywhere in the
@@ -27,6 +27,15 @@ export const URGENCY_TONE: Record<Urgency, DoorTone> = {
   done: "green",
 };
 
+
+/** A send on the Mail page: going out (ochre), sent with nothing failed (green), some or all failed (madder). */
+export const SEND_TONE: Record<EmailJobStatus, DoorTone> = {
+  queued: "ochre",
+  running: "ochre",
+  succeeded: "green",
+  partial: "madder",
+  failed: "madder",
+};
 
 /** A content link on the event page: live for members (green) or hidden (umber). */
 export const CONTENT_LINK_TONE: Record<"published" | "unpublished", DoorTone> = {

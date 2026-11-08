@@ -90,16 +90,6 @@ export function ManageAttendanceDialog({
     }
   }, [open, activeTab, allMembers.length, fetchAllMembers]);
 
-  React.useEffect(() => {
-    if (!open) {
-      setSelectedMemberIds(new Set());
-      setSearchQuery("");
-      setActiveTab("mark");
-      setSelectedDay("1");
-      setBackfillDay("1");
-    }
-  }, [open]);
-
   const dayInt = parseInt(selectedDay, 10);
 
   const attendedMembers = React.useMemo(() => {
@@ -265,7 +255,14 @@ export function ManageAttendanceDialog({
   return (
     <>
       <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className="flex h-[88dvh] flex-col gap-4 overflow-hidden sm:h-[80vh] sm:max-w-3xl sm:gap-5">
+        <DialogContent onCloseAutoFocus={() => {
+          if (open) return;
+          setSelectedMemberIds(new Set());
+          setSearchQuery("");
+          setActiveTab("mark");
+          setSelectedDay("1");
+          setBackfillDay("1");
+        }} className="flex h-[88dvh] flex-col gap-4 overflow-hidden sm:h-[80vh] sm:max-w-3xl sm:gap-5">
           <DialogHeader>
             <DialogTitle>{t("title")}</DialogTitle>
             <DialogDescription>

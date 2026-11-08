@@ -13,6 +13,12 @@ import type {
 import type {
   ActionsResponse,
   AttendanceResponse,
+  BlastEligibleCountResponse,
+  CertificateSample,
+  BlastSendRequest,
+  BlastSendResponse,
+  BlastTestRequest,
+  BlastTestResponse,
   AttendanceType,
   BackfillMember,
   BackfillResponse,
@@ -20,12 +26,17 @@ import type {
   CreateContentLinkPayload,
   CreateEventPayload,
   Department,
+  DirectEmailRequest,
+  EmailAttachmentInfo,
+  DirectEmailResponse,
   DriveRecordingCandidatesResponse,
   DriveStorageQuotaResponse,
   Event,
   EventContentLink,
   EventDetails,
   EventHistory,
+  EventDeletionImpact,
+  DeletionResourcePage,
   EventStatus,
   EventsPageParams,
   Form,
@@ -38,6 +49,9 @@ import type {
   Semester,
   SemesterInput,
   SendCertificatesResponse,
+  SendDetail,
+  SendsFilters,
+  SendsPage,
   UpdateContentLinkPayload,
   UpdateEventPayload,
   UpdateFormPayload,
@@ -82,6 +96,9 @@ export interface EventsFilters {
  * regardless of this TTL.
  */
 const CACHE_TTL = 15;
+
+/** Sends per page of the Mail page's outbox. */
+export const SENDS_PAGE_SIZE = 30;
 
 /**
  * The endpoints this app calls, grouped by what they are about.
@@ -145,6 +162,11 @@ export function createApi(request: Requester) {
 
     setStatus: (id: number, status: EventStatus) =>
       request.json<Event>(`/events/${id}/status`, { method: "PUT", body: { status } }),
+
+    deletionImpact: (id: number) => request.json<EventDeletionImpact>(`/events/${id}/deletion-impact`),
+
+    deletionResource: (id: number, resource: string, page: number) =>
+      request.json<DeletionResourcePage>(`/events/${id}/deletion-impact/${encodeURIComponent(resource)}`, { query: { page, page_size: 20 } }),
 
     remove: (id: number) => request.json<{ detail: string }>(`/events/${id}`, { method: "DELETE" }),
 
@@ -243,6 +265,32 @@ export function createApi(request: Requester) {
   const actions = {
     list: () => request.json<ActionsResponse>("/actions"),
   };
+
+  /** The Mail page: the outbox of sends, and the two ways to write one (members, specific people). */
+  const emails = {
+    sends: (filters: SendsFilters, before?: number) =>
+      request.json<SendsPage>("/emails/sends", {
+        query: { kind: filters.kind, member_id: filters.member_id, email: filters.email, before, limit: SENDS_PAGE_SIZE },
+      }),
+
+    send: (id: number) => request.json<SendDetail>(`/emails/sends/${id}`),
+
+    /** A certificate send's email for one random recipient it reached; generating the PNG takes a few seconds. */
+    certificateSample: (id: number) => request.json<CertificateSample>(`/emails/sends/${id}/certificate-sample`),
+
+    /** Members the club can email, and what is left of today's Gmail sending capacity. */
+    blastEligibleCount: () =>
+      request.json<BlastEligibleCountResponse>("/emails/blast/eligible-count", { query: { provider: "google" } }),
+
+    blast: (body: BlastSendRequest) => request.json<BlastSendResponse>("/emails/blast", { method: "POST", body }),
+
+    blastTest: (body: BlastTestRequest) => request.json<BlastTestResponse>("/emails/blast/test", { method: "POST", body }),
+
+    uploadAttachment: (file: File) => request.upload<EmailAttachmentInfo>("/email-attachment", file),
+
+    direct: (body: DirectEmailRequest) => request.json<DirectEmailResponse>("/emails/direct", { method: "POST", body }),
+  };
+
 
   const departments = {
     list: (params?: { endDate?: string }) =>
@@ -469,7 +517,7 @@ export function createApi(request: Requester) {
   };
 
   return {
-    access, permissions, events, eventStatus, attendance, certificates, actions, departments, forms, members, clubStructure,
+    access, permissions, events, eventStatus, attendance, certificates, emails, actions, departments, forms, members, clubStructure,
     semesters, pipeline, pipelineRequests,
   };
 }
