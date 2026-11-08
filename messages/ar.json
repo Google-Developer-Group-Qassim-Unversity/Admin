@@ -453,7 +453,8 @@
       "departmentAdministrative": "الأقسام الإدارية",
       "departmentAction": "إجراء القسم *",
       "departmentActionPlaceholder": "اختر إجراء القسم...",
-      "attendanceAccess": "آلية الحضور"
+      "attendanceAccess": "آلية الحضور",
+      "level": "المستوى"
     },
     "registration": {
       "requiredHint": "الأعضاء لازم يسجلون قبل الفعالية. بس المسجلين يقدرون يحضرون ويكسبون نقاط.",
@@ -1100,7 +1101,8 @@
     "details": "التفاصيل",
     "responsible": "المسؤول",
     "responsibleUnknown": "غير مسجل",
-    "createdBy": "أنشأها {name}"
+    "createdBy": "أنشأها {name}",
+    "level": "المستوى"
   },
   "eventLayout": {
     "backToPoints": "رجوع للنقاط",
@@ -3348,5 +3350,10 @@
       "failed": "فشل",
       "succeeded": "نجح"
     }
+  },
+  "eventLevels": {
+    "beginner": "مبتدئ",
+    "intermediate": "متوسط",
+    "advanced": "متقدم"
   }
 }

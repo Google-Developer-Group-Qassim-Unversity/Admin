@@ -453,7 +453,8 @@
       "departmentAdministrative": "Administrative departments",
       "departmentAction": "Department Action *",
       "departmentActionPlaceholder": "Select a department action...",
-      "attendanceAccess": "Attendance Access"
+      "attendanceAccess": "Attendance Access",
+      "level": "Level"
     },
     "registration": {
       "requiredHint": "Members must register beforehand. Only registered members can attend and earn points.",
@@ -1100,7 +1101,8 @@
     "details": "Details",
     "responsible": "Responsible",
     "responsibleUnknown": "Not recorded",
-    "createdBy": "Created by {name}"
+    "createdBy": "Created by {name}",
+    "level": "Level"
   },
   "eventLayout": {
     "backToPoints": "Back to Points",
@@ -3348,5 +3350,10 @@
       "failed": "Failed",
       "succeeded": "Succeeded"
     }
+  },
+  "eventLevels": {
+    "beginner": "Beginner",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
   }
 }
