@@ -84,3 +84,11 @@ checks pagination and resource links, and captures both active and quiet example
 node tests/ui-preview/shoot.mjs --routes /events/209/edit --viewports phone,phone-small,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-flow.mjs --out .preview-shots/deletion
 node tests/ui-preview/shoot.mjs --routes /events/209/edit --as dept --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/deletion-permissions.mjs
 ```
+
+The double-booking check opens the super-admin booking warning with draft and
+published bookings, verifies the available choices and email notice, and confirms
+that both bookings are kept:
+
+```bash
+node tests/ui-preview/shoot.mjs --routes '/pipeline?book=1' --viewports phone,desktop --locales ar,en --themes light,dark --exercise tests/ui-preview/double-booking-flow.mjs --out .preview-shots/double-booking
+```

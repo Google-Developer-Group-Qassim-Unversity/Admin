@@ -349,7 +349,7 @@ export type NotificationKind =
   | "cancelled";
 
 /** What happens to a request a super admin books over. */
-export type BumpOutcome = "reschedule" | "cancel";
+export type BumpOutcome = "keep" | "reschedule" | "cancel";
 
 /** `GET /pipeline/overlaps`: the requests a booking would bump, and who each email goes to. */
 export interface PipelineOverlaps {
