@@ -40,6 +40,8 @@ import type {
   EventStatus,
   EventsPageParams,
   Form,
+  GoogleFormsAuthStartResponse,
+  GoogleFormsAuthStatus,
   MakeRecordingCandidatePublicResponse,
   Member,
   MemberStats,
@@ -309,6 +311,20 @@ export function createApi(request: Requester) {
 
     update: (formId: number, payload: UpdateFormPayload) =>
       request.json<Form>(`/forms/${formId}/`, { method: "PUT", body: payload }),
+
+    googleAuthStatus: (force?: boolean) =>
+      request.json<GoogleFormsAuthStatus>("/forms/google-auth/status", {
+        query: { force: force ? true : undefined },
+      }),
+
+    startGoogleAuth: () =>
+      request.json<GoogleFormsAuthStartResponse>("/forms/google-auth/start", { method: "POST" }),
+
+    exchangeGoogleAuth: (code: string, state: string) =>
+      request.json<GoogleFormsAuthStatus>("/forms/google-auth/exchange", {
+        method: "POST",
+        body: { code, state },
+      }),
   };
 
   const members = {

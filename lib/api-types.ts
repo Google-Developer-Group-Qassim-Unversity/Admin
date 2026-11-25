@@ -968,3 +968,26 @@ export interface DeletionResourcePage {
   page: number;
   page_size: number;
 }
+
+// =============================================================================
+// Google Forms OAuth (Admin Settings)
+// =============================================================================
+
+export type GoogleFormsAuthSource = "database" | "env" | "none";
+
+export interface GoogleFormsAuthStatus {
+  valid: boolean;
+  reason: string | null;
+  detail: string | null;
+  checked_at: string;
+  source: GoogleFormsAuthSource;
+  account_email: string | null;
+  connected_at: string | null;
+  connected_by_name: string | null;
+  can_reconnect: boolean;
+  reconnect_unavailable_reason: string | null;
+}
+
+export interface GoogleFormsAuthStartResponse {
+  authorization_url: string;
+}

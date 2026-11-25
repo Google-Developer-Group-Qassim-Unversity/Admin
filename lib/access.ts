@@ -153,6 +153,7 @@ const ROUTE_PERMS: [prefix: string, needs: Perm[] | "super_admin"][] = [
   ["/points", ["points.custom", "points.catalogue"]],
   ["/club-structure/create", ["club_structure.manage"]],
   ["/club-structure", ["club_structure.view"]],
+  ["/settings/google-forms", ["forms.admin"]],
   ["/settings/semesters", ["semesters.manage"]],
   ["/events/create", ["events.create"]],
   ["/events", ["events.view"]],
