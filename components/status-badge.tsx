@@ -43,6 +43,13 @@ export const CONTENT_LINK_TONE: Record<"published" | "unpublished", DoorTone> = 
   unpublished: "umber",
 };
 
+/** Club Google Forms OAuth connection status on Settings. */
+export const GOOGLE_AUTH_TONE: Record<"connected" | "unreachable" | "expired", DoorTone> = {
+  connected: "green",
+  unreachable: "ochre",
+  expired: "madder",
+};
+
 const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
 const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";
 
