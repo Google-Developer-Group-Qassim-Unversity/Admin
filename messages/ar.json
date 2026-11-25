@@ -415,6 +415,7 @@
       "poster": "صورة الفعالية"
     },
     "validation": {
+      "attendancePointsInvalid": "أدخل عددًا صحيحًا من 0 إلى 2,147,483,647.",
       "nameRequired": "اسم الفعالية مطلوب",
       "nameTooLong": "الاسم لازم يكون 100 حرف أو أقل",
       "locationRequired": "الموقع مطلوب",
@@ -445,6 +446,8 @@
       "locationPlaceholder": "اختر موقع أو اكتبه...",
       "locationEmpty": "لا توجد مواقع",
       "dateTime": "تاريخ ووقت الفعالية *",
+      "attendancePointsHint": "النقاط لكل تسجيل حضور في هذه الفعالية. يُطبّق المبلغ عند الحفظ على سجلات الحضور السابقة والقادمة.",
+      "attendancePoints": "نقاط الحضور",
       "official": "فعالية رسمية",
       "department": "القسم *",
       "departmentPlaceholder": "اختر القسم...",
@@ -3189,6 +3192,7 @@
       "closed": "مغلقة"
     },
     "fields": {
+      "attendance_points": "نقاط الحضور",
       "name": "الاسم",
       "status": "الحالة",
       "description": "الوصف",

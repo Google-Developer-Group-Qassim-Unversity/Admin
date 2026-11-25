@@ -52,6 +52,9 @@ export const buildEventFormSchema = (t: (key: string) => string) =>
     startDate: z.date({ message: t("startDateRequired") }),
     endDate: z.date({ message: t("endDateRequired") }),
     is_official: z.boolean(),
+    attendance_points: z.number({ invalid_type_error: t("attendancePointsInvalid") })
+      .int(t("attendancePointsInvalid")).min(0, t("attendancePointsInvalid"))
+      .max(2147483647, t("attendancePointsInvalid")).optional(),
     level: z.enum(EVENT_LEVELS),
     /** Create mode only: true requires registration to attend and earn points, false opens it to anyone. */
     requireRegistration: z.boolean(),
@@ -117,6 +120,7 @@ export function EventForm({
       startDate: initialData?.startDate,
       endDate: initialData?.endDate,
       is_official: initialData?.is_official ?? false,
+      attendance_points: initialData?.attendance_points,
       level: initialData?.level ?? "beginner",
       requireRegistration: initialData?.requireRegistration ?? true,
       image_url: initialData?.image_url ?? "",
@@ -325,6 +329,27 @@ export function EventForm({
       </section>
       <section aria-labelledby="event-form-attendance" className="panel space-y-5">
         <SectionHead id="event-form-attendance" title={t("sections.attendance")} />
+        {mode === "edit" && initialData?.attendance_points != null && (
+          <div className="space-y-2">
+            <Label htmlFor="attendance_points">{t("fields.attendancePoints")}</Label>
+            <Input
+              id="attendance_points"
+              type="number"
+              min={0}
+              max={2147483647}
+              step={1}
+              inputMode="numeric"
+              className="min-h-11"
+              {...register("attendance_points", { valueAsNumber: true })}
+              aria-invalid={!!errors.attendance_points}
+              aria-describedby={`attendance-points-hint${errors.attendance_points ? " attendance-points-error" : ""}`}
+            />
+            <p id="attendance-points-hint" className="text-sm text-ink-2">{t("fields.attendancePointsHint")}</p>
+            {errors.attendance_points && (
+              <p id="attendance-points-error" role="alert" className="text-sm text-destructive">{errors.attendance_points.message}</p>
+            )}
+          </div>
+        )}
         {/* Registration Requirement (create only - changeable later from Google Form & Publish) */}
         {mode === "create" && (
           <div className="space-y-2">

@@ -63,6 +63,7 @@ const attendance = (eventId, type) => {
 const details = (eventId) => {
   const e = EVENTS.find((x) => x.id === eventId) ?? EVENTS[0];
   return {
+    attendance_points: 5,
     event: {
       id: e.id,
       name: e.name,

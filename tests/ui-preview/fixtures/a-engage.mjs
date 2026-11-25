@@ -105,9 +105,10 @@ const customMember = (id) => ({
 const eventDetails = (id) => {
   const e = [...EVENTS, ...CUSTOM_EVENTS].find((x) => String(x.id) === String(id)) ?? CUSTOM_EVENTS[0];
   return {
-    event: { ...e },
+    event: { ...e, level: "beginner" },
+    attendance_points: e.location_type === "none" || e.location_type === "hidden" ? null : 2,
     actions: [
-      { action_id: 2, ar_action_name: "تنظيم فعالية", department_id: 11, department_ar_name: "تطوير التطبيقات" },
+      { action_id: e.location_type === "none" || e.location_type === "hidden" ? 2 : 1, ar_action_name: "تنظيم فعالية", department_id: 11, department_ar_name: "تطوير التطبيقات" },
       { action_id: 3, ar_action_name: "حضور فعالية", department_id: 11, department_ar_name: "تطوير التطبيقات" },
     ],
     content_links: [
