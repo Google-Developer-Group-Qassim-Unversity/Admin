@@ -135,6 +135,7 @@ export interface EventApiPayload {
 
 export interface UpdateEventPayload {
   event: EventApiPayload;
+  attendance_points?: number;
   actions: [EventAction, EventAction]; // [department_action, member_action]
 }
 
@@ -147,6 +148,7 @@ export interface EventPerson {
 // Extended event details returned from GET /events/{id}/details
 export interface EventDetails {
   event: EventApiPayload;
+  attendance_points: number | null;
   actions: [EventAction, EventAction]; // [department_action, member_action]
   // Null on events created before these were recorded. For a pipeline event the
   // responsible member is the requester and created_by whoever published it.

@@ -78,6 +78,7 @@ export default function EventEditPage() {
       image_url: eventDetails.event.image_url,
       department_id: departmentId,
       composite_action: compositeAction,
+      attendance_points: eventDetails.attendance_points ?? undefined,
     };
   }, [eventDetails, findCompositeAction]);
 
@@ -104,6 +105,7 @@ export default function EventEditPage() {
       };
 
       const payload = {
+        attendance_points: data.attendance_points,
         event: {
           id: event.id,
           name: data.name.trim(),

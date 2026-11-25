@@ -14,7 +14,7 @@ type Item = EventHistoryData["items"][number];
 type Person = { member_id: number; name: string };
 
 // Fields whose before/after reads as text; the rest just say they changed.
-const SHOWN_VALUES = new Set(["name", "status", "location", "location_type", "start_datetime", "end_datetime"]);
+const SHOWN_VALUES = new Set(["name", "status", "location", "location_type", "start_datetime", "end_datetime", "attendance_points"]);
 
 /**
  * Who did what to the event from /events, newest first: created, edited (and

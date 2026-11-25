@@ -415,6 +415,7 @@
       "poster": "Event poster"
     },
     "validation": {
+      "attendancePointsInvalid": "Enter a whole number from 0 to 2,147,483,647.",
       "nameRequired": "Event name is required",
       "nameTooLong": "Name must be 100 characters or fewer",
       "locationRequired": "Location is required",
@@ -445,6 +446,8 @@
       "locationPlaceholder": "Select or enter location...",
       "locationEmpty": "No locations found",
       "dateTime": "Event Date & Time *",
+      "attendancePointsHint": "Points per check-in for this event. Saving applies this amount to existing and future check-ins.",
+      "attendancePoints": "Attendance points",
       "official": "Official Event",
       "department": "Department *",
       "departmentPlaceholder": "Select a department...",
@@ -3189,6 +3192,7 @@
       "closed": "Closed"
     },
     "fields": {
+      "attendance_points": "Attendance points",
       "name": "Name",
       "status": "Status",
       "description": "Description",
