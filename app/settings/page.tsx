@@ -17,7 +17,7 @@ import {
 import { toast } from "sonner";
 import Link from "next/link";
 import { useAuth } from "@clerk/nextjs";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -159,8 +159,9 @@ function GoogleFormsConnectionRow() {
   const t = useTranslations("settingsPage");
   const api = useApi();
   const fmt = useFormatters();
+  const queryClient = useQueryClient();
 
-  const { data, isLoading, isFetching, error, refetch } = useQuery({
+  const { data, isLoading, isFetching, error } = useQuery({
     queryKey: ["settings", "google-forms-auth"],
     queryFn: () => api.forms.googleAuthStatus(),
     staleTime: 30_000,
@@ -168,8 +169,8 @@ function GoogleFormsConnectionRow() {
 
   const recheck = useMutation({
     mutationFn: () => api.forms.googleAuthStatus(true),
-    onSuccess: () => {
-      void refetch();
+    onSuccess: (status) => {
+      queryClient.setQueryData(["settings", "google-forms-auth"], status);
     },
     onError: (err) => {
       toast.error(errorMessage(err, t("googleFormsAuthLoadFailed")));
@@ -230,7 +231,9 @@ function GoogleFormsConnectionRow() {
               <StatePill tone={GOOGLE_AUTH_TONE[stateKey]}>{statusLabel}</StatePill>
               {data.account_email ? (
                 <span>
-                  {t("googleFormsAuthConnectedAs", { email: isolate(data.account_email) })}
+                  {t(data.valid ? "googleFormsAuthConnectedAs" : "googleFormsAuthLastConnectedAs", {
+                    email: isolate(data.account_email),
+                  })}
                 </span>
               ) : null}
               {connectedMeta ? <span className="text-ink-3">{connectedMeta}</span> : null}

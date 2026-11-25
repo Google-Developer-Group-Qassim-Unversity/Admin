@@ -95,7 +95,7 @@ function GoogleFormsCallbackInner() {
             <div className="flex items-start gap-3">
               <Plate tone="madder" icon={AlertTriangle} />
               <div className="min-w-0 space-y-1">
-                <p className="text-[15px] leading-snug font-bold">{t("googleFormsAuthExpired")}</p>
+                <p className="text-[15px] leading-snug font-bold">{t("googleFormsCallbackErrorTitle")}</p>
                 <p className="text-ink-2 text-[14px]">{errorMessage}</p>
               </div>
             </div>
