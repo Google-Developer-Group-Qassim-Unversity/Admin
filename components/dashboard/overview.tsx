@@ -3,16 +3,23 @@
 import * as React from "react";
 import Link from "next/link";
 import { useLocale, useTranslations } from "next-intl";
-import { Award, ChevronRight, ClockAlert, CornerUpLeft, FilePen, Users, type LucideIcon } from "lucide-react";
+import { Award, CalendarClock, ChevronRight, CornerUpLeft, FilePen, Radio, Users, type LucideIcon } from "lucide-react";
 
 import { INK, Mark, Mortar, Plate, SectionHead, SOFT, type DoorTone } from "@/components/najdi";
 import { TEAM_ICON, useDepartmentName, useFormatDateRange } from "@/components/pipeline/shared";
-import { EVENT_TONE, STAGE_STEP, URGENCY_TONE, stageToneFor } from "@/components/status-badge";
+import { EVENT_LIFECYCLE_TONE, STAGE_STEP, URGENCY_TONE, stageToneFor } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { AttentionItem, AttentionKind } from "@/hooks/use-attention";
+import {
+  isCustomEvent,
+  isEventLive,
+  isEventRegistrationOpen,
+  isEventUpcoming,
+  resolveLifecycleState,
+} from "@/lib/event-lifecycle";
 import { nextStepFor } from "@/lib/event-next-step";
-import { cn, getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
+import { cn, parseLocalDateTime } from "@/lib/utils";
 import type { Event } from "@/lib/api-types";
 import type { EventRequestSummary, InboxItem } from "@/lib/pipeline-types";
 import { intlLocale, useTimeAgo } from "@/lib/format";
@@ -220,7 +227,7 @@ export function TeamInbox({ items, isPending, panel = false }: { items: InboxIte
 }
 
 
-/** Events running now and open for registration, each with the one thing it waits for. */
+/** Published events that are live or upcoming, each with the one step it is waiting for. */
 export function EventsNow({ events, isPending, panel = false }: { events: Event[] | undefined; isPending: boolean; panel?: boolean }) {
   const t = useTranslations("dashboard");
   const te = useTranslations("events");
@@ -230,9 +237,15 @@ export function EventsNow({ events, isPending, panel = false }: { events: Event[
     [locale],
   );
   const now = React.useMemo(() => new Date(), []);
+  const nowMs = now.getTime();
   const list = (events ?? [])
-    .filter((e) => e.status === "active" || e.status === "open")
-    .sort((a, b) => (a.status === b.status ? a.start_datetime.localeCompare(b.start_datetime) : a.status === "active" ? -1 : 1))
+    .filter((e) => !isCustomEvent(e) && (isEventLive(e, nowMs) || isEventUpcoming(e, nowMs)))
+    .sort((a, b) => {
+      const aLive = isEventLive(a, nowMs);
+      const bLive = isEventLive(b, nowMs);
+      if (aLive !== bLive) return aLive ? -1 : 1;
+      return a.start_datetime.localeCompare(b.start_datetime);
+    })
     .slice(0, 5);
 
   return (
@@ -245,21 +258,28 @@ export function EventsNow({ events, isPending, panel = false }: { events: Event[
       ) : (
         <ul className="flex flex-col">
           {list.map((e) => {
-            const tone = EVENT_TONE[e.status];
+            const state = resolveLifecycleState(e, nowMs);
+            const tone = EVENT_LIFECYCLE_TONE[state];
             const step = nextStepFor(e, now);
-            const live = e.status === "active" && getEffectiveEndDate(parseLocalDateTime(e.start_datetime), parseLocalDateTime(e.end_datetime)) >= now;
+            const regOpen = isEventRegistrationOpen(e, nowMs);
             return (
               <li key={e.id} className="border-rule flex min-h-14 items-center gap-3 border-b px-1 py-2 last:border-b-0">
                 <Mark tone={tone} />
                 <Link href={`/events/${e.id}`} className="flex min-w-0 flex-1 flex-col gap-0.5 outline-none hover:underline focus-visible:outline-2 focus-visible:outline-ring">
-                  <b className="truncate text-[15px] font-bold">{e.name}</b>
+                  <b className="truncate text-[15px] font-bold"><bdi>{e.name}</bdi></b>
                   <span className="text-ink-2 truncate text-[13px]">
-                    <span className={cn("font-bold", INK[tone])}>{live ? t("tiles.live") : te(`status.${e.status}`)}</span>
+                    <span className={cn("font-bold", INK[tone])}>{te(`lifecycle.${state}`)}</span>
+                    {regOpen ? (
+                      <>
+                        {" · "}
+                        <span className="text-door-green-ink font-medium">{te("registration.open")}</span>
+                      </>
+                    ) : null}
                     {" · "}
                     <span className="tabular">{when.format(parseLocalDateTime(e.start_datetime))}</span>
                   </span>
                 </Link>
-                {step.key !== "done" ? (
+                {step.key !== "done" && step.key !== "cancelled" ? (
                   <Link href={step.href} className="text-ink-2 hover:text-foreground shrink-0 text-[12.5px] font-bold">
                     {te(`nextStep.${step.key}`)}
                   </Link>
@@ -274,9 +294,10 @@ export function EventsNow({ events, isPending, panel = false }: { events: Event[
 }
 
 const ATTENTION_ICON: Record<AttentionKind, LucideIcon> = {
-  overdue: ClockAlert,
+  liveNow: Radio,
+  draftSoon: CalendarClock,
   draft: FilePen,
-  closingSoon: Users,
+  registrationSoon: Users,
   certificates: Award,
 };
 

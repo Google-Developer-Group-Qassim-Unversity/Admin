@@ -9,12 +9,22 @@ import { Button } from "@/components/ui/button";
 import { useEventHistory } from "@/hooks/use-event";
 import type { EventHistory as EventHistoryData } from "@/lib/api-types";
 import { useFormatters } from "@/lib/format";
+import { parseLocalDateTime } from "@/lib/utils";
 
 type Item = EventHistoryData["items"][number];
 type Person = { member_id: number; name: string };
 
 // Fields whose before/after reads as text; the rest just say they changed.
-const SHOWN_VALUES = new Set(["name", "status", "location", "location_type", "start_datetime", "end_datetime", "attendance_points"]);
+const SHOWN_VALUES = new Set([
+  "name",
+  "status",
+  "registration_status",
+  "location",
+  "location_type",
+  "start_datetime",
+  "end_datetime",
+  "attendance_points",
+]);
 
 /**
  * Who did what to the event from /events, newest first: created, edited (and
@@ -65,7 +75,12 @@ function useDescribe() {
   const shown = (field: string, value: unknown) => {
     if (value === null || value === undefined || value === "") return t("empty");
     if (field === "status") return t.has(`statuses.${value}`) ? t(`statuses.${value}`) : String(value);
-    if (field.endsWith("_datetime")) return fmt.dateTime(String(value));
+    if (field === "registration_status") {
+      return t.has(`registrationStatuses.${value}`) ? t(`registrationStatuses.${value}`) : String(value);
+    }
+    if (field.endsWith("_datetime") || field.endsWith("_at")) {
+      return fmt.dateTime(parseLocalDateTime(String(value)));
+    }
     return String(value);
   };
 
@@ -87,10 +102,38 @@ function useDescribe() {
         const [before, after] = d.status as [string, string];
         return { text: t("actions.statusChanged", { from: shown("status", before), to: shown("status", after) }) };
       }
+      case "registration_changed": {
+        const fields = Object.keys(d);
+        if (fields.length === 1 && fields[0] === "registration_status" && Array.isArray(d.registration_status)) {
+          const [before, after] = d.registration_status as [string, string];
+          return {
+            text: t("actions.registrationStatusChanged", {
+              from: shown("registration_status", before),
+              to: shown("registration_status", after),
+            }),
+          };
+        }
+        const note = fields
+          .map((field) => {
+            const label = t.has(`fields.${field}`) ? t(`fields.${field}`) : field;
+            const [before, after] = d[field] as [unknown, unknown];
+            return `${label}: ${shown(field, before)} → ${shown(field, after)}`;
+          })
+          .join("\n");
+        return { text: t("actions.registrationChanged"), note: note || undefined };
+      }
       case "meeting_url_changed": {
-        const [before, after] = d.meeting_url as [string | null, string | null];
-        const key = !after ? "meetCleared" : before ? "meetChanged" : "meetSet";
-        return { text: t(`actions.${key}`), note: after ?? undefined };
+        const urlPair = d.meeting_url as [string | null, string | null] | undefined;
+        const visPair = d.meeting_url_visibility as [string, string] | undefined;
+        if (urlPair) {
+          const [before, after] = urlPair;
+          const key = !after ? "meetCleared" : before ? "meetChanged" : "meetSet";
+          return { text: t(`actions.${key}`), note: after ?? undefined };
+        }
+        if (visPair) {
+          return { text: t("actions.meetChanged"), note: `${visPair[0]} → ${visPair[1]}` };
+        }
+        return { text: t("actions.meetChanged") };
       }
       case "attendance_marked":
       case "attendance_backfilled":

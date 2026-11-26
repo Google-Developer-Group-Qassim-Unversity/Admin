@@ -37,6 +37,7 @@ interface CameraScanPanelProps {
   selectedDay: string;
   onDayChange: (day: string) => void;
   dayCount: number;
+  disabled?: boolean;
 }
 
 type ScanStatus = "marked" | "already_marked" | "error";
@@ -71,7 +72,7 @@ function playBeep(kind: "success" | "warning" | "error") {
 }
 
 /** Two grid cells (camera box + controls) meant to sit directly inside QRCodeCard's two-column grid. */
-export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange, dayCount }: CameraScanPanelProps) {
+export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange, dayCount, disabled = false }: CameraScanPanelProps) {
   const t = useTranslations("attendance.scan");
 
   const videoRef = React.useRef<HTMLVideoElement | null>(null);
@@ -280,7 +281,7 @@ export function CameraScanPanel({ eventId, isMultiDay, selectedDay, onDayChange,
 
         <Button
           onClick={toggleCamera}
-          disabled={isStarting}
+          disabled={disabled || isStarting}
           variant={isCameraOn ? "outline" : "ochre"}
           size="lg"
           className="h-12 w-full text-base"

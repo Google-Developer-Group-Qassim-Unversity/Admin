@@ -5,9 +5,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { CalendarDays, ChevronRight, Globe, MapPin } from "lucide-react";
 
+import { eventTone } from "@/components/event-bits";
 import { Plate } from "@/components/najdi";
 import { usePointsDate } from "@/components/points-custom-event-card";
-import { EVENT_TONE, StatusBadge } from "@/components/status-badge";
+import { StatusBadge } from "@/components/status-badge";
 import type { Event } from "@/lib/api-types";
 
 
@@ -31,7 +32,7 @@ export function FullEventPointsCard({ event }: { event: Event }) {
           <Image src={imageUrl} alt="" fill sizes="48px" className="object-cover" />
         </span>
       ) : (
-        <Plate tone={EVENT_TONE[event.status]} icon={CalendarDays} />
+        <Plate tone={eventTone(event)} icon={CalendarDays} />
       )}
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
@@ -59,11 +60,11 @@ export function FullEventPointsCard({ event }: { event: Event }) {
               </dd>
             </div>
           ) : null}
-          <StatusBadge status={event.status} className="max-sm:hidden" />
+          <StatusBadge event={event} className="max-sm:hidden" />
         </dl>
       </div>
 
-      <StatusBadge status={event.status} className="shrink-0 sm:hidden" />
+      <StatusBadge event={event} className="shrink-0 sm:hidden" />
       <Link
         href={`/events/${event.id}?from=points`}
         className="text-door-indigo-ink relative z-10 flex min-h-10 items-center px-2 text-[13px] font-bold hover:underline max-md:hidden"

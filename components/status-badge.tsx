@@ -3,19 +3,48 @@
 import { useTranslations } from "next-intl";
 
 import { FILL, SOFT, type DoorTone, type Tone } from "@/components/najdi";
-import type { EmailJobStatus, EventStatus } from "@/lib/api-types";
+import type {
+  EffectiveRegistrationStatus,
+  EmailJobStatus,
+  Event,
+  EventPhase,
+  EventStatus,
+  FormType,
+  RegistrationStatus,
+} from "@/lib/api-types";
+import {
+  resolveEffectiveRegistration,
+  resolveLifecycleState,
+  type EventLifecycleState,
+} from "@/lib/event-lifecycle";
 
 /**
  * The one status vocabulary. Colour is bound to state everywhere in the
  * console (DESIGN.md §1), so these maps are the only place a status gets a
- * colour: indigo open, green running or done, ochre waiting on someone, madder
- * overdue or failed, umber draft or finished.
+ * colour: indigo upcoming/informational, green live or done, ochre waiting on
+ * someone, madder cancelled/returned/failed, umber draft or ended.
  */
+export const EVENT_LIFECYCLE_TONE: Record<EventLifecycleState, DoorTone> = {
+  draft: "umber",
+  upcoming: "indigo",
+  live: "green",
+  ended: "umber",
+  cancelled: "madder",
+};
+
+/** Raw publication status tones (use `EVENT_LIFECYCLE_TONE` when phase is available). */
 export const EVENT_TONE: Record<EventStatus, DoorTone> = {
   draft: "umber",
-  open: "indigo",
-  active: "green",
-  closed: "umber",
+  published: "green",
+  cancelled: "madder",
+};
+
+/** Registration state tones (rendered as a secondary pill/label beside lifecycle status). */
+export const REGISTRATION_TONE: Record<EffectiveRegistrationStatus, Tone> = {
+  open: "green",
+  not_open: "ochre",
+  closed: "neutral",
+  none: "neutral",
 };
 
 export type Urgency = "waiting" | "overdue" | "info" | "done";
@@ -53,22 +82,96 @@ export const GOOGLE_AUTH_TONE: Record<"connected" | "unreachable" | "expired", D
 const PILL = "inline-flex w-fit items-center gap-1.5 rounded-sm px-2 py-1 text-[12px] leading-none font-bold";
 const SQUARE = "inline-block size-2 shrink-0 rounded-[1px]";
 
-export function StatusDot({ status, className }: { status: EventStatus; className?: string }) {
+type StatusBadgeEvent = Pick<Event, "status" | "start_datetime" | "end_datetime"> & {
+  phase?: EventPhase | null;
+};
+
+type StatusDotProps =
+  | { event: StatusBadgeEvent; now?: number; status?: never; phase?: never; state?: never; className?: string }
+  | { state: EventLifecycleState; event?: never; now?: never; status?: never; phase?: never; className?: string }
+  | { status: EventStatus; phase?: EventPhase | null; event?: never; now?: never; state?: never; className?: string };
+
+function resolveBadgeState(props: StatusDotProps): EventLifecycleState {
+  if ("state" in props && props.state) return props.state;
+  if ("event" in props && props.event) return resolveLifecycleState(props.event, props.now);
+  if (props.status === "draft") return "draft";
+  if (props.status === "cancelled") return "cancelled";
+  return props.phase ?? "upcoming";
+}
+
+export function StatusDot(props: StatusDotProps) {
+  const state = resolveBadgeState(props);
   return (
     <span
-      className={`${SQUARE} ${status === "closed" ? "bg-adobe" : FILL[EVENT_TONE[status]]} ${className ?? ""}`}
+      className={`${SQUARE} ${state === "ended" ? "bg-adobe" : FILL[EVENT_LIFECYCLE_TONE[state]]} ${props.className ?? ""}`}
       aria-hidden="true"
     />
   );
 }
 
-export function StatusBadge({ status, className }: { status: EventStatus; className?: string }) {
-  const t = useTranslations("events.status");
+export function StatusBadge(props: StatusDotProps) {
+  const t = useTranslations("events.lifecycle");
+  const state = resolveBadgeState(props);
 
   return (
-    <span className={`${PILL} capitalize ${status === "closed" ? "bg-sunk text-ink-2" : SOFT[EVENT_TONE[status]]} ${className ?? ""}`}>
-      <StatusDot status={status} />
-      {t(status)}
+    <span className={`${PILL} ${state === "ended" ? "bg-sunk text-ink-2" : SOFT[EVENT_LIFECYCLE_TONE[state]]} ${props.className ?? ""}`}>
+      <StatusDot state={state} />
+      {t(state)}
+    </span>
+  );
+}
+
+type RegistrationBadgeEvent = StatusBadgeEvent & {
+  form_type?: FormType | null;
+  registration_status?: RegistrationStatus | null;
+  effective_registration_status?: EffectiveRegistrationStatus;
+  is_registration_open?: boolean;
+};
+
+/**
+ * Secondary registration indicator, orthogonal to lifecycle status.
+ * Use `variant="quiet"` (default) beside a `StatusBadge` in list rows/tables,
+ * and `variant="pill"` on detail headers and registration controls.
+ */
+export function RegistrationBadge({
+  event,
+  status,
+  now,
+  variant = "quiet",
+  className,
+}: {
+  event?: RegistrationBadgeEvent;
+  status?: EffectiveRegistrationStatus;
+  now?: number;
+  variant?: "quiet" | "pill";
+  className?: string;
+}) {
+  const t = useTranslations("events.registration");
+  const effective = status ?? (event ? resolveEffectiveRegistration(event, now) : "none");
+  const label = t(effective);
+  const tone = REGISTRATION_TONE[effective];
+
+  if (variant === "pill") {
+    return (
+      <span className={`${PILL} ${SOFT[tone]} ${className ?? ""}`}>
+        <span className={`${SQUARE} ${FILL[tone]}`} aria-hidden="true" />
+        {label}
+      </span>
+    );
+  }
+
+  return (
+    <span
+      className={`inline-flex w-fit items-center gap-1.5 text-[12px] leading-none font-medium ${
+        effective === "open"
+          ? "text-door-green-ink font-bold"
+          : effective === "not_open"
+            ? "text-door-ochre-ink font-bold"
+            : "text-ink-2"
+      } ${className ?? ""}`}
+    >
+      <span className={`${SQUARE} ${FILL[tone]}`} aria-hidden="true" />
+      {label}
     </span>
   );
 }

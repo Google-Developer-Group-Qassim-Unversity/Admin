@@ -36,6 +36,7 @@ interface AttendanceListCardProps {
   isFetching: boolean;
   onRefresh: () => void;
   onManageClick: () => void;
+  manageDisabled?: boolean;
   selectedDay: string;
   onSelectedDayChange: (day: string) => void;
   searchQuery: string;
@@ -52,6 +53,7 @@ export function AttendanceListCard({
   isFetching,
   onRefresh,
   onManageClick,
+  manageDisabled = false,
   selectedDay,
   onSelectedDayChange,
   searchQuery,
@@ -136,7 +138,7 @@ export function AttendanceListCard({
                 </SelectContent>
               </Select>
             )}
-            <Button variant="outline" onClick={onManageClick} className="w-full">
+            <Button variant="outline" onClick={onManageClick} disabled={manageDisabled} className="w-full">
               <UserPlus />
               {t('manage')}
             </Button>

@@ -348,10 +348,34 @@
     "noneMatchFilters": "ما فيه فعاليات تطابق الفلاتر. جرب تعدل معايير البحث.",
     "status": {
       "draft": "مسودة",
-      "open": "مفتوحة",
-      "active": "جارية",
-      "closed": "مغلقة"
+      "published": "منشورة",
+      "cancelled": "ملغاة"
     },
+    "lifecycle": {
+      "draft": "مسودة",
+      "upcoming": "قادمة",
+      "live": "جارية الآن",
+      "ended": "منتهية",
+      "cancelled": "ملغاة"
+    },
+    "registration": {
+      "open": "التسجيل مفتوح",
+      "not_open": "لم يُفتح التسجيل",
+      "opensSoon": "يُفتح قريبًا",
+      "closed": "التسجيل مغلق",
+      "none": "بدون تسجيل"
+    },
+    "views": {
+      "label": "تصفية الفعاليات حسب المرحلة",
+      "all": "الكل",
+      "live": "جارية الآن",
+      "upcoming": "القادمة",
+      "drafts": "المسودات",
+      "ended": "المنتهية",
+      "cancelled": "الملغاة"
+    },
+    "registrationFilter": "التسجيل",
+    "allRegistration": "كل حالات التسجيل",
     "filters": {
       "search": "ابحث في الفعاليات...",
       "semester": "الفصل الدراسي",
@@ -400,11 +424,13 @@
       "agoDays": "{days, plural, one {أمس} other {قبل # أيام}}"
     },
     "nextStep": {
-      "publish": "أرفق النموذج وانشر",
+      "publish": "أكمل الإعداد وانشر",
+      "openRegistration": "افتح التسجيل",
       "review": "راجع التسجيلات",
+      "prepareAttendance": "راجع وجهّز",
       "attend": "سجّل الحضور",
-      "close": "اقفل وامنح النقاط",
-      "done": "ما فيه شيء"
+      "done": "ما فيه شيء",
+      "cancelled": "ملغاة"
     },
     "subtitle": "أنشئ الفعاليات وانشرها وتابعها."
   },
@@ -463,14 +489,6 @@
       "requiredHint": "الأعضاء لازم يسجلون قبل الفعالية. بس المسجلين يقدرون يحضرون ويكسبون نقاط.",
       "notRequiredHint": "ما يحتاج تسجيل. أي عضو يقدر يحضر الفعالية ويكسب نقاط."
     }
-  },
-  "closeEvent": {
-    "title": "إغلاق الفعالية",
-    "description": "متأكد إنك تبي تغلق هذي الفعالية؟ تقدر تفتحها مرة ثانية بعدين.",
-    "success": "تم إغلاق الفعالية.",
-    "failed": "تعذر إغلاق الفعالية.",
-    "unknownError": "خطأ غير معروف",
-    "closeButton": "إغلاق الفعالية"
   },
   "eventImage": {
     "label": "صورة الفعالية",
@@ -822,18 +840,20 @@
       "confirm": "تأكيد",
       "andMore": "{count, plural, =0 {} one {...وواحد إضافي} two {...واثنان إضافيان} few {...و# إضافيين} many {...و# إضافي} other {...و# إضافي}}"
     },
-    "statusItem": {
-      "reopenTitle": "إعادة فتح الفعالية",
-      "closeTitle": "إغلاق الفعالية",
-      "overdueTitle": "الفعالية انتهت: اقفلها",
-      "reopenDescription": "أعد فتح الفعالية عشان تكمل استقبال الحضور.",
-      "closeDescription": "إذا خلص تسجيل الحضور، أغلق الفعالية عشان تعتمد سجلات الحضور نهائيًا.",
-      "opening": "جاري الفتح...",
-      "openEvent": "فتح الفعالية",
-      "closeEvent": "إغلاق الفعالية",
-      "reopenSuccess": "تم إعادة فتح الفعالية.",
-      "reopenFailed": "تعذر فتح الفعالية.",
-      "unknownError": "خطأ غير معروف"
+    "lifecycleStrip": {
+      "draftTitle": "الفعالية ما زالت مسودة",
+      "draftDescription": "ما تقدر تسجّل الحضور قبل ما تنشر الفعالية.",
+      "goToPublish": "اذهب للنشر",
+      "cancelledTitle": "الفعالية ملغاة",
+      "cancelledDescription": "ما يمكن تسجيل الحضور لفعالية ملغاة.",
+      "manageStatus": "إدارة الحالة",
+      "upcomingTitle": "فعالية قادمة",
+      "upcomingDescription": "تبدأ في {time}. يُفتح التحضير يوم الفعالية.",
+      "liveTitle": "الفعالية جارية الآن",
+      "liveDescription": "جاهز للتحضير عند الباب. استخدم رمز QR أو امسح بطاقات الأعضاء.",
+      "endedTitle": "انتهت الفعالية",
+      "endedDescription": "انتهت تلقائيًا حسب وقتها. لا يزال بإمكانك مراجعة أو إكمال الحضور، أو إرسال الشهادات.",
+      "sendCertificates": "إرسال الشهادات"
     },
     "daySelect": {
       "title": "اختيار اليوم أو الأيام",
@@ -1053,15 +1073,47 @@
     }
   },
   "eventManage": {
-    "title": "التسجيل ونموذج Google",
-    "subtitle": "تحكم في شرط التسجيل والنموذج المرفق لهذي الفعالية.",
+    "title": "النشر والتسجيل",
+    "subtitle": "تحكم في ظهور الفعالية، وفترة التسجيل، وإعدادات النموذج.",
+    "sections": {
+      "publication": "الظهور والنشر",
+      "registration": "التسجيل",
+      "meeting": "رابط الاجتماع"
+    },
     "requireRegistration": "التسجيل مطلوب",
     "requiredHint": "الأعضاء لازم يسجلون عشان يشاركون في هذي الفعالية.",
     "notRequiredHint": "أي أحد يقدر يشارك بدون تسجيل. إذا فيه نموذج Google مرفق، يبقى مرفق.",
     "registrationRequired": "صار التسجيل مطلوب لهذي الفعالية.",
     "registrationNotRequired": "التسجيل ما عاد مطلوب.",
     "updateFailed": "تعذر تحديث إعداد التسجيل.",
-    "stepDone": "تم"
+    "registration": {
+      "controlsTitle": "حالة التسجيل",
+      "openRegistration": "افتح التسجيل",
+      "closeNow": "أغلق التسجيل",
+      "updating": "جاري التحديث...",
+      "openedToast": "تم فتح التسجيل.",
+      "closedToast": "تم إغلاق التسجيل.",
+      "updateFailed": "تعذر تحديث حالة التسجيل",
+      "explainCancelled": "التسجيل مغلق لأن الفعالية ملغاة.",
+      "explainEnded": "أُغلق التسجيل تلقائيًا بعد انتهاء الفعالية.",
+      "explainDraft": "انشر الفعالية فوق عشان تفتح التسجيل.",
+      "explainOpen": "التسجيل مفتوح حاليًا ويقدر الأعضاء يسجلون.",
+      "explainNotOpen": "ما بعد فُتح التسجيل. الفعالية تظهر للأعضاء كإعلان مسبق.",
+      "explainClosedManual": "التسجيل مغلق حاليًا ولا يُقبل تسجيل جديد.",
+      "gateCancelledTitle": "التسجيل مغلق",
+      "gateDraftTitle": "متوقف ما دامت الفعالية مسودة",
+      "gateEndedTitle": "أُغلق تلقائيًا",
+      "gateOpenTitle": "يستقبل التسجيلات الحين",
+      "gateNotOpenTitle": "لم يُفتح بعد",
+      "gateClosedTitle": "التسجيل مغلق",
+      "editDates": "تعديل التواريخ"
+    },
+    "modeLabel": "طريقة المشاركة",
+    "modeRequiredTitle": "تسجيل مطلوب",
+    "modeRequiredHint": "الأعضاء يسجلون قبل المشاركة (مباشرة أو عبر نموذج Google)",
+    "modeOpenTitle": "بدون تسجيل",
+    "modeOpenHint": "أي أحد يقدر يحضر مباشرة بدون تسجيل مسبق",
+    "savedGoogleFormPreserved": "نموذج Google المرفق محفوظ عندنا وبيرجع تلقائيًا إذا فعّلت التسجيل مرة ثانية."
   },
   "sendCustomEmail": {
     "title": "إرسال بريد مخصص",
@@ -1096,6 +1148,7 @@
     "noLocation": "بدون موقع",
     "attendance": "الحضور",
     "attendeesCount": "{count, plural, =0 {لا يوجد حاضرين} one {حاضر وحد} two {حاضران} few {# حاضرين} many {# حاضر} other {# حاضر}}",
+    "registration": "التسجيل",
     "description": "الوصف",
     "noDescription": "ما فيه وصف لهذي الفعالية.",
     "date": "التاريخ",
@@ -1115,16 +1168,11 @@
     "goBackToEvents": "ارجع للفعاليات",
     "errorPrefix": "خطأ: {message}",
     "tabsLabel": "أقسام الفعالية",
-    "overdue": {
-      "title": "الحضور ما انقفل",
-      "body": "الفعالية انتهت. اقفلها عشان تنمنح النقاط وتنرسل الشهادات.",
-      "action": "اقفل الفعالية"
-    },
     "tabs": {
       "info": "معلومات الفعالية",
       "content": "المحتوى",
-      "manage": "نموذج Google والنشر",
-      "responses": "إدارة الردود",
+      "manage": "النشر والتسجيل",
+      "responses": "الردود",
       "attendance": "الحضور",
       "edit": "تعديل الفعالية"
     }
@@ -1516,12 +1564,22 @@
     "acceptAllCount": "قبول الكل ({count})",
     "acceptBulk": "قبول دفعة",
     "statusAlert": {
-      "notPublishedTitle": "الفعالية غير منشورة",
-      "notPublishedDescription": "هذي الفعالية تحتاج تسجيل بس ما زالت في وضع المسودة. انشر الفعالية عشان تبدأ باستقبال الردود.",
-      "activeTitle": "الفعالية جارية",
-      "activeDescription": "الفعالية صارت جارية الآن. لازم ترسل رسائل القبول.",
-      "closedTitle": "الردود مغلقة",
-      "closedDescription": "ما عاد يتم استقبال ردود."
+      "draftTitle": "الفعالية ما زالت مسودة",
+      "draftDescription": "انشر الفعالية من تبويب النشر والتسجيل قبل ما يبدأ الأعضاء بالتسجيل.",
+      "cancelledTitle": "الفعالية ملغاة",
+      "cancelledDescription": "التسجيل مغلق. الردود السابقة تبقى متاحة للاطلاع.",
+      "scheduledOpenTitle": "التسجيل مجدول",
+      "scheduledOpenDescription": "راح يفتح التسجيل تلقائيًا في {time}.",
+      "notOpenTitle": "التسجيل لم يُفتح بعد",
+      "notOpenDescription": "الفعالية منشورة، لكن التسجيل ما انفتح للحين. افتحه لما تكون جاهز لاستقبال الردود.",
+      "openScheduledCloseTitle": "التسجيل مفتوح",
+      "openScheduledCloseDescription": "يستقبل الردود حتى {time}.",
+      "endedTitle": "انتهت الفعالية",
+      "endedDescription": "أُغلق التسجيل تلقائيًا بعد انتهاء الفعالية.",
+      "closedDeadlineTitle": "انتهى موعد التسجيل",
+      "closedDeadlineDescription": "أُغلق التسجيل تلقائيًا في {time}. تقدر تراجع الردود وترسل رسائل القبول.",
+      "closedTitle": "التسجيل مغلق",
+      "closedDescription": "ما عاد يتم استقبال ردود جديدة. تقدر تراجع المسجلين وترسل رسائل القبول."
     },
     "bulkAcceptTitle": "قبول دفعة بالبريد الإلكتروني",
     "bulkAcceptDescription": "اكتب البريد الإلكتروني لكل شخص، وحد في كل سطر أو مفصولين بفواصل. أي بريد غير صحيح أو مو موجود نتجاوزه.",
@@ -1579,10 +1637,10 @@
     "removedAcceptanceFrom": "{count, plural, =0 {} one {تم إلغاء القبول عن رد وحد} two {تم إلغاء القبول عن ردين} few {تم إلغاء القبول عن # ردود} many {تم إلغاء القبول عن # رد} other {تم إلغاء القبول عن # رد}}",
     "acceptedFrom": "{count, plural, =0 {} one {تم قبول رد وحد} two {تم قبول ردين} few {تم قبول # ردود} many {تم قبول # رد} other {تم قبول # رد}}",
     "updateFailed": "تعذر تحديث الردود",
-    "closedSuccess": "تم إغلاق الردود. الفعالية صارت جارية الآن.",
-    "closeFailed": "تعذر إغلاق الردود. حاول مرة ثانية.",
-    "openedSuccess": "تم فتح الردود. الفعالية صارت تستقبل ردود جديدة.",
-    "openFailed": "تعذر فتح الردود. حاول مرة ثانية.",
+    "closedSuccess": "تم إغلاق التسجيل.",
+    "closeFailed": "تعذر إغلاق التسجيل. حاول مرة ثانية.",
+    "openedSuccess": "تم فتح التسجيل.",
+    "openFailed": "تعذر فتح التسجيل. حاول مرة ثانية.",
     "acceptanceQueuedCount": "{count, plural, =0 {} one {رسالة القبول في طريقها لمستلم وحد} two {رسائل القبول في طريقها لمستلمين} few {رسائل القبول في طريقها لـ # مستلمين} many {رسائل القبول في طريقها لـ # مستلم} other {رسائل القبول في طريقها لـ # مستلم}}",
     "sendAcceptanceFailed": "تعذر إرسال رسائل القبول",
     "testSentCount": "{count, plural, =0 {} one {تم إرسال بريد اختباري لمستلم وحد} two {تم إرسال بريد اختباري لمستلمين} few {تم إرسال بريد اختباري لـ # مستلمين} many {تم إرسال بريد اختباري لـ # مستلم} other {تم إرسال بريد اختباري لـ # مستلم}}",
@@ -1604,14 +1662,14 @@
     "columns": "الأعمدة",
     "refresh": "تحديث",
     "closing": "جاري الإغلاق...",
-    "closeResponses": "إغلاق الردود",
+    "closeResponses": "إغلاق التسجيل",
     "opening": "جاري الفتح...",
-    "openResponses": "فتح الردود",
+    "openResponses": "فتح التسجيل",
     "noneFound": "ما فيه ردود.",
-    "closeConfirmTitle": "إغلاق الردود؟",
-    "openConfirmTitle": "فتح الردود؟",
-    "closeConfirmDescription": "متأكد إنك تبي تغلق الردود لهذي الفعالية؟ حالة الفعالية راح تتغير من \"مفتوحة\" إلى \"جارية\" وما راح يتم قبول ردود جديدة.",
-    "openConfirmDescription": "متأكد إنك تبي تفتح الردود لهذي الفعالية؟ حالة الفعالية راح تتغير من \"جارية\" إلى \"مفتوحة\" وراح يتم قبول ردود جديدة."
+    "closeConfirmTitle": "إغلاق التسجيل؟",
+    "openConfirmTitle": "فتح التسجيل؟",
+    "closeConfirmDescription": "لن يُقبل أي تسجيل جديد. وإذا كان فيه نموذج Google مرفق، راح يتوقف عن استقبال الردود أيضًا.",
+    "openConfirmDescription": "راح يقدر الأعضاء يسجلون فورًا، وسيتم إزالة أي موعد إغلاق سابق أو موعد فتح مستقبلي."
   },
   "customEventForm": {
     "eventInformation": "معلومات الفعالية",
@@ -1674,25 +1732,51 @@
     "removing": "جاري الفك..."
   },
   "publishItem": {
+    "draftTitle": "مسودة — غير ظاهرة للأعضاء",
+    "draftDescription": "الفريق فقط يقدر يشوف هذي الفعالية. انشرها متى ما كانت جاهزة للأعضاء.",
+    "googleFormDraftNote": "النشر مع فتح التسجيل ينشر نموذج Google المرفق تلقائيًا.",
+    "publishAndOpen": "نشر وفتح التسجيل",
+    "publishOnly": "نشر للعرض فقط",
+    "publishOnlyHint": "النشر للعرض فقط يظهر الفعالية للأعضاء ويخلي التسجيل متوقف لين تفتحه تحت.",
+    "publishEvent": "نشر الفعالية",
+    "publishedTitle": "منشورة للأعضاء",
+    "publishedPhaseHint": {
+      "upcoming": "ظاهرة في الموقع والتطبيق، وتتحول إلى «جارية الآن» تلقائيًا وقت البداية.",
+      "live": "الفعالية شغالة الحين والتحضير مفتوح.",
+      "ended": "انتهت الفعالية تلقائيًا حسب وقتها."
+    },
+    "publishedAt": "نُشرت في {date}",
+    "openEvent": "فتح الفعالية",
+    "moveToDraft": "إلغاء النشر (مسودة)",
+    "cancelEvent": "إلغاء الفعالية",
+    "unpublishConfirmTitle": "تبي تلغي نشر هذي الفعالية؟",
+    "unpublishConfirmDescription": "راح تختفي الفعالية عن الأعضاء وترجع كمسودة بدون ما تنلغي أو يوصل إشعار للمسجلين، ويتوقف نموذج Google المرفق مؤقتًا.",
+    "cancelConfirmTitle": "تبي تلغي هذي الفعالية؟",
+    "cancelConfirmIntro": "إلغاء الفعالية يطبّق مباشرة:",
+    "cancelConsequenceRegistration": "يُغلق التسجيل تلقائيًا ويتوقف نموذج Google المرفق عن استقبال الردود.",
+    "cancelConsequenceNotify": "يصل إشعار للمقبولين بإلغاء الفعالية.",
+    "cancelConsequencePoints": "تُستبعد الفعالية من النقاط وسجل الأعضاء.",
+    "cancelConfirmButton": "إلغاء الفعالية",
+    "cancelling": "جاري الإلغاء...",
+    "cancelledTitle": "فعالية ملغاة",
+    "cancelledDescription": "مخفية عن الجدول النشط، والتسجيل مغلق، ولا تُحتسب نقاطها.",
+    "cancelledAt": "أُلغيت في {date}",
+    "restoreAndPublish": "استعادة ونشر",
+    "restoreAsDraft": "استعادة كمسودة",
+    "restoring": "جاري الاستعادة...",
     "publishedSuccess": "تم نشر الفعالية.",
+    "publishedAndOpenedSuccess": "تم نشر الفعالية وفتح التسجيل.",
+    "restoredPublishedSuccess": "تمت استعادة الفعالية ونشرها.",
+    "restoredDraftSuccess": "تمت استعادة الفعالية كمسودة.",
     "publishFailed": "تعذر نشر الفعالية. حاول مرة ثانية.",
-    "unpublishedSuccess": "تم إلغاء نشر الفعالية.",
-    "unpublishFailed": "تعذر إلغاء نشر الفعالية. حاول مرة ثانية.",
+    "unpublishedSuccess": "تم إلغاء النشر وإرجاع الفعالية إلى مسودة.",
+    "unpublishFailed": "تعذر إرجاع الفعالية إلى مسودة. حاول مرة ثانية.",
+    "cancelledSuccess": "تم إلغاء الفعالية.",
+    "cancelFailed": "تعذر إلغاء الفعالية. حاول مرة ثانية.",
+    "publishing": "جاري النشر...",
+    "unpublishing": "جاري الإرجاع لمسودة...",
     "linkCopied": "تم نسخ رابط الفعالية.",
     "copyFailed": "تعذر نسخ الرابط. حاول مرة ثانية.",
-    "activeLocked": "الفعالية جارية الحين، ما تقدر تغير حالة النشر",
-    "closedLocked": "الفعالية مغلقة، ما تقدر تغير حالة النشر",
-    "openDescription": "الفعالية منشورة وظاهرة للأعضاء",
-    "closedDescription": "انشرها عشان تظهر للأعضاء",
-    "googleFormNote": "هذا الإجراء ينشر أو يلغي نشر نموذج Google المرفق بالفعالية بعد.",
-    "title": "نشر الفعالية",
-    "openEvent": "فتح الفعالية",
-    "locked": "مقفلة",
-    "lockedTooltip": "ما تقدر تتحكم بحالة النشر لأن الفعالية جارية أو مغلقة",
-    "unpublishing": "جاري إلغاء النشر...",
-    "publishing": "جاري النشر...",
-    "unpublish": "إلغاء النشر",
-    "publish": "نشر",
     "qrCodeTitle": "رمز QR للفعالية",
     "qrCodeDescription": "امسح أو شارك رمز QR هذا لفتح صفحة الفعالية.",
     "copyQrCode": "نسخ صورة QR",
@@ -1700,9 +1784,13 @@
     "qrCopied": "تم نسخ رمز QR.",
     "qrCopyFailed": "تعذر نسخ رمز QR. حاول مرة ثانية.",
     "qrDownloadFailed": "تعذر تحميل رمز QR. حاول مرة ثانية.",
-    "eventLink": "رابط الفعالية العام",
-    "copyLink": "نسخ رابط الفعالية",
-    "showQr": "عرض رمز QR"
+    "eventLink": "رابط الفعالية",
+    "draftLinkHint": "غير مفعل بعد — جاهز للبوستر ورمز QR",
+    "copyLink": "نسخ الرابط",
+    "showQr": "عرض رمز QR",
+    "sectionTitle": "الظهور والنشر",
+    "draftPastDateWarning": "وقت انتهاء هذي الفعالية ({date}) قد عدّى. إذا نشرتها الحين راح تظهر كمنتهية.",
+    "editDates": "تعديل التواريخ"
   },
   "memberSelectDialog": {
     "loading": "جارٍ تحميل الأعضاء…",
@@ -1768,11 +1856,27 @@
   },
   "meetingUrlItem": {
     "savedToast": "تم حفظ رابط الاجتماع.",
+    "visibilityUpdatedToast": "تم تحديث صلاحية ظهور رابط الاجتماع.",
     "removedToast": "تم حذف رابط الاجتماع.",
     "saveFailed": "تعذر حفظ رابط الاجتماع.",
     "title": "رابط الاجتماع",
     "descriptionSaved": "الأعضاء يشوفون زر انضمام في صفحة الفعالية",
     "descriptionEmpty": "الصق رابط، أو بس كود Google Meet مثل abc-defg-hij",
+    "descriptionEnded": "ما عاد يظهر للأعضاء، لكن يبقى محفوظًا لاكتشاف تسجيلات Google Meet تلقائيًا.",
+    "descriptionByVisibility": {
+      "public": "ظاهر للجميع مع زر انضمام في صفحة الفعالية والتطبيق.",
+      "accepted": "يظهر فقط للأعضاء المقبولين في صفحة الفعالية والتطبيق.",
+      "hidden": "مخفي عن الأعضاء. محفوظ للفريق واكتشاف تسجيلات Google Meet تلقائيًا."
+    },
+    "visibilityLabel": "من يقدر يشوف الرابط",
+    "visibility": {
+      "acceptedTitle": "المقبولون فقط",
+      "acceptedHint": "زر الانضمام يظهر للمقبولين في الفعالية فقط",
+      "publicTitle": "الجميع",
+      "publicHint": "يظهر بشكل عام في صفحة الفعالية",
+      "hiddenTitle": "الفريق فقط",
+      "hiddenHint": "خاص للفريق ولاكتشاف تسجيلات Meet"
+    },
     "placeholder": "https://meet.google.com/abc-defg-hij",
     "ariaLabel": "رابط الاجتماع",
     "save": "حفظ",
@@ -1898,14 +2002,14 @@
     "pipeline": "مسار الفعاليات",
     "eventCount": "{count, plural, one {فعالية وحدة} other {# فعالية}}",
     "allClearTitle": "ما فيه شيء ينتظرك",
-    "allClearBody": "ما فيه فعاليات متأخرة ولا مسودات معلّقة ولا شهادات ما انرسلت. استمتع.",
+    "allClearBody": "ما فيه فعاليات جارية ولا مسودات معلّقة ولا شهادات ما انرسلت. استمتع.",
     "greeting": "أهلًا {name}",
     "yourRequests": "طلبات قسمك",
     "all": "الكل",
     "noRequests": "ما فيه طلبات للحين. احجز موعدًا وابدأ واحد.",
     "openInbox": "افتح",
     "events": "الفعاليات",
-    "noEvents": "ما فيه فعالية شغالة ولا تسجيل مفتوح.",
+    "noEvents": "ما فيه فعالية جارية ولا قادمة الحين.",
     "stages": {
       "club": "المسار في النادي",
       "yours": "المسار في أقسامك",
@@ -1948,24 +2052,29 @@
       "emailsHint": "من كل المزوّدين"
     },
     "queue": {
-      "overdue": {
-        "title": "الحضور ما انقفل",
-        "detail": "انتهت قبل {days, plural, one {يوم} other {# أيام}} والنقاط ما انمنحت",
-        "action": "اقفل الفعالية"
+      "liveNow": {
+        "title": "شغالة الحين",
+        "detail": "الفعالية جارية الآن — افتح التحضير عند الباب",
+        "action": "الحضور"
+      },
+      "draftSoon": {
+        "title": "تبدأ قريب وما زالت مسودة",
+        "detail": "{days, plural, =0 {تبدأ اليوم} one {تبدأ بكرة} other {تبدأ بعد # أيام}}",
+        "action": "انشر"
       },
       "draft": {
-        "title": "مسودة ما اننشرت أبدًا",
+        "title": "مسودة ما اننشرت للحين",
         "detail": "انكتبت قبل {days, plural, one {يوم} other {# أيام}}",
         "action": "أكمل الإعداد"
       },
-      "closingSoon": {
-        "title": "تبدأ قريب — راجع التسجيلات",
+      "registrationSoon": {
+        "title": "التسجيل مفتوح وتبدأ قريب",
         "detail": "{days, plural, =0 {تبدأ اليوم} one {تبدأ بكرة} other {تبدأ بعد # أيام}}",
         "action": "راجع"
       },
       "certificates": {
         "title": "{count, plural, one {شهادة وحدة} other {# شهادة}} جاهزة للإرسال",
-        "detail": "انقفلت قبل {days, plural, one {يوم} other {# أيام}}",
+        "detail": "{days, plural, =0 {انتهت اليوم} one {انتهت أمس} other {انتهت قبل # أيام}}",
         "action": "أرسل"
       }
     },
@@ -3219,14 +3328,22 @@
     "reviewNote": "قُبل {accepted}، ولم يُقبل {rejected}",
     "statuses": {
       "draft": "مسودة",
+      "published": "منشورة",
+      "cancelled": "ملغاة",
       "open": "مفتوحة",
       "active": "جارية",
       "closed": "مغلقة"
+    },
+    "registrationStatuses": {
+      "not_open": "لم يُفتح",
+      "open": "مفتوح",
+      "closed": "مغلق"
     },
     "fields": {
       "attendance_points": "نقاط الحضور",
       "name": "الاسم",
       "status": "الحالة",
+      "registration_status": "حالة التسجيل",
       "description": "الوصف",
       "location_type": "حضوري أو عن بعد",
       "location": "المكان",
@@ -3247,6 +3364,9 @@
       "created": "أنشأ الفعالية",
       "edited": "عدّل {count} من البيانات",
       "statusChanged": "غيّر الحالة من {from} إلى {to}",
+      "registrationStatusChanged": "غيّر التسجيل من {from} إلى {to}",
+      "registrationChanged": "حدّث إعدادات التسجيل",
+      "content_link_changed": "حدّث روابط محتوى الفعالية",
       "meetSet": "أضاف رابط Meet",
       "meetChanged": "غيّر رابط Meet",
       "meetCleared": "حذف رابط Meet",

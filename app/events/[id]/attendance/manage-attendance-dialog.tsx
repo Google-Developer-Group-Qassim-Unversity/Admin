@@ -35,6 +35,7 @@ import { useTranslations } from "next-intl";
 interface ManageAttendanceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  initialTab?: Tab;
   eventId: number;
   dayCount: number;
   isMultiDay: boolean;
@@ -45,6 +46,7 @@ interface ManageAttendanceDialogProps {
 export function ManageAttendanceDialog({
   open,
   onOpenChange,
+  initialTab = "mark",
   eventId,
   dayCount,
   isMultiDay,
@@ -55,7 +57,10 @@ export function ManageAttendanceDialog({
   const tc = useTranslations("common.actions");
   const { getToken } = useAuth();
 
-  const [activeTab, setActiveTab] = React.useState<Tab>("mark");
+  const [activeTab, setActiveTab] = React.useState<Tab>(initialTab);
+  React.useEffect(() => {
+    if (open) setActiveTab(initialTab);
+  }, [open, initialTab]);
   const [allMembers, setAllMembers] = React.useState<Member[]>([]);
   const [isLoadingMembers, setIsLoadingMembers] = React.useState(false);
   const [searchQuery, setSearchQuery] = React.useState("");

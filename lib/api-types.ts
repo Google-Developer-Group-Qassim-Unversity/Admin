@@ -3,11 +3,16 @@
 // Event types
 export type LocationType = "online" | "on-site" | "none" | "hidden";
 
-// the event types represent the status of an event in its lifecycle
-//  'draft' means the event is being created but not yet open to members
-//  'open' means the event is published and members can register
-//  'active' means registeration is closed but the event is ongoing and taking attendance
-export type EventStatus = "draft" | "open" | "active" | "closed";
+// Event lifecycle & registration types (orthogonal axes, mirrored from Backend/app/routers/models.py)
+//  - EventStatus: human publication / cancellation intent ("draft" | "published" | "cancelled")
+//  - EventPhase: derived server-side from Riyadh wall-clock vs start/end ("upcoming" | "live" | "ended")
+//  - RegistrationStatus: stored on form ("not_open" | "open" | "closed")
+//  - EffectiveRegistrationStatus: derived server-side ("none" | "not_open" | "open" | "closed")
+export type EventStatus = "draft" | "published" | "cancelled";
+export type EventPhase = "upcoming" | "live" | "ended";
+export type RegistrationStatus = "not_open" | "open" | "closed";
+export type EffectiveRegistrationStatus = "none" | "not_open" | "open" | "closed";
+export type MeetingUrlVisibility = "public" | "accepted" | "hidden";
 
 /** How much prior knowledge an event assumes. Shown on the member app's event cards. */
 export const EVENT_LEVELS = ["beginner", "intermediate", "advanced"] as const;
@@ -24,14 +29,27 @@ export interface Event {
   status: EventStatus;
   level: EventLevel;
   image_url: string | null;
-  /** Join link for remote events. Set from the "Google Form & Publish" tab. */
+  /** Join link for remote events. Set from the "Publish & Registration" tab. */
   meeting_url: string | null;
+  /** Who can see the join link on the website and iOS app. */
+  meeting_url_visibility?: MeetingUrlVisibility;
   is_official: boolean;
   created_at: string;
+  published_at?: string | null;
+  cancelled_at?: string | null;
+  /** Derived server-side from Riyadh clock against start/end. */
+  phase?: EventPhase | null;
   /** UUID of the semester the event counts toward. */
   semester_id?: string | null;
   /** Published content links, attached server-side on the detail payloads. */
   content_links?: EventContentLink[];
+  /** Lean registration metadata attached on list and detail payloads. */
+  form_id?: number | null;
+  form_type?: FormType | null;
+  registration_status?: RegistrationStatus | null;
+  effective_registration_status?: EffectiveRegistrationStatus;
+  is_registration_open?: boolean;
+  google_responders_url?: string | null;
   /** Set on the paginated admin list - null when the event has no department */
   department_id?: number | null;
   department_name?: string | null;
@@ -105,6 +123,16 @@ export interface CreateEventPayload {
   department_action_id: number;
   member_action_id: number;
   department_id: number;
+  registration_status?: RegistrationStatus | null;
+}
+
+export interface UpdateEventStatusPayload {
+  status: EventStatus;
+  open_registration?: boolean;
+}
+
+export interface UpdateEventRegistrationPayload {
+  registration_status: RegistrationStatus;
 }
 
 // Action info used in event details and update payloads
@@ -131,6 +159,9 @@ export interface EventApiPayload {
   image_url: string | null;
   is_official: number;
   created_at?: string;
+  published_at?: string | null;
+  cancelled_at?: string | null;
+  phase?: EventPhase | null;
 }
 
 export interface UpdateEventPayload {
@@ -148,6 +179,7 @@ export interface EventPerson {
 // Extended event details returned from GET /events/{id}/details
 export interface EventDetails {
   event: EventApiPayload;
+  form?: Form | null;
   attendance_points: number | null;
   actions: [EventAction, EventAction]; // [department_action, member_action]
   // Null on events created before these were recorded. For a pipeline event the
@@ -164,7 +196,9 @@ export type EventHistoryAction =
   | "created"
   | "edited"
   | "status_changed"
+  | "registration_changed"
   | "meeting_url_changed"
+  | "content_link_changed"
   | "deleted"
   | "attendance_marked"
   | "attendance_scanned"
@@ -229,7 +263,10 @@ export interface Form {
   google_responders_url: string | null;
   admin_google_email: string | null;
   granted_emails: string[];
-  google_form_schema: JSON;
+  google_form_schema?: JSON;
+  registration_status?: RegistrationStatus | null;
+  effective_registration_status?: EffectiveRegistrationStatus;
+  is_registration_open?: boolean;
 }
 
 export interface CreateFormPayload {
@@ -285,6 +322,9 @@ export interface GoogleFormData {
   googleRespondersUrl?: string | null;
   adminGoogleEmail?: string | null;
   grantedEmails: string[];
+  registrationStatus?: RegistrationStatus | null;
+  effectiveRegistrationStatus?: EffectiveRegistrationStatus;
+  isRegistrationOpen?: boolean;
 }
 
 // =============================================================================
@@ -321,7 +361,9 @@ export interface EventsPageParams {
   page: number;
   pageSize: number;
   semester?: string;
-  status?: "draft" | "open" | "active" | "closed";
+  status?: EventStatus;
+  phase?: EventPhase;
+  registrationStatus?: EffectiveRegistrationStatus;
   search?: string;
   excludeCustom?: boolean;
 }

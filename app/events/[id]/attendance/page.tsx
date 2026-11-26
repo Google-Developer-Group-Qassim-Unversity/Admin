@@ -1,21 +1,23 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
+import { useState } from "react";
 
-import { useEventAttendance } from '@/hooks/use-event';
-import { useEventContext } from '@/contexts/event-context';
-import { parseLocalDateTime, getEventDayCount } from '@/lib/utils';
+import { useEventAttendance } from "@/hooks/use-event";
+import { useEventContext } from "@/contexts/event-context";
+import { parseLocalDateTime, getEventDayCount } from "@/lib/utils";
 
-import { QRCodeCard } from './qr-code-card';
-import { EventStatusItem } from './event-status-item';
-import { AttendanceListCard } from './attendance-list-card';
-import { ManageAttendanceDialog } from './manage-attendance-dialog';
+import { QRCodeCard } from "./qr-code-card";
+import { EventStatusItem } from "./event-status-item";
+import { AttendanceListCard } from "./attendance-list-card";
+import { ManageAttendanceDialog } from "./manage-attendance-dialog";
+import type { Tab } from "./types";
 
 export default function EventAttendancePage() {
-  const { event, refetch } = useEventContext();
-  const [selectedDay, setSelectedDay] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
+  const { event } = useEventContext();
+  const [selectedDay, setSelectedDay] = useState("all");
+  const [searchQuery, setSearchQuery] = useState("");
   const [isMarkAttendanceOpen, setIsMarkAttendanceOpen] = useState(false);
+  const [manageInitialTab, setManageInitialTab] = useState<Tab>("mark");
 
   const {
     data: attendanceData,
@@ -28,25 +30,32 @@ export default function EventAttendancePage() {
     return null;
   }
 
-  const isEventClosed = event.status === 'closed';
+  const canRecordAttendance = event.status === "published";
   const eventStart = parseLocalDateTime(event.start_datetime);
   const eventEnd = parseLocalDateTime(event.end_datetime);
   const dayCount = getEventDayCount(eventStart, eventEnd);
   const isMultiDay = dayCount > 1;
 
+  const openManageDialog = (tab: Tab) => {
+    setManageInitialTab(tab);
+    setIsMarkAttendanceOpen(true);
+  };
+
   return (
     <div className="grid w-full min-w-0 grid-cols-1 items-start gap-6 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
-      {/* Open/closed first: on a phone at the door it is the one control that
-          must never be below the fold. */}
       <div className="lg:col-span-2">
         <EventStatusItem
           event={event}
-          isEventClosed={isEventClosed}
-          onStatusChange={() => refetch?.()}
+          onOpenCertificates={canRecordAttendance ? () => openManageDialog("emails") : undefined}
         />
       </div>
 
-      <QRCodeCard eventId={event.id} isMultiDay={isMultiDay} dayCount={dayCount} />
+      <QRCodeCard
+        eventId={event.id}
+        isMultiDay={isMultiDay}
+        dayCount={dayCount}
+        disabled={!canRecordAttendance}
+      />
 
       <AttendanceListCard
         eventStart={eventStart}
@@ -57,7 +66,8 @@ export default function EventAttendancePage() {
         isLoading={isLoadingAttendance}
         isFetching={isFetchingAttendance}
         onRefresh={() => refetchAttendance()}
-        onManageClick={() => setIsMarkAttendanceOpen(true)}
+        onManageClick={() => openManageDialog("mark")}
+        manageDisabled={!canRecordAttendance}
         selectedDay={selectedDay}
         onSelectedDayChange={setSelectedDay}
         searchQuery={searchQuery}
@@ -67,6 +77,7 @@ export default function EventAttendancePage() {
       <ManageAttendanceDialog
         open={isMarkAttendanceOpen}
         onOpenChange={setIsMarkAttendanceOpen}
+        initialTab={manageInitialTab}
         eventId={event.id}
         dayCount={dayCount}
         isMultiDay={isMultiDay}

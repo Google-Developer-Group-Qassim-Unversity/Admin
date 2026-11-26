@@ -6,8 +6,9 @@ import { Globe, MapPin } from "lucide-react";
 
 import { NextStepChip } from "@/components/event-card";
 import { EventThumb, useDepartmentName, useEventDates } from "@/components/event-bits";
-import { StatusBadge } from "@/components/status-badge";
+import { RegistrationBadge, StatusBadge } from "@/components/status-badge";
 import type { Event } from "@/lib/api-types";
+import { resolveLifecycleState } from "@/lib/event-lifecycle";
 import { parseLocalDateTime } from "@/lib/utils";
 
 const DAY_MS = 86_400_000;
@@ -50,6 +51,8 @@ export function EventsTable({ events, now }: { events: Event[]; now: number }) {
               const LocationIcon = event.location_type === "online" ? Globe : MapPin;
               const start = parseLocalDateTime(event.start_datetime);
               const dept = departmentName(event);
+              const lifecycle = resolveLifecycleState(event, now);
+              const showRegistration = lifecycle === "upcoming" || lifecycle === "live";
 
               return (
                 <tr key={event.id} className="border-rule hover:bg-background border-b transition-colors last:border-b-0">
@@ -68,7 +71,10 @@ export function EventsTable({ events, now }: { events: Event[]; now: number }) {
                   </td>
 
                   <td className="px-4 py-3">
-                    <StatusBadge status={event.status} />
+                    <div className="flex flex-col gap-1.5">
+                      <StatusBadge event={event} now={now} />
+                      {showRegistration ? <RegistrationBadge event={event} now={now} /> : null}
+                    </div>
                   </td>
 
                   <td className="px-4 py-3">
