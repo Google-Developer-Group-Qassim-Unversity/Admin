@@ -6,9 +6,9 @@ import * as React from "react";
 import { ArrowLeft, Info, Link2, FolderUp, Users, ClipboardCheck, Pencil, CalendarX, CalendarDays, Globe, MapPin, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
-import { StatusBadge } from "@/components/status-badge";
-import { Door } from "@/components/najdi";
-import { eventTone, useDepartmentName, useEventDates } from "@/components/event-bits";
+import { RegistrationBadge, StatusBadge } from "@/components/status-badge";
+import { useDepartmentName, useEventDates } from "@/components/event-bits";
+import { resolveLifecycleState } from "@/lib/event-lifecycle";
 import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -116,8 +116,8 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
   const dept = departmentName(event);
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
   const showLocation = event.location_type !== "none" && event.location_type !== "hidden" && Boolean(event.location);
-  const overdue = eventTone(event, now) === "madder";
-  const onAttendance = isActiveTab("/attendance");
+  const lifecycle = resolveLifecycleState(event, now);
+  const showRegistrationBadge = lifecycle === "upcoming" || lifecycle === "live";
 
   return (
     <EventProvider event={event} isLoading={isLoading} error={error} refetch={refetch}>
@@ -134,7 +134,8 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
             <bdi>{event.name}</bdi>
           </h1>
           <div className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px]">
-            <StatusBadge status={event.status} />
+            <StatusBadge event={event} now={now} />
+            {showRegistrationBadge ? <RegistrationBadge event={event} now={now} variant="pill" /> : null}
             <span className="tabular text-foreground flex items-center gap-1.5 font-medium">
               <CalendarDays className="size-4" aria-hidden="true" />
               {dates.range(start, end)}
@@ -184,21 +185,6 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
             })}
           </div>
         </nav>
-
-        {overdue && !onAttendance ? (
-          <Door tone="madder" innerClassName="sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex flex-col gap-1">
-              <h2 className="font-display text-[21px] leading-tight font-semibold">{t("overdue.title")}</h2>
-              <p className="text-sm font-medium opacity-90">{t("overdue.body")}</p>
-            </div>
-            <Button asChild variant="secondary" className="bg-[var(--door-panel)] text-[var(--door-panel-ink)] hover:bg-[var(--door-panel)]/90 sm:shrink-0">
-              <Link href={`/events/${eventId}/attendance`}>
-                {t("overdue.action")}
-                <ArrowLeft className="ltr:-scale-x-100" />
-              </Link>
-            </Button>
-          </Door>
-        ) : null}
 
         <div className="flex flex-col gap-6">{children}</div>
       </div>

@@ -36,6 +36,9 @@ export function useFormData(eventId: number) {
         googleRespondersUrl: result.data.google_responders_url,
         adminGoogleEmail: result.data.admin_google_email,
         grantedEmails: result.data.granted_emails,
+        registrationStatus: result.data.registration_status ?? null,
+        effectiveRegistrationStatus: result.data.effective_registration_status,
+        isRegistrationOpen: result.data.is_registration_open,
       };
     },
   });
@@ -79,6 +82,8 @@ export function useAttachForm(eventId: number, getToken?: GetTokenFn) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
+      queryClient.invalidateQueries({ queryKey: ['events', 'detail', String(eventId)] });
+      queryClient.invalidateQueries({ queryKey: ['events', 'list'] });
     },
   });
 }
@@ -96,6 +101,8 @@ export function useUnattachForm(eventId: number, getToken?: GetTokenFn) {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
+      queryClient.invalidateQueries({ queryKey: ['events', 'detail', String(eventId)] });
+      queryClient.invalidateQueries({ queryKey: ['events', 'list'] });
     },
   });
 }
@@ -154,6 +161,8 @@ export function useUpdateFormType(eventId: number, getToken: () => Promise<strin
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: formKeys.byEvent(eventId) });
+      queryClient.invalidateQueries({ queryKey: ['events', 'detail', String(eventId)] });
+      queryClient.invalidateQueries({ queryKey: ['events', 'list'] });
     },
   });
 }

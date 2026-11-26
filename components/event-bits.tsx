@@ -6,25 +6,25 @@ import { useLocale } from "next-intl";
 import { CalendarDays } from "lucide-react";
 
 import { Plate, type DoorTone } from "@/components/najdi";
-import { EVENT_TONE, type Urgency } from "@/components/status-badge";
+import { EVENT_LIFECYCLE_TONE, type Urgency } from "@/components/status-badge";
 import type { Event } from "@/lib/api-types";
-import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
+import { resolveLifecycleState } from "@/lib/event-lifecycle";
+import { parseLocalDateTime } from "@/lib/utils";
 import { cn } from "@/lib/utils";
 import { intlLocale } from "@/lib/format";
 
 /**
- * An event's door colour. Draft and closed are mud (nothing to do, or done
- * with), open is indigo (members are signing up), active is green (it is
- * running) unless it has ended without attendance being closed, which is
- * madder: overdue.
+ * An event's door colour, bound strictly to its lifecycle state:
+ *   - draft / ended: umber
+ *   - upcoming: indigo
+ *   - live: green
+ *   - cancelled: madder
  */
-export function eventTone(event: Pick<Event, "status" | "start_datetime" | "end_datetime">, now = Date.now()): DoorTone {
-  if (event.status === "active") {
-    const start = parseLocalDateTime(event.start_datetime);
-    const end = getEffectiveEndDate(start, parseLocalDateTime(event.end_datetime));
-    if (end.getTime() < now) return "madder";
-  }
-  return EVENT_TONE[event.status];
+export function eventTone(
+  event: Pick<Event, "status" | "phase" | "start_datetime" | "end_datetime">,
+  now = Date.now(),
+): DoorTone {
+  return EVENT_LIFECYCLE_TONE[resolveLifecycleState(event, now)];
 }
 
 /** The tone an urgency reads as; a step with no urgency is plain mud. */

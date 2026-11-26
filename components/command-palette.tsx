@@ -123,7 +123,7 @@ export function CommandPalette({
                   onSelect={() => go(`/events/${event.id}`)}
                 >
                   <span className="grid size-8 shrink-0 place-items-center">
-                    <StatusDot status={event.status} />
+                    <StatusDot event={event} />
                   </span>
                   <span className="truncate font-medium" dir="auto">
                     {event.name}

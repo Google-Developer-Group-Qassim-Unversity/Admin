@@ -24,6 +24,7 @@ import { useInbox, usePipelineMe, usePipelineOverview } from "@/hooks/use-pipeli
 import { getEmailDashboardStats } from "@/lib/api";
 import { useApi } from "@/lib/api/client";
 import { useFormatters } from "@/lib/format";
+import { isCustomEvent, isEventLive, isEventRegistrationOpen } from "@/lib/event-lifecycle";
 
 /**
  * Home. The event pipeline is the club's main way to make an event, so it is
@@ -85,10 +86,14 @@ export default function DashboardPage() {
   }, [mine, waiting]);
   const stagesTitle = me.data?.is_super_admin ? t("stages.club") : t("stages.yours");
 
+  const [now] = React.useState(() => Date.now());
   const counts = React.useMemo(() => {
-    const list = events ?? [];
-    return { open: list.filter((e) => e.status === "open").length, live: list.filter((e) => e.status === "active").length };
-  }, [events]);
+    const list = (events ?? []).filter((e) => !isCustomEvent(e) && e.status === "published");
+    return {
+      open: list.filter((e) => isEventRegistrationOpen(e, now)).length,
+      live: list.filter((e) => isEventLive(e, now)).length,
+    };
+  }, [events, now]);
 
   const stats: Stat[] = [
     { label: t("tiles.open"), value: counts.open },

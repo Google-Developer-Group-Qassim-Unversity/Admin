@@ -93,6 +93,7 @@ interface QRCodeCardProps {
   eventId: number;
   isMultiDay: boolean;
   dayCount: number;
+  disabled?: boolean;
   children?: React.ReactNode;
 }
 
@@ -137,7 +138,7 @@ function GuardToggleRow({ id, icon: Icon, label, helpText, checked, onCheckedCha
   );
 }
 
-export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCardProps) {
+export function QRCodeCard({ eventId, isMultiDay, dayCount, disabled = false, children }: QRCodeCardProps) {
   const t = useTranslations("attendance.qrCode");
   const { getToken } = useAuth();
   const [mode, setMode] = useState<'qr' | 'camera'>('qr');
@@ -279,7 +280,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
     <section aria-labelledby="attendance-take" className="panel flex min-w-0 flex-col gap-4">
       <SectionHead id="attendance-take" title={t('title')} action={<div className="hidden sm:block">{modeToggle}</div>} />
       <p className="text-ink-2 -mt-2 text-[13.5px]">{t('description')}</p>
-      <div>
+      <div className={disabled ? "pointer-events-none opacity-50" : undefined} aria-disabled={disabled || undefined}>
         <div className="mb-5 sm:hidden">{modeToggle}</div>
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {mode === 'camera' ? (
@@ -289,6 +290,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
               selectedDay={scanDay}
               onDayChange={setScanDay}
               dayCount={dayCount}
+              disabled={disabled}
             />
           ) : (
           <>
@@ -395,7 +397,7 @@ export function QRCodeCard({ eventId, isMultiDay, dayCount, children }: QRCodeCa
               </CollapsibleContent>
             </Collapsible>
 
-            <Button variant="ochre" size="lg" onClick={handleGenerateToken} disabled={isGenerating} className="h-12 w-full text-base">
+            <Button variant="ochre" size="lg" onClick={handleGenerateToken} disabled={disabled || isGenerating} className="h-12 w-full text-base">
               {isGenerating ? (
                 <>
                   <RefreshCw className="h-4 w-4 animate-spin" />

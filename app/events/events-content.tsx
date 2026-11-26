@@ -15,11 +15,28 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { FilterBar } from "@/components/filter-bar";
 import { ListPager } from "@/components/list-pager";
 import { PageHeader } from "@/components/page-header";
+import { Mark, type Tone } from "@/components/najdi";
 import { useEventsPaginated } from "@/hooks/use-event";
 import { useSemesterOptions } from "@/hooks/use-semesters";
 import { ApiRequestError } from "@/lib/api/errors";
+import type { EffectiveRegistrationStatus, EventPhase, EventStatus } from "@/lib/api-types";
 
-const STATUSES = ["draft", "open", "active", "closed"] as const;
+type LifecycleView = "all" | "live" | "upcoming" | "drafts" | "ended" | "cancelled";
+
+const LIFECYCLE_VIEWS: {
+  id: LifecycleView;
+  tone?: Tone;
+  query: { status?: EventStatus; phase?: EventPhase };
+}[] = [
+  { id: "all", query: {} },
+  { id: "live", tone: "green", query: { status: "published", phase: "live" } },
+  { id: "upcoming", tone: "indigo", query: { status: "published", phase: "upcoming" } },
+  { id: "drafts", tone: "umber", query: { status: "draft" } },
+  { id: "ended", tone: "neutral", query: { status: "published", phase: "ended" } },
+  { id: "cancelled", tone: "madder", query: { status: "cancelled" } },
+];
+
+const REGISTRATION_FILTERS: EffectiveRegistrationStatus[] = ["open", "not_open", "closed", "none"];
 const PAGE_SIZE_OPTIONS = ["12", "24", "48"] as const;
 
 type View = "table" | "cards";
@@ -60,16 +77,16 @@ function useDebouncedValue<T>(value: T, delayMs: number): T {
 
 export function EventsContent() {
   const t = useTranslations("events");
-  const ts = useTranslations("events.status");
   const semesterOptions = useSemesterOptions();
 
+  const [lifecycleView, setLifecycleView] = React.useState<LifecycleView>("all");
+  const [registrationFilter, setRegistrationFilter] = React.useState<"all" | EffectiveRegistrationStatus>("all");
   const [semester, setSemester] = React.useState("all");
-  const [status, setStatus] = React.useState<string>("all");
   const [searchQuery, setSearchQuery] = React.useState("");
   const [page, setPage] = React.useState(1);
   const [pageSize, setPageSize] = React.useState(12);
   const [view, setView] = useView();
-  // One clock for every "in 3 days" and next step on the page.
+  // One clock for every relative day and next step on the page.
   const [now] = React.useState(() => Date.now());
 
   const debouncedSearch = useDebouncedValue(searchQuery.trim(), 300);
@@ -78,13 +95,17 @@ export function EventsContent() {
   // narrower filter can't leave you on a page that no longer exists.
   React.useEffect(() => {
     setPage(1);
-  }, [debouncedSearch, semester, status, pageSize]);
+  }, [debouncedSearch, semester, lifecycleView, registrationFilter, pageSize]);
+
+  const activeView = LIFECYCLE_VIEWS.find((v) => v.id === lifecycleView) ?? LIFECYCLE_VIEWS[0];
 
   const { data, isPending, isError, error, isPlaceholderData } = useEventsPaginated({
     page,
     pageSize,
     semester: semester === "all" ? undefined : semester,
-    status: status === "all" ? undefined : (status as (typeof STATUSES)[number]),
+    status: activeView.query.status,
+    phase: activeView.query.phase,
+    registrationStatus: registrationFilter === "all" ? undefined : registrationFilter,
     search: debouncedSearch || undefined,
     excludeCustom: true,
   });
@@ -95,7 +116,11 @@ export function EventsContent() {
   const from = total === 0 ? 0 : (page - 1) * pageSize + 1;
   const to = Math.min(page * pageSize, total);
 
-  const hasFilters = debouncedSearch.length > 0 || semester !== "all" || status !== "all";
+  const hasFilters =
+    debouncedSearch.length > 0 ||
+    semester !== "all" ||
+    lifecycleView !== "all" ||
+    registrationFilter !== "all";
 
   return (
     <div className="mx-auto flex w-full max-w-[1400px] flex-col gap-5 sm:gap-6">
@@ -107,6 +132,37 @@ export function EventsContent() {
           </Link>
         </Button>
       </PageHeader>
+
+      {/* Workflow-oriented lifecycle views: scrollable on phones, one crisp strip on desktop. */}
+      <div className="no-scrollbar -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div
+          role="tablist"
+          aria-label={t("views.label")}
+          className="border-rule flex w-max min-w-full gap-1 border-b"
+        >
+          {LIFECYCLE_VIEWS.map((item) => {
+            const active = lifecycleView === item.id;
+            return (
+              <button
+                key={item.id}
+                type="button"
+                role="tab"
+                aria-selected={active}
+                onClick={() => setLifecycleView(item.id)}
+                className={`focus-visible:outline-ring relative flex min-h-11 shrink-0 items-center gap-2 px-3 text-sm whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+                  active ? "text-foreground font-bold" : "text-ink-2 hover:text-foreground font-medium"
+                }`}
+              >
+                {item.tone ? <Mark tone={item.tone} className="size-2" /> : null}
+                {t(`views.${item.id}`)}
+                {active ? (
+                  <span aria-hidden="true" className="bg-foreground absolute inset-x-2 -bottom-px h-[3px] rounded-t-[2px]" />
+                ) : null}
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <FilterBar
         search={searchQuery}
@@ -154,15 +210,18 @@ export function EventsContent() {
           </SelectContent>
         </Select>
 
-        <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-full sm:w-[150px]">
-            <SelectValue placeholder={t("statusFilter")} />
+        <Select
+          value={registrationFilter}
+          onValueChange={(value) => setRegistrationFilter(value as "all" | EffectiveRegistrationStatus)}
+        >
+          <SelectTrigger className="w-full sm:w-[190px]" aria-label={t("registrationFilter")}>
+            <SelectValue placeholder={t("registrationFilter")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">{t("allStatuses")}</SelectItem>
-            {STATUSES.map((s) => (
-              <SelectItem key={s} value={s} className="capitalize">
-                {ts(s)}
+            <SelectItem value="all">{t("allRegistration")}</SelectItem>
+            {REGISTRATION_FILTERS.map((reg) => (
+              <SelectItem key={reg} value={reg}>
+                {t(`registration.${reg}`)}
               </SelectItem>
             ))}
           </SelectContent>
@@ -214,7 +273,7 @@ export function EventsContent() {
       ) : (
         <div className={`transition-opacity ${isPlaceholderData ? "opacity-60" : ""}`}>
           {/* Phones: rows on the wall. md up: the table, or the posters. */}
-          <ul className={`flex flex-col md:hidden`}>
+          <ul className="flex flex-col md:hidden">
             {events.map((event) => (
               <EventRow key={event.id} event={event} now={now} />
             ))}

@@ -6,9 +6,11 @@ import { parseLocalDateTime, isOvernightEvent, getEventDayCount, getEffectiveEnd
 import { EventHistory } from "@/components/events/event-history";
 import { useEventContext } from "@/contexts/event-context";
 import { useEventAttendance, useEventDetails } from "@/hooks/use-event";
-import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, SignalLow, SignalMedium, SignalHigh, type LucideIcon } from "lucide-react";
+import { ArrowRight, MapPin, Globe, Calendar, Clock, ImageIcon, Trophy, Users, UserCheck, UserRound, SignalLow, SignalMedium, SignalHigh, ClipboardList, type LucideIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { SectionHead } from "@/components/najdi";
+import { RegistrationBadge } from "@/components/status-badge";
+import { resolveEventPhase } from "@/lib/event-lifecycle";
 import { isolate, useFormatters } from "@/lib/format";
 import type { EventLevel } from "@/lib/api-types";
 
@@ -99,7 +101,8 @@ export default function EventInfoPage() {
     }
   };
 
-  const showAttendance = event.status === "active" || event.status === "closed";
+  const phase = resolveEventPhase(event);
+  const showAttendance = event.status === "published" && (phase === "live" || phase === "ended");
 
   return (
     // Phone: poster, facts, description stacked. lg+: poster beside the rest.
@@ -155,6 +158,10 @@ export default function EventInfoPage() {
                 <span dir="auto">{event.location}</span>
               </Fact>
             )}
+
+            <Fact icon={ClipboardList} label={t("registration")}>
+              <RegistrationBadge event={event} variant="pill" />
+            </Fact>
 
             {showAttendance && (
               <Fact icon={UserCheck} label={t("attendance")}>

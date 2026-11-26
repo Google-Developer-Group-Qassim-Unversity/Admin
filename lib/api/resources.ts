@@ -33,6 +33,7 @@ import type {
   DriveStorageQuotaResponse,
   Event,
   EventContentLink,
+  MeetingUrlVisibility,
   EventDetails,
   EventHistory,
   EventDeletionImpact,
@@ -56,6 +57,7 @@ import type {
   SendsPage,
   UpdateContentLinkPayload,
   UpdateEventPayload,
+  UpdateEventRegistrationPayload,
   UpdateFormPayload,
 } from "@/lib/api-types";
 import type {
@@ -136,6 +138,8 @@ export function createApi(request: Requester) {
           page_size: params.pageSize,
           semester: params.semester && params.semester !== "all" ? params.semester : undefined,
           status: params.status,
+          phase: params.phase,
+          registration_status: params.registrationStatus,
           search: params.search?.trim() ? params.search.trim() : undefined,
           exclude_custom: params.excludeCustom ? true : undefined,
         },
@@ -159,11 +163,29 @@ export function createApi(request: Requester) {
     updatePartial: (id: number, payload: Partial<Event>) =>
       request.json<Event>(`/events/${id}`, { method: "PATCH", body: payload }),
 
-    updateMeetingUrl: (id: number, meetingUrl: string | null) =>
-      request.json<Event>(`/events/${id}/meeting-url`, { method: "PUT", body: { meeting_url: meetingUrl } }),
+    updateMeetingUrl: (
+      id: number,
+      payload: { meetingUrl?: string | null; meetingUrlVisibility?: MeetingUrlVisibility }
+    ) => {
+      const body: Record<string, string | null> = {};
+      if (payload.meetingUrl !== undefined) body.meeting_url = payload.meetingUrl;
+      if (payload.meetingUrlVisibility !== undefined) {
+        body.meeting_url_visibility = payload.meetingUrlVisibility;
+      }
+      return request.json<Event>(`/events/${id}/meeting-url`, { method: "PUT", body });
+    },
 
-    setStatus: (id: number, status: EventStatus) =>
-      request.json<Event>(`/events/${id}/status`, { method: "PUT", body: { status } }),
+    setStatus: (id: number, status: EventStatus, options?: { open_registration?: boolean }) =>
+      request.json<Event>(`/events/${id}/status`, {
+        method: "PUT",
+        body: {
+          status,
+          ...(options?.open_registration !== undefined ? { open_registration: options.open_registration } : {}),
+        },
+      }),
+
+    setRegistration: (id: number, payload: UpdateEventRegistrationPayload) =>
+      request.json<Form>(`/events/${id}/registration`, { method: "PUT", body: payload }),
 
     deletionImpact: (id: number) => request.json<EventDeletionImpact>(`/events/${id}/deletion-impact`),
 
@@ -208,16 +230,13 @@ export function createApi(request: Requester) {
     },
   };
 
-  // The status transitions, named for what they mean rather than for the value
-  // they write. `publish` and `openResponses` both set "open"; keeping both
-  // names is deliberate, they are different actions to an admin.
+  // Publication & cancellation transitions. Registration opening/closing is
+  // orthogonal and goes through `events.setRegistration`.
   const eventStatus = {
-    publish: (id: number) => events.setStatus(id, "open"),
+    publish: (id: number, openRegistration?: boolean) =>
+      events.setStatus(id, "published", openRegistration !== undefined ? { open_registration: openRegistration } : undefined),
     unpublish: (id: number) => events.setStatus(id, "draft"),
-    closeResponses: (id: number) => events.setStatus(id, "active"),
-    openResponses: (id: number) => events.setStatus(id, "open"),
-    close: (id: number) => events.setStatus(id, "closed"),
-    reopen: (id: number) => events.setStatus(id, "active"),
+    cancel: (id: number) => events.setStatus(id, "cancelled"),
   };
 
   const attendance = {

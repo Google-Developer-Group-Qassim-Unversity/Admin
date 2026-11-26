@@ -4,18 +4,25 @@ import { useQueries } from "@tanstack/react-query";
 import { useApi } from "@/lib/api/client";
 import { useEvents } from "@/hooks/use-event";
 import type { Event } from "@/lib/api-types";
-import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
+import {
+  isCustomEvent,
+  isEventEnded,
+  isEventLive,
+  isEventRegistrationOpen,
+  isEventUpcoming,
+} from "@/lib/event-lifecycle";
+import { parseLocalDateTime } from "@/lib/utils";
 import type { Urgency } from "@/components/status-badge";
 import { useAccess } from "@/hooks/use-access";
 
-export type AttentionKind = "overdue" | "draft" | "closingSoon" | "certificates";
+export type AttentionKind = "liveNow" | "draftSoon" | "draft" | "registrationSoon" | "certificates";
 
 export interface AttentionItem {
   id: string;
   kind: AttentionKind;
   urgency: Urgency;
   event: Event;
-  /** Days overdue, days old, or days remaining - whichever the kind is about. */
+  /** Days since ended, days old, or days remaining — whichever the kind is about. */
   days: number;
   /** Certificates still to send, for the "certificates" kind only. */
   count?: number;
@@ -24,8 +31,8 @@ export interface AttentionItem {
 
 const DAY_MS = 86_400_000;
 const DRAFT_STALE_DAYS = 3;
-const CLOSING_SOON_DAYS = 3;
-/** Certificate counts cost one request each, so only the newest few are checked. */
+const STARTING_SOON_DAYS = 3;
+/** Certificate counts cost one request each, so only the newest few ended events are checked. */
 const CERTIFICATE_LOOKBACK = 4;
 
 function daysBetween(from: Date, to: Date) {
@@ -33,12 +40,12 @@ function daysBetween(from: Date, to: Date) {
 }
 
 /**
- * What is waiting on an admin right now, derived from the events list rather
- * than from a dedicated endpoint - there isn't one.
- *
- * Three of the four kinds are free: they fall out of `status` and the two
- * datetimes every event already carries. Only the certificate check costs
- * requests, and it is capped at the most recently closed few.
+ * Operational work waiting on an admin right now, derived from the events list:
+ *   1. Live now (published + live) → take attendance
+ *   2. Draft starting soon (draft starting within 3 days) → publish now
+ *   3. Registration open & starting soon (published + upcoming + registration open) → review responses
+ *   4. Stale drafts (draft older than 3 days) → finish setup & publish
+ *   5. Certificates ready to send (published + ended, picked up automatically once phase === "ended")
  */
 export function useAttention() {
   const api = useApi();
@@ -46,22 +53,23 @@ export function useAttention() {
   const { data: events, isPending, error } = useEvents(undefined);
 
   const now = React.useMemo(() => new Date(), []);
+  const nowMs = now.getTime();
 
-  const recentlyClosed = React.useMemo(
+  const recentlyEnded = React.useMemo(
     () =>
       (events ?? [])
-        .filter((e) => e.status === "closed" && e.location_type !== "none" && e.location_type !== "hidden")
+        .filter((e) => !isCustomEvent(e) && isEventEnded(e, nowMs))
         .sort(
           (a, b) =>
-            parseLocalDateTime(b.start_datetime).getTime() -
-            parseLocalDateTime(a.start_datetime).getTime(),
+            parseLocalDateTime(b.end_datetime).getTime() -
+            parseLocalDateTime(a.end_datetime).getTime(),
         )
         .slice(0, CERTIFICATE_LOOKBACK),
-    [events],
+    [events, nowMs],
   );
 
   const certificateQueries = useQueries({
-    queries: recentlyClosed.map((event) => ({
+    queries: recentlyEnded.map((event) => ({
       queryKey: ["certificates", "eligible", event.id] as const,
       queryFn: () => api.certificates.eligibleCount(event.id),
       staleTime: 5 * 60 * 1000,
@@ -75,24 +83,37 @@ export function useAttention() {
     const out: AttentionItem[] = [];
 
     for (const event of events) {
-      const start = parseLocalDateTime(event.start_datetime);
-      const end = getEffectiveEndDate(start, parseLocalDateTime(event.end_datetime));
+      if (isCustomEvent(event) || event.status === "cancelled") continue;
 
-      // Ran, ended, never closed - so nobody has been awarded their points.
-      if (event.status === "active" && end.getTime() < now.getTime()) {
+      const start = parseLocalDateTime(event.start_datetime);
+
+      // Running right now — jump straight to check-in at the door.
+      if (isEventLive(event, nowMs)) {
         out.push({
-          id: `overdue-${event.id}`,
-          kind: "overdue",
-          urgency: "overdue",
+          id: `live-${event.id}`,
+          kind: "liveNow",
+          urgency: "done",
           event,
-          days: Math.max(1, daysBetween(end, now)),
+          days: 0,
           href: `/events/${event.id}/attendance`,
         });
         continue;
       }
 
-      // Sitting in draft long enough that it was probably forgotten.
+      // Still a draft: flag urgently if it starts soon, otherwise once stale.
       if (event.status === "draft") {
+        const until = daysBetween(now, start);
+        if (until >= 0 && until <= STARTING_SOON_DAYS) {
+          out.push({
+            id: `draft-soon-${event.id}`,
+            kind: "draftSoon",
+            urgency: "overdue",
+            event,
+            days: until,
+            href: `/events/${event.id}/manage`,
+          });
+          continue;
+        }
         const age = daysBetween(parseLocalDateTime(event.created_at), now);
         if (age >= DRAFT_STALE_DAYS) {
           out.push({
@@ -107,13 +128,13 @@ export function useAttention() {
         continue;
       }
 
-      // Open, and starting soon - last call to review who registered.
-      if (event.status === "open") {
+      // Published + upcoming + registration open & starting soon — review or close registration.
+      if (isEventUpcoming(event, nowMs) && isEventRegistrationOpen(event, nowMs)) {
         const until = daysBetween(now, start);
-        if (until >= 0 && until <= CLOSING_SOON_DAYS) {
+        if (until >= 0 && until <= STARTING_SOON_DAYS) {
           out.push({
-            id: `soon-${event.id}`,
-            kind: "closingSoon",
+            id: `reg-soon-${event.id}`,
+            kind: "registrationSoon",
             urgency: "waiting",
             event,
             days: until,
@@ -123,7 +144,7 @@ export function useAttention() {
       }
     }
 
-    recentlyClosed.forEach((event, i) => {
+    recentlyEnded.forEach((event, i) => {
       const data = certificateQueries[i]?.data;
       if (!data) return;
       const outstanding = data.eligible_count - data.sent_count;
@@ -133,17 +154,22 @@ export function useAttention() {
           kind: "certificates",
           urgency: "info",
           event,
-          days: daysBetween(parseLocalDateTime(event.start_datetime), now),
+          days: Math.max(0, daysBetween(parseLocalDateTime(event.end_datetime), now)),
           count: outstanding,
           href: `/events/${event.id}/attendance`,
         });
       }
     });
 
-    // Overdue first, then whatever is waiting, then the merely informational.
-    const rank: Record<Urgency, number> = { overdue: 0, waiting: 1, info: 2, done: 3 };
-    return out.sort((a, b) => rank[a.urgency] - rank[b.urgency] || b.days - a.days);
-  }, [events, now, recentlyClosed, certificateQueries]);
+    const rank: Record<AttentionKind, number> = {
+      liveNow: 0,
+      draftSoon: 1,
+      registrationSoon: 2,
+      draft: 3,
+      certificates: 4,
+    };
+    return out.sort((a, b) => rank[a.kind] - rank[b.kind] || a.days - b.days);
+  }, [events, now, nowMs, recentlyEnded, certificateQueries]);
 
   return { items, isPending, error };
 }

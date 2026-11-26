@@ -31,9 +31,17 @@ interface FormsCopyItemProps {
   formData: GoogleFormData | null;
   onFormChange: () => void;
   disabled?: boolean;
+  /** Ended / cancelled events lock form mutations: hide if none attached, show Open Form only if attached. */
+  readOnly?: boolean;
 }
 
-export function FormsCopyItem({ eventId, formData, onFormChange, disabled = false }: FormsCopyItemProps) {
+export function FormsCopyItem({
+  eventId,
+  formData,
+  onFormChange,
+  disabled = false,
+  readOnly = false,
+}: FormsCopyItemProps) {
   const t = useTranslations('formsCopyItem');
   const tCommon = useTranslations('common.actions');
   const { getToken } = useAuth();
@@ -91,6 +99,37 @@ export function FormsCopyItem({ eventId, formData, onFormChange, disabled = fals
   };
 
   const isReady = youHaveAccess && !showEmailInput;
+
+  if (readOnly) {
+    if (!hasExistingForm || !fileId) return null;
+    return (
+      <Item className="px-0 py-0">
+        <ItemContent className="min-w-0">
+          <ItemTitle className="text-[15px] font-bold">
+            <GoogleFormsIcon className="size-4 shrink-0" aria-hidden="true" />
+            {t('attached')}
+          </ItemTitle>
+          {sharedWithEmail ? (
+            <ItemDescription className="text-ink-2 line-clamp-none break-all">
+              {t('sharedWith', { email: sharedWithEmail })}
+            </ItemDescription>
+          ) : null}
+        </ItemContent>
+        <ItemActions className="w-full sm:w-auto">
+          <Button variant="outline" size="sm" className="w-full sm:w-auto" asChild>
+            <a
+              href={`https://docs.google.com/forms/d/${fileId}/edit`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {t('openForm')}
+              <ExternalLink className="rtl:-scale-x-100" />
+            </a>
+          </Button>
+        </ItemActions>
+      </Item>
+    );
+  }
 
   const moreMenu = (
     <DropdownMenu>

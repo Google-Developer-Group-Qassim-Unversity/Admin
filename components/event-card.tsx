@@ -7,8 +7,9 @@ import { ChevronRight, Globe, ImageOff, MapPin, Users } from "lucide-react";
 
 import { EventThumb, eventTone, posterUrl, urgencyTone, useDepartmentName, useEventDates } from "@/components/event-bits";
 import { Mark, SOFT } from "@/components/najdi";
-import { StatusBadge } from "@/components/status-badge";
+import { RegistrationBadge, StatusBadge } from "@/components/status-badge";
 import type { Event } from "@/lib/api-types";
+import { resolveLifecycleState } from "@/lib/event-lifecycle";
 import { nextStepFor } from "@/lib/event-next-step";
 import { cn } from "@/lib/utils";
 
@@ -16,7 +17,9 @@ import { cn } from "@/lib/utils";
 export function NextStepChip({ event, now, className }: { event: Event; now: number; className?: string }) {
   const t = useTranslations("events.nextStep");
   const step = nextStepFor(event, new Date(now));
-  if (step.key === "done") return <span className={cn("text-ink-2 text-[12.5px]", className)}>{t("done")}</span>;
+  if (step.key === "done" || step.key === "cancelled") {
+    return <span className={cn("text-ink-2 text-[12.5px]", className)}>{t(step.key)}</span>;
+  }
   return (
     <Link
       href={step.href}
@@ -44,6 +47,9 @@ export function EventRow({ event, now }: { event: Event; now: number }) {
   const dept = departmentName(event);
   const LocationIcon = event.location_type === "online" ? Globe : MapPin;
   const showLocation = event.location_type !== "none" && event.location_type !== "hidden" && Boolean(event.location);
+  const lifecycle = resolveLifecycleState(event, now);
+  const showRegistration = lifecycle === "upcoming" || lifecycle === "live";
+  const showAttendance = lifecycle === "live" || lifecycle === "ended";
 
   return (
     <li className="border-rule relative flex items-start gap-3 border-b px-1 py-3 transition-colors hover:bg-card has-[a:active]:bg-sunk">
@@ -76,9 +82,10 @@ export function EventRow({ event, now }: { event: Event; now: number }) {
           ) : null}
         </p>
         <div className="mt-1 flex flex-wrap items-center gap-2">
-          <StatusBadge status={event.status} />
+          <StatusBadge event={event} now={now} />
+          {showRegistration ? <RegistrationBadge event={event} now={now} /> : null}
           <NextStepChip event={event} now={now} />
-          {event.status === "active" || event.status === "closed" ? (
+          {showAttendance ? (
             <Link
               href={`/events/${event.id}/attendance`}
               className="text-ink-2 hover:text-foreground relative z-10 inline-flex h-8 items-center gap-1 rounded-sm px-1 text-[12.5px] font-bold"
@@ -106,6 +113,7 @@ export function EventPosterTile({ event, now }: { event: Event; now: number }) {
   const departmentName = useDepartmentName();
   const dept = departmentName(event);
   const url = posterUrl(event);
+  const lifecycle = resolveLifecycleState(event, now);
 
   return (
     <li className="group relative flex flex-col gap-2">
@@ -122,7 +130,7 @@ export function EventPosterTile({ event, now }: { event: Event; now: number }) {
       <div className="flex flex-col gap-1 px-0.5">
         <div className="flex items-center gap-2">
           <Mark tone={eventTone(event, now)} />
-          <span className="text-ink-2 text-[12.5px] font-bold">{t(`status.${event.status}`)}</span>
+          <span className="text-ink-2 text-[12.5px] font-bold">{t(`lifecycle.${lifecycle}`)}</span>
           <span className="text-ink-2 tabular ms-auto text-[12.5px]">{dates.day(event.start_datetime)}</span>
         </div>
         <h3 className="line-clamp-2 text-[15px] leading-snug font-bold">

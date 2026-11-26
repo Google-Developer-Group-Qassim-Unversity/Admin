@@ -5,7 +5,8 @@ import { Empty, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/
 import { useSubmissions, useAcceptSubmissions } from "@/hooks/use-submissions";
 import { useSendAcceptance, useSendAcceptanceTest } from "@/hooks/use-acceptance";
 import { useFormData, useFormSchema } from "@/hooks/use-form-data";
-import { useCloseEventResponses, useOpenEventResponses } from "@/hooks/use-event";
+import { useUpdateEventRegistration } from "@/hooks/use-event";
+import { resolveEffectiveRegistration, resolveEventPhase } from "@/lib/event-lifecycle";
 import { FormResponse, mapSchemaToTitleAnswers } from "@/lib/googl-parser";
 import {
   transformSubmissionsToRows,
@@ -67,6 +68,7 @@ import {
   Pagination,
   SelectedRowsActions,
   SummaryStatistics,
+  StatusAlert,
   SendAcceptanceDialog,
   SendAcceptanceButton,
   ResponseCardList,
@@ -90,11 +92,10 @@ export default function EventResponsesPage() {
   const { event, refetch } = useEventContext();
   const { getToken } = useAuth();
   const { data: submissions, isLoading: submissionsLoading, error, refetch: refetchSubmissions } = useSubmissions(event?.id ?? 0, getToken);
-  const { data: formData, isLoading: formDataLoading } = useFormData(event?.id ?? 0);
+  const { data: formData, isLoading: formDataLoading, refetch: refetchForm } = useFormData(event?.id ?? 0);
   const { data: formSchema, isLoading: formSchemaLoading } = useFormSchema(formData?.id, getToken);
   const acceptSubmissionsMutation = useAcceptSubmissions(getToken);
-  const closeResponsesMutation = useCloseEventResponses();
-  const openResponsesMutation = useOpenEventResponses();
+  const updateRegistrationMutation = useUpdateEventRegistration();
   const sendAcceptanceMutation = useSendAcceptance(getToken);
   const sendAcceptanceTestMutation = useSendAcceptanceTest(getToken);
 
@@ -360,29 +361,41 @@ export default function EventResponsesPage() {
     return null;
   }
 
+  const phase = resolveEventPhase(event);
+  const effectiveReg = formData?.effectiveRegistrationStatus ?? resolveEffectiveRegistration(event);
+  const isRegistrationOpen = effectiveReg === "open";
+
   const handleToggleResponsesClick = () => {
     setToggleResponsesDialogOpen(true);
   };
 
-  const handleCloseResponses = async () => {
+  const handleCloseRegistration = async () => {
     try {
-      await closeResponsesMutation.mutateAsync(event.id);
-      toast.success(t('closedSuccess'));
+      await updateRegistrationMutation.mutateAsync({
+        id: event.id,
+        data: { registration_status: "closed" },
+      });
+      toast.success(t("closedSuccess"));
       setToggleResponsesDialogOpen(false);
+      await refetchForm();
       refetch?.();
     } catch {
-      toast.error(t('closeFailed'));
+      toast.error(t("closeFailed"));
     }
   };
 
-  const handleOpenResponses = async () => {
+  const handleOpenRegistration = async () => {
     try {
-      await openResponsesMutation.mutateAsync(event.id);
-      toast.success(t('openedSuccess'));
+      await updateRegistrationMutation.mutateAsync({
+        id: event.id,
+        data: { registration_status: "open" },
+      });
+      toast.success(t("openedSuccess"));
       setToggleResponsesDialogOpen(false);
+      await refetchForm();
       refetch?.();
     } catch {
-      toast.error(t('openFailed'));
+      toast.error(t("openFailed"));
     }
   };
 
@@ -419,40 +432,39 @@ export default function EventResponsesPage() {
     }
   };
 
-  const canToggleResponses = event.status === 'open' || event.status === 'active';
-  const toggleResponsesButton = canToggleResponses ? (
+  const canToggleRegistration =
+    event.status === "published" && phase !== "ended" && (formData?.formType ?? event.form_type) !== "none";
+  const toggleResponsesButton = canToggleRegistration ? (
     <Button
-        variant={event.status === 'open' ? 'default' : 'outline'}
-        size="sm"
-        onClick={handleToggleResponsesClick}
-        disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
-      >
-        {event.status === 'open' ? (
-          closeResponsesMutation.isPending ? (
-            <>
-              <Loader2 className="animate-spin" />
-              {t("closing")}
-            </>
-          ) : (
-            <>
-              <Lock />
-              {t("closeResponses")}
-            </>
-          )
+      variant={isRegistrationOpen ? "default" : "outline"}
+      size="sm"
+      onClick={handleToggleResponsesClick}
+      disabled={updateRegistrationMutation.isPending}
+    >
+      {isRegistrationOpen ? (
+        updateRegistrationMutation.isPending ? (
+          <>
+            <Loader2 className="animate-spin" />
+            {t("closing")}
+          </>
         ) : (
-          openResponsesMutation.isPending ? (
-            <>
-              <Loader2 className="animate-spin" />
-              {t("opening")}
-            </>
-          ) : (
-            <>
-              <Unlock />
-              {t("openResponses")}
-            </>
-          )
-        )}
-      </Button>
+          <>
+            <Lock />
+            {t("closeResponses")}
+          </>
+        )
+      ) : updateRegistrationMutation.isPending ? (
+        <>
+          <Loader2 className="animate-spin" />
+          {t("opening")}
+        </>
+      ) : (
+        <>
+          <Unlock />
+          {t("openResponses")}
+        </>
+      )}
+    </Button>
   ) : null;
 
   if (!formDataLoading && formData?.formType === 'none') {
@@ -487,6 +499,7 @@ export default function EventResponsesPage() {
           </Alert>
         ) : (
           <>
+            <StatusAlert event={event} formData={formData} />
             <SummaryStatistics total={total} accepted={accepted} pending={pending} invited={invited} acceptedNotInvited={acceptedNotInvited} />
 
             {/* Phone toolbar: search, then filter + actions, then the two
@@ -733,32 +746,33 @@ export default function EventResponsesPage() {
         isLoading={acceptSubmissionsMutation.isPending}
       />
       
-      <AlertDialog open={toggleResponsesDialogOpen} onOpenChange={(open) => {
-        if (!(closeResponsesMutation.isPending || openResponsesMutation.isPending)) {
-          setToggleResponsesDialogOpen(open);
-        }
-      }}>
+      <AlertDialog
+        open={toggleResponsesDialogOpen}
+        onOpenChange={(open) => {
+          if (!updateRegistrationMutation.isPending) {
+            setToggleResponsesDialogOpen(open);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {event.status === 'open' ? t('closeConfirmTitle') : t('openConfirmTitle')}
+              {isRegistrationOpen ? t("closeConfirmTitle") : t("openConfirmTitle")}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {event.status === 'open'
-                ? t('closeConfirmDescription')
-                : t('openConfirmDescription')}
+              {isRegistrationOpen ? t("closeConfirmDescription") : t("openConfirmDescription")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}>
+            <AlertDialogCancel disabled={updateRegistrationMutation.isPending}>
               {tc("cancel")}
             </AlertDialogCancel>
             <Button
-              onClick={event.status === 'open' ? handleCloseResponses : handleOpenResponses}
-              disabled={closeResponsesMutation.isPending || openResponsesMutation.isPending}
+              onClick={isRegistrationOpen ? handleCloseRegistration : handleOpenRegistration}
+              disabled={updateRegistrationMutation.isPending}
             >
-              {event.status === 'open' ? (
-                closeResponsesMutation.isPending ? (
+              {isRegistrationOpen ? (
+                updateRegistrationMutation.isPending ? (
                   <>
                     <Loader2 className="animate-spin" />
                     {t("closing")}
@@ -769,18 +783,16 @@ export default function EventResponsesPage() {
                     {t("closeResponses")}
                   </>
                 )
+              ) : updateRegistrationMutation.isPending ? (
+                <>
+                  <Loader2 className="animate-spin" />
+                  {t("opening")}
+                </>
               ) : (
-                openResponsesMutation.isPending ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    {t("opening")}
-                  </>
-                ) : (
-                  <>
-                    <Unlock />
-                    {t("openResponses")}
-                  </>
-                )
+                <>
+                  <Unlock />
+                  {t("openResponses")}
+                </>
               )}
             </Button>
           </AlertDialogFooter>

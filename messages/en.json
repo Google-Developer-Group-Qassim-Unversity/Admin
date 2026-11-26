@@ -347,11 +347,35 @@
     "noneMatchSemester": "No events match the selected semester filter.",
     "noneMatchFilters": "No events match your filters. Try adjusting your search criteria.",
     "status": {
-      "draft": "draft",
-      "open": "open",
-      "active": "active",
-      "closed": "closed"
+      "draft": "Draft",
+      "published": "Published",
+      "cancelled": "Cancelled"
     },
+    "lifecycle": {
+      "draft": "Draft",
+      "upcoming": "Upcoming",
+      "live": "Live",
+      "ended": "Ended",
+      "cancelled": "Cancelled"
+    },
+    "registration": {
+      "open": "Registration open",
+      "not_open": "Not open yet",
+      "opensSoon": "Opens soon",
+      "closed": "Registration closed",
+      "none": "No registration"
+    },
+    "views": {
+      "label": "Filter events by lifecycle",
+      "all": "All",
+      "live": "Live",
+      "upcoming": "Upcoming",
+      "drafts": "Drafts",
+      "ended": "Ended",
+      "cancelled": "Cancelled"
+    },
+    "registrationFilter": "Registration",
+    "allRegistration": "All registration",
     "filters": {
       "search": "Search events...",
       "semester": "Semester",
@@ -400,11 +424,13 @@
       "agoDays": "{days, plural, one {yesterday} other {# days ago}}"
     },
     "nextStep": {
-      "publish": "Attach form & publish",
+      "publish": "Setup & publish",
+      "openRegistration": "Open registration",
       "review": "Review registrations",
+      "prepareAttendance": "Review & prepare",
       "attend": "Take attendance",
-      "close": "Close & award points",
-      "done": "Nothing to do"
+      "done": "Nothing to do",
+      "cancelled": "Cancelled"
     },
     "subtitle": "Create, publish, and track every event."
   },
@@ -463,14 +489,6 @@
       "requiredHint": "Members must register beforehand. Only registered members can attend and earn points.",
       "notRequiredHint": "No registration needed. Anyone can attend this event and earn points."
     }
-  },
-  "closeEvent": {
-    "title": "Close Event",
-    "description": "Are you sure you want to close this event? You can re-open it later.",
-    "success": "Event closed successfully",
-    "failed": "Failed to close event",
-    "unknownError": "Unknown error",
-    "closeButton": "Close Event"
   },
   "eventImage": {
     "label": "Event Image",
@@ -822,18 +840,20 @@
       "confirm": "Confirm",
       "andMore": "{count, plural, one {...and # more} other {...and # more}}"
     },
-    "statusItem": {
-      "reopenTitle": "Re-open Event",
-      "closeTitle": "Close Event",
-      "overdueTitle": "The event has ended: close it",
-      "reopenDescription": "Re-open the event to resume accepting attendance.",
-      "closeDescription": "When attendance is complete, close the event to finalize attendance records.",
-      "opening": "Opening...",
-      "openEvent": "Open Event",
-      "closeEvent": "Close Event",
-      "reopenSuccess": "Event re-opened successfully",
-      "reopenFailed": "Failed to open event",
-      "unknownError": "Unknown error"
+    "lifecycleStrip": {
+      "draftTitle": "Event is still a draft",
+      "draftDescription": "Attendance cannot be recorded until the event is published.",
+      "goToPublish": "Go to Publish",
+      "cancelledTitle": "Event was cancelled",
+      "cancelledDescription": "Attendance cannot be recorded for a cancelled event.",
+      "manageStatus": "Manage Status",
+      "upcomingTitle": "Upcoming event",
+      "upcomingDescription": "Starts {time}. Attendance opens on event day.",
+      "liveTitle": "Event is live",
+      "liveDescription": "Ready for check-in at the door. Use the QR code or scan member cards.",
+      "endedTitle": "Event has ended",
+      "endedDescription": "Ended automatically on schedule. You can still review or backfill attendance, or send certificates.",
+      "sendCertificates": "Send Certificates"
     },
     "daySelect": {
       "title": "Select Day(s)",
@@ -1053,15 +1073,47 @@
     }
   },
   "eventManage": {
-    "title": "Registration & Google Form",
-    "subtitle": "Manage this event's registration requirement and its attached Google Form.",
+    "title": "Publish & Registration",
+    "subtitle": "Control event visibility, registration window, and form settings.",
+    "sections": {
+      "publication": "Event Visibility",
+      "registration": "Registration",
+      "meeting": "Online Meeting Link"
+    },
     "requireRegistration": "Require Registration",
     "requiredHint": "Members must register to participate in this event",
     "notRequiredHint": "Anyone can participate without registration. If a Google Form is attached, it stays attached.",
     "registrationRequired": "Registration is now required for this event",
     "registrationNotRequired": "Registration is no longer required",
     "updateFailed": "Failed to update registration setting",
-    "stepDone": "Done"
+    "registration": {
+      "controlsTitle": "Registration status",
+      "openRegistration": "Open Registration",
+      "closeNow": "Close Registration",
+      "updating": "Updating...",
+      "openedToast": "Registration is now open.",
+      "closedToast": "Registration is now closed.",
+      "updateFailed": "Failed to update registration",
+      "explainCancelled": "Registration is closed because this event was cancelled.",
+      "explainEnded": "Registration closed automatically when the event ended.",
+      "explainDraft": "Publish the event above to start accepting registrations.",
+      "explainOpen": "Members can currently register for this event.",
+      "explainNotOpen": "Registration has not opened yet. Members see the event as a preview.",
+      "explainClosedManual": "Registration is closed. No new submissions are accepted.",
+      "gateCancelledTitle": "Registration closed",
+      "gateDraftTitle": "Paused while draft",
+      "gateEndedTitle": "Closed automatically",
+      "gateOpenTitle": "Accepting registrations",
+      "gateNotOpenTitle": "Not open yet",
+      "gateClosedTitle": "Registration closed",
+      "editDates": "Edit dates"
+    },
+    "modeLabel": "How members join",
+    "modeRequiredTitle": "Registration required",
+    "modeRequiredHint": "Members sign up first (directly or via Google Form)",
+    "modeOpenTitle": "Open attendance",
+    "modeOpenHint": "Anyone can attend directly without signing up",
+    "savedGoogleFormPreserved": "Your previously attached Google Form is saved and will return if you switch back to registration required."
   },
   "sendCustomEmail": {
     "title": "Send Custom Email",
@@ -1096,6 +1148,7 @@
     "noLocation": "No Location",
     "attendance": "Attendance",
     "attendeesCount": "{count, plural, one {# attendee} other {# attendees}}",
+    "registration": "Registration",
     "description": "Description",
     "noDescription": "No description provided for this event.",
     "date": "Date",
@@ -1115,16 +1168,11 @@
     "goBackToEvents": "Go back to Events",
     "errorPrefix": "Error: {message}",
     "tabsLabel": "Event sections",
-    "overdue": {
-      "title": "Attendance was never closed",
-      "body": "The event has ended. Close it to award the points and send the certificates.",
-      "action": "Close the event"
-    },
     "tabs": {
       "info": "Event Info",
       "content": "Content",
-      "manage": "Google Form & Publish",
-      "responses": "Manage Responses",
+      "manage": "Publish & Registration",
+      "responses": "Responses",
       "attendance": "Attendance",
       "edit": "Edit Event"
     }
@@ -1516,12 +1564,22 @@
     "acceptAllCount": "Accept All ({count})",
     "acceptBulk": "Accept Bulk",
     "statusAlert": {
-      "notPublishedTitle": "Event Not Published",
-      "notPublishedDescription": "This event requires registration but is still in draft status. Please publish the event to start collecting responses.",
-      "activeTitle": "Event is Active",
-      "activeDescription": "The event is now active. Acceptance emails should be sent.",
-      "closedTitle": "Responses Closed",
-      "closedDescription": "Responses are not being collected anymore."
+      "draftTitle": "Event is still a draft",
+      "draftDescription": "Publish the event from Publish & Registration before members can register.",
+      "cancelledTitle": "Event was cancelled",
+      "cancelledDescription": "Registration is closed. Existing submissions remain visible for reference.",
+      "scheduledOpenTitle": "Registration scheduled",
+      "scheduledOpenDescription": "Registration will open automatically on {time}.",
+      "notOpenTitle": "Registration not open yet",
+      "notOpenDescription": "The event is published, but registration hasn't opened yet. Open it when you are ready to collect responses.",
+      "openScheduledCloseTitle": "Registration is open",
+      "openScheduledCloseDescription": "Accepting responses until {time}.",
+      "endedTitle": "Event has ended",
+      "endedDescription": "Registration closed automatically when the event ended.",
+      "closedDeadlineTitle": "Registration deadline passed",
+      "closedDeadlineDescription": "Registration closed automatically on {time}. You can review responses and send acceptance emails.",
+      "closedTitle": "Registration is closed",
+      "closedDescription": "No new responses are being accepted. You can review submissions and send acceptance emails."
     },
     "bulkAcceptTitle": "Accept Bulk by Email",
     "bulkAcceptDescription": "Enter emails (one per line, or separated by commas). Invalid or non-existent emails will be skipped.",
@@ -1579,10 +1637,10 @@
     "removedAcceptanceFrom": "{count, plural, one {Removed acceptance from # submission} other {Removed acceptance from # submissions}}",
     "acceptedFrom": "{count, plural, one {Accepted # submission} other {Accepted # submissions}}",
     "updateFailed": "Failed to update submissions",
-    "closedSuccess": "Responses have been closed. Event is now active.",
-    "closeFailed": "Failed to close responses. Please try again.",
-    "openedSuccess": "Responses have been opened. Event is now accepting responses.",
-    "openFailed": "Failed to open responses. Please try again.",
+    "closedSuccess": "Registration has been closed.",
+    "closeFailed": "Failed to close registration. Please try again.",
+    "openedSuccess": "Registration is now open.",
+    "openFailed": "Failed to open registration. Please try again.",
     "acceptanceQueuedCount": "{count, plural, =0 {} one {The acceptance email is on its way to # recipient} other {Acceptance emails are on their way to # recipients}}",
     "sendAcceptanceFailed": "Failed to send acceptance emails",
     "testSentCount": "{count, plural, one {Test emails sent to # recipient} other {Test emails sent to # recipients}}",
@@ -1604,14 +1662,14 @@
     "columns": "Columns",
     "refresh": "Refresh",
     "closing": "Closing...",
-    "closeResponses": "Close Responses",
+    "closeResponses": "Close Registration",
     "opening": "Opening...",
-    "openResponses": "Open Responses",
+    "openResponses": "Open Registration",
     "noneFound": "No submissions found.",
-    "closeConfirmTitle": "Close Responses?",
-    "openConfirmTitle": "Open Responses?",
-    "closeConfirmDescription": "Are you sure you want to close responses for this event? The event status will change from \"open\" to \"active\" and no new responses will be accepted.",
-    "openConfirmDescription": "Are you sure you want to open responses for this event? The event status will change from \"active\" to \"open\" and new responses will be accepted."
+    "closeConfirmTitle": "Close registration?",
+    "openConfirmTitle": "Open registration?",
+    "closeConfirmDescription": "No new registrations will be accepted. If a Google Form is attached, it will stop accepting responses too.",
+    "openConfirmDescription": "Members will be able to register right away. Any past deadline or future open time will be cleared."
   },
   "customEventForm": {
     "eventInformation": "Event Information",
@@ -1674,25 +1732,51 @@
     "removing": "Removing..."
   },
   "publishItem": {
-    "publishedSuccess": "Event published successfully.",
+    "draftTitle": "Draft — hidden from members",
+    "draftDescription": "Only staff can see this event. Publish it when you're ready for members to view it.",
+    "googleFormDraftNote": "Publishing with registration open also publishes the attached Google Form.",
+    "publishAndOpen": "Publish & Open Registration",
+    "publishOnly": "Publish as preview",
+    "publishOnlyHint": "Publish as preview makes the event visible while keeping registration paused until you open it below.",
+    "publishEvent": "Publish Event",
+    "publishedTitle": "Published to members",
+    "publishedPhaseHint": {
+      "upcoming": "Visible on the website and app. Will move to Live automatically at start time.",
+      "live": "Currently running. Attendance is open for check-in.",
+      "ended": "The event has ended automatically on schedule."
+    },
+    "publishedAt": "Published {date}",
+    "openEvent": "Open Event",
+    "moveToDraft": "Unpublish (Move to Draft)",
+    "cancelEvent": "Cancel Event",
+    "unpublishConfirmTitle": "Unpublish this event?",
+    "unpublishConfirmDescription": "The event will be hidden from members and returned to Draft without cancelling it or notifying registrants. Any attached Google Form will pause.",
+    "cancelConfirmTitle": "Cancel this event?",
+    "cancelConfirmIntro": "Cancelling an event has immediate effects:",
+    "cancelConsequenceRegistration": "Registration closes automatically and any attached Google Form stops accepting responses.",
+    "cancelConsequenceNotify": "Accepted registrants are notified that the event was cancelled.",
+    "cancelConsequencePoints": "The event is excluded from points and member history.",
+    "cancelConfirmButton": "Cancel Event",
+    "cancelling": "Cancelling...",
+    "cancelledTitle": "Event cancelled",
+    "cancelledDescription": "Hidden from active schedules, registration is closed, and points do not count.",
+    "cancelledAt": "Cancelled {date}",
+    "restoreAndPublish": "Restore & Publish",
+    "restoreAsDraft": "Restore as Draft",
+    "restoring": "Restoring...",
+    "publishedSuccess": "Event published.",
+    "publishedAndOpenedSuccess": "Event published and registration opened.",
+    "restoredPublishedSuccess": "Event restored and published.",
+    "restoredDraftSuccess": "Event restored as draft.",
     "publishFailed": "Failed to publish event. Please try again.",
-    "unpublishedSuccess": "Event unpublished successfully.",
+    "unpublishedSuccess": "Event moved back to draft.",
     "unpublishFailed": "Failed to unpublish event. Please try again.",
+    "cancelledSuccess": "Event cancelled.",
+    "cancelFailed": "Failed to cancel event. Please try again.",
+    "publishing": "Publishing...",
+    "unpublishing": "Moving to draft...",
     "linkCopied": "Event link copied to clipboard.",
     "copyFailed": "Failed to copy link. Please try again.",
-    "activeLocked": "Event is active - publish status cannot be changed",
-    "closedLocked": "Event is closed - publish status cannot be changed",
-    "openDescription": "Event is published and visible to members",
-    "closedDescription": "Publish to make the event visible to members",
-    "googleFormNote": "This also publishes or unpublishes the event's attached Google Form.",
-    "title": "Publish Event",
-    "openEvent": "Open Event",
-    "locked": "Locked",
-    "lockedTooltip": "Cannot control publish status anymore because the event is either active or closed",
-    "unpublishing": "Unpublishing...",
-    "publishing": "Publishing...",
-    "unpublish": "Unpublish",
-    "publish": "Publish",
     "qrCodeTitle": "Event QR Code",
     "qrCodeDescription": "Scan or share this QR code to open the event page.",
     "copyQrCode": "Copy QR Image",
@@ -1700,9 +1784,13 @@
     "qrCopied": "QR code copied to clipboard.",
     "qrCopyFailed": "Failed to copy QR code. Please try again.",
     "qrDownloadFailed": "Failed to download QR code. Please try again.",
-    "eventLink": "Public event link",
-    "copyLink": "Copy event link",
-    "showQr": "Show QR code"
+    "eventLink": "Event link",
+    "draftLinkHint": "Not live yet — ready for posters & QR codes",
+    "copyLink": "Copy link",
+    "showQr": "Show QR code",
+    "sectionTitle": "Event Visibility",
+    "draftPastDateWarning": "This event's end date ({date}) has already passed. Publishing it now will mark it as Ended.",
+    "editDates": "Edit dates"
   },
   "memberSelectDialog": {
     "loading": "Loading members…",
@@ -1768,11 +1856,27 @@
   },
   "meetingUrlItem": {
     "savedToast": "Meeting link saved",
+    "visibilityUpdatedToast": "Meeting link visibility updated",
     "removedToast": "Meeting link removed",
     "saveFailed": "Failed to save meeting link",
     "title": "Meeting Link",
     "descriptionSaved": "Members see a join button on the event page",
     "descriptionEmpty": "Paste a link, or just a Google Meet code like abc-defg-hij",
+    "descriptionEnded": "No longer shown to members. Kept for automatic Google Meet recording discovery.",
+    "descriptionByVisibility": {
+      "public": "Shown publicly with a Join button on the event page and app.",
+      "accepted": "Shown only to accepted members on the event page and app.",
+      "hidden": "Hidden from members. Kept for staff and automatic Google Meet recording discovery."
+    },
+    "visibilityLabel": "Who can see this link",
+    "visibility": {
+      "acceptedTitle": "Accepted members",
+      "acceptedHint": "Only accepted registrants see the Join button",
+      "publicTitle": "Anyone",
+      "publicHint": "Shown publicly on the event page",
+      "hiddenTitle": "Staff only",
+      "hiddenHint": "Private — for staff & Meet recordings"
+    },
     "placeholder": "https://meet.google.com/abc-defg-hij",
     "ariaLabel": "Meeting link",
     "save": "Save",
@@ -1898,14 +2002,14 @@
     "pipeline": "Event pipeline",
     "eventCount": "{count, plural, one {# event} other {# events}}",
     "allClearTitle": "Nothing waiting on you",
-    "allClearBody": "No overdue events, stale drafts or unsent certificates. Enjoy it.",
+    "allClearBody": "No live events, stale drafts, or unsent certificates. Enjoy it.",
     "greeting": "Welcome, {name}",
     "yourRequests": "Your department's requests",
     "all": "All",
     "noRequests": "No requests yet. Book dates to start one.",
     "openInbox": "Open",
     "events": "Events",
-    "noEvents": "Nothing is running or open for registration.",
+    "noEvents": "No live or upcoming events right now.",
     "stages": {
       "club": "Across the club",
       "yours": "Your departments' pipeline",
@@ -1948,24 +2052,29 @@
       "emailsHint": "Across every provider"
     },
     "queue": {
-      "overdue": {
-        "title": "Attendance never closed",
-        "detail": "ended {days, plural, one {# day} other {# days}} ago, points not awarded",
-        "action": "Close event"
+      "liveNow": {
+        "title": "Live right now",
+        "detail": "event is running — open attendance at the door",
+        "action": "Attendance"
+      },
+      "draftSoon": {
+        "title": "Starts soon — still a draft",
+        "detail": "{days, plural, =0 {starts today} one {starts tomorrow} other {starts in # days}}",
+        "action": "Publish"
       },
       "draft": {
-        "title": "Draft has never been published",
+        "title": "Draft has not been published",
         "detail": "created {days, plural, one {# day} other {# days}} ago",
         "action": "Finish setup"
       },
-      "closingSoon": {
-        "title": "Starts soon — review the registrations",
+      "registrationSoon": {
+        "title": "Registration open — starts soon",
         "detail": "{days, plural, =0 {starts today} one {starts tomorrow} other {starts in # days}}",
         "action": "Review"
       },
       "certificates": {
         "title": "{count, plural, one {# certificate} other {# certificates}} ready to send",
-        "detail": "closed {days, plural, one {# day} other {# days}} ago",
+        "detail": "{days, plural, =0 {ended today} one {ended yesterday} other {ended # days ago}}",
         "action": "Send"
       }
     },
@@ -3219,14 +3328,22 @@
     "reviewNote": "{accepted} accepted, {rejected} not accepted",
     "statuses": {
       "draft": "Draft",
+      "published": "Published",
+      "cancelled": "Cancelled",
       "open": "Open",
       "active": "Active",
+      "closed": "Closed"
+    },
+    "registrationStatuses": {
+      "not_open": "Not open",
+      "open": "Open",
       "closed": "Closed"
     },
     "fields": {
       "attendance_points": "Attendance points",
       "name": "Name",
       "status": "Status",
+      "registration_status": "Registration status",
       "description": "Description",
       "location_type": "On-site or online",
       "location": "Location",
@@ -3247,6 +3364,9 @@
       "created": "created the event",
       "edited": "edited {count, plural, one {# thing} other {# things}}",
       "statusChanged": "changed the status from {from} to {to}",
+      "registrationStatusChanged": "changed registration from {from} to {to}",
+      "registrationChanged": "updated registration settings",
+      "content_link_changed": "updated event content links",
       "meetSet": "set the Meet link",
       "meetChanged": "changed the Meet link",
       "meetCleared": "removed the Meet link",

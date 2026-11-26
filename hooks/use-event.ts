@@ -4,14 +4,17 @@ import { ApiRequestError } from '@/lib/api';
 import type {
   CreateContentLinkPayload,
   Event,
+  MeetingUrlVisibility,
   UpdateContentLinkPayload,
   UpdateEventPayload,
+  UpdateEventRegistrationPayload,
   BackfillMember,
   AttendanceType,
   EventsPageParams,
 } from '@/lib/api-types';
 import type { Api, EventsFilters } from '@/lib/api/resources';
 import { pipelineKeys } from './use-pipeline';
+import { formKeys } from './use-form-data';
 
 // Query keys
 const eventKeysAll = ['events'] as const;
@@ -42,9 +45,13 @@ function useEventCacheUpdates() {
   const queryClient = useQueryClient();
 
   return (id: number, event: Event) => {
-    queryClient.setQueryData(eventKeys.detail(id), event);
+    // Write endpoints return the lean Events_model (without form_* / content_links);
+    // merge onto the existing cache so UI stays populated while invalidation refetches.
+    queryClient.setQueryData<Event>(eventKeys.detail(id), (prev) => (prev ? { ...prev, ...event } : event));
+    queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
     queryClient.invalidateQueries({ queryKey: eventKeys.fullDetails() });
     queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+    queryClient.invalidateQueries({ queryKey: formKeys.byEvent(id) });
   };
 }
 
@@ -135,16 +142,23 @@ export function useUpdateEventPartial() {
 }
 
 /**
- * Hook for setting (or clearing) a remote event's join link via
- * PUT /events/[id]/meeting-url. Pass null to clear it.
+ * Hook for setting (or clearing) a remote event's join link and visibility policy
+ * via PUT /events/[id]/meeting-url.
  */
 export function useUpdateEventMeetingUrl() {
   const api = useApi();
   const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: ({ id, meetingUrl }: { id: number; meetingUrl: string | null }) =>
-      api.events.updateMeetingUrl(id, meetingUrl),
+    mutationFn: ({
+      id,
+      meetingUrl,
+      meetingUrlVisibility,
+    }: {
+      id: number;
+      meetingUrl?: string | null;
+      meetingUrlVisibility?: MeetingUrlVisibility;
+    }) => api.events.updateMeetingUrl(id, { meetingUrl, meetingUrlVisibility }),
     onSuccess: (data, { id }) => onEventChanged(id, data),
   });
 }
@@ -279,20 +293,24 @@ export function useDepartment(id: number | undefined) {
 }
 
 /**
- * Hook for publishing an event via PUT /events/[id]/status.
+ * Publish an event via PUT /events/[id]/status. Pass `openRegistration: true`
+ * to open registration atomically in the same call, or `false` to publish as a
+ * teaser with registration kept closed.
  */
 export function usePublishEvent() {
   const api = useApi();
   const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: (id: number) => api.eventStatus.publish(id),
-    onSuccess: (data, id) => onEventChanged(id, data),
+    mutationFn: ({ id, openRegistration }: { id: number; openRegistration?: boolean }) =>
+      api.eventStatus.publish(id, openRegistration),
+    onSuccess: (data, { id }) => onEventChanged(id, data),
   });
 }
 
 /**
- * Hook for unpublishing an event, back to "draft".
+ * Move an event back to "draft" via PUT /events/[id]/status.
+ * Resets registration to "not_open" and unpublishes any attached Google Form.
  */
 export function useUnpublishEvent() {
   const api = useApi();
@@ -305,58 +323,36 @@ export function useUnpublishEvent() {
 }
 
 /**
- * Hook for closing event responses.
- * Changes event status from "open" to "active".
+ * Cancel an event via PUT /events/[id]/status.
+ * Closes registration, excludes the event from points/history, and notifies accepted registrants.
  */
-export function useCloseEventResponses() {
+export function useCancelEvent() {
   const api = useApi();
   const onEventChanged = useEventCacheUpdates();
 
   return useMutation({
-    mutationFn: (id: number) => api.eventStatus.closeResponses(id),
+    mutationFn: (id: number) => api.eventStatus.cancel(id),
     onSuccess: (data, id) => onEventChanged(id, data),
   });
 }
 
 /**
- * Hook for re-opening event responses.
- * Changes event status from "active" back to "open".
+ * Update an event's registration state and/or Riyadh-local schedule window
+ * via PUT /events/[id]/registration.
  */
-export function useOpenEventResponses() {
+export function useUpdateEventRegistration() {
   const api = useApi();
-  const onEventChanged = useEventCacheUpdates();
+  const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (id: number) => api.eventStatus.openResponses(id),
-    onSuccess: (data, id) => onEventChanged(id, data),
-  });
-}
-
-/**
- * Hook for closing an event.
- * Changes event status to "closed".
- */
-export function useCloseEvent() {
-  const api = useApi();
-  const onEventChanged = useEventCacheUpdates();
-
-  return useMutation({
-    mutationFn: (id: number) => api.eventStatus.close(id),
-    onSuccess: (data, id) => onEventChanged(id, data),
-  });
-}
-
-/**
- * Hook for re-opening a closed event.
- * Changes event status from "closed" back to "active".
- */
-export function useOpenEvent() {
-  const api = useApi();
-  const onEventChanged = useEventCacheUpdates();
-
-  return useMutation({
-    mutationFn: (id: number) => api.eventStatus.reopen(id),
-    onSuccess: (data, id) => onEventChanged(id, data),
+    mutationFn: ({ id, data }: { id: number; data: UpdateEventRegistrationPayload }) =>
+      api.events.setRegistration(id, data),
+    onSuccess: (_, { id }) => {
+      queryClient.invalidateQueries({ queryKey: eventKeys.detail(id) });
+      queryClient.invalidateQueries({ queryKey: eventKeys.fullDetail(id) });
+      queryClient.invalidateQueries({ queryKey: eventKeys.lists() });
+      queryClient.invalidateQueries({ queryKey: formKeys.byEvent(id) });
+    },
   });
 }
 
