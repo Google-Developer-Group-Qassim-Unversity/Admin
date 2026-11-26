@@ -2,12 +2,15 @@
 
 import * as React from "react";
 import { useTranslations } from "next-intl";
-import { Check, Copy, ExternalLink, EyeOff, Globe, Loader2, Trash2, UserCheck } from "lucide-react";
+import { Copy, ExternalLink, Eye, Loader2, Trash2, Video } from "lucide-react";
 import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Mortar } from "@/components/najdi";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { FieldHelp } from "@/components/field-help";
+import { Plate } from "@/components/najdi";
+import { StatePill } from "@/components/status-badge";
 import { useUpdateEventMeetingUrl } from "@/hooks/use-event";
 import { resolveEventPhase } from "@/lib/event-lifecycle";
 import type { Event, MeetingUrlVisibility } from "@/lib/api-types";
@@ -19,16 +22,10 @@ interface MeetingUrlItemProps {
 }
 
 /**
- * Online Meeting Link + Visibility Policy (`public` | `accepted` | `hidden`).
- *
- * Designed for smart defaults & progressive disclosure:
- * - Before a link is entered/saved, only the clean single URL input is shown.
- * - Once a link exists (or is being typed), the compact visibility selector appears
- *   with the smart default already selected (`accepted` when registration is required,
- *   `public` when open attendance) — and hides the `accepted` option completely when
- *   registration is off so newcomers never face nonsensical combinations.
- * - After the event ends or is cancelled, hides member visibility controls and explains
- *   that the link stays available for Google Meet recording lookup.
+ * Online Meeting Link + Visibility Policy (`public` | `accepted` | `hidden`),
+ * rendered as two flat operational rows:
+ * 1. The meeting URL (read-only once ended or cancelled).
+ * 2. Who sees the link (only shown while the event is active/draft and a link exists).
  */
 export function MeetingUrlItem({ event, requiresRegistration, onEventChange }: MeetingUrlItemProps) {
   const t = useTranslations("meetingUrlItem");
@@ -37,8 +34,7 @@ export function MeetingUrlItem({ event, requiresRegistration, onEventChange }: M
 
   const savedUrl = event.meeting_url ?? "";
   const defaultVisibility: MeetingUrlVisibility = requiresRegistration ? "accepted" : "public";
-  const serverVisibility: MeetingUrlVisibility =
-    event.meeting_url_visibility ?? defaultVisibility;
+  const serverVisibility: MeetingUrlVisibility = event.meeting_url_visibility ?? defaultVisibility;
   const resolvedServerVisibility: MeetingUrlVisibility =
     !requiresRegistration && serverVisibility === "accepted" ? "public" : serverVisibility;
 
@@ -81,11 +77,11 @@ export function MeetingUrlItem({ event, requiresRegistration, onEventChange }: M
     );
   };
 
-  const handleVisibilitySelect = (nextVisibility: MeetingUrlVisibility) => {
+  const handleVisibilitySelect = (nextValue: string) => {
+    const nextVisibility = nextValue as MeetingUrlVisibility;
     if (nextVisibility === visibility || updateMeetingUrl.isPending) return;
     setVisibility(nextVisibility);
 
-    // If a link is already saved and not being edited, persist the policy immediately.
     if (savedUrl && !isUrlDirty) {
       updateMeetingUrl.mutate(
         { id: event.id, meetingUrlVisibility: nextVisibility },
@@ -112,59 +108,69 @@ export function MeetingUrlItem({ event, requiresRegistration, onEventChange }: M
     }
   };
 
-  const visibilityOptions: Array<{
-    value: MeetingUrlVisibility;
-    title: string;
-    hint: string;
-    icon: React.ComponentType<{ className?: string }>;
-  }> = requiresRegistration
+  const visibilityOptions = requiresRegistration
     ? [
-        {
-          value: "accepted",
-          title: t("visibility.acceptedTitle"),
-          hint: t("visibility.acceptedHint"),
-          icon: UserCheck,
-        },
-        {
-          value: "public",
-          title: t("visibility.publicTitle"),
-          hint: t("visibility.publicHint"),
-          icon: Globe,
-        },
-        {
-          value: "hidden",
-          title: t("visibility.hiddenTitle"),
-          hint: t("visibility.hiddenHint"),
-          icon: EyeOff,
-        },
+        { value: "accepted", label: t("visibility.acceptedTitle") },
+        { value: "public", label: t("visibility.publicTitle") },
+        { value: "hidden", label: t("visibility.hiddenTitle") },
       ]
     : [
-        {
-          value: "public",
-          title: t("visibility.publicTitle"),
-          hint: t("visibility.publicHint"),
-          icon: Globe,
-        },
-        {
-          value: "hidden",
-          title: t("visibility.hiddenTitle"),
-          hint: t("visibility.hiddenHint"),
-          icon: EyeOff,
-        },
+        { value: "public", label: t("visibility.publicTitle") },
+        { value: "hidden", label: t("visibility.hiddenTitle") },
       ];
 
-  const descriptionText = isInactiveForMembers
-    ? t("descriptionEnded")
-    : savedUrl
-      ? t(`descriptionByVisibility.${resolvedServerVisibility}`)
-      : t("descriptionEmpty");
+  // Ended / cancelled: meeting link is read-only (kept for Meet recording lookup on ended events).
+  if (isInactiveForMembers) {
+    if (!savedUrl) return null;
+    return (
+      <div className="border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex shrink-0 items-center gap-3">
+          <Plate tone="neutral" size="sm" icon={Video} />
+          <span className="text-[14.5px] font-bold">{t("title")}</span>
+        </div>
+
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">
+          <span dir="ltr" className="text-ink-2 truncate text-[13.5px] font-medium">
+            {savedUrl}
+          </span>
+          {event.status === "published" && phase === "ended" ? (
+            <StatePill tone="neutral">{t("keptForRecordings")}</StatePill>
+          ) : null}
+          <Button
+            variant="outline"
+            size="icon-sm"
+            onClick={copyLink}
+            title={t("copyLink")}
+            aria-label={t("copyLink")}
+          >
+            <Copy />
+          </Button>
+          <Button variant="outline" size="icon-sm" asChild>
+            <a
+              href={savedUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={t("openLink")}
+              aria-label={t("openLink")}
+            >
+              <ExternalLink className="rtl:-scale-x-100" />
+            </a>
+          </Button>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <p className="text-ink-2 text-[13px]">{descriptionText}</p>
+    <>
+      {/* Row 1: Meeting URL */}
+      <div className="border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex shrink-0 items-center gap-3">
+          <Plate tone="neutral" size="sm" icon={Video} />
+          <span className="text-[14.5px] font-bold">{t("title")}</span>
+        </div>
 
-        <div className="flex w-full flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex min-w-0 flex-1 items-center gap-1.5 sm:max-w-lg sm:justify-end">
           <Input
             type="text"
             inputMode="url"
@@ -183,107 +189,82 @@ export function MeetingUrlItem({ event, requiresRegistration, onEventChange }: M
             }}
             disabled={updateMeetingUrl.isPending}
             aria-label={t("ariaLabel")}
-            className="w-full min-w-0 text-ellipsis sm:flex-1"
+            className="min-w-0 flex-1 text-ellipsis"
           />
-          <div className="flex gap-2">
-            <Button
-              className="flex-1 sm:flex-none"
-              onClick={() => save(trimmed || null)}
-              disabled={!isUrlDirty || updateMeetingUrl.isPending}
-            >
-              {updateMeetingUrl.isPending ? (
-                <>
-                  <Loader2 className="animate-spin" />
-                  {tc("saving")}
-                </>
-              ) : (
-                t("save")
-              )}
-            </Button>
-            {savedUrl ? (
+          <Button
+            size="sm"
+            onClick={() => save(trimmed || null)}
+            disabled={!isUrlDirty || updateMeetingUrl.isPending}
+          >
+            {updateMeetingUrl.isPending ? (
               <>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={copyLink}
-                  title={t("copyLink")}
-                  aria-label={t("copyLink")}
-                >
-                  <Copy className="size-4" />
-                </Button>
-                <Button variant="outline" size="icon" asChild>
-                  <a
-                    href={savedUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title={t("openLink")}
-                    aria-label={t("openLink")}
-                  >
-                    <ExternalLink className="size-4 rtl:-scale-x-100" />
-                  </a>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  title={t("removeLink")}
-                  aria-label={t("removeLink")}
-                  onClick={() => save(null)}
-                  disabled={updateMeetingUrl.isPending}
-                >
-                  <Trash2 className="size-4" />
-                </Button>
+                <Loader2 className="animate-spin" />
+                {tc("saving")}
               </>
-            ) : null}
-          </div>
+            ) : (
+              t("save")
+            )}
+          </Button>
+          {savedUrl ? (
+            <>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                onClick={copyLink}
+                title={t("copyLink")}
+                aria-label={t("copyLink")}
+              >
+                <Copy />
+              </Button>
+              <Button variant="outline" size="icon-sm" asChild>
+                <a
+                  href={savedUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  title={t("openLink")}
+                  aria-label={t("openLink")}
+                >
+                  <ExternalLink className="rtl:-scale-x-100" />
+                </a>
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                title={t("removeLink")}
+                aria-label={t("removeLink")}
+                onClick={() => save(null)}
+                disabled={updateMeetingUrl.isPending}
+              >
+                <Trash2 />
+              </Button>
+            </>
+          ) : null}
         </div>
       </div>
 
-      {/* Progressive disclosure: only show visibility policy once a link exists (or is typed) and event is not ended/cancelled */}
-      {hasUrlInput && !isInactiveForMembers ? (
-        <div className="flex flex-col gap-2">
-          <div className="flex items-center justify-between gap-2">
-            <span id="meeting-visibility-label" className="text-ink-2 text-[13px] font-bold">
-              {t("visibilityLabel")}
-            </span>
+      {/* Row 2: Who sees the link (clear dedicated label + FieldHelp) */}
+      {hasUrlInput ? (
+        <div className="border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex shrink-0 items-center gap-2">
+            <Plate tone="neutral" size="sm" icon={Eye} />
+            <span className="ms-1 text-[14.5px] font-bold">{t("visibilityLabel")}</span>
+            <FieldHelp label={t("visibilityHelpLabel")}>{t("visibilityHelp")}</FieldHelp>
             {updateMeetingUrl.isPending ? (
-              <Loader2 className="text-ink-2 size-3.5 animate-spin" aria-hidden="true" />
+              <Loader2 className="text-ink-2 size-4 animate-spin" aria-hidden="true" />
             ) : null}
           </div>
 
-          <Mortar
-            role="radiogroup"
-            aria-labelledby="meeting-visibility-label"
-            className={requiresRegistration ? "grid-cols-1 sm:grid-cols-3" : "grid-cols-1 sm:grid-cols-2"}
-          >
-            {visibilityOptions.map((opt) => {
-              const Icon = opt.icon;
-              const selected = visibility === opt.value;
-              return (
-                <button
-                  key={opt.value}
-                  type="button"
-                  role="radio"
-                  aria-checked={selected}
-                  disabled={updateMeetingUrl.isPending}
-                  onClick={() => handleVisibilitySelect(opt.value)}
-                  className={`focus-visible:outline-ring flex min-h-14 items-start gap-2.5 rounded-lg p-3 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 ${
-                    selected
-                      ? "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--foreground)]"
-                      : "text-ink-2 hover:text-foreground hover:bg-card/50"
-                  }`}
-                >
-                  <Icon className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-[13.5px] font-bold">{opt.title}</span>
-                    <span className="text-ink-2 text-[12px] leading-snug">{opt.hint}</span>
-                  </span>
-                  {selected ? <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> : null}
-                </button>
-              );
-            })}
-          </Mortar>
+          <div className="w-full sm:w-auto sm:min-w-72">
+            <SegmentedControl
+              label={t("visibilityLabel")}
+              value={visibility}
+              onValueChange={handleVisibilitySelect}
+              disabled={updateMeetingUrl.isPending}
+              options={visibilityOptions}
+            />
+          </div>
         </div>
       ) : null}
-    </div>
+    </>
   );
 }

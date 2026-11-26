@@ -2,16 +2,17 @@
 
 import { useAuth } from "@clerk/nextjs";
 import * as React from "react";
-import { Check, Loader2, UserCheck, Users } from "lucide-react";
+import { Loader2, UserCheck, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslations } from "next-intl";
 
+import { FieldHelp } from "@/components/field-help";
 import { FormsCopyItem } from "@/components/forms-copy-item";
-import { EventRegistrationControls } from "@/components/event-registration-controls";
 import { MeetingUrlItem } from "@/components/meeting-url-item";
 import { PublishItem } from "@/components/publish-item";
-import { Mortar, SectionHead } from "@/components/najdi";
+import { Plate, SectionHead } from "@/components/najdi";
 import { RegistrationBadge } from "@/components/status-badge";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useFormData, useUpdateFormType } from "@/hooks/use-form-data";
 import { useEventContext } from "@/contexts/event-context";
 import { resolveEventPhase } from "@/lib/event-lifecycle";
@@ -39,8 +40,14 @@ export default function EventManagePage() {
     refetch?.();
   };
 
-  const handleRegistrationMode = (nextRequireRegistration: boolean) => {
-    if (!formData || isRegistrationLocked || updateFormType.isPending || nextRequireRegistration === requiresRegistration) {
+  const handleRegistrationMode = (nextValue: string) => {
+    const nextRequireRegistration = nextValue === "required";
+    if (
+      !formData ||
+      isRegistrationLocked ||
+      updateFormType.isPending ||
+      nextRequireRegistration === requiresRegistration
+    ) {
       return;
     }
 
@@ -63,137 +70,74 @@ export default function EventManagePage() {
   const modeDisabled = !formData || isRegistrationLocked || updateFormType.isPending;
 
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      {/* Region 1: Event Visibility, Publication & Permanent Share Link */}
+    <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
+      {/* Region 1: 4-step lifecycle track + single status/action Door */}
       <PublishItem event={event} formData={formData} onEventChange={handleFormChange} />
 
-      {/* Region 2: Registration (Read-only summary when ended/cancelled; clean progressive controls when active/draft) */}
-      <section aria-labelledby="manage-registration" className="panel flex flex-col gap-5">
+      {/* Region 2: Registration setup (flat rows on the wall, zero hint paragraphs) */}
+      <section aria-labelledby="manage-registration" className="flex flex-col">
         <SectionHead
           id="manage-registration"
           title={t("sections.registration")}
           as="h2"
           action={
-            <RegistrationBadge
-              event={event}
-              status={formData?.effectiveRegistrationStatus}
-              variant="pill"
-            />
+            event.status !== "draft" ? (
+              <RegistrationBadge
+                event={event}
+                status={formData?.effectiveRegistrationStatus}
+                variant="pill"
+              />
+            ) : undefined
           }
         />
 
-        {isRegistrationLocked ? (
-          <div className="flex flex-col gap-4">
-            <div className="text-ink-2 flex items-center gap-2 text-sm">
-              {requiresRegistration ? (
-                <UserCheck className="size-4 shrink-0" aria-hidden="true" />
-              ) : (
-                <Users className="size-4 shrink-0" aria-hidden="true" />
-              )}
-              <span className="text-foreground font-bold">
-                {requiresRegistration ? t("modeRequiredTitle") : t("modeOpenTitle")}
-              </span>
-            </div>
-
-            {requiresRegistration ? (
-              <EventRegistrationControls event={event} formData={formData} onChanged={handleFormChange} />
-            ) : null}
-
-            {/* When ended/cancelled: only show a read-only Open Form link if a Google Form was attached */}
-            {requiresRegistration && hasSavedGoogleForm ? (
-              <div className="border-rule border-t pt-4">
-                <FormsCopyItem
-                  eventId={event.id}
-                  formData={formData}
-                  onFormChange={handleFormChange}
-                  readOnly
-                />
-              </div>
+        {/* Attendance mode row */}
+        <div className="border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-2">
+            <Plate tone="neutral" size="sm" icon={requiresRegistration ? UserCheck : Users} />
+            <span className="ms-1 text-[14.5px] font-bold">{t("modeLabel")}</span>
+            <FieldHelp label={t("helpLabel", { field: t("modeLabel") })}>{t("modeHelp")}</FieldHelp>
+            {updateFormType.isPending ? (
+              <Loader2 className="text-ink-2 size-4 animate-spin" aria-hidden="true" />
             ) : null}
           </div>
-        ) : (
-          <>
-            {/* Tactile 2-brick Mud & Doors mode selector */}
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center justify-between gap-2">
-                <span id="registration-mode-label" className="text-ink-2 text-[13px] font-bold">
-                  {t("modeLabel")}
-                </span>
-                {updateFormType.isPending ? (
-                  <Loader2 className="text-ink-2 size-4 animate-spin" aria-hidden="true" />
-                ) : null}
-              </div>
 
-              <Mortar
-                role="radiogroup"
-                aria-labelledby="registration-mode-label"
-                className="grid-cols-1 sm:grid-cols-2"
-              >
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={requiresRegistration}
-                  disabled={modeDisabled}
-                  onClick={() => handleRegistrationMode(true)}
-                  className={`focus-visible:outline-ring flex min-h-14 items-start gap-3 rounded-lg p-3 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 ${
-                    requiresRegistration
-                      ? "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--foreground)]"
-                      : "text-ink-2 hover:text-foreground hover:bg-card/50"
-                  }`}
-                >
-                  <UserCheck className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-sm font-bold">{t("modeRequiredTitle")}</span>
-                    <span className="text-ink-2 text-[12.5px] leading-snug">{t("modeRequiredHint")}</span>
-                  </span>
-                  {requiresRegistration ? <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> : null}
-                </button>
-
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={!requiresRegistration}
-                  disabled={modeDisabled}
-                  onClick={() => handleRegistrationMode(false)}
-                  className={`focus-visible:outline-ring flex min-h-14 items-start gap-3 rounded-lg p-3 text-start transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 disabled:opacity-60 ${
-                    !requiresRegistration
-                      ? "bg-card text-foreground shadow-[inset_0_0_0_1px_var(--foreground)]"
-                      : "text-ink-2 hover:text-foreground hover:bg-card/50"
-                  }`}
-                >
-                  <Users className="mt-0.5 size-4 shrink-0" aria-hidden="true" />
-                  <span className="flex min-w-0 flex-1 flex-col gap-0.5">
-                    <span className="text-sm font-bold">{t("modeOpenTitle")}</span>
-                    <span className="text-ink-2 text-[12.5px] leading-snug">{t("modeOpenHint")}</span>
-                  </span>
-                  {!requiresRegistration ? <Check className="mt-0.5 size-4 shrink-0" aria-hidden="true" /> : null}
-                </button>
-              </Mortar>
+          {isRegistrationLocked ? (
+            <span className="text-sm font-bold">
+              {requiresRegistration ? t("modeRequiredTitle") : t("modeOpenTitle")}
+            </span>
+          ) : (
+            <div className="w-full sm:w-auto sm:min-w-88">
+              <SegmentedControl
+                label={t("modeLabel")}
+                value={requiresRegistration ? "required" : "open"}
+                onValueChange={handleRegistrationMode}
+                disabled={modeDisabled}
+                options={[
+                  { value: "required", label: t("modeRequiredTitle") },
+                  { value: "open", label: t("modeOpenTitle") },
+                ]}
+              />
             </div>
+          )}
+        </div>
 
-            {/* Progressive disclosure: when registration is OFF, hide both gate controls AND Google Form */}
-            {requiresRegistration ? (
-              <>
-                <EventRegistrationControls event={event} formData={formData} onChanged={handleFormChange} />
-
-                <div className="border-rule flex flex-col gap-2 border-t pt-4">
-                  <FormsCopyItem
-                    eventId={event.id}
-                    formData={formData}
-                    onFormChange={handleFormChange}
-                  />
-                </div>
-              </>
-            ) : hasSavedGoogleForm ? (
-              <p className="text-ink-2 text-[13px]">{t("savedGoogleFormPreserved")}</p>
-            ) : null}
-          </>
-        )}
+        {/* Inline Google Form row */}
+        {requiresRegistration ? (
+          <FormsCopyItem
+            eventId={event.id}
+            formData={formData}
+            onFormChange={handleFormChange}
+            readOnly={isRegistrationLocked}
+          />
+        ) : hasSavedGoogleForm && !isRegistrationLocked ? (
+          <p className="text-ink-3 px-1 pt-2.5 text-[13px]">{t("savedGoogleFormPreserved")}</p>
+        ) : null}
       </section>
 
-      {/* Region 3: Online Meeting Link & Visibility Policy */}
-      {event.location_type === "online" ? (
-        <section aria-labelledby="manage-meeting" className="panel flex flex-col gap-4">
+      {/* Region 3: Online meeting link & visibility (hide if ended/cancelled with no saved link) */}
+      {event.location_type === "online" && (!isRegistrationLocked || Boolean(event.meeting_url)) ? (
+        <section aria-labelledby="manage-meeting" className="flex flex-col">
           <SectionHead id="manage-meeting" title={t("sections.meeting")} as="h2" />
           <MeetingUrlItem
             event={event}

@@ -3,13 +3,32 @@
 import { useSearchParams, usePathname } from "next/navigation";
 import Link from "next/link";
 import * as React from "react";
-import { ArrowLeft, Info, Link2, FolderUp, Users, ClipboardCheck, Pencil, CalendarX, CalendarDays, Globe, MapPin, Building2 } from "lucide-react";
+import {
+  ArrowLeft,
+  Info,
+  Link2,
+  FolderUp,
+  Users,
+  ClipboardCheck,
+  Pencil,
+  CalendarX,
+  CalendarDays,
+  Globe,
+  MapPin,
+  Building2,
+  Copy,
+  QrCode,
+  ExternalLink,
+} from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertTitle } from "@/components/ui/alert";
+import { EventQrCodeDialog } from "@/components/event-qr-code-dialog";
 import { RegistrationBadge, StatusBadge } from "@/components/status-badge";
 import { useDepartmentName, useEventDates } from "@/components/event-bits";
-import { resolveLifecycleState } from "@/lib/event-lifecycle";
+import { isCustomEvent, resolveLifecycleState } from "@/lib/event-lifecycle";
 import { getEffectiveEndDate, parseLocalDateTime } from "@/lib/utils";
+import { config } from "@/lib/config";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EventProvider } from "@/contexts/event-context";
@@ -42,6 +61,7 @@ function TabSkeleton({ w }: { w: string }) {
 
 export function EventLayoutContent({ eventId, children }: { eventId: string; children: React.ReactNode }) {
   const t = useTranslations("eventLayout");
+  const tp = useTranslations("publishItem");
   const searchParams = useSearchParams();
   const pathname = usePathname();
 
@@ -50,8 +70,8 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
   const departmentName = useDepartmentName();
   const [now] = React.useState(() => Date.now());
 
-  const backHref = searchParams.get('from') === 'points' ? '/points' : '/events';
-  const backLabel = searchParams.get('from') === 'points' ? t('backToPoints') : t('backToEvents');
+  const backHref = searchParams.get("from") === "points" ? "/points" : "/events";
+  const backLabel = searchParams.get("from") === "points" ? t("backToPoints") : t("backToEvents");
 
   const isActiveTab = (tabPath: string) => {
     if (tabPath === "") {
@@ -118,6 +138,18 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
   const showLocation = event.location_type !== "none" && event.location_type !== "hidden" && Boolean(event.location);
   const lifecycle = resolveLifecycleState(event, now);
   const showRegistrationBadge = lifecycle === "upcoming" || lifecycle === "live";
+  const showPublicLink = !isCustomEvent(event);
+  const eventUrl = `${config.memberAppUrl}/events/${event.id}`;
+  const displayUrl = eventUrl.replace(/^https?:\/\//, "");
+
+  const handleCopyLink = async () => {
+    try {
+      await navigator.clipboard.writeText(eventUrl);
+      toast.success(tp("linkCopied"));
+    } catch {
+      toast.error(tp("copyFailed"));
+    }
+  };
 
   return (
     <EventProvider event={event} isLoading={isLoading} error={error} refetch={refetch}>
@@ -129,30 +161,77 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
           </Link>
         </Button>
 
-        <header className="flex flex-col gap-2">
-          <h1 className="font-display line-clamp-3 text-[26px] leading-relaxed font-semibold text-balance sm:text-[30px]">
-            <bdi>{event.name}</bdi>
-          </h1>
-          <div className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px]">
-            <StatusBadge event={event} now={now} />
-            {showRegistrationBadge ? <RegistrationBadge event={event} now={now} variant="pill" /> : null}
-            <span className="tabular text-foreground flex items-center gap-1.5 font-medium">
-              <CalendarDays className="size-4" aria-hidden="true" />
-              {dates.range(start, end)}
-            </span>
-            {showLocation ? (
-              <span className="flex min-w-0 items-center gap-1.5">
-                <LocationIcon className="size-4 shrink-0" aria-hidden="true" />
-                <span className="truncate" dir="auto">{event.location}</span>
+        <header className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between lg:gap-6">
+          <div className="flex min-w-0 flex-1 flex-col gap-2">
+            <h1 className="font-display line-clamp-3 text-[26px] leading-relaxed font-semibold text-balance sm:text-[30px]">
+              <bdi>{event.name}</bdi>
+            </h1>
+            <div className="text-ink-2 flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[13.5px]">
+              <StatusBadge event={event} now={now} />
+              {showRegistrationBadge ? <RegistrationBadge event={event} now={now} variant="pill" /> : null}
+              <span className="tabular text-foreground flex items-center gap-1.5 font-medium">
+                <CalendarDays className="size-4" aria-hidden="true" />
+                {dates.range(start, end)}
               </span>
-            ) : null}
-            {dept ? (
-              <span className="flex min-w-0 items-center gap-1.5">
-                <Building2 className="size-4 shrink-0" aria-hidden="true" />
-                <span className="truncate" dir="auto">{dept}</span>
-              </span>
-            ) : null}
+              {showLocation ? (
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <LocationIcon className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="truncate" dir="auto">
+                    {event.location}
+                  </span>
+                </span>
+              ) : null}
+              {dept ? (
+                <span className="flex min-w-0 items-center gap-1.5">
+                  <Building2 className="size-4 shrink-0" aria-hidden="true" />
+                  <span className="truncate" dir="auto">
+                    {dept}
+                  </span>
+                </span>
+              ) : null}
+            </div>
           </div>
+
+          {showPublicLink ? (
+            <div
+              aria-label={tp("eventLink")}
+              className="bg-card ring-rule flex w-full shrink-0 items-center gap-1.5 rounded-lg p-1.5 ring-1 lg:w-auto lg:max-w-md"
+            >
+              <span
+                dir="ltr"
+                className="text-ink-2 tabular flex min-w-0 flex-1 items-center gap-1.5 px-2 text-[13px] font-medium"
+              >
+                <Link2 className="text-ink-3 size-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{displayUrl}</span>
+              </span>
+              <Button variant="outline" size="sm" onClick={handleCopyLink} className="shrink-0">
+                <Copy />
+                {tp("copyLink")}
+              </Button>
+              <EventQrCodeDialog
+                url={eventUrl}
+                eventName={event.name}
+                trigger={
+                  <Button variant="outline" size="icon-sm" title={tp("showQr")} aria-label={tp("showQr")}>
+                    <QrCode />
+                  </Button>
+                }
+              />
+              {event.status === "published" ? (
+                <Button variant="outline" size="icon-sm" asChild>
+                  <a
+                    href={eventUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title={tp("openEvent")}
+                    aria-label={tp("openEvent")}
+                  >
+                    <ExternalLink className="rtl:-scale-x-100" />
+                  </a>
+                </Button>
+              ) : null}
+            </div>
+          ) : null}
         </header>
 
         {/* Sticky under the top bar on phones so switching tab never needs a
@@ -160,7 +239,7 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
             tab in view. */}
         <nav
           aria-label={t("tabsLabel")}
-          className="bg-card border-rule rounded-t-xl sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 border-b px-2 sm:-mx-6 sm:px-4 md:static md:mx-0 md:px-2"
+          className="bg-card border-rule sticky top-[calc(4.25rem+env(safe-area-inset-top))] z-30 -mx-4 rounded-t-xl border-b px-2 sm:-mx-6 sm:px-4 md:static md:mx-0 md:px-2"
         >
           <div className="no-scrollbar flex gap-1 overflow-x-auto overscroll-x-contain">
             {TAB_ITEMS.map((tab) => {
@@ -173,13 +252,18 @@ export function EventLayoutContent({ eventId, children }: { eventId: string; chi
                   prefetch
                   aria-current={isActive ? "page" : undefined}
                   ref={isActive ? scrollIntoViewOnMount : undefined}
-                  className={`focus-visible:outline-ring relative flex min-h-12 shrink-0 items-center gap-2 px-3 text-sm whitespace-nowrap outline-none transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 ${
+                  className={`focus-visible:outline-ring relative flex min-h-12 shrink-0 items-center gap-2 px-3 text-sm whitespace-nowrap transition-colors outline-none focus-visible:outline-2 focus-visible:-outline-offset-2 ${
                     isActive ? "text-foreground font-bold" : "text-ink-2 hover:text-foreground font-medium"
                   }`}
                 >
                   <tab.icon className="size-4" strokeWidth={1.75} aria-hidden="true" />
                   {t(`tabs.${tab.key}`)}
-                  {isActive && <span aria-hidden="true" className="bg-foreground absolute inset-x-2 -bottom-px h-[3px] rounded-t-[2px]" />}
+                  {isActive && (
+                    <span
+                      aria-hidden="true"
+                      className="bg-foreground absolute inset-x-2 -bottom-px h-[3px] rounded-t-[2px]"
+                    />
+                  )}
                 </Link>
               );
             })}
