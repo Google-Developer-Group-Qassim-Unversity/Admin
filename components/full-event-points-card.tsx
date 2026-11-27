@@ -39,7 +39,7 @@ export function FullEventPointsCard({ event }: { event: Event }) {
         <h3 className="truncate text-[15px] leading-snug font-bold">
           {/* Stretched: the whole row opens the points editor. */}
           <Link
-            href={`/points/${event.id}`}
+            href={`/points/events/${event.id}`}
             aria-label={`${event.name}: ${tp("editPoints")}`}
             className="outline-none after:absolute after:inset-0 focus-visible:after:outline-2 focus-visible:after:outline-offset-[-2px] focus-visible:after:outline-ring"
           >

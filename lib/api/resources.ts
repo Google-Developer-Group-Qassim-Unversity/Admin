@@ -22,7 +22,10 @@ import type {
   AttendanceType,
   BackfillMember,
   BackfillResponse,
+  BonusDetail,
+  BonusSummary,
   CertificateEligibleCount,
+  CreateBonusPayload,
   CreateContentLinkPayload,
   CreateEventPayload,
   Department,
@@ -32,6 +35,7 @@ import type {
   DriveRecordingCandidatesResponse,
   DriveStorageQuotaResponse,
   Event,
+  EventBonusDetail,
   EventContentLink,
   MeetingUrlVisibility,
   EventDetails,
@@ -55,10 +59,12 @@ import type {
   SendDetail,
   SendsFilters,
   SendsPage,
+  UpdateBonusPayload,
   UpdateContentLinkPayload,
   UpdateEventPayload,
   UpdateEventRegistrationPayload,
   UpdateFormPayload,
+  UpsertEventBonusPayload,
 } from "@/lib/api-types";
 import type {
   ClubDepartment,
@@ -347,6 +353,8 @@ export function createApi(request: Requester) {
   };
 
   const members = {
+    list: () => request.json<Member[]>("/members"),
+
     listPaginated: (params: MembersPageParams) =>
       request.json<Paginated<Member>>("/members/paginated", {
         query: {
@@ -551,9 +559,33 @@ export function createApi(request: Requester) {
       }),
   };
 
+  const bonuses = {
+    list: (options?: { semester?: string | number; standaloneOnly?: boolean; eventId?: number }) =>
+      request.json<BonusSummary[]>("/bonuses", {
+        query: {
+          semester: options?.semester !== undefined && options.semester !== "all" ? options.semester : undefined,
+          standalone_only: options?.standaloneOnly ? true : undefined,
+          event_id: options?.eventId,
+        },
+      }),
+    get: (bonusId: string) => request.json<BonusDetail>(`/bonuses/${encodeURIComponent(bonusId)}`),
+    create: (body: CreateBonusPayload) => request.json<BonusDetail>("/bonuses", { method: "POST", body }),
+    update: (bonusId: string, body: UpdateBonusPayload) =>
+      request.json<BonusDetail>(`/bonuses/${encodeURIComponent(bonusId)}`, { method: "PUT", body }),
+    remove: (bonusId: string) =>
+      request.json<{ message: string }>(`/bonuses/${encodeURIComponent(bonusId)}`, { method: "DELETE" }),
+    byEvent: (eventId: number | string) =>
+      request.json<EventBonusDetail>(`/bonuses/by-event/${encodeURIComponent(String(eventId))}`),
+    upsertByEvent: (eventId: number | string, body: UpsertEventBonusPayload) =>
+      request.json<EventBonusDetail>(`/bonuses/by-event/${encodeURIComponent(String(eventId))}`, {
+        method: "PUT",
+        body,
+      }),
+  };
+
   return {
     access, permissions, events, eventStatus, attendance, certificates, emails, actions, departments, forms, members, clubStructure,
-    semesters, pipeline, pipelineRequests,
+    semesters, pipeline, pipelineRequests, bonuses,
   };
 }
 

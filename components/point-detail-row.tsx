@@ -36,13 +36,15 @@ export interface MemberOption {
 }
 
 export interface PointDetailRowData {
-  log_id?: number;
+  client_key?: string;
+  grant_id?: string;
   row_type: PointRowType;
   departments_id: number[];
   member_ids: number[];
   points: number;
   action_id: number | null;
   action_name: string | null;
+  label_ar?: string | null;
 }
 
 interface PointDetailRowProps {
@@ -102,15 +104,18 @@ export function PointDetailRow({
     actionPoints: number | null
   ) => {
     if (actionId !== null && actionPoints !== null) {
+      const action = allActions.find((option) => option.id === actionId);
       updateMultipleFields({
         action_id: actionId,
-        action_name: actionName,
+        action_name: action?.action_name ?? actionName,
+        label_ar: action?.ar_action_name ?? null,
         points: actionPoints,
       });
     } else {
       updateMultipleFields({
         action_id: null,
         action_name: actionName,
+        label_ar: actionName,
       });
     }
   };

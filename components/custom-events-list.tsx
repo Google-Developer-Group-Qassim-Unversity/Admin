@@ -8,24 +8,24 @@ import { Button } from "@/components/ui/button";
 import { FilterBar } from "@/components/filter-bar";
 import { PointsCustomEventCard } from "@/components/points-custom-event-card";
 import { POINTS_LIST } from "@/components/points-list-states";
-import type { Event } from "@/lib/api-types";
+import type { BonusSummary } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { parseLocalDateTime } from "@/lib/utils";
 
 const SHOWN = 50;
 
-export function CustomEventsList({ events }: { events: Event[] }) {
+export function CustomEventsList({ bonuses }: { bonuses: BonusSummary[] }) {
   const tp = useTranslations("points");
   const [searchQuery, setSearchQuery] = React.useState("");
 
-  const searchResults = useFuzzySearch(events, searchQuery, ["name"]);
+  const searchResults = useFuzzySearch(bonuses, searchQuery, ["title"]);
 
-  const filteredEvents = React.useMemo(() => {
-    const source = searchQuery.trim() ? searchResults : events;
-    // Copy before sorting: the props array belongs to the caller.
+  const filteredBonuses = React.useMemo(() => {
+    const source = searchQuery.trim() ? searchResults : bonuses;
     return [...source]
-      .sort((a, b) => new Date(b.start_datetime).getTime() - new Date(a.start_datetime).getTime())
+      .sort((a, b) => parseLocalDateTime(b.given_at).getTime() - parseLocalDateTime(a.given_at).getTime())
       .slice(0, SHOWN);
-  }, [searchResults, searchQuery, events]);
+  }, [searchResults, searchQuery, bonuses]);
 
   return (
     <div className="flex flex-col gap-3">
@@ -35,7 +35,7 @@ export function CustomEventsList({ events }: { events: Event[] }) {
         searchPlaceholder={tp("searchCustom")}
         trailing={
           <>
-            <span className="tabular">{tp("shownCount", { shown: filteredEvents.length, total: events.length })}</span>
+            <span className="tabular">{tp("shownCount", { shown: filteredBonuses.length, total: bonuses.length })}</span>
             {searchQuery ? (
               <Button variant="ghost" size="sm" onClick={() => setSearchQuery("")} className="shrink-0">
                 <X />
@@ -46,10 +46,10 @@ export function CustomEventsList({ events }: { events: Event[] }) {
         }
       />
 
-      {filteredEvents.length > 0 ? (
+      {filteredBonuses.length > 0 ? (
         <ul className={POINTS_LIST}>
-          {filteredEvents.map((event) => (
-            <PointsCustomEventCard key={event.id} event={event} />
+          {filteredBonuses.map((bonus) => (
+            <PointsCustomEventCard key={bonus.id} bonus={bonus} />
           ))}
         </ul>
       ) : (

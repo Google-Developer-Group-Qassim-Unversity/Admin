@@ -16,11 +16,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 export function PointsEditorShell({
   title,
   description,
+  backHref = "/points",
   children,
 }: {
   /** null while loading - the heading renders as a skeleton. */
   title: string | null;
   description?: string | null;
+  backHref?: string;
   children: React.ReactNode;
 }) {
   const tl = useTranslations("eventLayout");
@@ -29,7 +31,7 @@ export function PointsEditorShell({
     <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
       <div className="flex flex-col gap-3">
         <Button variant="ghost" size="sm" asChild className="-ms-2 w-fit">
-          <Link href="/points">
+          <Link href={backHref}>
             <ArrowLeft className="rtl:-scale-x-100" />
             {tl("backToPoints")}
           </Link>
