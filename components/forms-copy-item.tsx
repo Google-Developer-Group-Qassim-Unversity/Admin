@@ -1,30 +1,27 @@
-'use client';
+"use client";
 
-import { useTranslations } from 'next-intl';
-import { useState } from 'react';
-import { useAuth } from '@clerk/nextjs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { useTranslations } from "next-intl";
+import { useState } from "react";
+import { useAuth } from "@clerk/nextjs";
+import { Ellipsis, ExternalLink, Loader2, Mail, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
-  Item,
-  ItemActions,
-  ItemContent,
-  ItemDescription,
-  ItemTitle,
-} from '@/components/ui/item';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
-import { GoogleFormsIcon } from '@/lib/google-icons';
-import { MoreHorizontal, Loader2, ExternalLink, Trash2 } from 'lucide-react';
-import { getSavedGoogleEmail, saveGoogleEmail } from '@/lib/google-email-storage';
-import { useAttachForm, useUnattachForm } from '@/hooks/use-form-data';
-import { RemoveGoogleFormDialog } from '@/components/remove-google-form-dialog';
-import { toast } from 'sonner';
-import type { GoogleFormData } from '@/lib/api-types';
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { FieldHelp } from "@/components/field-help";
+import { Plate } from "@/components/najdi";
+import { GoogleFormsIcon } from "@/lib/google-icons";
+import { getSavedGoogleEmail, saveGoogleEmail } from "@/lib/google-email-storage";
+import { useAttachForm, useUnattachForm } from "@/hooks/use-form-data";
+import { RemoveGoogleFormDialog } from "@/components/remove-google-form-dialog";
+import type { GoogleFormData } from "@/lib/api-types";
 
 interface FormsCopyItemProps {
   eventId: number;
@@ -42,17 +39,11 @@ export function FormsCopyItem({
   disabled = false,
   readOnly = false,
 }: FormsCopyItemProps) {
-  const t = useTranslations('formsCopyItem');
-  const tCommon = useTranslations('common.actions');
+  const t = useTranslations("formsCopyItem");
+  const tCommon = useTranslations("common.actions");
   const { getToken } = useAuth();
-  // The server's admin_google_email is whoever the form was MOST RECENTLY shared
-  // with - a single value that gets silently overwritten every time a different
-  // admin requests access, even though earlier grants are never revoked. Whether
-  // *this* browser has access has to be checked against the full grant list
-  // (grantedEmails), not that one field, or every admin but the latest one sees a
-  // false "request access" prompt for access they already have.
   const savedEmail = getSavedGoogleEmail();
-  const [email, setEmail] = useState(savedEmail || '');
+  const [email, setEmail] = useState(savedEmail || "");
   const [requestingDifferentEmail, setRequestingDifferentEmail] = useState(false);
   const [confirmRemoveOpen, setConfirmRemoveOpen] = useState(false);
 
@@ -60,13 +51,13 @@ export function FormsCopyItem({
   const unattachForm = useUnattachForm(eventId, getToken);
 
   const isLoading = attachForm.isPending || unattachForm.isPending;
-  const hasExistingForm = !!formData?.googleFormId;
+  const hasExistingForm = Boolean(formData?.googleFormId);
   const sharedWithEmail = formData?.adminGoogleEmail ?? null;
   const grantedEmails = formData?.grantedEmails ?? [];
   const youHaveAccess =
     hasExistingForm &&
-    !!savedEmail &&
-    grantedEmails.some((granted) => granted.toLowerCase() === savedEmail.toLowerCase());
+    Boolean(savedEmail) &&
+    grantedEmails.some((granted) => granted.toLowerCase() === (savedEmail ?? "").toLowerCase());
   const showEmailInput = !youHaveAccess || requestingDifferentEmail;
   const fileId = formData?.googleFormId;
 
@@ -78,12 +69,12 @@ export function FormsCopyItem({
     saveGoogleEmail(trimmedEmail);
     attachForm.mutate(trimmedEmail, {
       onSuccess: () => {
-        toast.success(t('attachedSuccess'));
+        toast.success(t("attachedSuccess"));
         setRequestingDifferentEmail(false);
         onFormChange();
       },
       onError: () => {
-        toast.error(t('attachFailed'));
+        toast.error(t("attachFailed"));
       },
     });
   };
@@ -94,40 +85,39 @@ export function FormsCopyItem({
         setConfirmRemoveOpen(false);
         onFormChange();
       },
-      onError: () => toast.error(t('unattachFailed')),
+      onError: () => toast.error(t("unattachFailed")),
     });
   };
-
-  const isReady = youHaveAccess && !showEmailInput;
 
   if (readOnly) {
     if (!hasExistingForm || !fileId) return null;
     return (
-      <Item className="px-0 py-0">
-        <ItemContent className="min-w-0">
-          <ItemTitle className="text-[15px] font-bold">
-            <GoogleFormsIcon className="size-4 shrink-0" aria-hidden="true" />
-            {t('attached')}
-          </ItemTitle>
+      <div className="border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <Plate tone="neutral" size="sm">
+            <GoogleFormsIcon className="size-4" aria-hidden="true" />
+          </Plate>
+          <span className="text-[14.5px] font-bold">{t("label")}</span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 sm:justify-end">
           {sharedWithEmail ? (
-            <ItemDescription className="text-ink-2 line-clamp-none break-all">
-              {t('sharedWith', { email: sharedWithEmail })}
-            </ItemDescription>
+            <span dir="ltr" className="text-ink-2 break-all text-[13px]">
+              {t("sharedWith", { email: sharedWithEmail })}
+            </span>
           ) : null}
-        </ItemContent>
-        <ItemActions className="w-full sm:w-auto">
-          <Button variant="outline" size="sm" className="w-full sm:w-auto" asChild>
+          <Button variant="outline" size="sm" asChild>
             <a
               href={`https://docs.google.com/forms/d/${fileId}/edit`}
               target="_blank"
               rel="noopener noreferrer"
             >
-              {t('openForm')}
+              {t("openForm")}
               <ExternalLink className="rtl:-scale-x-100" />
             </a>
           </Button>
-        </ItemActions>
-      </Item>
+        </div>
+      </div>
     );
   }
 
@@ -137,159 +127,135 @@ export function FormsCopyItem({
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          size="icon-sm"
           className="shrink-0"
           disabled={isLoading || disabled}
-          aria-label={t('moreActions')}
+          aria-label={t("moreActions")}
+          title={t("moreActions")}
         >
-          {isLoading && !showEmailInput ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <MoreHorizontal className="h-4 w-4" />
-          )}
+          {isLoading && !showEmailInput ? <Loader2 className="animate-spin" /> : <Ellipsis />}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        {youHaveAccess && !requestingDifferentEmail ? (
+          <>
+            <DropdownMenuItem onClick={() => setRequestingDifferentEmail(true)}>
+              <Mail />
+              {t("requestDifferentEmail")}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        ) : null}
         <DropdownMenuItem onClick={() => setConfirmRemoveOpen(true)} variant="destructive">
           <Trash2 />
-          {t('unattach')}
+          {t("unattach")}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 
-  const itemContent = (
-    <Item
-      className={`px-0 py-0 ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-    >
-      <ItemContent className="min-w-0">
-        <ItemTitle className="text-[15px] font-bold">
-          <GoogleFormsIcon className="size-4 shrink-0" aria-hidden="true" />
-          {isReady ? t('attached') : t('attachForm')}
-        </ItemTitle>
-        <ItemDescription className="text-ink-2 line-clamp-none sm:max-w-100">
-          {isReady ? (
-            <span className="flex flex-col gap-1">
-              <span>{t('attachedDescription')}</span>
-              <span className="text-[13px] text-ink-2">{t('attachedEditHint')}</span>
-              <span className="text-[13px] text-ink-2 break-all">{t('sharedWith', { email: savedEmail ?? '' })}</span>
-              <button
-                type="button"
-                className="-my-1.5 w-fit py-1.5 text-start text-[13px] text-ink-2 underline underline-offset-2 hover:text-foreground"
-                onClick={() => setRequestingDifferentEmail(true)}
-              >
-                {t('requestDifferentEmail')}
-              </button>
-            </span>
-          ) : (
-            <span className="flex flex-col gap-1">
-              <span>{hasExistingForm ? t('requestAccessDescription') : t('createDescription')}</span>
-              {hasExistingForm && sharedWithEmail && (
-                <span className="text-[13px] text-ink-2 break-all">{t('sharedWith', { email: sharedWithEmail })}</span>
-              )}
-            </span>
-          )}
-        </ItemDescription>
-      </ItemContent>
-      {/* Phone: the actions take their own full-width row under the text. */}
-      <ItemActions className="w-full sm:w-auto">
-        {showEmailInput ? (
-          <form onSubmit={handleRequestAccess} className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
-            <Input
-              type="email"
-              inputMode="email"
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              enterKeyHint="send"
-              dir="ltr"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('emailPlaceholder')}
-              disabled={isLoading || disabled}
-              aria-label={t('emailPlaceholder')}
-              className="w-full sm:w-56"
-            />
-            <div className="flex gap-2">
-              <Button type="submit" className="flex-1 sm:flex-none" disabled={isLoading || disabled || !email.trim()}>
-                {attachForm.isPending ? (
-                  <>
-                    <Loader2 className="animate-spin" />
-                    {hasExistingForm ? t('requestingAccess') : t('creatingForm')}
-                  </>
-                ) : hasExistingForm ? (
-                  t('requestAccess')
-                ) : (
-                  t('createForm')
-                )}
-              </Button>
-              {youHaveAccess && requestingDifferentEmail && (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  disabled={isLoading}
-                  onClick={() => {
-                    setEmail(savedEmail || '');
-                    setRequestingDifferentEmail(false);
-                  }}
-                >
-                  {tCommon('cancel')}
-                </Button>
-              )}
-              {hasExistingForm && moreMenu}
-            </div>
-          </form>
-        ) : (
-          <div className="flex w-full gap-2 sm:w-auto">
-            <Button variant="outline" className="flex-1 sm:flex-none" asChild disabled={disabled}>
-              <a
-                href={`https://docs.google.com/forms/d/${fileId}/edit`}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                {t('openForm')}
-                <ExternalLink className="rtl:-scale-x-100" />
-              </a>
-            </Button>
-            {moreMenu}
-          </div>
-        )}
-      </ItemActions>
-    </Item>
-  );
-
-  const removeDialog = (
-    <RemoveGoogleFormDialog
-      sharedWithEmail={sharedWithEmail}
-      open={confirmRemoveOpen}
-      onOpenChange={setConfirmRemoveOpen}
-      onConfirm={handleUnattach}
-      isLoading={unattachForm.isPending}
-    />
-  );
-
-  // Wrap in tooltip when disabled to explain why
-  if (disabled) {
-    return (
-      <>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <div className="cursor-not-allowed">{itemContent}</div>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p>{t('disabledTooltip')}</p>
-          </TooltipContent>
-        </Tooltip>
-        {removeDialog}
-      </>
-    );
-  }
-
   return (
     <>
-      {itemContent}
-      {removeDialog}
+      <div
+        className={`border-rule flex min-h-16 flex-col gap-3 border-b px-1 py-3.5 sm:flex-row sm:items-center sm:justify-between ${
+          disabled ? "pointer-events-none opacity-50" : ""
+        }`}
+      >
+        <div className="flex shrink-0 items-center gap-2">
+          <Plate tone="neutral" size="sm">
+            <GoogleFormsIcon className="size-4" aria-hidden="true" />
+          </Plate>
+          <span className="ms-1 text-[14.5px] font-bold">{t("label")}</span>
+          <FieldHelp label={t("helpLabel")}>{t("help")}</FieldHelp>
+        </div>
+
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 sm:justify-end">
+          {showEmailInput ? (
+            <form
+              onSubmit={handleRequestAccess}
+              className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center"
+            >
+              <Input
+                type="email"
+                inputMode="email"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                enterKeyHint="send"
+                dir="ltr"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={t("emailPlaceholder")}
+                disabled={isLoading || disabled}
+                aria-label={t("emailPlaceholder")}
+                className="w-full sm:w-60"
+              />
+              <div className="flex items-center gap-2">
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="flex-1 sm:flex-none"
+                  disabled={isLoading || disabled || !email.trim()}
+                >
+                  {attachForm.isPending ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      {hasExistingForm ? t("requestingAccess") : t("creatingForm")}
+                    </>
+                  ) : hasExistingForm ? (
+                    t("requestAccess")
+                  ) : (
+                    t("createForm")
+                  )}
+                </Button>
+                {youHaveAccess && requestingDifferentEmail ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={isLoading}
+                    onClick={() => {
+                      setEmail(savedEmail || "");
+                      setRequestingDifferentEmail(false);
+                    }}
+                  >
+                    {tCommon("cancel")}
+                  </Button>
+                ) : null}
+                {hasExistingForm ? moreMenu : null}
+              </div>
+            </form>
+          ) : (
+            <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+              {savedEmail ? (
+                <span dir="ltr" className="text-ink-2 break-all text-[13px]">
+                  {t("sharedWith", { email: savedEmail })}
+                </span>
+              ) : null}
+              <Button variant="outline" size="sm" className="flex-1 sm:flex-none" asChild disabled={disabled}>
+                <a
+                  href={`https://docs.google.com/forms/d/${fileId}/edit`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("openForm")}
+                  <ExternalLink className="rtl:-scale-x-100" />
+                </a>
+              </Button>
+              {moreMenu}
+            </div>
+          )}
+        </div>
+      </div>
+
+      <RemoveGoogleFormDialog
+        sharedWithEmail={sharedWithEmail}
+        open={confirmRemoveOpen}
+        onOpenChange={setConfirmRemoveOpen}
+        onConfirm={handleUnattach}
+        isLoading={unattachForm.isPending}
+      />
     </>
   );
 }
