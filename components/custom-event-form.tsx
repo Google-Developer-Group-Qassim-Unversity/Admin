@@ -5,6 +5,16 @@ import { useLocale, useTranslations } from "next-intl";
 import { setHours, setMinutes } from "date-fns";
 import { CalendarIcon, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
@@ -51,8 +61,16 @@ export interface CustomEventFormData {
   point_details: PointDetailRowData[];
 }
 
+let nextRowKey = 0;
+
+function makeRowKey(): string {
+  nextRowKey += 1;
+  return `row-${nextRowKey}`;
+}
+
 function createEmptyRow(type: PointRowType = "department"): PointDetailRowData {
   return {
+    client_key: makeRowKey(),
     row_type: type,
     departments_id: [],
     member_ids: [],
@@ -65,6 +83,7 @@ function createEmptyRow(type: PointRowType = "department"): PointDetailRowData {
 
 function grantToRow(grant: BonusGrant): PointDetailRowData {
   return {
+    client_key: grant.id,
     grant_id: grant.id,
     row_type: grant.recipient_type,
     departments_id: grant.department_ids,
@@ -91,11 +110,14 @@ export function CustomEventForm({
   onMemberCreated,
 }: CustomEventFormProps) {
   const t = useTranslations("customEventForm");
+  const te = useTranslations("editCustomEvent");
   const locale = useLocale();
   const tc = useTranslations("common.states");
+  const ta = useTranslations("common.actions");
   const { isSuperAdmin } = useAccess();
   // Only super admins give points outside the point actions.
   const isRestrictedMode = !isSuperAdmin;
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
 
   const initialTitle = initialBonus?.title ?? initialEventBonus?.event_name ?? "";
   const initialDateStr = initialBonus?.given_at ?? initialEventBonus?.start_datetime ?? null;
@@ -133,6 +155,7 @@ export function CustomEventForm({
       points: g.points,
       action_id: g.source_action_id ?? null,
       action_name: g.label_en ?? g.label_ar ?? null,
+      label_ar: g.label_ar ?? null,
     }));
     return {
       eventName: initialTitle,
@@ -156,6 +179,7 @@ export function CustomEventForm({
         points: r.points,
         action_id: r.action_id,
         action_name: r.action_name,
+        label_ar: r.label_ar ?? null,
       })),
     }),
     [eventName, date, isVisible, rows]
@@ -327,7 +351,7 @@ export function CustomEventForm({
         <div className="space-y-3">
           {rows.map((row, index) => (
             <PointDetailRow
-              key={row.grant_id ?? `new-${index}`}
+              key={row.client_key ?? row.grant_id ?? `row-${index}`}
               data={row}
               index={index}
               departmentOptions={departmentOptions}
@@ -372,11 +396,11 @@ export function CustomEventForm({
             type="button"
             variant="ghost"
             className="text-door-madder-ink hover:bg-door-madder-soft me-auto"
-            onClick={onDelete}
+            onClick={() => setDeleteDialogOpen(true)}
             disabled={isSubmitting || isDeleting}
           >
             <Trash2 className="h-4 w-4" />
-            {isDeleting ? tc("deleting") : tc("delete")}
+            {isDeleting ? tc("deleting") : ta("delete")}
           </Button>
         ) : null}
         <Button type="submit" disabled={isSubmitting || isDeleting || (mode === "edit" && !isDirty)}>
@@ -389,6 +413,27 @@ export function CustomEventForm({
               : t("saveChanges")}
         </Button>
       </FormActions>
+
+      {onDelete && !isFullEvent ? (
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>{te("deleteConfirmTitle")}</AlertDialogTitle>
+              <AlertDialogDescription>{te("deleteConfirmDescription")}</AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>{ta("cancel")}</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onDelete}
+                disabled={isDeleting}
+                className="bg-door-madder hover:bg-door-madder/90 text-white"
+              >
+                {isDeleting ? tc("deleting") : ta("delete")}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
     </form>
   );
 }

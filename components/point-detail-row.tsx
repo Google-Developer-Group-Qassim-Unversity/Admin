@@ -36,6 +36,7 @@ export interface MemberOption {
 }
 
 export interface PointDetailRowData {
+  client_key?: string;
   grant_id?: string;
   row_type: PointRowType;
   departments_id: number[];

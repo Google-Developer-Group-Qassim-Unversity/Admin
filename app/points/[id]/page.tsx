@@ -6,7 +6,7 @@ import Link from "next/link";
 import { isSameDay } from "date-fns";
 import { ArrowLeft, SearchX } from "lucide-react";
 import { toast } from "sonner";
-import { useAuth } from "@clerk/nextjs";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { PointsEditorShell } from "@/components/points-editor-shell";
@@ -16,20 +16,11 @@ import {
   CustomEventForm,
   type CustomEventFormData,
 } from "@/components/custom-event-form";
-import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { MemberOption } from "@/components/point-detail-row";
-import type { BonusDetail, BonusGrantInput, GroupedActions, Member } from "@/lib/api-types";
-import {
-  getBonus,
-  updateBonus,
-  deleteBonus,
-  getDepartments,
-  getMembers,
-  getActions,
-  shouldContactSupport,
-} from "@/lib/api";
+import { rowsToGrantInputs, useBonusEditorOptions } from "@/hooks/use-bonus-editor-options";
+import { useApi } from "@/lib/api/client";
+import { ApiRequestError, shouldContactSupport } from "@/lib/api/errors";
+import type { BonusDetail } from "@/lib/api-types";
 import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
-import { useTranslations } from "next-intl";
 
 export default function EditBonusPage() {
   const t = useTranslations("editCustomEvent");
@@ -37,131 +28,81 @@ export default function EditBonusPage() {
   const tl = useTranslations("eventLayout");
   const params = useParams();
   const router = useRouter();
-  const { getToken } = useAuth();
+  const api = useApi();
   const bonusId = params.id as string;
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
   const [isDeleting, setIsDeleting] = React.useState(false);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [isLoadingBonus, setIsLoadingBonus] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-
   const [bonus, setBonus] = React.useState<BonusDetail | null>(null);
-  const [departmentOptions, setDepartmentOptions] = React.useState<ComboboxOption[]>([]);
-  const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
-  const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
-    department: [],
-    member: [],
-    bonus: [],
-  });
 
-  const handleMemberCreated = React.useCallback((member: Member) => {
-    setMemberOptions((prev) => [
-      ...prev,
-      { id: member.id, label: member.name, uni_id: member.uni_id, email: member.email },
-    ]);
-  }, []);
+  const {
+    departmentOptions,
+    memberOptions,
+    actionOptions,
+    isLoadingOptions,
+    handleMemberCreated,
+  } = useBonusEditorOptions();
 
   React.useEffect(() => {
-    async function fetchData() {
-      setIsLoading(true);
+    let cancelled = false;
+
+    async function fetchBonus() {
+      setIsLoadingBonus(true);
       setError(null);
-
-      const [bonusRes, deptsRes, membersRes, actionsRes] = await Promise.all([
-        getBonus(bonusId, getToken),
-        getDepartments(),
-        getMembers(getToken),
-        getActions(),
-      ]);
-
-      if (!bonusRes.success) {
-        setError(bonusRes.error.message || t("loadFailed"));
-        setIsLoading(false);
-        return;
+      try {
+        const data = await api.bonuses.get(bonusId);
+        if (cancelled) return;
+        if (data.event_id !== null) {
+          router.replace(`/points/events/${data.event_id}`);
+          return;
+        }
+        setBonus(data);
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof ApiRequestError ? err.message : t("loadFailed"));
+        }
+      } finally {
+        if (!cancelled) setIsLoadingBonus(false);
       }
-
-      setBonus(bonusRes.data);
-
-      if (deptsRes.success) {
-        setDepartmentOptions(
-          deptsRes.data.map((d) => ({
-            id: d.id,
-            label: d.ar_name || d.name,
-          }))
-        );
-      }
-
-      if (membersRes.success) {
-        setMemberOptions(
-          membersRes.data.map((m) => ({
-            id: m.id,
-            label: m.name,
-            uni_id: m.uni_id,
-            email: m.email,
-          }))
-        );
-      }
-
-      if (actionsRes.success) {
-        setActionOptions({
-          department: actionsRes.data.department_actions,
-          member: actionsRes.data.member_actions,
-          bonus: actionsRes.data.custom_actions,
-        });
-      }
-
-      setIsLoading(false);
     }
-    fetchData();
-  }, [bonusId, getToken, t]);
+
+    fetchBonus();
+    return () => {
+      cancelled = true;
+    };
+  }, [api, bonusId, router, t]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
     if (!bonus) return;
     setIsSubmitting(true);
 
     try {
-      const givenAt = new Date(data.date);
-      givenAt.setHours(10, 0, 0, 0);
-
-      const grants: BonusGrantInput[] = data.point_details.map((pd) => ({
-        id: pd.grant_id ?? null,
-        recipient_type: pd.row_type,
-        points: pd.points,
-        source_action_id: pd.action_id,
-        label_en: pd.action_name,
-        label_ar: pd.label_ar ?? pd.action_name,
-        member_ids: pd.row_type === "member" ? pd.member_ids : [],
-        department_ids: pd.row_type === "department" ? pd.departments_id : [],
-      }));
-
-      const res = await updateBonus(
-        bonus.id,
-        {
-          title: data.event_name,
-          given_at: isSameDay(givenAt, parseLocalDateTime(bonus.given_at))
-            ? undefined
-            : formatLocalDateTime(givenAt),
-          is_public: data.is_visible,
-          grants,
-        },
-        getToken
-      );
-
-      if (!res.success) {
-        if (shouldContactSupport(res.error)) {
-          toast.error(t("updateEventInfoFailedContactSupport"), {
-            description: tc("errorDetail", { message: res.error.message }),
-            duration: 10000,
-          });
-        } else {
-          toast.error(res.error.message);
-        }
-        return;
-      }
+      await api.bonuses.update(bonus.id, {
+        title: data.event_name,
+        given_at: isSameDay(data.date, parseLocalDateTime(bonus.given_at))
+          ? undefined
+          : formatLocalDateTime(data.date),
+        is_public: data.is_visible,
+        grants: rowsToGrantInputs(data.point_details, true),
+      });
 
       toast.success(t("updatedSuccess"));
       router.push("/points");
-    } catch {
-      toast.error(tc("unexpectedError"));
+    } catch (err) {
+      if (err instanceof ApiRequestError) {
+        if (shouldContactSupport(err)) {
+          toast.error(t("updateEventInfoFailedContactSupport"), {
+            description: tc("errorDetail", { message: err.message }),
+            duration: 10000,
+          });
+        } else {
+          toast.error(err.message);
+        }
+      } else {
+        toast.error(tc("unexpectedError"));
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -171,21 +112,17 @@ export default function EditBonusPage() {
     if (!bonus) return;
     setIsDeleting(true);
     try {
-      const res = await deleteBonus(bonus.id, getToken);
-      if (!res.success) {
-        toast.error(res.error.message);
-        return;
-      }
-      toast.success(t("updatedSuccess"));
+      await api.bonuses.remove(bonus.id);
+      toast.success(t("deletedSuccess"));
       router.push("/points");
-    } catch {
-      toast.error(tc("unexpectedError"));
+    } catch (err) {
+      toast.error(err instanceof ApiRequestError ? err.message : tc("unexpectedError"));
     } finally {
       setIsDeleting(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoadingBonus || isLoadingOptions) {
     return (
       <PointsEditorShell title={null}>
         <div className="space-y-6">

@@ -10,6 +10,7 @@ import { PointsCustomEventCard } from "@/components/points-custom-event-card";
 import { POINTS_LIST } from "@/components/points-list-states";
 import type { BonusSummary } from "@/lib/api-types";
 import { useFuzzySearch } from "@/lib/search-utils";
+import { parseLocalDateTime } from "@/lib/utils";
 
 const SHOWN = 50;
 
@@ -22,7 +23,7 @@ export function CustomEventsList({ bonuses }: { bonuses: BonusSummary[] }) {
   const filteredBonuses = React.useMemo(() => {
     const source = searchQuery.trim() ? searchResults : bonuses;
     return [...source]
-      .sort((a, b) => new Date(b.given_at).getTime() - new Date(a.given_at).getTime())
+      .sort((a, b) => parseLocalDateTime(b.given_at).getTime() - parseLocalDateTime(a.given_at).getTime())
       .slice(0, SHOWN);
   }, [searchResults, searchQuery, bonuses]);
 
