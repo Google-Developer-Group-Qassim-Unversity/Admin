@@ -103,15 +103,18 @@ export function PointDetailRow({
     actionPoints: number | null
   ) => {
     if (actionId !== null && actionPoints !== null) {
+      const action = allActions.find((option) => option.id === actionId);
       updateMultipleFields({
         action_id: actionId,
-        action_name: actionName,
+        action_name: action?.action_name ?? actionName,
+        label_ar: action?.ar_action_name ?? null,
         points: actionPoints,
       });
     } else {
       updateMultipleFields({
         action_id: null,
         action_name: actionName,
+        label_ar: actionName,
       });
     }
   };

@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import { isSameDay } from "date-fns";
 import { ArrowLeft, SearchX } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@clerk/nextjs";
@@ -27,7 +28,7 @@ import {
   getActions,
   shouldContactSupport,
 } from "@/lib/api";
-import { formatLocalDateTime } from "@/lib/utils";
+import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
 export default function EditBonusPage() {
@@ -136,7 +137,9 @@ export default function EditBonusPage() {
         bonus.id,
         {
           title: data.event_name,
-          given_at: formatLocalDateTime(givenAt),
+          given_at: isSameDay(givenAt, parseLocalDateTime(bonus.given_at))
+            ? undefined
+            : formatLocalDateTime(givenAt),
           is_public: data.is_visible,
           grants,
         },
