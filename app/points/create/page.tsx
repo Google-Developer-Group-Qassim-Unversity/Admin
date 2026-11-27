@@ -17,12 +17,11 @@ import {
   getDepartments,
   getMembers,
   getActions,
-  createCustomDepartmentPoints,
-  createCustomMemberPoints,
+  createBonus,
   shouldContactSupport,
 } from "@/lib/api";
 import { formatLocalDateTime } from "@/lib/utils";
-import type { GroupedActions, LocationType, ApiError, CreateCustomPointsResponse, Member } from "@/lib/api-types";
+import type { BonusGrantInput, GroupedActions, Member } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 
 export default function CreateCustomEventPage() {
@@ -31,9 +30,7 @@ export default function CreateCustomEventPage() {
   const { getToken } = useAuth();
   const [isSubmitting, setIsSubmitting] = React.useState(false);
 
-  const [departmentOptions, setDepartmentOptions] = React.useState<
-    ComboboxOption[]
-  >([]);
+  const [departmentOptions, setDepartmentOptions] = React.useState<ComboboxOption[]>([]);
   const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
   const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
     department: [],
@@ -52,8 +49,6 @@ export default function CreateCustomEventPage() {
   React.useEffect(() => {
     async function fetchData() {
       setIsLoadingData(true);
-      // Departments scoped to the current semester (the club's roster),
-      // minus the ones hidden from the leaderboard, like the event form.
       const today = new Date();
       const endDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
       const [deptsRes, membersRes, actionsRes] = await Promise.all([
@@ -99,80 +94,43 @@ export default function CreateCustomEventPage() {
     setIsSubmitting(true);
 
     try {
-      const startDate = new Date(data.date);
-      startDate.setHours(10, 0, 0, 0);
-      const endDate = new Date(data.date);
-      endDate.setHours(12, 0, 0, 0);
+      const givenAt = new Date(data.date);
+      givenAt.setHours(10, 0, 0, 0);
 
-      const departmentRows = data.point_details.filter((pd) => pd.row_type === "department");
-      const memberRows = data.point_details.filter((pd) => pd.row_type === "member");
+      const grants: BonusGrantInput[] = data.point_details.map((pd) => ({
+        recipient_type: pd.row_type,
+        points: pd.points,
+        source_action_id: pd.action_id,
+        label_en: pd.action_name,
+        label_ar: pd.label_ar ?? pd.action_name,
+        member_ids: pd.row_type === "member" ? pd.member_ids : [],
+        department_ids: pd.row_type === "department" ? pd.departments_id : [],
+      }));
 
-      type CreateResult = { success: true; data: CreateCustomPointsResponse } | { success: false; error: ApiError };
-      const results: { type: string; result: CreateResult }[] = [];
-      let eventId: number | null = null;
+      const result = await createBonus(
+        {
+          title: data.event_name,
+          given_at: formatLocalDateTime(givenAt),
+          is_public: data.is_visible,
+          grants,
+        },
+        getToken
+      );
 
-      if (departmentRows.length > 0) {
-        const deptPayload = {
-          event_id: null,
-          start_datetime: formatLocalDateTime(startDate),
-          end_datetime: formatLocalDateTime(endDate),
-          event_name: data.event_name,
-          location_type: (data.is_visible ? "none" : "hidden") as LocationType,
-          point_deatils: departmentRows.map((pd) => ({
-            departments_id: pd.departments_id,
-            points: pd.points,
-            action_id: pd.action_id,
-            action_name: pd.action_name,
-          })),
-        };
-
-        const deptResult = await createCustomDepartmentPoints(deptPayload, getToken);
-        results.push({ type: "department", result: deptResult });
-
-        if (deptResult.success) {
-          eventId = deptResult.data.event_id;
+      if (!result.success) {
+        if (shouldContactSupport(result.error)) {
+          toast.error(t("createFailedContactSupport"), {
+            description: t("errorDetail", { message: result.error.message }),
+            duration: 10000,
+          });
+        } else {
+          toast.error(result.error.message);
         }
+        return;
       }
 
-      if (memberRows.length > 0) {
-        const memberPayload = {
-          event_id: eventId,
-          start_datetime: formatLocalDateTime(startDate),
-          end_datetime: formatLocalDateTime(endDate),
-          event_name: data.event_name,
-          location_type: (data.is_visible ? "none" : "hidden") as LocationType,
-          point_deatils: memberRows.map((pd) => ({
-            member_ids: pd.member_ids,
-            points: pd.points,
-            action_id: pd.action_id,
-            action_name: pd.action_name,
-          })),
-        };
-
-        const memberResult = await createCustomMemberPoints(memberPayload, getToken);
-        results.push({ type: "member", result: memberResult });
-      }
-
-      const failures = results.filter((r) => !r.result.success);
-      if (failures.length > 0) {
-        const firstError = failures[0].result;
-        if (!firstError.success) {
-          if (shouldContactSupport(firstError.error)) {
-            toast.error(
-              t("createFailedContactSupport"),
-              {
-                description: t("errorDetail", { message: firstError.error.message }),
-                duration: 10000,
-              }
-            );
-          } else {
-            toast.error(firstError.error.message);
-          }
-        }
-      } else {
-        toast.success(t("createdSuccess"));
-        router.push("/points");
-      }
+      toast.success(t("createdSuccess"));
+      router.push("/points");
     } catch {
       toast.error(t("unexpectedError"));
     } finally {
@@ -206,7 +164,6 @@ export default function CreateCustomEventPage() {
           actionOptions={actionOptions}
           onSubmit={handleSubmit}
           isSubmitting={isSubmitting}
-          useSimpleInput={true}
           onMemberCreated={handleMemberCreated}
         />
       )}

@@ -31,6 +31,7 @@ import PermissionsPage from "@/app/permissions/page";
 import PointsLayout from "@/app/points/layout";
 import PointsPage from "@/app/points/page";
 import PointsDetailPage from "@/app/points/[id]/page";
+import PointsEventDetailPage from "@/app/points/events/[id]/page";
 import PointsCreatePage from "@/app/points/create/page";
 import PointsCustomPage from "@/app/points/custom/page";
 import PointsFullPage from "@/app/points/full/page";
@@ -81,6 +82,7 @@ const ROUTES = [
   ["/points/custom", points(PointsCustomPage)],
   ["/points/full", points(PointsFullPage)],
   ["/points/manage", points(PointsManagePage)],
+  ["/points/events/:id", PointsEventDetailPage],
   ["/points/:id", PointsDetailPage],
   ["/manage-emails", ManageEmailsPage],
   ["/settings", SettingsPage],

@@ -515,6 +515,89 @@ export interface BatchCreateMembersResponse {
 }
 
 // =============================================================================
+// First-Class Bonuses (standalone and event-attached)
+// =============================================================================
+
+export interface BonusGrant {
+  id: string;
+  recipient_type: PointRowType;
+  points: number;
+  source_action_id: number | null;
+  label_en: string | null;
+  label_ar: string | null;
+  member_ids: number[];
+  department_ids: number[];
+  created_at: string;
+}
+
+export interface BonusGrantInput {
+  id?: string | null;
+  recipient_type: PointRowType;
+  points: number;
+  source_action_id?: number | null;
+  label_en?: string | null;
+  label_ar?: string | null;
+  member_ids?: number[];
+  department_ids?: number[];
+}
+
+export interface BonusSummary {
+  id: string;
+  title: string;
+  event_id: number | null;
+  semester_id: string;
+  given_at: string;
+  is_public: boolean;
+  grant_count: number;
+  member_count: number;
+  department_count: number;
+  created_at: string;
+}
+
+export interface BonusDetail {
+  id: string;
+  title: string;
+  event_id: number | null;
+  semester_id: string;
+  given_at: string;
+  is_public: boolean;
+  created_by: number | null;
+  created_at: string;
+  updated_at: string;
+  grants: BonusGrant[];
+}
+
+export interface EventBonusDetail {
+  event_id: number;
+  event_name: string;
+  start_datetime: string;
+  end_datetime: string;
+  bonus_id: string | null;
+  grants: BonusGrant[];
+}
+
+export interface CreateBonusPayload {
+  title: string;
+  given_at: string;
+  is_public: boolean;
+  event_id?: number | null;
+  semester_id?: string | null;
+  grants: BonusGrantInput[];
+}
+
+export interface UpdateBonusPayload {
+  title?: string;
+  given_at?: string;
+  is_public?: boolean;
+  semester_id?: string | null;
+  grants?: BonusGrantInput[];
+}
+
+export interface UpsertEventBonusPayload {
+  grants: BonusGrantInput[];
+}
+
+// =============================================================================
 // Custom Points (Department)
 // =============================================================================
 

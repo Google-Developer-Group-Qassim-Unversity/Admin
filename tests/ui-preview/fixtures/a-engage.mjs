@@ -146,7 +146,91 @@ const JOBS = [
 ];
 
 export default [
-  { path: /^\/events$/, body: [...EVENTS, ...CUSTOM_EVENTS] },
+  { path: /^\/events$/, body: EVENTS },
+  {
+    path: /^\/bonuses$/,
+    body: CUSTOM_EVENTS.map((e) => ({
+      id: `bonus-${e.id}`,
+      title: e.name,
+      event_id: null,
+      semester_id: "sem-475",
+      given_at: e.start_datetime,
+      is_public: e.location_type !== "hidden",
+      grant_count: 2,
+      member_count: 3,
+      department_count: 2,
+      created_at: e.created_at,
+    })),
+  },
+  {
+    path: /^\/bonuses\/by-event\/\d+$/,
+    body: ({ pathname }) => {
+      const id = Number(pathname.split("/").pop());
+      const e = EVENTS.find((x) => x.id === id) ?? EVENTS[0];
+      return {
+        event_id: e.id,
+        event_name: e.name,
+        start_datetime: e.start_datetime,
+        end_datetime: e.end_datetime,
+        bonus_id: `bonus-ev-${e.id}`,
+        grants: [
+          {
+            id: `g-m-${e.id}`,
+            recipient_type: "member",
+            points: 5,
+            source_action_id: 5,
+            label_en: "Volunteering",
+            label_ar: "التطوع",
+            member_ids: [100, 101, 102],
+            department_ids: [],
+            created_at: e.created_at,
+          },
+        ],
+      };
+    },
+  },
+  {
+    path: /^\/bonuses\/[^/]+$/,
+    body: ({ pathname }) => {
+      const raw = pathname.split("/").pop();
+      const e = CUSTOM_EVENTS.find((x) => `bonus-${x.id}` === raw || String(x.id) === raw) ?? CUSTOM_EVENTS[0];
+      return {
+        id: `bonus-${e.id}`,
+        title: e.name,
+        event_id: null,
+        semester_id: "sem-475",
+        given_at: e.start_datetime,
+        is_public: e.location_type !== "hidden",
+        created_by: 1,
+        created_at: e.created_at,
+        updated_at: e.created_at,
+        grants: [
+          {
+            id: `g-d-1-${e.id}`,
+            recipient_type: "department",
+            points: 15,
+            source_action_id: 2,
+            label_en: "Organizing an event",
+            label_ar: "تنظيم فعالية",
+            member_ids: [],
+            department_ids: [11, 14],
+            created_at: e.created_at,
+          },
+          {
+            id: `g-m-1-${e.id}`,
+            recipient_type: "member",
+            points: 5,
+            source_action_id: 5,
+            label_en: "Volunteering",
+            label_ar: "التطوع",
+            member_ids: [100, 101, 102],
+            department_ids: [],
+            created_at: e.created_at,
+          },
+        ],
+      };
+    },
+  },
   { path: /^\/events\/\d+\/details$/, body: ({ pathname }) => eventDetails(pathname.split("/")[2]) },
   { path: /^\/custom\/departments\/\d+$/, body: ({ pathname }) => customDepartment(Number(pathname.split("/").pop())) },
   { path: /^\/custom\/members\/\d+$/, body: ({ pathname }) => customMember(Number(pathname.split("/").pop())) },

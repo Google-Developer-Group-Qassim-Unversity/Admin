@@ -3,7 +3,7 @@
 import * as React from "react";
 import { useLocale, useTranslations } from "next-intl";
 import { setHours, setMinutes } from "date-fns";
-import { CalendarIcon, Eye, EyeOff, Plus } from "lucide-react";
+import { CalendarIcon, Eye, EyeOff, Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -15,14 +15,13 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Switch } from "@/components/ui/switch";
-import { CreatableCombobox } from "@/components/ui/creatable-combobox";
 import {
   PointDetailRow,
   type PointDetailRowData,
   type MemberOption,
 } from "@/components/point-detail-row";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
-import type { CustomEventDepartment, CustomEventMember, GroupedActions, LocationType, Member, PointRowType } from "@/lib/api-types";
+import type { BonusDetail, BonusGrant, EventBonusDetail, GroupedActions, Member, PointRowType } from "@/lib/api-types";
 import { cn, parseLocalDateTime } from "@/lib/utils";
 import { useFormDirty } from "@/lib/use-form-dirty";
 import { useAccess } from "@/hooks/use-access";
@@ -32,16 +31,15 @@ import { intlLocale } from "@/lib/format";
 
 export interface CustomEventFormProps {
   mode: "create" | "edit";
-  initialData?: CustomEventDepartment;
-  initialMemberData?: CustomEventMember;
-  eventNameOptions?: string[];
-  allEvents?: Array<{ name: string; start_datetime: string; location_type: LocationType }>;
+  initialBonus?: BonusDetail;
+  initialEventBonus?: EventBonusDetail;
   departmentOptions: ComboboxOption[];
   memberOptions: MemberOption[];
   actionOptions: GroupedActions;
   onSubmit: (data: CustomEventFormData) => void;
+  onDelete?: () => void;
+  isDeleting?: boolean;
   isSubmitting: boolean;
-  useSimpleInput?: boolean;
   isFullEvent?: boolean;
   onMemberCreated?: (member: Member) => void;
 }
@@ -61,21 +59,34 @@ function createEmptyRow(type: PointRowType = "department"): PointDetailRowData {
     points: 0,
     action_id: null,
     action_name: null,
+    label_ar: null,
+  };
+}
+
+function grantToRow(grant: BonusGrant): PointDetailRowData {
+  return {
+    grant_id: grant.id,
+    row_type: grant.recipient_type,
+    departments_id: grant.department_ids,
+    member_ids: grant.member_ids,
+    points: grant.points,
+    action_id: grant.source_action_id ?? null,
+    action_name: grant.label_en ?? grant.label_ar ?? null,
+    label_ar: grant.label_ar ?? null,
   };
 }
 
 export function CustomEventForm({
   mode,
-  initialData,
-  initialMemberData,
-  eventNameOptions = [],
-  allEvents = [],
+  initialBonus,
+  initialEventBonus,
   departmentOptions,
   memberOptions,
   actionOptions,
   onSubmit,
+  onDelete,
+  isDeleting = false,
   isSubmitting,
-  useSimpleInput = false,
   isFullEvent = false,
   onMemberCreated,
 }: CustomEventFormProps) {
@@ -86,88 +97,48 @@ export function CustomEventForm({
   // Only super admins give points outside the point actions.
   const isRestrictedMode = !isSuperAdmin;
 
-  const [eventName, setEventName] = React.useState(initialData?.event_name ?? initialMemberData?.event_name ?? "");
+  const initialTitle = initialBonus?.title ?? initialEventBonus?.event_name ?? "";
+  const initialDateStr = initialBonus?.given_at ?? initialEventBonus?.start_datetime ?? null;
+  const initialGrants = initialBonus?.grants ?? initialEventBonus?.grants ?? [];
+  const initialIsPublic = initialBonus ? initialBonus.is_public : true;
+
+  const [eventName, setEventName] = React.useState(initialTitle);
   const [date, setDate] = React.useState<Date | undefined>(() => {
     if (mode === "create") {
       return new Date();
     }
-    const initialDt = initialData?.start_datetime ?? initialMemberData?.start_datetime;
-    if (initialDt) {
-      return parseLocalDateTime(initialDt);
+    if (initialDateStr) {
+      return parseLocalDateTime(initialDateStr);
     }
     return undefined;
   });
-  const [isVisible, setIsVisible] = React.useState(() => {
-    if (mode === "edit" && (initialData?.event_name || initialMemberData?.event_name) && allEvents.length > 0) {
-      const matchingEvent = allEvents.find((e) => e.name === (initialData?.event_name ?? initialMemberData?.event_name));
-      if (matchingEvent) {
-        return matchingEvent.location_type !== "hidden";
-      }
-    }
-    return true;
-  });
+  const [isVisible, setIsVisible] = React.useState(initialIsPublic);
 
   const [rows, setRows] = React.useState<PointDetailRowData[]>(() => {
-    const deptRows = initialData?.point_details?.map((pd) => ({
-      log_id: pd.log_id,
-      row_type: "department" as PointRowType,
-      departments_id: pd.departments_id,
-      member_ids: [],
-      points: pd.points,
-      action_id: pd.action_id ?? null,
-      action_name: pd.action_name ?? null,
-    })) ?? [];
-    const memRows = initialMemberData?.point_details?.map((pd) => ({
-      log_id: pd.log_id,
-      row_type: "member" as PointRowType,
-      departments_id: [],
-      member_ids: pd.member_ids,
-      points: pd.points,
-      action_id: pd.action_id ?? null,
-      action_name: pd.action_name ?? null,
-    })) ?? [];
-    const allRows = [...deptRows, ...memRows];
-    return allRows.length > 0 ? allRows : [createEmptyRow("department")];
+    const mapped = initialGrants.map(grantToRow);
+    if (mapped.length > 0) return mapped;
+    return isFullEvent ? [] : [createEmptyRow("department")];
   });
 
   const [calendarOpen, setCalendarOpen] = React.useState(false);
-
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
   const initialSnapshot = React.useMemo(() => {
     if (mode === "create") return null;
-
-    const matchingEvent = allEvents.find((e) => e.name === (initialData?.event_name ?? initialMemberData?.event_name));
-    const initialVisibility = matchingEvent
-      ? matchingEvent.location_type !== "hidden"
-      : true;
-
-    const deptRows = initialData?.point_details?.map((pd) => ({
-      log_id: pd.log_id,
-      row_type: "department" as PointRowType,
-      departments_id: [...pd.departments_id].sort((a, b) => a - b),
-      member_ids: [],
-      points: pd.points,
-      action_id: pd.action_id ?? null,
-      action_name: pd.action_name ?? null,
-    })) ?? [];
-    const memRows = initialMemberData?.point_details?.map((pd) => ({
-      log_id: pd.log_id,
-      row_type: "member" as PointRowType,
-      departments_id: [],
-      member_ids: [...pd.member_ids].sort((a, b) => a - b),
-      points: pd.points,
-      action_id: pd.action_id ?? null,
-      action_name: pd.action_name ?? null,
-    })) ?? [];
-
+    const mapped = initialGrants.map((g) => ({
+      grant_id: g.id,
+      row_type: g.recipient_type,
+      departments_id: [...g.department_ids].sort((a, b) => a - b),
+      member_ids: [...g.member_ids].sort((a, b) => a - b),
+      points: g.points,
+      action_id: g.source_action_id ?? null,
+      action_name: g.label_en ?? g.label_ar ?? null,
+    }));
     return {
-      eventName: initialData?.event_name ?? initialMemberData?.event_name ?? "",
-      date: (initialData?.start_datetime ?? initialMemberData?.start_datetime)
-        ? parseLocalDateTime(initialData?.start_datetime ?? initialMemberData!.start_datetime).getTime()
-        : null,
-      isVisible: initialVisibility,
-      rows: [...deptRows, ...memRows],
+      eventName: initialTitle,
+      date: initialDateStr ? parseLocalDateTime(initialDateStr).getTime() : null,
+      isVisible: initialIsPublic,
+      rows: mapped,
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -178,7 +149,7 @@ export function CustomEventForm({
       date: date?.getTime() ?? null,
       isVisible,
       rows: rows.map((r) => ({
-        log_id: r.log_id,
+        grant_id: r.grant_id,
         row_type: r.row_type,
         departments_id: [...r.departments_id].sort((a, b) => a - b),
         member_ids: [...r.member_ids].sort((a, b) => a - b),
@@ -191,23 +162,6 @@ export function CustomEventForm({
   );
 
   const isDirty = useFormDirty(initialSnapshot, currentSnapshot);
-
-  const handleEventNameChange = (newName: string) => {
-    setEventName(newName);
-    
-    if (!useSimpleInput && newName && allEvents.length > 0) {
-      const matchingEvent = allEvents.find((e) => e.name === newName);
-      if (matchingEvent) {
-        if (matchingEvent.start_datetime) {
-          const eventDate = parseLocalDateTime(matchingEvent.start_datetime);
-          setDate(eventDate);
-        }
-        
-        const shouldBeVisible = matchingEvent.location_type !== "hidden";
-        setIsVisible(shouldBeVisible);
-      }
-    }
-  };
 
   const handleRowChange = (index: number, data: PointDetailRowData) => {
     setRows((prev) => prev.map((r, i) => (i === index ? data : r)));
@@ -224,15 +178,15 @@ export function CustomEventForm({
   const validate = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!eventName.trim()) {
+    if (!isFullEvent && !eventName.trim()) {
       newErrors.eventName = t("eventNameRequired");
     }
 
-    if (!date) {
+    if (!isFullEvent && !date) {
       newErrors.date = t("dateRequired");
     }
 
-    if (rows.length === 0) {
+    if (!isFullEvent && rows.length === 0) {
       newErrors.rows = t("rowsRequired");
     }
 
@@ -255,9 +209,9 @@ export function CustomEventForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!validate() || !date) return;
-
-    const startDate = setMinutes(setHours(new Date(date), 10), 0);
+    if (!validate()) return;
+    const effectiveDate = date ?? new Date();
+    const startDate = setMinutes(setHours(new Date(effectiveDate), 10), 0);
 
     onSubmit({
       event_name: eventName.trim(),
@@ -279,28 +233,16 @@ export function CustomEventForm({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor="event-name">{t("eventName")}</Label>
-            {useSimpleInput ? (
-              <Input
-                id="event-name"
-                value={eventName}
-                onChange={(e) => handleEventNameChange(e.target.value)}
-                placeholder={t("eventNamePlaceholder")}
-                disabled={isSubmitting || isFullEvent}
-                dir="auto"
-                autoComplete="off"
-                enterKeyHint="next"
-              />
-            ) : (
-              <CreatableCombobox
-                options={eventNameOptions}
-                value={eventName}
-                onChange={handleEventNameChange}
-                placeholder={t("selectOrCreateEvent")}
-                searchPlaceholder={t("searchEvents")}
-                emptyMessage={t("noMatchingEvents")}
-                disabled={isFullEvent}
-              />
-            )}
+            <Input
+              id="event-name"
+              value={eventName}
+              onChange={(e) => setEventName(e.target.value)}
+              placeholder={t("eventNamePlaceholder")}
+              disabled={isSubmitting || isFullEvent}
+              dir="auto"
+              autoComplete="off"
+              enterKeyHint="next"
+            />
             {errors.eventName && (
               <p className="text-door-madder-ink text-sm font-medium">{errors.eventName}</p>
             )}
@@ -339,31 +281,31 @@ export function CustomEventForm({
             )}
           </div>
 
-          <div className="space-y-1.5">
-            <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
-            <label
-              htmlFor="is_visible"
-              className="bg-sunk ring-rule has-[:focus-visible]:ring-ring flex min-h-14 cursor-pointer items-center gap-3 rounded-lg p-3 ring-1 transition-colors hover:ring-adobe"
-            >
-              <Switch
-                id="is_visible"
-                checked={isVisible}
-                onCheckedChange={setIsVisible}
-                disabled={isSubmitting || isFullEvent}
-              />
-              <div className="flex-1">
-                <p className={cn("flex items-center gap-1.5 text-sm font-bold", isVisible ? "text-door-indigo-ink" : "text-door-umber-ink")}>
-                  {isVisible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
-                  {isVisible ? t("visible") : t("hidden")}
-                </p>
-                <p className="text-ink-2 text-[13px]">
-                  {isVisible
-                    ? t("visibleHint")
-                    : t("hiddenHint")}
-                </p>
-              </div>
-            </label>
-          </div>
+          {!isFullEvent && (
+            <div className="space-y-1.5">
+              <Label htmlFor="is_visible">{t("eventVisibility")}</Label>
+              <label
+                htmlFor="is_visible"
+                className="bg-sunk ring-rule has-[:focus-visible]:ring-ring flex min-h-14 cursor-pointer items-center gap-3 rounded-lg p-3 ring-1 transition-colors hover:ring-adobe"
+              >
+                <Switch
+                  id="is_visible"
+                  checked={isVisible}
+                  onCheckedChange={setIsVisible}
+                  disabled={isSubmitting}
+                />
+                <div className="flex-1">
+                  <p className={cn("flex items-center gap-1.5 text-sm font-bold", isVisible ? "text-door-indigo-ink" : "text-door-umber-ink")}>
+                    {isVisible ? <Eye className="size-4" /> : <EyeOff className="size-4" />}
+                    {isVisible ? t("visible") : t("hidden")}
+                  </p>
+                  <p className="text-ink-2 text-[13px]">
+                    {isVisible ? t("visibleHint") : t("hiddenHint")}
+                  </p>
+                </div>
+              </label>
+            </div>
+          )}
         </div>
       </section>
 
@@ -385,7 +327,7 @@ export function CustomEventForm({
         <div className="space-y-3">
           {rows.map((row, index) => (
             <PointDetailRow
-              key={index}
+              key={row.grant_id ?? `new-${index}`}
               data={row}
               index={index}
               departmentOptions={departmentOptions}
@@ -393,7 +335,7 @@ export function CustomEventForm({
               actionOptions={actionOptions}
               onChange={handleRowChange}
               onRemove={handleRowRemove}
-              canRemove={rows.length > 1}
+              canRemove={isFullEvent || rows.length > 1}
               onMemberCreated={onMemberCreated}
             />
           ))}
@@ -425,7 +367,19 @@ export function CustomEventForm({
       </section>
 
       <FormActions>
-        <Button type="submit" disabled={isSubmitting || (mode === "edit" && !isDirty)}>
+        {onDelete && !isFullEvent ? (
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-door-madder-ink hover:bg-door-madder-soft me-auto"
+            onClick={onDelete}
+            disabled={isSubmitting || isDeleting}
+          >
+            <Trash2 className="h-4 w-4" />
+            {isDeleting ? tc("deleting") : tc("delete")}
+          </Button>
+        ) : null}
+        <Button type="submit" disabled={isSubmitting || isDeleting || (mode === "edit" && !isDirty)}>
           {isSubmitting
             ? mode === "create"
               ? tc("creating")

@@ -3,40 +3,42 @@
 import * as React from "react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useAuth } from "@clerk/nextjs";
 import { Plus, Trophy } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { CustomEventsList } from "@/components/custom-events-list";
 import { PointsEmpty, PointsListSkeleton, PointsLoadError } from "@/components/points-list-states";
-import { getEvents } from "@/lib/api";
-import type { Event } from "@/lib/api-types";
+import { getBonuses } from "@/lib/api";
+import type { BonusSummary } from "@/lib/api-types";
 import { useTranslations } from "next-intl";
 
-/** Custom (points-only) events. The page header and tabs come from the points layout. */
+/** Standalone bonuses. The page header and tabs come from the points layout. */
 export default function PointsPage() {
   const t = useTranslations("pointsList");
-  const [customEvents, setCustomEvents] = useState<Event[]>([]);
+  const { getToken } = useAuth();
+  const [bonuses, setBonuses] = useState<BonusSummary[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<{ message: string; isServerError?: boolean } | null>(null);
 
   useEffect(() => {
-    async function fetchEvents() {
+    async function fetchBonuses() {
       setIsLoading(true);
       setError(null);
-      const response = await getEvents();
+      const response = await getBonuses({ standaloneOnly: true }, getToken);
       if (response.success) {
-        setCustomEvents(response.data.filter((e) => e.location_type === "none" || e.location_type === "hidden"));
+        setBonuses(response.data);
       } else {
         setError(response.error);
       }
       setIsLoading(false);
     }
-    fetchEvents();
-  }, []);
+    fetchBonuses();
+  }, [getToken]);
 
   if (isLoading) return <PointsListSkeleton />;
   if (error) return <PointsLoadError message={error.message} isServerError={error.isServerError} />;
-  if (customEvents.length === 0) {
+  if (bonuses.length === 0) {
     return (
       <PointsEmpty icon={Trophy} title={t("noneYetTitle")} description={t("noneYetDescription")}>
         <Button asChild>
@@ -48,5 +50,5 @@ export default function PointsPage() {
       </PointsEmpty>
     );
   }
-  return <CustomEventsList events={customEvents} />;
+  return <CustomEventsList bonuses={bonuses} />;
 }

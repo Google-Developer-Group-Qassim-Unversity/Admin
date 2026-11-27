@@ -17,53 +17,35 @@ import {
 } from "@/components/custom-event-form";
 import type { ComboboxOption } from "@/components/ui/department-combobox";
 import type { MemberOption } from "@/components/point-detail-row";
-import type { CustomEventDepartment, CustomEventMember, GroupedActions, EventDetails, Member } from "@/lib/api-types";
+import type { BonusDetail, BonusGrantInput, GroupedActions, Member } from "@/lib/api-types";
 import {
-  getCustomEvents,
-  getCustomEventDepartment,
-  getCustomEventMember,
-  getEventDetails,
+  getBonus,
+  updateBonus,
+  deleteBonus,
   getDepartments,
   getMembers,
   getActions,
-  updateCustomPointDetail,
-  updateCustomMemberPointDetail,
-  createCustomDepartmentPoints,
-  createCustomMemberPoints,
-  updateEvent,
   shouldContactSupport,
-  deleteCustomPointDetail,
-  deleteCustomMemberPointDetail,
 } from "@/lib/api";
-import { formatLocalDateTime, parseLocalDateTime } from "@/lib/utils";
+import { formatLocalDateTime } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
-export default function EditCustomEventPage() {
+export default function EditBonusPage() {
   const t = useTranslations("editCustomEvent");
   const tc = useTranslations("createCustomEvent");
   const tl = useTranslations("eventLayout");
   const params = useParams();
   const router = useRouter();
   const { getToken } = useAuth();
-  const eventId = params.id as string;
+  const bonusId = params.id as string;
 
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [isDeleting, setIsDeleting] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const [initialData, setInitialData] =
-    React.useState<CustomEventDepartment | null>(null);
-  const [initialMemberData, setInitialMemberData] =
-    React.useState<CustomEventMember | null>(null);
-  const [eventDetails, setEventDetails] = 
-    React.useState<EventDetails | null>(null);
-  const [eventNameOptions, setEventNameOptions] = React.useState<string[]>([]);
-  const [allEvents, setAllEvents] = React.useState<
-    Array<{ name: string; start_datetime: string; location_type: import("@/lib/api-types").LocationType }>
-  >([]);
-  const [departmentOptions, setDepartmentOptions] = React.useState<
-    ComboboxOption[]
-  >([]);
+  const [bonus, setBonus] = React.useState<BonusDetail | null>(null);
+  const [departmentOptions, setDepartmentOptions] = React.useState<ComboboxOption[]>([]);
   const [memberOptions, setMemberOptions] = React.useState<MemberOption[]>([]);
   const [actionOptions, setActionOptions] = React.useState<GroupedActions>({
     department: [],
@@ -78,52 +60,25 @@ export default function EditCustomEventPage() {
     ]);
   }, []);
 
-  const isFullEvent = React.useMemo(() => {
-    if (!eventDetails?.event) return false;
-    const locationType = eventDetails.event.location_type;
-    return locationType !== "none" && locationType !== "hidden";
-  }, [eventDetails]);
-
   React.useEffect(() => {
     async function fetchData() {
       setIsLoading(true);
       setError(null);
 
-      const [eventRes, eventDetailsRes, eventsRes, deptsRes, membersRes, actionsRes, memberEventRes] = await Promise.all([
-        getCustomEventDepartment(eventId, getToken),
-        getEventDetails(eventId, getToken),
-        getCustomEvents(),
+      const [bonusRes, deptsRes, membersRes, actionsRes] = await Promise.all([
+        getBonus(bonusId, getToken),
         getDepartments(),
         getMembers(getToken),
         getActions(),
-        getCustomEventMember(eventId, getToken),
       ]);
 
-      if (!eventDetailsRes.success) {
-        setError(eventDetailsRes.error.message || t("loadFailed"));
+      if (!bonusRes.success) {
+        setError(bonusRes.error.message || t("loadFailed"));
         setIsLoading(false);
         return;
       }
 
-      setEventDetails(eventDetailsRes.data);
-
-      if (eventRes.success) {
-        setInitialData(eventRes.data);
-      }
-
-      if (memberEventRes.success) {
-        setInitialMemberData(memberEventRes.data);
-      }
-
-      if (eventsRes.success) {
-        const names = [...new Set(eventsRes.data.map((e) => e.name))];
-        setEventNameOptions(names);
-        setAllEvents(eventsRes.data.map((e) => ({
-          name: e.name,
-          start_datetime: e.start_datetime,
-          location_type: e.location_type,
-        })));
-      }
+      setBonus(bonusRes.data);
 
       if (deptsRes.success) {
         setDepartmentOptions(
@@ -145,278 +100,85 @@ export default function EditCustomEventPage() {
         );
       }
 
-if (actionsRes.success) {
-          setActionOptions({
-            department: actionsRes.data.department_actions,
-            member: actionsRes.data.member_actions,
-            bonus: actionsRes.data.custom_actions,
-          });
-        }
+      if (actionsRes.success) {
+        setActionOptions({
+          department: actionsRes.data.department_actions,
+          member: actionsRes.data.member_actions,
+          bonus: actionsRes.data.custom_actions,
+        });
+      }
 
       setIsLoading(false);
     }
     fetchData();
-  }, [eventId, getToken, t]);
+  }, [bonusId, getToken, t]);
 
   const handleSubmit = async (data: CustomEventFormData) => {
-    if (!eventDetails) return;
-
-    const initialEventName = initialData?.event_name ?? initialMemberData?.event_name;
-    const initialStartDt = initialData?.start_datetime ?? initialMemberData?.start_datetime;
-
+    if (!bonus) return;
     setIsSubmitting(true);
 
     try {
-      const originalDate = parseLocalDateTime(initialStartDt || "");
-      const originalDateOnly = new Date(originalDate.getFullYear(), originalDate.getMonth(), originalDate.getDate());
-      const newDateOnly = new Date(data.date.getFullYear(), data.date.getMonth(), data.date.getDate());
-      
-      const dateChanged = initialStartDt ? originalDateOnly.getTime() !== newDateOnly.getTime() : true;
-      const nameChanged = data.event_name !== initialEventName;
-      
-      const currentEvent = allEvents.find((e) => e.name === initialEventName);
-      const currentVisibility = currentEvent ? currentEvent.location_type !== "hidden" : true;
-      const visibilityChanged = data.is_visible !== currentVisibility;
+      const givenAt = new Date(data.date);
+      givenAt.setHours(10, 0, 0, 0);
 
-      if (!isFullEvent && (nameChanged || dateChanged || visibilityChanged)) {
-        let startDate, endDate;
-        if (dateChanged) {
-          startDate = new Date(data.date);
-          startDate.setHours(10, 0, 0, 0);
-          endDate = new Date(data.date);
-          endDate.setHours(12, 0, 0, 0);
+      const grants: BonusGrantInput[] = data.point_details.map((pd) => ({
+        id: pd.grant_id ?? null,
+        recipient_type: pd.row_type,
+        points: pd.points,
+        source_action_id: pd.action_id,
+        label_en: pd.action_name,
+        label_ar: pd.label_ar ?? pd.action_name,
+        member_ids: pd.row_type === "member" ? pd.member_ids : [],
+        department_ids: pd.row_type === "department" ? pd.departments_id : [],
+      }));
+
+      const res = await updateBonus(
+        bonus.id,
+        {
+          title: data.event_name,
+          given_at: formatLocalDateTime(givenAt),
+          is_public: data.is_visible,
+          grants,
+        },
+        getToken
+      );
+
+      if (!res.success) {
+        if (shouldContactSupport(res.error)) {
+          toast.error(t("updateEventInfoFailedContactSupport"), {
+            description: tc("errorDetail", { message: res.error.message }),
+            duration: 10000,
+          });
         } else {
-          startDate = parseLocalDateTime(initialStartDt || "");
-          endDate = parseLocalDateTime((initialData?.end_datetime ?? initialMemberData?.end_datetime) || "");
+          toast.error(res.error.message);
         }
-
-        const updatePayload = {
-          event: {
-            id: eventDetails.event.id,
-            name: data.event_name,
-            description: eventDetails.event.description,
-            location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
-            location: eventDetails.event.location,
-            start_datetime: formatLocalDateTime(startDate),
-            end_datetime: formatLocalDateTime(endDate),
-            status: eventDetails.event.status,
-            image_url: eventDetails.event.image_url,
-            is_official: eventDetails.event.is_official,
-          },
-          actions: eventDetails.actions,
-        };
-
-        const eventUpdateRes = await updateEvent(
-          parseInt(eventId),
-          updatePayload,
-          getToken
-        );
-
-        if (!eventUpdateRes.success) {
-          if (shouldContactSupport(eventUpdateRes.error)) {
-            toast.error(
-              t("updateEventInfoFailedContactSupport"),
-              {
-                description: tc("errorDetail", { message: eventUpdateRes.error.message }),
-                duration: 10000,
-              }
-            );
-          } else {
-            toast.error(eventUpdateRes.error.message);
-          }
-          setIsSubmitting(false);
-          return;
-        }
+        return;
       }
 
-      const existingDeptRows = data.point_details.filter((pd) => pd.row_type === "department" && pd.log_id);
-      const newDeptRows = data.point_details.filter((pd) => pd.row_type === "department" && !pd.log_id);
-      const existingMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && pd.log_id);
-      const newMemberRows = data.point_details.filter((pd) => pd.row_type === "member" && !pd.log_id);
-
-      const currentDeptLogIds = new Set(existingDeptRows.map((pd) => pd.log_id));
-      const currentMemberLogIds = new Set(existingMemberRows.map((pd) => pd.log_id));
-      
-      const deletedDeptLogIds = (initialData?.point_details ?? [])
-        .map((pd) => pd.log_id)
-        .filter((logId) => logId !== undefined && !currentDeptLogIds.has(logId));
-      const deletedMemberLogIds = (initialMemberData?.point_details ?? [])
-        .map((pd) => pd.log_id)
-        .filter((logId) => logId !== undefined && !currentMemberLogIds.has(logId));
-
-      const deleteDeptPromises = deletedDeptLogIds.map((logId) =>
-        deleteCustomPointDetail(logId!, getToken)
-      );
-      const deleteMemberPromises = deletedMemberLogIds.map((logId) =>
-        deleteCustomMemberPointDetail(logId!, getToken)
-      );
-
-      const deleteResults = await Promise.all([...deleteDeptPromises, ...deleteMemberPromises]);
-      const failedDeletes = deleteResults.filter((r) => !r.success);
-      if (failedDeletes.length > 0) {
-        const firstError = failedDeletes[0];
-        if (!firstError.success) {
-          toast.error(
-            t("deleteFailedCount", { count: failedDeletes.length }),
-            {
-              description: firstError.error.message,
-            }
-          );
-        }
-      }
-
-      const updateDeptPromises = existingDeptRows
-        .filter((pd) => {
-          const original = initialData?.point_details.find((orig) => orig.log_id === pd.log_id);
-          if (!original) return true;
-          const pointsChanged = pd.points !== original.points;
-          const actionChanged = pd.action_name !== (original.action_name ?? null);
-          const depsChanged = 
-            pd.departments_id.length !== original.departments_id.length ||
-            !pd.departments_id.every((id) => original.departments_id.includes(id));
-          return pointsChanged || actionChanged || depsChanged;
-        })
-        .map((pd) =>
-          updateCustomPointDetail(
-            pd.log_id!,
-            {
-              log_id: pd.log_id!,
-              departments_id: pd.departments_id,
-              points: pd.points,
-              action_id: pd.action_id,
-              action_name: pd.action_name,
-            },
-            getToken
-          )
-        );
-
-      const updateMemberPromises = existingMemberRows
-        .filter((pd) => {
-          const original = initialMemberData?.point_details.find((orig) => orig.log_id === pd.log_id);
-          if (!original) return true;
-          const pointsChanged = pd.points !== original.points;
-          const actionChanged = pd.action_name !== (original.action_name ?? null);
-          const membersChanged = 
-            pd.member_ids.length !== original.member_ids.length ||
-            !pd.member_ids.every((id) => original.member_ids.includes(id));
-          return pointsChanged || actionChanged || membersChanged;
-        })
-        .map((pd) =>
-          updateCustomMemberPointDetail(
-            pd.log_id!,
-            {
-              log_id: pd.log_id!,
-              member_ids: pd.member_ids,
-              points: pd.points,
-              action_id: pd.action_id,
-              action_name: pd.action_name,
-            },
-            getToken
-          )
-        );
-
-      const updateResults = await Promise.all([...updateDeptPromises, ...updateMemberPromises]);
-
-      const failedUpdates = updateResults.filter((r) => !r.success);
-      if (failedUpdates.length > 0) {
-        const firstError = failedUpdates[0];
-        if (!firstError.success) {
-          toast.error(
-            t("updateFailedCount", { count: failedUpdates.length }),
-            {
-              description: firstError.error.message,
-            }
-          );
-        }
-      }
-
-      const newStartDate = new Date(data.date);
-      newStartDate.setHours(10, 0, 0, 0);
-      const newEndDate = new Date(data.date);
-      newEndDate.setHours(12, 0, 0, 0);
-
-      if (newDeptRows.length > 0) {
-        const createDeptPayload = {
-          event_id: parseInt(eventId),
-          start_datetime: formatLocalDateTime(newStartDate),
-          end_datetime: formatLocalDateTime(newEndDate),
-          event_name: data.event_name,
-          location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
-          point_deatils: newDeptRows.map((pd) => ({
-            departments_id: pd.departments_id,
-            points: pd.points,
-            action_id: pd.action_id,
-            action_name: pd.action_name,
-          })),
-        };
-
-        const createRes = await createCustomDepartmentPoints(
-          createDeptPayload,
-          getToken
-        );
-
-        if (!createRes.success) {
-          if (shouldContactSupport(createRes.error)) {
-            toast.error(
-              t("createDeptFailedContactSupport"),
-              {
-                description: tc("errorDetail", { message: createRes.error.message }),
-                duration: 10000,
-              }
-            );
-          } else {
-            toast.error(createRes.error.message);
-          }
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      if (newMemberRows.length > 0) {
-        const createMemberPayload = {
-          event_id: parseInt(eventId),
-          start_datetime: formatLocalDateTime(newStartDate),
-          end_datetime: formatLocalDateTime(newEndDate),
-          event_name: data.event_name,
-          location_type: (data.is_visible ? "none" : "hidden") as import("@/lib/api-types").LocationType,
-          point_deatils: newMemberRows.map((pd) => ({
-            member_ids: pd.member_ids,
-            points: pd.points,
-            action_id: pd.action_id,
-            action_name: pd.action_name,
-          })),
-        };
-
-        const createRes = await createCustomMemberPoints(
-          createMemberPayload,
-          getToken
-        );
-
-        if (!createRes.success) {
-          if (shouldContactSupport(createRes.error)) {
-            toast.error(
-              t("createMemberFailedContactSupport"),
-              {
-                description: tc("errorDetail", { message: createRes.error.message }),
-                duration: 10000,
-              }
-            );
-          } else {
-            toast.error(createRes.error.message);
-          }
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      if (failedUpdates.length === 0) {
-        toast.success(t("updatedSuccess"));
-      }
+      toast.success(t("updatedSuccess"));
       router.push("/points");
     } catch {
       toast.error(tc("unexpectedError"));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!bonus) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteBonus(bonus.id, getToken);
+      if (!res.success) {
+        toast.error(res.error.message);
+        return;
+      }
+      toast.success(t("updatedSuccess"));
+      router.push("/points");
+    } catch {
+      toast.error(tc("unexpectedError"));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -443,7 +205,7 @@ if (actionsRes.success) {
     );
   }
 
-  if (error || (!initialData && !initialMemberData)) {
+  if (error || !bonus) {
     return (
       <div className="mx-auto flex w-full max-w-4xl flex-col gap-6">
         <Button variant="ghost" size="sm" asChild className="-ms-2 w-fit">
@@ -462,22 +224,17 @@ if (actionsRes.success) {
   }
 
   return (
-    <PointsEditorShell
-      title={isFullEvent ? t("titleFull") : t("titleCustom")}
-      description={isFullEvent ? t("descriptionFull") : t("descriptionCustom")}
-    >
+    <PointsEditorShell title={t("titleCustom")} description={t("descriptionCustom")}>
       <CustomEventForm
         mode="edit"
-        initialData={initialData ?? undefined}
-        initialMemberData={initialMemberData ?? undefined}
-        eventNameOptions={eventNameOptions}
-        allEvents={allEvents}
+        initialBonus={bonus}
         departmentOptions={departmentOptions}
         memberOptions={memberOptions}
         actionOptions={actionOptions}
         onSubmit={handleSubmit}
+        onDelete={handleDelete}
+        isDeleting={isDeleting}
         isSubmitting={isSubmitting}
-        isFullEvent={isFullEvent}
         onMemberCreated={handleMemberCreated}
       />
     </PointsEditorShell>

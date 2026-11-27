@@ -57,6 +57,12 @@ import type {
   CreatedMemberResponse,
   BatchCreateMemberItem,
   BatchCreateMembersResponse,
+  BonusSummary,
+  BonusDetail,
+  EventBonusDetail,
+  CreateBonusPayload,
+  UpdateBonusPayload,
+  UpsertEventBonusPayload,
   CustomEventDepartment,
   CreateCustomDepartmentPayload,
   CreateCustomPointsResponse,
@@ -586,6 +592,99 @@ export async function getMembers(
   getToken?: GetTokenFn
 ): Promise<ApiResponse<Member[]>> {
   return apiFetch<Member[]>("/members", {}, getToken);
+}
+
+// =============================================================================
+// Bonuses API (first-class standalone & event-attached bonuses)
+// =============================================================================
+
+export async function getBonuses(
+  options?: { semester?: string | number; standaloneOnly?: boolean; eventId?: number },
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BonusSummary[]>> {
+  const params = new URLSearchParams();
+  if (options?.semester !== undefined && options.semester !== "all") {
+    params.set("semester", String(options.semester));
+  }
+  if (options?.standaloneOnly) {
+    params.set("standalone_only", "true");
+  }
+  if (options?.eventId !== undefined) {
+    params.set("event_id", String(options.eventId));
+  }
+  const qs = params.toString();
+  return apiFetch<BonusSummary[]>(qs ? `/bonuses?${qs}` : "/bonuses", {}, getToken);
+}
+
+export async function getBonus(
+  bonusId: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BonusDetail>> {
+  return apiFetch<BonusDetail>(`/bonuses/${encodeURIComponent(bonusId)}`, {}, getToken);
+}
+
+export async function createBonus(
+  payload: CreateBonusPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BonusDetail>> {
+  return apiFetch<BonusDetail>(
+    "/bonuses",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+export async function updateBonus(
+  bonusId: string,
+  payload: UpdateBonusPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<BonusDetail>> {
+  return apiFetch<BonusDetail>(
+    `/bonuses/${encodeURIComponent(bonusId)}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
+}
+
+export async function deleteBonus(
+  bonusId: string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<{ message: string }>> {
+  return apiFetch<{ message: string }>(
+    `/bonuses/${encodeURIComponent(bonusId)}`,
+    {
+      method: "DELETE",
+    },
+    getToken
+  );
+}
+
+export async function getEventBonuses(
+  eventId: number | string,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EventBonusDetail>> {
+  return apiFetch<EventBonusDetail>(`/bonuses/by-event/${eventId}`, {}, getToken);
+}
+
+export async function upsertEventBonuses(
+  eventId: number | string,
+  payload: UpsertEventBonusPayload,
+  getToken?: GetTokenFn
+): Promise<ApiResponse<EventBonusDetail>> {
+  return apiFetch<EventBonusDetail>(
+    `/bonuses/by-event/${eventId}`,
+    {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    },
+    getToken
+  );
 }
 
 // =============================================================================

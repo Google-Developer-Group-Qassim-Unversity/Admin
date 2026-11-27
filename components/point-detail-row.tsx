@@ -36,13 +36,14 @@ export interface MemberOption {
 }
 
 export interface PointDetailRowData {
-  log_id?: number;
+  grant_id?: string;
   row_type: PointRowType;
   departments_id: number[];
   member_ids: number[];
   points: number;
   action_id: number | null;
   action_name: string | null;
+  label_ar?: string | null;
 }
 
 interface PointDetailRowProps {
