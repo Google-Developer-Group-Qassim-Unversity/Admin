@@ -436,7 +436,7 @@ page has to work at 360px wide with a thumb.
   one. No invented feeds, tickers or totals.
 - **Theme via tokens only.**
 - **The API layer.** New components never take or thread `getToken`; see
-  "Frontend: the API layer is mid-migration" in the root `CLAUDE.md`.
+  "The API layer is mid-migration" in `AGENTS.md`.
 
 ---
 

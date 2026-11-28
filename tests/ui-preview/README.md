@@ -6,7 +6,6 @@ or a backend. `shoot.mjs` bundles the actual pages inside the actual `AppShell`
 (`stubs/`), and answers every API call from `fixtures/*.mjs`.
 
 ```bash
-cd Frontend
 pnpm fonts                       # once: Thmanyah Sans, or screenshots use Tajawal
 node tests/ui-preview/shoot.mjs --routes /,/pipeline,/events/209 \
   --viewports phone,desktop --locales ar,en --themes light,dark
