@@ -13,5 +13,5 @@ pnpm run typecheck
 pnpm run lint
 ```
 
-Start with [CLAUDE.md](CLAUDE.md) for how the repos fit together and the
+Start with [AGENTS.md](AGENTS.md) for how the repos fit together and the
 branch flow, then [DESIGN.md](DESIGN.md) before any UI work.

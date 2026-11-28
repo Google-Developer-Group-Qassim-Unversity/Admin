@@ -1,127 +1,55 @@
 # Admin
 
-The admin panel for GDG Qassim's score system (`admin.gdg-q.com`). Next.js with
-Clerk auth; every piece of data comes from the `Backend` API.
+The GDG Qassim admin panel (`admin.gdg-q.com`): Next.js, Clerk, next-intl, react-query. All data comes
+from the `Backend` API; the repos sit side by side, and `Backend/AGENTS.md` covers the API, its
+environments and its migrations. `Backend/app/helpers.py` means that file in the sibling repo.
 
-## Three repositories
+## Branches, deploys, environments
 
-The system is split across three repos in the
-`Google-Developer-Group-Qassim-Unversity` org, meant to be cloned side by side:
-
-| Repo | What | Deployed at |
-|------|------|-------------|
-| [`Backend`](https://github.com/Google-Developer-Group-Qassim-Unversity/Backend) | FastAPI + SQLAlchemy + Alembic on MySQL; the one API every frontend calls | `refactor.albrrak773.com` (pm2 `GDG-backend`) |
-| [`Admin`](https://github.com/Google-Developer-Group-Qassim-Unversity/Admin) | Next.js admin panel, Clerk auth | `admin.gdg-q.com` |
-| [`Website`](https://github.com/Google-Developer-Group-Qassim-Unversity/Website) | Next.js public site: leaderboard, events, member profiles, wallet passes | `gdg-q.com` |
-
-`Backend` and `Admin` were one repo, `score-leaderboard-Admin-app` (archived;
-its issues and PRs #1-#173 are still there). `Website` was
-`score-leaderboard-app`. A path written as `Admin/lib/access.ts` or
-`Backend/app/helpers.py` means that file in the sibling repo.
-
-A change that spans repos is one branch per repo with the same name - the PR
-checks pick up the other repo's matching branch (falling back to `dev`) - and
-the backend merges first, since the frontend expects its API to exist.
-
-## Branches: everything goes through `dev`
-
-**Never push to `main`, and never open a PR into `main`.** Branch from `dev`,
-open the PR into `dev`. A merge to `dev` deploys staging
-(`admin-dev.gdg-q.com`, against `scores_staging`, a copy of prod); `main` only
-ever receives `dev`: once in a while, one large `dev` -> `main` PR, merged with
-a merge commit, which deploys prod. Don't open that PR unless asked - its
-timing is the team's call. PR checks run on PRs into `dev` only.
-
-Staging and local dev redirect every email away from real members. See
-`Backend/docs/STAGING.md`.
-
-## When something is broken in production
-
-The API is the usual suspect: read `Backend/docs/LOGGING.md`. Every response
-carries an `X-Request-ID` header, which is also a Sentry tag, so a failed call
-in the browser's network tab leads straight to its backend log lines. This app
-runs in docker on the same VPS as the backend (`gdg-admin-web`, port 3012;
-staging `gdg-admin-web-staging`, port 3013).
-
-## The design system is "Mud & Doors"
-
-Any UI work - a new page, a new component, a tweak - follows
-[DESIGN.md](DESIGN.md) and is done with the **`impeccable`**
-skill, which loads `PRODUCT.md` and `DESIGN.md` itself. The
-design is settled: every UI task is a refinement inside it, so never run
-impeccable's redesign / new-visual-world flow and never edit DESIGN.md or
-PRODUCT.md unless asked for a design-system change. Do not invent a look;
-extend this one:
-
-- Colour is state, never decoration: green done, ochre waiting on someone,
-  madder returned/overdue, indigo with a team/open, umber draft. Everything else
-  is the limewash wall and mud ink, through the tokens in `app/globals.css`.
-- Build from `components/najdi.tsx` (Door, Plate, Tarma, Courses, Mark, Count,
-  SectionHead, Mortar, Shurfa) and the restyled `components/ui/*`; status
-  colours come from `components/status-badge.tsx`, never per page.
-- Phone first, Arabic first: ≥44px targets, rows not card grids, logical CSS,
-  `<bdi>` on user content, dates through `useFormatters()` in `lib/format.ts`
-  (Western digits, Gregorian calendar).
-- Reem Kufi only for titles; Thmanyah Sans for everything else. Its licence
-  forbids re-hosting it, so it is never committed: `pnpm fonts` fetches it.
-- Check UI changes on phone and desktop, Arabic and English, light and dark,
-  with `node tests/ui-preview/shoot.mjs` (see `tests/ui-preview/README.md`).
-- Code written in the old four-colour look (brand-* classes, BrandRail,
-  StatTile, round dots, card grids) is migrated, not patched: DESIGN.md §9 maps
-  every old piece to its replacement and lists the exports that no longer exist
-  (old `brand-*` classes compile to nothing, silently). Finish every UI change
-  with DESIGN.md §10, the definition of done.
-
-## The API layer is mid-migration
-
-`lib/api/` is the API as one module - `useApi()` in a client
-component, `serverApi()` in a route handler - and it holds the Clerk token
-itself. `lib/api.ts` is the older half: 59 one-line wrappers that each
-take an optional `getToken`, which callers thread down through hooks and
-component props.
-
-**The invariant: anything still taking `getToken` is on a resource that has not
-migrated.** Threading it into a new hook or a new prop is the mistake to catch
-in review; migrate the resource instead. `lib/api.ts`'s header comment lists
-what has moved and the three steps for moving the next one.
-
-The migrated calls throw `ApiRequestError` rather than returning
-`ApiResponse<T>`, so there is one `ApiRequestError` class and `lib/api.ts`
-re-exports it - defining a second would break the `instanceof` check that stops
-react-query retrying 404s.
-
-## Linear: use `linear-gdg`, never `linear`
-
-This project's tickets live in the GDG Linear workspace, reached through an MCP
-server named `linear-gdg` (`https://mcp.linear.app/mcp`). It is declared in this
-repo for every agent we use:
-
-| Agent | File | Sign in once with |
-|-------|------|-------------------|
-| Claude Code | `.mcp.json` | `/mcp` |
-| Codex | `.codex/config.toml` (project must be trusted) | `codex mcp login linear-gdg` |
-| opencode | `opencode.json` | `opencode mcp auth linear-gdg` |
-| Cursor | `.cursor/mcp.json` | Settings → MCP |
-| VS Code (Copilot) | `.vscode/mcp.json` | the server's "Start" prompt |
-| Gemini CLI | `.gemini/settings.json` | `/mcp auth linear-gdg` |
-
-Sign in with the Linear account that is a member of the GDG workspace. No token
-is committed. A `linear` server, if one is loaded, is some other workspace
-configured outside this repo: never read or write GDG tickets through it.
+- Branch from `dev`, open PRs into `dev`. Never push to `main` or open a PR into it unless asked; a
+  release is one `dev` -> `main` PR (`Backend/.claude/skills/releasing-to-production`).
+- A merge to `dev` deploys staging (`admin-dev.gdg-q.com`, which calls `api-dev.gdg-q.com`); `main`
+  deploys production. Both run in Docker on the VPS (`gdg-admin-web-staging` on port 3013,
+  `gdg-admin-web` on 3012).
+- A change that needs new API ships as same-named branches in Backend and here. Backend merges and
+  deploys first. PR checks here check out Backend's same-named branch, else its `dev`.
 
 ## Commands
 
+Secrets come from Infisical (`--path=/admin-frontend`); `pnpm run dev` wraps `infisical run`.
+
 ```bash
-pnpm run typecheck            # tsc --noEmit
-pnpm run lint
-pnpm run dev                  # runs via infisical, port 3000
+pnpm install              # a fresh worktree has no node_modules
+pnpm fonts                # Thmanyah Sans; its licence forbids committing it
+pnpm run dev              # port 3000; Website uses it too, Next moves to the next free port
+pnpm run typecheck        # CI runs typecheck and lint
+pnpm run lint             # 0 errors expected; existing warnings are fine
+pnpm test                 # node:test unit tests in tests/*.test.ts
 ```
 
-The Club Structure page has a browser check that runs against the real backend
-and a real MySQL: it lives in `Backend/tests/test_club_structure_browser.py`
-and drives `tests/club-structure/run.mjs` here. See
-`tests/club-structure/README.md`. CI runs it on every PR, checking out the
-`Backend` branch with the PR's name if there is one, else `dev`.
+The Club Structure browser check runs from Backend (`RUN_CLUB_BROWSER=1 uv run pytest` there, with
+this repo as `ADMIN_DIR`); see `tests/club-structure/README.md`.
 
-> This file is intentionally short and covers only what is easy to get wrong.
-> Run `/init` if you want a fuller codebase overview generated.
+## UI work follows DESIGN.md
+
+The design ("Mud & Doors") is settled: read `DESIGN.md` §0, §8 and §10 before touching UI, and finish
+with §10, its definition of done. Use the `impeccable` skill in refine/extend mode if it's installed.
+Never redesign, and edit `DESIGN.md` or `PRODUCT.md` only when asked for a design-system change.
+Screenshot UI changes with `node tests/ui-preview/shoot.mjs` (`tests/ui-preview/README.md`). It needs
+no backend and no Clerk session.
+
+## The API layer is mid-migration
+
+`lib/api/` is the API as one module: `useApi()` in client components, `serverApi()` on the server,
+and it holds the Clerk token itself. `lib/api.ts` is the older half, where wrappers take an optional
+`getToken` that callers thread through hooks and props.
+
+- Anything still taking `getToken` is on a resource that hasn't migrated. Never thread `getToken` into
+  a new hook or prop: migrate the resource instead (three steps in `lib/api.ts`'s header comment).
+- There is one `ApiRequestError` class, re-exported by `lib/api.ts`. A second class breaks the
+  `instanceof` check that stops react-query retrying 404s.
+
+## Linear
+
+GDG tickets (`GDG-54`) live in the GDG Linear workspace: the `linear-gdg` MCP server from `.mcp.json`, or
+`linear-gdgq` in Albrrak773's own setup. Never read or write them through another Linear server.
